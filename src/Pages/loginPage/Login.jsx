@@ -2,8 +2,16 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import {
-  Brain, ShieldCheck, CloudSun, Gauge, Moon,
-  ChevronDown, Eye, EyeOff, Lock, Mail,
+  Brain,
+  ShieldCheck,
+  CloudSun,
+  Gauge,
+  Moon,
+  ChevronDown,
+  Eye,
+  EyeOff,
+  Lock,
+  Mail,
 } from "lucide-react";
 import noboLogo from "../../assets/noboIIISvgREQuired.webp";
 import earthBall from "../../assets/earthBall.jpeg";
@@ -19,15 +27,33 @@ import brain2 from "../../assets/icons/brain2.png";
 import world2 from "../../assets/icons/world2.png";
 import tab2 from "../../assets/icons/tab2.png";
 
-
-
 import { ROUTES } from "../../utils/routes";
 
 const socialBrands = [
-  { id: "apple-icon", label: "Apple", href: "https://www.apple.com", color: "#e2e8f0" },
-  { id: "microsoft-icon", label: "Microsoft", href: "https://www.microsoft.com", color: "#e2e8f0" },
-  { id: "google-icon", label: "Google", href: "https://www.google.com", color: "#e2e8f0" },
-  { id: "bluesky-icon", label: "Bluesky", href: "https://bsky.app/profile/nobo.bsky.social", color: "#38bdf8" },
+  {
+    id: "apple-icon",
+    label: "Apple",
+    href: "https://www.apple.com",
+    color: "#e2e8f0",
+  },
+  {
+    id: "microsoft-icon",
+    label: "Microsoft",
+    href: "https://www.microsoft.com",
+    color: "#e2e8f0",
+  },
+  {
+    id: "google-icon",
+    label: "Google",
+    href: "https://www.google.com",
+    color: "#e2e8f0",
+  },
+  {
+    id: "bluesky-icon",
+    label: "Bluesky",
+    href: "https://bsky.app/profile/nobo.bsky.social",
+    color: "#38bdf8",
+  },
 ];
 
 function BrandIcon({ id, size = 18, className = "", color }) {
@@ -58,7 +84,8 @@ function FeatureBadge({ icon: Icon, label, color, extra }) {
 function SideFeature({ img, title, desc, color }) {
   return (
     <div className="flex items-start gap-3">
-      <div className="mt-1 rounded-2xl p-3"
+      <div
+        className="mt-1 rounded-2xl p-3"
         style={{
           background: `${color}18`,
           border: `1px solid ${color}55`,
@@ -111,7 +138,8 @@ function LoginCard() {
       <div className="relative z-10">
         {/* Language */}
         <div className="flex justify-end">
-          <button className="
+          <button
+            className="
             flex
             items-center
             gap-2
@@ -124,7 +152,8 @@ function LoginCard() {
             text-sm
             hover:bg-white/10
             transition
-          ">
+          "
+          >
             العربية
             <ChevronDown size={16} />
           </button>
@@ -132,9 +161,7 @@ function LoginCard() {
 
         {/* Header */}
         <div className="mt-8 text-center">
-          <h1 className="text-4xl font-bold tracking-tight">
-            Welcome Back
-          </h1>
+          <h1 className="text-4xl font-bold tracking-tight">Welcome Back</h1>
           <p className="mt-3 text-gray-400 text-sm">
             Sign in to your NOBO ERP account
           </p>
@@ -142,14 +169,16 @@ function LoginCard() {
 
         {/* Online Offline */}
         <div className="mt-8">
-          <div className="
+          <div
+            className="
             flex
             rounded-2xl
             border
             border-white/10
             bg-white/5
             overflow-hidden
-          ">
+          "
+          >
             <button
               onClick={() => setMode("online")}
               className={`
@@ -192,7 +221,8 @@ function LoginCard() {
           <label className="block text-sm mb-2 text-gray-300">
             Email or Username
           </label>
-          <div className="
+          <div
+            className="
             flex
             items-center
             gap-3
@@ -206,7 +236,8 @@ function LoginCard() {
             focus-within:border-violet-500
             focus-within:ring-2
             focus-within:ring-violet-500/30
-          ">
+          "
+          >
             <Mail size={18} className="text-gray-400" />
             <input
               type="text"
@@ -223,10 +254,9 @@ function LoginCard() {
 
         {/* Password */}
         <div className="mt-5">
-          <label className="block text-sm mb-2 text-gray-300">
-            Password
-          </label>
-          <div className="
+          <label className="block text-sm mb-2 text-gray-300">Password</label>
+          <div
+            className="
             flex
             items-center
             gap-3
@@ -240,7 +270,8 @@ function LoginCard() {
             focus-within:border-violet-500
             focus-within:ring-2
             focus-within:ring-violet-500/30
-          ">
+          "
+          >
             <Lock size={18} className="text-gray-400" />
             <input
               type={showPassword ? "text" : "password"}
@@ -252,9 +283,7 @@ function LoginCard() {
                 placeholder:text-gray-500
               "
             />
-            <button
-              onClick={() => setShowPassword(!showPassword)}
-            >
+            <button onClick={() => setShowPassword(!showPassword)}>
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
@@ -275,7 +304,7 @@ function LoginCard() {
           </button>
         </div>
 
-{/* Sign In */}
+        {/* Sign In */}
         <motion.button
           onClick={handleSignIn}
           whileHover={{
@@ -283,7 +312,7 @@ function LoginCard() {
             boxShadow: "0 0 35px rgba(124,92,255,.35)",
           }}
           whileTap={{
-            scale: .98,
+            scale: 0.98,
           }}
           className="
             mt-7
@@ -306,9 +335,7 @@ function LoginCard() {
         {/* Divider */}
         <div className="my-8 flex items-center">
           <div className="flex-1 h-px bg-white/10" />
-          <span className="px-4 text-xs text-gray-500">
-            Or continue with
-          </span>
+          <span className="px-4 text-xs text-gray-500">Or continue with</span>
           <div className="flex-1 h-px bg-white/10" />
         </div>
 
@@ -381,9 +408,7 @@ function LoginCard() {
 
         {/* Register */}
         <div className="mt-8 text-center">
-          <p className="text-gray-400 text-sm">
-            New to NOBO ERP?
-          </p>
+          <p className="text-gray-400 text-sm">New to NOBO ERP?</p>
           <button className="mt-2 font-semibold text-violet-400 hover:text-violet-300 transition">
             Create your account
           </button>
@@ -397,7 +422,10 @@ export default function LoginPage() {
   const [dark, setDark] = useState(true);
 
   return (
-    <div dir="ltr" className="bg-space min-h-screen w-full relative overflow-hidden text-white">
+    <div
+      dir="ltr"
+      className="bg-space min-h-screen w-full relative overflow-hidden text-white"
+    >
       <div className="bg-stars absolute inset-0 pointer-events-none" />
       {/* top badges */}
       <div className="relative z-10 flex flex-wrap items-center justify-between gap-3 px-6 md:px-10 pt-6">
@@ -405,13 +433,31 @@ export default function LoginPage() {
           <span className="text-lg font-black">
             <span className="brand-text">nobo</span>
           </span>
-          <span className="font-tajawal text-lg text-gray-400 tracking-widest font-bold">ERP III</span>
+          <span className="font-tajawal text-lg text-gray-400 tracking-widest font-bold">
+            ERP III
+          </span>
         </div>
         <div className="flex flex-wrap gap-2 justify-end">
-          <FeatureBadge icon={Brain} label="ذكاء اصطناعي مساعد ذكي" color="#c084fc" />
-          <FeatureBadge icon={ShieldCheck} label="أمان متقدم حماية بياناتك" color="#2b8cff" />
-          <FeatureBadge icon={CloudSun} label="متاح دائماً جاهزية 99.9%" color="#38bdf8" />
-          <FeatureBadge icon={Gauge} label="أداء فائق سرعة وثبات" color="#f5b800" />
+          <FeatureBadge
+            icon={Brain}
+            label="ذكاء اصطناعي مساعد ذكي"
+            color="#c084fc"
+          />
+          <FeatureBadge
+            icon={ShieldCheck}
+            label="أمان متقدم حماية بياناتك"
+            color="#2b8cff"
+          />
+          <FeatureBadge
+            icon={CloudSun}
+            label="متاح دائماً جاهزية 99.9%"
+            color="#38bdf8"
+          />
+          <FeatureBadge
+            icon={Gauge}
+            label="أداء فائق سرعة وثبات"
+            color="#f5b800"
+          />
           <button
             onClick={() => setDark((d) => !d)}
             className="glow-badge rounded-2xl px-4 py-2 flex items-center gap-2 text-xs text-gray-200"
@@ -433,71 +479,107 @@ export default function LoginPage() {
         {/* left */}
         <div className="space-y-8 order-2 lg:order-1 max-w-[360px]">
           <div>
-            <img src={noboLogo} alt="nobo ERP III" className="w-full max-w-[260px] object-contain" />
-            <p className="text-gray-400 mt-2 text-sm">منصة ERP ذكية لإدارة أعمالك بلا حدود</p>
+            <img
+              src={noboLogo}
+              alt="nobo ERP III"
+              className="w-full max-w-[260px] object-contain"
+            />
+            <p className="text-gray-400 mt-2 text-sm">
+              منصة ERP ذكية لإدارة أعمالك بلا حدود
+            </p>
           </div>
-<div className="space-y-4">
-            <SideFeature img={Sheild} title="قوة أعمالك" desc="نظام متكامل لإدارة جميع عملياتك" color="#2b8cff" />
-            <SideFeature img={brain2} title="ذكاء نوبو" desc="تحليلات ذكية وتوقعات دقيقة لدعم نمو أعمالك" color="#ff3d6b" />
-            <SideFeature img={world2} title="من السعودية للعالم" desc="إدارة محلية برؤية عالمية" color="#f5b800" />
-          </div>
-          <div className="panel rounded-3xl p-2 flex flex-col pt-2 w-fit">
-            <div className="p-3 text-xs text-gray-300 flex items-start gap-2">
-              <img src={Cloud} alt="" className="w-4 h-4 mt-0.5 shrink-0 object-contain" />
-              يعمل أونلاين وأوفلاين، استمر في عملك بدون إنترنت
-            </div>
-            <div className="p-3 text-xs text-gray-300 flex items-start gap-2">
-              <img src={analysis} alt="" className="w-4 h-4 mt-0.5 shrink-0 object-contain" />
-              تقارير لحظية ذكية، تقارير فورية أدق لقرارات أوسع
-            </div>
-            <div className="p-3 text-xs text-gray-300 flex items-start gap-2">
-              <img src={tab2} alt="" className="w-4 h-4 mt-0.5 shrink-0 object-contain" />
-              يعمل على جميع الأجهزة، كمبيوتر، تابلت، جوال
-            </div>
-            <div className="p-3 text-xs text-gray-300 flex items-start gap-2">
-              <img src={Speaker} alt="" className="w-4 h-4 mt-0.5 shrink-0 object-contain" />
-              دعم فني عالمي 24/7/365، طوال العام
-            </div>
+          <div className="space-y-4">
+            <SideFeature
+              img={Sheild}
+              title="قوة أعمالك"
+              desc="نظام متكامل لإدارة جميع عملياتك"
+              color="#2b8cff"
+            />
+            <SideFeature
+              img={brain2}
+              title="ذكاء نوبو"
+              desc="تحليلات ذكية وتوقعات دقيقة لدعم نمو أعمالك"
+              color="#ff3d6b"
+            />
+            <SideFeature
+              img={world2}
+              title="من السعودية للعالم"
+              desc="إدارة محلية برؤية عالمية"
+              color="#f5b800"
+            />
+            <SideFeature
+              img={Cloud}
+              title="متاح على جميع الأجهزة"
+              desc="كمبيوتر، تابلت، جوال"
+              color="#17d9c4"
+            />
+            <SideFeature
+              img={analysis}
+              title="   تقارير لحظية ذكية، تقارير فورية أدق لقرارات أوسع"
+              desc="تحليلات ذكية وتوقعات دقيقة لدعم نمو أعمالك"
+              color="#ff3d6b"
+            />
+            <SideFeature
+              img={tab2}
+              title="يدعم جميع اللغات بلا حدود"
+              desc="إدارة محلية برؤية عالمية"
+              color="#f5b800"
+            />
+            <SideFeature
+              img={Speaker}
+              title="دعم فني عالمي 24/7/365"
+              desc="تحليلات ذكية وتوقعات دقيقة لدعم نمو أعمالك"
+              color="#ff3d6b"
+            />
           </div>
         </div>
 
-{/* center image */}
+        {/* center image */}
         <div className="order-1 lg:order-2 flex items-center justify-center relative">
           <img
             src={earthBall}
             alt=""
             className="relative z-20 w-[640px] max-w-full h-auto object-contain rounded-3xl float"
             style={{ filter: "brightness(1.05) contrast(1.02) saturate(1.05)" }}
-/>
-<div className="absolute left-1/2 bottom-0 z-30 -translate-x-1/2 translate-y-8 md:translate-y-10 lg:translate-y-12 w-[640px] max-w-full pointer-events-none">
-<img
-    src={LogoNobo}
-    alt="NOBO Logo"
-    className="w-[130%] h-auto drop-shadow-none"
-    style={{ filter: "drop-shadow(0 0 0 transparent)" }}
-  />
-</div>
+          />
+          <div className="absolute left-1/2 bottom-0 z-30 -translate-x-1/2 translate-y-8 md:translate-y-10 lg:translate-y-12 w-[640px] max-w-full pointer-events-none">
+            <img
+              src={LogoNobo}
+              alt="NOBO Logo"
+              className="w-[130%] h-auto drop-shadow-none"
+              style={{ filter: "drop-shadow(0 0 0 transparent)" }}
+            />
+          </div>
         </div>
 
-{/* right login card */}
+        {/* right login card */}
         <div className="order-3 flex items-center justify-center">
           <LoginCard />
         </div>
       </div>
 
-{/* stats & compliance row — 6 photos only (no rectangles) */}
+      {/* stats & compliance row — 6 photos only (no rectangles) */}
       <div className="relative z-10 max-w-7xl mx-auto mt-10 px-4 flex flex-wrap items-center justify-center gap-6">
         {[
           { img: sheild, label: "عميل حول العالم يثقون بنا" },
           { img: Charge, label: "أداء فائق سرعة وثبات" },
           { img: Cloud, label: "متاح دائماً جاهزية 99.9%" },
-{ img: analysis, label: "تقارير لحظية ذكية", scale: true },
-{ img: Signal, label: "يدعم جميع اللغات بلا حدود" },
+          { img: analysis, label: "تقارير لحظية ذكية", scale: true },
+          { img: Signal, label: "يدعم جميع اللغات بلا حدود" },
           { img: Speaker, label: "دعم فني عالمي 24/7/365", scale: true },
         ].map((s, i) => (
-          <div key={i} className="flex flex-col items-center justify-center gap-1.5 text-center">
-            <img src={s.img} alt="" className={`w-24 h-24 object-contain ${s.scale ? "scale-150" : ""}`} />
-            <div className="text-[11px] text-gray-400 leading-snug max-w-[160px]">{s.label}</div>
+          <div
+            key={i}
+            className="flex flex-col items-center justify-center gap-1.5 text-center"
+          >
+            <img
+              src={s.img}
+              alt=""
+              className={`w-24 h-24 object-contain ${s.scale ? "scale-150" : ""}`}
+            />
+            <div className="text-[11px] text-gray-400 leading-snug max-w-[160px]">
+              {s.label}
+            </div>
           </div>
         ))}
       </div>
@@ -522,7 +604,8 @@ export default function LoginPage() {
       </div>
 
       <div className="relative z-10 text-center text-[11px] text-gray-500 pb-6 mt-6 tracking-widest">
-        © 2024 NOBO ERP. جميع الحقوق محفوظة | نوبو ERP إدارة ذكية بلا حدود ... مستقبل بلا حدود
+        © 2024 NOBO ERP. جميع الحقوق محفوظة | نوبو ERP إدارة ذكية بلا حدود ...
+        مستقبل بلا حدود
       </div>
     </div>
   );
