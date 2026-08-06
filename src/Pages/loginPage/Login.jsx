@@ -8,16 +8,16 @@ import {
 import noboLogo from "../../assets/noboIIISvgREQuired.webp";
 import earthBall from "../../assets/earthBall.jpeg";
 import LogoNobo from "../../assets/LogoNobo.png";
-import sheild from "../../../src/assets/icons/sheild.png";
-import Charge from "../../../src/assets/icons/Charge.png";
-import Cloud from "../../../src/assets/icons/Cloud.png";
-import analysis from "../../../src/assets/icons/analysis.png";
-import Signal from "../../../src/assets/icons/Signal.png";
-import Speaker from "../../../src/assets/icons/Speaker.png";
-import Sheild from "../../../src/assets/icons/Sheild.png";
-import brain2 from "../../../src/assets/icons/brain2.png";
-import world2 from "../../../src/assets/icons/world2.png";
-import tab2 from "../../../src/assets/icons/tab2.png";
+import sheild from "../../assets/icons/Sheild.png";
+import Charge from "../../assets/icons/Charge.png";
+import Cloud from "../../assets/icons/Cloud.png";
+import analysis from "../../assets/icons/analysis.png";
+import Signal from "../../assets/icons/Signal.png";
+import Speaker from "../../assets/icons/Speaker.png";
+import Sheild from "../../assets/icons/Sheild.png";
+import brain2 from "../../assets/icons/brain2.png";
+import world2 from "../../assets/icons/world2.png";
+import tab2 from "../../assets/icons/tab2.png";
 
 
 
