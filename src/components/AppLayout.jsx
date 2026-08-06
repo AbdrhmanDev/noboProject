@@ -1,0 +1,159 @@
+import { useNavigate } from "react-router-dom";
+import Header from "./Header";
+import Footer from "./Footer";
+import { ROUTES } from "../utils/routes";
+import { NAV_ITEMS } from "../utils/navItems";
+
+export default function AppLayout({ children, onLogout, activePath = ROUTES.DASHBOARD }) {
+  const navigate = useNavigate();
+
+  return (
+    <div dir="rtl" className="bg-space min-h-screen w-full text-white flex">
+      {/* sidebar (RTL: sits on the right) */}
+      <aside
+        className="
+          hidden
+          lg:flex
+          flex-col
+          w-[285px]
+          shrink-0
+          bg-black
+          border-l
+          border-white/10
+          px-5
+          py-6
+          relative
+          overflow-hidden
+        "
+      >
+        <div className="bg-stars absolute inset-0 pointer-events-none opacity-40" />
+        <div className="flex items-center gap-3 mb-10">
+          <div
+            className="
+              w-12
+              h-12
+              rounded-2xl
+              bg-gradient-to-br
+              from-cyan-400
+              to-blue-600
+              flex
+              items-center
+              justify-center
+              text-xl
+              font-black
+              shadow-[0_0_25px_rgba(59,130,246,.5)]
+            "
+          >
+            N
+          </div>
+          <div>
+            <div className="text-2xl font-black brand-text">NOBO</div>
+            <div className="text-xs text-gray-500">ERP III</div>
+          </div>
+        </div>
+        <button
+          onClick={() => navigate(ROUTES.DASHBOARD)}
+          className="
+            w-full
+            rounded-2xl
+            py-4
+            font-bold
+            text-white
+            mb-4
+            transition
+            duration-300
+            hover:scale-[1.02]
+            shadow-[0_0_30px_rgba(43,140,255,.35)]
+            text-sm
+          "
+          style={{ background: "linear-gradient(90deg,#2b8cff,#4f6bff)" }}
+        >
+          الرئيسية
+        </button>
+        <nav className="space-y-1 overflow-y-auto scrollbar-none">
+          {NAV_ITEMS.slice(1).map((item, i) => {
+            const isActive = activePath === item.to;
+            return (
+              <div
+                key={i}
+                onClick={() => navigate(item.to)}
+                className={`
+                  group
+                  rounded-2xl
+                  px-4
+                  py-3.5
+                  flex
+                  items-center
+                  gap-4
+                  cursor-pointer
+                  transition-all
+                  duration-300
+                  hover:bg-blue-500/10
+                  hover:border
+                  hover:border-blue-500/30
+                  hover:translate-x-1
+                  ${isActive ? "bg-blue-500/15 border border-blue-500/40" : ""}
+                `}
+              >
+                <item.icon size={20} color={isActive ? "#2b8cff" : "#60a5fa"} className="group-hover:scale-110 transition" />
+                <span className={`font-semibold tracking-wide ${isActive ? "text-white" : ""}`}>{item.label}</span>
+              </div>
+            );
+          })}
+        </nav>
+        <div
+          className="
+            mt-auto
+            rounded-3xl
+            border
+            border-white/10
+            bg-white/5
+            backdrop-blur-xl
+            p-4
+            flex
+            items-center
+            gap-3
+          "
+        >
+          <img
+            src="https://api.dicebear.com/7.x/avataaars/svg?seed=Sherif"
+            alt=""
+            className="w-14 h-14 rounded-full bg-gray-700"
+            style={{ boxShadow: "0 0 25px rgba(43,140,255,.3)" }}
+          />
+          <div>
+            <div className="text-sm font-bold">شريف رضا</div>
+            <div className="text-[11px] text-gray-400">مدير النظام</div>
+          </div>
+        </div>
+        <div
+          className="
+            mt-4
+            rounded-2xl
+            bg-green-500/10
+            border
+            border-green-400/30
+            p-3
+            flex
+            items-center
+            justify-between
+          "
+        >
+          <div>
+            <div className="text-xs text-green-400">System Status</div>
+            <div className="text-[11px] text-gray-400">All Services Online</div>
+          </div>
+          <div className="w-3 h-3 rounded-full bg-green-400 animate-pulse" />
+        </div>
+      </aside>
+
+      {/* main */}
+      <main className="flex-1 p-4 md:p-6 overflow-x-hidden">
+        <Header onLogout={onLogout} />
+        {children}
+        <Footer />
+      </main>
+    </div>
+  );
+}
+
