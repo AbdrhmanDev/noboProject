@@ -20,7 +20,7 @@ export default function Header({ onLogout }) {
           <span className="text-sm font-extrabold" style={{ color: "#60a5fa" }}>⏰</span>
         </div>
         <TopWidget label="USD" value="3.7700" sub="+0.45%" color="#34d399" />
-        <TopWidget label="الذهب oooooooooooooo" value="2,385" sub="+1.25%" color="#f5b800" />
+        <TopWidget label="الذهب" value="2,385" sub="+1.25%" color="#f5b800" />
         <TopWidget label="الفضة" value="28.56" sub="+0.78%" color="#c084fc" />
       </div>
       <div className="flex items-center gap-4">
