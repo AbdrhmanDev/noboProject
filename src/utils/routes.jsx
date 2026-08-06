@@ -2,7 +2,7 @@
 export const ROUTES = {
   LOGIN: "/",
   DASHBOARD: "/dashboard",
-  POS: "/pos",
+  POS: "/POSPage",
   SALES: "/sales",
   PURCHASES: "/purchases",
   INVENTORY: "/inventory",
