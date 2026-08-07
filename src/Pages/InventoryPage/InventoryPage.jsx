@@ -1,12 +1,13 @@
 import { Plus, AlertTriangle, Package, ArrowLeftRight, Search } from "lucide-react";
 import AppLayout from "../../components/AppLayout";
+import { useI18n } from "../../i18n/I18nContext";
 import { ROUTES } from "../../utils/routes";
 
 const stats = [
-  { label: "إجمالي الأصناف", value: "2,540", color: "#2b8cff" },
-  { label: "قيمة المخزون", value: "486,200 ر.س", color: "#f5b800" },
-  { label: "منخفض المخزون", value: "18", color: "#ff3d6b" },
-  { label: "نفدت الكمية", value: "6", color: "#8b5cf6" },
+  { labelKey: "inv.totalItems", value: "2,540", color: "#2b8cff" },
+  { labelKey: "inv.stockValue", value: "486,200 ر.س", color: "#f5b800" },
+  { labelKey: "inv.lowStock", value: "18", color: "#ff3d6b" },
+  { labelKey: "inv.outOfStock", value: "6", color: "#8b5cf6" },
 ];
 
 const items = [
@@ -20,13 +21,14 @@ const items = [
 const lowStock = items.filter((i) => i.qty <= i.min);
 
 export default function InventoryPage({ onLogout }) {
+  const { t } = useI18n();
   return (
     <AppLayout onLogout={onLogout} activePath={ROUTES.INVENTORY}>
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <h1 className="text-xl font-black brand-text">المخزون</h1>
+        <h1 className="text-xl font-black brand-text">{t("inv.title")}</h1>
         <div className="flex gap-2">
-          <button className="panel rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><ArrowLeftRight size={13} /> تحويل مخزون</button>
-          <button className="primary-btn rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><Plus size={13} /> إضافة منتج</button>
+          <button className="panel rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><ArrowLeftRight size={13} /> {t("inv.transfer")}</button>
+          <button className="primary-btn rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><Plus size={13} /> {t("inv.addProduct")}</button>
         </div>
       </div>
 
@@ -35,7 +37,7 @@ export default function InventoryPage({ onLogout }) {
         {stats.map((s, i) => (
           <div key={i} className="stat-card rounded-2xl p-4">
             <div className="text-lg font-black" style={{ color: s.color }}>{s.value}</div>
-            <div className="text-[11px] text-gray-400 mt-1">{s.label}</div>
+            <div className="text-[11px] text-gray-400 mt-1">{t(s.labelKey)}</div>
           </div>
         ))}
       </div>
@@ -44,21 +46,21 @@ export default function InventoryPage({ onLogout }) {
         {/* items table */}
         <div className="panel rounded-2xl p-4">
           <div className="flex items-center gap-2 mb-3">
-            <h3 className="font-bold text-sm">قائمة الأصناف</h3>
+            <h3 className="font-bold text-sm">{t("inv.itemList")}</h3>
             <div className="flex-1" />
             <div className="flex items-center gap-2 input-dark rounded-xl px-3 py-2">
               <Search size={14} color="#60a5fa" />
-              <input placeholder="بحث..." className="bg-transparent outline-none text-xs text-white placeholder-gray-500" />
+              <input placeholder={t("inv.search")} className="bg-transparent outline-none text-xs text-white placeholder-gray-500" />
             </div>
           </div>
           <table className="w-full text-xs">
             <thead>
               <tr className="text-gray-500 text-right">
-                <th className="font-medium pb-2">المنتج</th>
+                <th className="font-medium pb-2">{t("inv.product")}</th>
                 <th className="font-medium pb-2">SKU</th>
-                <th className="font-medium pb-2">الكمية</th>
-                <th className="font-medium pb-2">الحد الأدنى</th>
-                <th className="font-medium pb-2">الموقع</th>
+                <th className="font-medium pb-2">{t("inv.qty")}</th>
+                <th className="font-medium pb-2">{t("inv.min")}</th>
+                <th className="font-medium pb-2">{t("inv.location")}</th>
               </tr>
             </thead>
             <tbody>
@@ -77,7 +79,7 @@ export default function InventoryPage({ onLogout }) {
 
         {/* low stock alerts */}
         <div className="panel rounded-2xl p-4">
-          <h3 className="font-bold text-sm mb-3 flex items-center gap-2"><AlertTriangle size={15} color="#ff3d6b" /> تنبيهات المخزون</h3>
+          <h3 className="font-bold text-sm mb-3 flex items-center gap-2"><AlertTriangle size={15} color="#ff3d6b" /> {t("inv.alerts")}</h3>
           <div className="space-y-3">
             {lowStock.map((it, i) => (
               <div key={i} className="flex items-center justify-between bg-white/5 rounded-xl px-3 py-2">
@@ -89,7 +91,7 @@ export default function InventoryPage({ onLogout }) {
                   </div>
                 </div>
                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${it.qty === 0 ? "bg-red-500/15 text-red-400" : "bg-yellow-500/15 text-yellow-400"}`}>
-                  {it.qty === 0 ? "نفدت" : `${it.qty} متبقي`}
+                  {it.qty === 0 ? t("inv.out") : t("inv.left", { n: it.qty })}
                 </span>
               </div>
             ))}

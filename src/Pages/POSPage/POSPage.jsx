@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Search, Plus, Minus, Trash2, ScanLine, CreditCard, Banknote, Smartphone } from "lucide-react";
 import AppLayout from "../../components/AppLayout";
+import { useI18n } from "../../i18n/I18nContext";
 import { ROUTES } from "../../utils/routes";
 
 const products = [
@@ -13,6 +14,7 @@ const products = [
 ];
 
 export default function POSPage({ onLogout }) {
+  const { t } = useI18n();
   const [cart, setCart] = useState([]);
   const [search, setSearch] = useState("");
 
@@ -40,8 +42,8 @@ export default function POSPage({ onLogout }) {
   return (
     <AppLayout onLogout={onLogout} activePath={ROUTES.POS}>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-black brand-text">نقطة البيع POS</h1>
-        <span className="text-xs text-gray-400">كاشير: شريف رضا</span>
+        <h1 className="text-xl font-black brand-text">{t("pos.title")}</h1>
+        <span className="text-xs text-gray-400">{t("pos.cashier")}</span>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-[1.6fr_1fr] gap-4">
@@ -53,12 +55,12 @@ export default function POSPage({ onLogout }) {
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="بحث عن منتج..."
+                placeholder={t("pos.search")}
                 className="bg-transparent outline-none flex-1 text-sm text-white placeholder-gray-500"
               />
             </div>
             <button className="primary-btn rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1">
-              <ScanLine size={14} /> مسح
+              <ScanLine size={14} /> {t("pos.scan")}
             </button>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -70,7 +72,7 @@ export default function POSPage({ onLogout }) {
               >
                 <div className="text-sm font-bold text-white">{p.name}</div>
                 <div className="text-xs text-blue-400 mt-1">{p.price} ر.س</div>
-                <div className="text-[10px] text-gray-500 mt-1">المخزون: {p.stock}</div>
+                <div className="text-[10px] text-gray-500 mt-1">{t("pos.stock", { n: p.stock })}</div>
               </button>
             ))}
           </div>
@@ -78,10 +80,10 @@ export default function POSPage({ onLogout }) {
 
         {/* cart */}
         <div className="panel rounded-2xl p-4 flex flex-col">
-          <h3 className="font-bold text-sm mb-3">سلة البيع</h3>
+          <h3 className="font-bold text-sm mb-3">{t("pos.cart")}</h3>
           <div className="flex-1 space-y-2 overflow-y-auto scrollbar-none max-h-[320px]">
             {cart.length === 0 && (
-              <div className="text-xs text-gray-500 text-center py-8">السلة فارغة</div>
+              <div className="text-xs text-gray-500 text-center py-8">{t("pos.emptyCart")}</div>
             )}
             {cart.map((i) => (
               <div key={i.id} className="flex items-center justify-between bg-white/5 rounded-xl px-3 py-2">
@@ -100,18 +102,18 @@ export default function POSPage({ onLogout }) {
           </div>
           <div className="border-t border-white/10 mt-3 pt-3 space-y-1">
             <div className="flex justify-between text-xs text-gray-400">
-              <span>الضريبة (15%)</span>
+              <span>{t("pos.tax")}</span>
               <span>{(total * 0.15).toFixed(2)} ر.س</span>
             </div>
             <div className="flex justify-between text-sm font-bold">
-              <span>الإجمالي</span>
+              <span>{t("pos.total")}</span>
               <span className="text-blue-400">{(total * 1.15).toFixed(2)} ر.س</span>
             </div>
           </div>
           <div className="grid grid-cols-3 gap-2 mt-3">
-            <button className="primary-btn rounded-xl py-2 text-[11px] font-bold flex items-center justify-center gap-1"><CreditCard size={12} /> بطاقة</button>
-            <button className="stat-card rounded-xl py-2 text-[11px] font-bold flex items-center justify-center gap-1"><Banknote size={12} /> نقدي</button>
-            <button className="stat-card rounded-xl py-2 text-[11px] font-bold flex items-center justify-center gap-1"><Smartphone size={12} /> محفظة</button>
+            <button className="primary-btn rounded-xl py-2 text-[11px] font-bold flex items-center justify-center gap-1"><CreditCard size={12} /> {t("pos.card")}</button>
+            <button className="stat-card rounded-xl py-2 text-[11px] font-bold flex items-center justify-center gap-1"><Banknote size={12} /> {t("pos.cash")}</button>
+            <button className="stat-card rounded-xl py-2 text-[11px] font-bold flex items-center justify-center gap-1"><Smartphone size={12} /> {t("pos.wallet")}</button>
           </div>
         </div>
       </div>

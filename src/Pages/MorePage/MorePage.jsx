@@ -2,25 +2,27 @@ import {
   LayoutGrid, BookOpen, LifeBuoy, GraduationCap, FileBox, Share2, MessageSquare, Smartphone,
 } from "lucide-react";
 import AppLayout from "../../components/AppLayout";
+import { useI18n } from "../../i18n/I18nContext";
 import { ROUTES } from "../../utils/routes";
 
 const modules = [
-  { title: "الوحدات الإضافية", desc: "إدارة الوحدات والملحقات الإضافية", icon: LayoutGrid, color: "#2b8cff" },
-  { title: "الدليل الإرشادي", desc: "تعلم استخدام نظام NOBO خطوة بخطوة", icon: BookOpen, color: "#f5b800" },
-  { title: "مركز المساعدة", desc: "مقالات ودروس لمساعدتك", icon: LifeBuoy, color: "#17d9c4" },
-  { title: "الأكاديمية", desc: "دورات تدريبية معتمدة", icon: GraduationCap, color: "#8b5cf6" },
-  { title: "مكتبة الملفات", desc: "مستندات ونماذج جاهزة للاستخدام", icon: FileBox, color: "#ff3d6b" },
-  { title: "التكاملات", desc: "ربط NOBO مع تطبيقاتك الأخرى", icon: Share2, color: "#34d399" },
-  { title: "التواصل والدعم", desc: "تواصل مع فريق الدعم الفني", icon: MessageSquare, color: "#60a5fa" },
-  { title: "التطبيقات", desc: "اكتشف تطبيقات NOBO للجوال", icon: Smartphone, color: "#c084fc" },
+  { titleKey: "more.modules", descKey: "more.modulesDesc", icon: LayoutGrid, color: "#2b8cff" },
+  { titleKey: "more.guide", descKey: "more.guideDesc", icon: BookOpen, color: "#f5b800" },
+  { titleKey: "more.help", descKey: "more.helpDesc", icon: LifeBuoy, color: "#17d9c4" },
+  { titleKey: "more.academy", descKey: "more.academyDesc", icon: GraduationCap, color: "#8b5cf6" },
+  { titleKey: "more.fileLibrary", descKey: "more.fileLibraryDesc", icon: FileBox, color: "#ff3d6b" },
+  { titleKey: "more.integrations", descKey: "more.integrationsDesc", icon: Share2, color: "#34d399" },
+  { titleKey: "more.support", descKey: "more.supportDesc", icon: MessageSquare, color: "#60a5fa" },
+  { titleKey: "more.apps", descKey: "more.appsDesc", icon: Smartphone, color: "#c084fc" },
 ];
 
 export default function MorePage({ onLogout }) {
+  const { t } = useI18n();
   return (
     <AppLayout onLogout={onLogout} activePath={ROUTES.MORE}>
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <h1 className="text-xl font-black brand-text">المزيد</h1>
-        <span className="text-xs text-gray-400">استكشف المزيد من مزايا نظام NOBO</span>
+        <h1 className="text-xl font-black brand-text">{t("more.title")}</h1>
+        <span className="text-xs text-gray-400">{t("more.subtitle")}</span>
       </div>
 
       {/* module cards */}
@@ -31,10 +33,10 @@ export default function MorePage({ onLogout }) {
               <div className="rounded-xl p-2" style={{ background: `${m.color}22` }}>
                 <m.icon size={18} color={m.color} />
               </div>
-              <span className="text-[10px] text-gray-500">جديد</span>
+              <span className="text-[10px] text-gray-500">{t("more.new")}</span>
             </div>
-            <div className="font-bold text-white text-sm">{m.title}</div>
-            <div className="text-[11px] text-gray-400 mt-1">{m.desc}</div>
+            <div className="font-bold text-white text-sm">{t(m.titleKey)}</div>
+            <div className="text-[11px] text-gray-400 mt-1">{t(m.descKey)}</div>
           </div>
         ))}
       </div>

@@ -1,14 +1,18 @@
 import { useNavigate } from "react-router-dom";
 import Header from "./Header";
 import Footer from "./Footer";
+import { useI18n } from "../i18n/I18nContext";
+import { useUser } from "../context/UserContext";
 import { ROUTES } from "../utils/routes";
 import { NAV_ITEMS } from "../utils/navItems";
 
 export default function AppLayout({ children, onLogout, activePath = ROUTES.DASHBOARD }) {
   const navigate = useNavigate();
+  const { t, dir } = useI18n();
+  const { user } = useUser();
 
   return (
-    <div dir="rtl" className="bg-space min-h-screen w-full text-white flex">
+    <div dir={dir} className="bg-space min-h-screen w-full text-white flex">
       {/* sidebar (RTL: sits on the right) */}
       <aside
         className="
@@ -68,7 +72,7 @@ export default function AppLayout({ children, onLogout, activePath = ROUTES.DASH
           "
           style={{ background: "linear-gradient(90deg,#2b8cff,#4f6bff)" }}
         >
-          الرئيسية
+          {t("layout.home")}
         </button>
         <nav className="space-y-1 overflow-y-auto scrollbar-none">
           {NAV_ITEMS.slice(1).map((item, i) => {
@@ -91,17 +95,17 @@ export default function AppLayout({ children, onLogout, activePath = ROUTES.DASH
                   hover:bg-blue-500/10
                   hover:border
                   hover:border-blue-500/30
-                  hover:translate-x-1
                   ${isActive ? "bg-blue-500/15 border border-blue-500/40" : ""}
                 `}
               >
                 <item.icon size={20} color={isActive ? "#2b8cff" : "#60a5fa"} className="group-hover:scale-110 transition" />
-                <span className={`font-semibold tracking-wide ${isActive ? "text-white" : ""}`}>{item.label}</span>
+                <span className={`font-semibold tracking-wide ${isActive ? "text-white" : ""}`}>{t(item.labelKey)}</span>
               </div>
             );
           })}
         </nav>
-        <div
+<button
+          onClick={() => navigate(ROUTES.PROFILE)}
           className="
             mt-auto
             rounded-3xl
@@ -113,19 +117,26 @@ export default function AppLayout({ children, onLogout, activePath = ROUTES.DASH
             flex
             items-center
             gap-3
+            text-left
+            cursor-pointer
+            transition
+            hover:border-blue-500/40
+            hover:bg-blue-500/10
           "
         >
           <img
-            src="https://api.dicebear.com/7.x/avataaars/svg?seed=Sherif"
+            src={user.avatarFile || user.avatar}
             alt=""
-            className="w-14 h-14 rounded-full bg-gray-700"
+            className="w-14 h-14 rounded-full bg-gray-700 object-cover"
             style={{ boxShadow: "0 0 25px rgba(43,140,255,.3)" }}
           />
           <div>
-            <div className="text-sm font-bold">شريف رضا</div>
-            <div className="text-[11px] text-gray-400">مدير النظام</div>
+            <div className="text-sm font-bold">{user.name}</div>
+            <div className="text-[11px] text-gray-400">
+              {user.role === "systemAdmin" ? t("layout.systemAdmin") : t(`profile.role${user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : "SystemAdmin"}`)}
+            </div>
           </div>
-        </div>
+        </button>
         <div
           className="
             mt-4
@@ -140,8 +151,8 @@ export default function AppLayout({ children, onLogout, activePath = ROUTES.DASH
           "
         >
           <div>
-            <div className="text-xs text-green-400">System Status</div>
-            <div className="text-[11px] text-gray-400">All Services Online</div>
+            <div className="text-xs text-green-400">{t("layout.systemStatus")}</div>
+            <div className="text-[11px] text-gray-400">{t("layout.allServices")}</div>
           </div>
           <div className="w-3 h-3 rounded-full bg-green-400 animate-pulse" />
         </div>
@@ -156,4 +167,3 @@ export default function AppLayout({ children, onLogout, activePath = ROUTES.DASH
     </div>
   );
 }
-

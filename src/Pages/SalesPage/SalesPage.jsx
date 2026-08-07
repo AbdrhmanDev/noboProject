@@ -1,12 +1,13 @@
 import { Plus, Filter, Download } from "lucide-react";
 import AppLayout from "../../components/AppLayout";
+import { useI18n } from "../../i18n/I18nContext";
 import { ROUTES } from "../../utils/routes";
 
 const stats = [
-  { label: "فواتير البيع", value: "320", color: "#2b8cff" },
-  { label: "إجمالي المبيعات", value: "125,430 ر.س", color: "#f5b800" },
-  { label: "المرتجعات", value: "12", color: "#ff3d6b" },
-  { label: "متوسط الفاتورة", value: "392 ر.س", color: "#17d9c4" },
+  { labelKey: "sales.invoicesCount", value: "320", color: "#2b8cff" },
+  { labelKey: "sales.totalSales", value: "125,430 ر.س", color: "#f5b800" },
+  { labelKey: "sales.returns", value: "12", color: "#ff3d6b" },
+  { labelKey: "sales.avgInvoice", value: "392 ر.س", color: "#17d9c4" },
 ];
 
 const invoices = [
@@ -18,14 +19,15 @@ const invoices = [
 ];
 
 export default function SalesPage({ onLogout }) {
+  const { t } = useI18n();
   return (
     <AppLayout onLogout={onLogout} activePath={ROUTES.SALES}>
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <h1 className="text-xl font-black brand-text">المبيعات</h1>
+        <h1 className="text-xl font-black brand-text">{t("sales.title")}</h1>
         <div className="flex gap-2">
-          <button className="panel rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><Filter size={13} /> تصفية</button>
-          <button className="panel rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><Download size={13} /> تصدير</button>
-          <button className="primary-btn rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><Plus size={13} /> فاتورة بيع</button>
+          <button className="panel rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><Filter size={13} /> {t("sales.filter")}</button>
+          <button className="panel rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><Download size={13} /> {t("sales.export")}</button>
+          <button className="primary-btn rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><Plus size={13} /> {t("sales.saleInvoice")}</button>
         </div>
       </div>
 
@@ -34,22 +36,22 @@ export default function SalesPage({ onLogout }) {
         {stats.map((s, i) => (
           <div key={i} className="stat-card rounded-2xl p-4">
             <div className="text-lg font-black" style={{ color: s.color }}>{s.value}</div>
-            <div className="text-[11px] text-gray-400 mt-1">{s.label}</div>
+            <div className="text-[11px] text-gray-400 mt-1">{t(s.labelKey)}</div>
           </div>
         ))}
       </div>
 
       {/* invoices table */}
       <div className="panel rounded-2xl p-4">
-        <h3 className="font-bold text-sm mb-3">فواتير البيع</h3>
+        <h3 className="font-bold text-sm mb-3">{t("sales.saleInvoices")}</h3>
         <table className="w-full text-xs">
           <thead>
             <tr className="text-gray-500 text-right">
-              <th className="font-medium pb-2">الرقم</th>
-              <th className="font-medium pb-2">التاريخ</th>
-              <th className="font-medium pb-2">العميل</th>
-              <th className="font-medium pb-2">المبلغ</th>
-              <th className="font-medium pb-2">الحالة</th>
+              <th className="font-medium pb-2">{t("sales.number")}</th>
+              <th className="font-medium pb-2">{t("sales.date")}</th>
+              <th className="font-medium pb-2">{t("sales.customer")}</th>
+              <th className="font-medium pb-2">{t("sales.amount")}</th>
+              <th className="font-medium pb-2">{t("sales.status")}</th>
             </tr>
           </thead>
           <tbody>

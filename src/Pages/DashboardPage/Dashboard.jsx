@@ -8,6 +8,7 @@ import {
   PieChart, Pie, Cell,
 } from "recharts";
 import AppLayout from "../../components/AppLayout";
+import { useI18n } from "../../i18n/I18nContext";
 import { ROUTES } from "../../utils/routes";
 
 /* ---------------------------------- data ---------------------------------- */
@@ -23,9 +24,9 @@ const salesTrend = [
 ];
 
 const channelData = [
-  { name: "نقطة البيع", value: 45, color: "#ff3d6b" },
-  { name: "المتجر الإلكتروني", value: 35, color: "#2b8cff" },
-  { name: "طلبات الشركات", value: 20, color: "#f5b800" },
+  { nameKey: "dash.pos", value: 45, color: "#ff3d6b" },
+  { nameKey: "dash.eshop", value: 35, color: "#2b8cff" },
+  { nameKey: "dash.corporate", value: 20, color: "#f5b800" },
 ];
 
 const branches = [
@@ -67,10 +68,10 @@ const recentActivity = [
 ];
 
 const financials = [
-  { label: "إجمالي الإيرادات", value: "125,430", color: "#2b8cff" },
-  { label: "إجمالي المصروفات", value: "96,890", color: "#ff3d6b" },
-  { label: "صافي الربح", value: "28,540", color: "#17d9c4" },
-  { label: "الدين المستحق", value: "18,760", color: "#f5b800" },
+  { labelKey: "dash.totalRevenue", value: "125,430", color: "#2b8cff" },
+  { labelKey: "dash.totalExpenses", value: "96,890", color: "#ff3d6b" },
+  { labelKey: "dash.netProfit", value: "28,540", color: "#17d9c4" },
+  { labelKey: "dash.dueDebt", value: "18,760", color: "#f5b800" },
 ];
 
 /* ------------------------------ dashboard page ------------------------------ */
@@ -100,35 +101,36 @@ function QuickAction({ icon: Icon, label }) {
 }
 
 export default function Dashboard({ onLogout }) {
+  const { t } = useI18n();
   return (
     <AppLayout onLogout={onLogout} activePath={ROUTES.DASHBOARD}>
       {/* quick actions */}
       <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1 mb-6">
-        <QuickAction icon={Receipt} label="فاتورة بيع +" />
-        <QuickAction icon={FileText} label="فاتورة شراء +" />
-        <QuickAction icon={Package} label="إضافة منتج" />
-        <QuickAction icon={UserPlus} label="عميل جديد" />
-        <QuickAction icon={BarChart3} label="تقرير المبيعات" />
-        <QuickAction icon={ArrowLeftRight} label="تحويل مخزون" />
-        <QuickAction icon={Receipt} label="مصروف جديد" />
-        <QuickAction icon={UserPlus} label="إضافة مستخدم" />
+        <QuickAction icon={Receipt} label={t("dash.saleInvoice")} />
+        <QuickAction icon={FileText} label={t("dash.purchaseInvoice")} />
+        <QuickAction icon={Package} label={t("dash.addProduct")} />
+        <QuickAction icon={UserPlus} label={t("dash.newCustomer")} />
+        <QuickAction icon={BarChart3} label={t("dash.salesReport")} />
+        <QuickAction icon={ArrowLeftRight} label={t("dash.transferStock")} />
+        <QuickAction icon={Receipt} label={t("dash.newExpense")} />
+        <QuickAction icon={UserPlus} label={t("dash.addUser")} />
       </div>
 
       {/* stat cards */}
       <div className="flex flex-wrap gap-3 mb-6">
-        <StatCard label="إجمالي الأرباح" value="28,540 ر.س" delta="+8.3%" color="#f5b800" icon={Briefcase} />
-        <StatCard label="إجمالي المبيعات" value="125,430 ر.س" delta="+12.5%" color="#2b8cff" icon={ShoppingBag} />
-        <StatCard label="إجمالي الطلبات" value="320 طلب" delta="+15.7%" color="#ff3d6b" icon={ShoppingCart} />
-        <StatCard label="إجمالي المخزون" value="2,540 صنف" delta="+6.2%" color="#8b5cf6" icon={Boxes} />
-        <StatCard label="إجمالي العملاء" value="8,920 عميل" delta="+7.1%" color="#34d399" icon={Contact} />
+        <StatCard label={t("dash.totalProfit")} value="28,540 ر.س" delta="+8.3%" color="#f5b800" icon={Briefcase} />
+        <StatCard label={t("dash.totalSales")} value="125,430 ر.س" delta="+12.5%" color="#2b8cff" icon={ShoppingBag} />
+        <StatCard label={t("dash.totalOrders")} value="320 طلب" delta="+15.7%" color="#ff3d6b" icon={ShoppingCart} />
+        <StatCard label={t("dash.totalInventory")} value="2,540 صنف" delta="+6.2%" color="#8b5cf6" icon={Boxes} />
+        <StatCard label={t("dash.totalCustomers")} value="8,920 عميل" delta="+7.1%" color="#34d399" icon={Contact} />
       </div>
 
       {/* charts row */}
       <div className="grid grid-cols-1 xl:grid-cols-[1.4fr_1fr_1fr] gap-4 mb-6">
         <div className="panel rounded-2xl p-4">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="font-bold text-sm">نظرة عامة على المبيعات</h3>
-            <span className="text-[11px] text-gray-400 flex items-center gap-1">آخر 7 أيام <ChevronDown size={12} /></span>
+            <h3 className="font-bold text-sm">{t("dash.salesOverview")}</h3>
+            <span className="text-[11px] text-gray-400 flex items-center gap-1">{t("dash.last7Days")} <ChevronDown size={12} /></span>
           </div>
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={salesTrend}>
@@ -145,14 +147,14 @@ export default function Dashboard({ onLogout }) {
               <XAxis dataKey="day" stroke="#6b7280" fontSize={10} />
               <YAxis stroke="#6b7280" fontSize={10} />
               <Tooltip contentStyle={{ background: "#0b1020", border: "1px solid #2b3a5c", fontSize: 12 }} />
-              <Area type="monotone" dataKey="sales" stroke="#2b8cff" fill="url(#sales)" strokeWidth={2} name="المبيعات" />
-              <Area type="monotone" dataKey="profit" stroke="#f5b800" fill="url(#profit)" strokeWidth={2} name="الأرباح" />
+              <Area type="monotone" dataKey="sales" stroke="#2b8cff" fill="url(#sales)" strokeWidth={2} name={t("dash.sales")} />
+              <Area type="monotone" dataKey="profit" stroke="#f5b800" fill="url(#profit)" strokeWidth={2} name={t("dash.profit")} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
 
         <div className="panel rounded-2xl p-4">
-          <h3 className="font-bold text-sm mb-2">توزيع المبيعات حسب القنوات</h3>
+          <h3 className="font-bold text-sm mb-2">{t("dash.salesByChannel")}</h3>
           <div className="relative">
             <ResponsiveContainer width="100%" height={200}>
               <PieChart>
@@ -163,13 +165,13 @@ export default function Dashboard({ onLogout }) {
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
               <span className="text-lg font-black">125,430</span>
-              <span className="text-[10px] text-gray-400">ريال سعودي</span>
+              <span className="text-[10px] text-gray-400">{t("dash.sar")}</span>
             </div>
           </div>
           <div className="space-y-1.5 mt-2">
             {channelData.map((c, i) => (
               <div key={i} className="flex items-center justify-between text-[11px] text-gray-300">
-                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: c.color }} />{c.name}</span>
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: c.color }} />{t(c.nameKey)}</span>
                 <span>{c.value}%</span>
               </div>
             ))}
@@ -177,7 +179,7 @@ export default function Dashboard({ onLogout }) {
         </div>
 
         <div className="panel rounded-2xl p-4">
-          <h3 className="font-bold text-sm mb-3">أداء الفروع</h3>
+          <h3 className="font-bold text-sm mb-3">{t("dash.branchPerf")}</h3>
           <div className="space-y-3">
             {branches.map((b, i) => (
               <div key={i} className="flex items-center justify-between text-xs">
@@ -195,15 +197,15 @@ export default function Dashboard({ onLogout }) {
       {/* products table */}
       <div className="panel rounded-2xl p-4 mb-6">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-bold text-sm">أفضل المنتجات مبيعاً</h3>
-          <span className="text-[11px] text-blue-400">عرض الكل</span>
+          <h3 className="font-bold text-sm">{t("dash.topProducts")}</h3>
+          <span className="text-[11px] text-blue-400">{t("dash.viewAll")}</span>
         </div>
         <table className="w-full text-xs">
           <thead>
             <tr className="text-gray-500 text-right">
-              <th className="font-medium pb-2">المنتج</th>
-              <th className="font-medium pb-2">الكمية</th>
-              <th className="font-medium pb-2">المبيعات</th>
+              <th className="font-medium pb-2">{t("dash.product")}</th>
+              <th className="font-medium pb-2">{t("dash.qty")}</th>
+              <th className="font-medium pb-2">{t("dash.sales")}</th>
             </tr>
           </thead>
           <tbody>
@@ -221,7 +223,7 @@ export default function Dashboard({ onLogout }) {
       {/* bottom widgets */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         <div className="panel rounded-2xl p-4">
-          <h3 className="font-bold text-sm mb-3">المهام اليومية</h3>
+          <h3 className="font-bold text-sm mb-3">{t("dash.dailyTasks")}</h3>
           <div className="space-y-3">
             {dailyTasks.map((t, i) => (
               <div key={i} className="flex items-start gap-2 text-xs">
@@ -232,7 +234,7 @@ export default function Dashboard({ onLogout }) {
           </div>
         </div>
         <div className="panel rounded-2xl p-4">
-          <h3 className="font-bold text-sm mb-3">المهام القادمة</h3>
+          <h3 className="font-bold text-sm mb-3">{t("dash.upcomingTasks")}</h3>
           <div className="space-y-3">
             {upcomingTasks.map((t, i) => (
               <div key={i} className="flex items-start gap-2 text-xs">
@@ -243,7 +245,7 @@ export default function Dashboard({ onLogout }) {
           </div>
         </div>
         <div className="panel rounded-2xl p-4">
-          <h3 className="font-bold text-sm mb-3">النشاط الأخير</h3>
+          <h3 className="font-bold text-sm mb-3">{t("dash.recentActivity")}</h3>
           <div className="space-y-3">
             {recentActivity.map((a, i) => (
               <div key={i} className="text-xs">
@@ -254,11 +256,11 @@ export default function Dashboard({ onLogout }) {
           </div>
         </div>
         <div className="panel rounded-2xl p-4">
-          <h3 className="font-bold text-sm mb-3">الملخص المالي</h3>
+          <h3 className="font-bold text-sm mb-3">{t("dash.financialSummary")}</h3>
           <div className="space-y-3">
             {financials.map((f, i) => (
               <div key={i} className="flex items-center justify-between text-xs">
-                <span className="text-gray-300">{f.label}</span>
+                <span className="text-gray-300">{t(f.labelKey)}</span>
                 <span className="font-bold" style={{ color: f.color }}>{f.value}</span>
               </div>
             ))}
@@ -268,4 +270,3 @@ export default function Dashboard({ onLogout }) {
     </AppLayout>
   );
 }
-

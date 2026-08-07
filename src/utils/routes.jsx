@@ -14,5 +14,6 @@ export const ROUTES = {
   HR: "/hr",
   SETTINGS: "/settings",
   MORE: "/more",
+  PROFILE: "/profile",
   NOT_FOUND: "*",
 };

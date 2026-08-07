@@ -1,5 +1,6 @@
 import { Plus, FolderPlus, Clock, Users } from "lucide-react";
 import AppLayout from "../../components/AppLayout";
+import { useI18n } from "../../i18n/I18nContext";
 import { ROUTES } from "../../utils/routes";
 
 const projects = [
@@ -11,13 +12,14 @@ const projects = [
 ];
 
 export default function ProjectsPage({ onLogout }) {
+  const { t } = useI18n();
   return (
     <AppLayout onLogout={onLogout} activePath={ROUTES.PROJECTS}>
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <h1 className="text-xl font-black brand-text">المشاريع</h1>
+        <h1 className="text-xl font-black brand-text">{t("proj.title")}</h1>
         <div className="flex gap-2">
-          <button className="panel rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><FolderPlus size={13} /> مشروع جديد</button>
-          <button className="primary-btn rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><Plus size={13} /> مهمة</button>
+          <button className="panel rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><FolderPlus size={13} /> {t("proj.newProject")}</button>
+          <button className="primary-btn rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><Plus size={13} /> {t("proj.task")}</button>
         </div>
       </div>
 
@@ -30,19 +32,19 @@ export default function ProjectsPage({ onLogout }) {
                 p.status === "مكتمل" ? "bg-green-500/15 text-green-400" :
                 p.status === "قيد التنفيذ" ? "bg-blue-500/15 text-blue-400" :
                 "bg-yellow-500/15 text-yellow-400"
-              }`}>{p.status}</span>
+              }`}>{t(p.status === "مكتمل" ? "proj.completed" : p.status === "قيد التنفيذ" ? "proj.inProgress" : "proj.initial")}</span>
               <span className="text-lg font-black" style={{ color: p.color }}>{p.progress}%</span>
             </div>
             <div className="font-bold text-white text-sm">{p.name}</div>
-            <div className="text-[11px] text-gray-400 mt-1">العميل: {p.client}</div>
+            <div className="text-[11px] text-gray-400 mt-1">{t("proj.client", { name: p.client })}</div>
             <div className="mt-3">
               <div className="h-2 rounded-full bg-white/10 overflow-hidden">
                 <div className="h-full rounded-full transition-all" style={{ width: `${p.progress}%`, background: p.color }} />
               </div>
             </div>
             <div className="flex items-center gap-4 mt-3 text-[11px] text-gray-400">
-              <span className="flex items-center gap-1"><Users size={12} /> {p.team} أعضاء</span>
-              <span className="flex items-center gap-1"><Clock size={12} /> {p.status === "مكتمل" ? "تم التسليم" : "آخر 7 أيام"}</span>
+              <span className="flex items-center gap-1"><Users size={12} /> {t("proj.members", { n: p.team })}</span>
+              <span className="flex items-center gap-1"><Clock size={12} /> {p.status === "مكتمل" ? t("proj.delivered") : t("proj.last7Days")}</span>
             </div>
           </div>
         ))}

@@ -1,12 +1,13 @@
 import { Plus, Truck, Search } from "lucide-react";
 import AppLayout from "../../components/AppLayout";
+import { useI18n } from "../../i18n/I18nContext";
 import { ROUTES } from "../../utils/routes";
 
 const stats = [
-  { label: "فواتير الشراء", value: "96", color: "#2b8cff" },
-  { label: "إجمالي المشتريات", value: "76,890 ر.س", color: "#f5b800" },
-  { label: "موردين نشطين", value: "24", color: "#17d9c4" },
-  { label: "طلبات معلقة", value: "8", color: "#ff3d6b" },
+  { labelKey: "purch.purchaseInvoices", value: "96", color: "#2b8cff" },
+  { labelKey: "purch.totalPurchases", value: "76,890 ر.س", color: "#f5b800" },
+  { labelKey: "purch.activeSuppliers", value: "24", color: "#17d9c4" },
+  { labelKey: "purch.pendingOrders", value: "8", color: "#ff3d6b" },
 ];
 
 const purchases = [
@@ -18,13 +19,14 @@ const purchases = [
 ];
 
 export default function PurchasesPage({ onLogout }) {
+  const { t } = useI18n();
   return (
     <AppLayout onLogout={onLogout} activePath={ROUTES.PURCHASES}>
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <h1 className="text-xl font-black brand-text">المشتريات</h1>
+        <h1 className="text-xl font-black brand-text">{t("purch.title")}</h1>
         <div className="flex gap-2">
-          <button className="panel rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><Truck size={13} /> أمر شراء</button>
-          <button className="primary-btn rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><Plus size={13} /> فاتورة شراء</button>
+          <button className="panel rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><Truck size={13} /> {t("purch.purchaseOrder")}</button>
+          <button className="primary-btn rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><Plus size={13} /> {t("purch.purchaseInvoice")}</button>
         </div>
       </div>
 
@@ -33,7 +35,7 @@ export default function PurchasesPage({ onLogout }) {
         {stats.map((s, i) => (
           <div key={i} className="stat-card rounded-2xl p-4">
             <div className="text-lg font-black" style={{ color: s.color }}>{s.value}</div>
-            <div className="text-[11px] text-gray-400 mt-1">{s.label}</div>
+            <div className="text-[11px] text-gray-400 mt-1">{t(s.labelKey)}</div>
           </div>
         ))}
       </div>
@@ -41,21 +43,21 @@ export default function PurchasesPage({ onLogout }) {
       {/* purchases table */}
       <div className="panel rounded-2xl p-4">
         <div className="flex items-center gap-2 mb-3">
-          <h3 className="font-bold text-sm">سجل المشتريات</h3>
+          <h3 className="font-bold text-sm">{t("purch.purchaseLog")}</h3>
           <div className="flex-1" />
           <div className="flex items-center gap-2 input-dark rounded-xl px-3 py-2">
             <Search size={14} color="#60a5fa" />
-            <input placeholder="بحث..." className="bg-transparent outline-none text-xs text-white placeholder-gray-500" />
+            <input placeholder={t("purch.search")} className="bg-transparent outline-none text-xs text-white placeholder-gray-500" />
           </div>
         </div>
         <table className="w-full text-xs">
           <thead>
             <tr className="text-gray-500 text-right">
-              <th className="font-medium pb-2">الرقم</th>
-              <th className="font-medium pb-2">التاريخ</th>
-              <th className="font-medium pb-2">المورد</th>
-              <th className="font-medium pb-2">المبلغ</th>
-              <th className="font-medium pb-2">الحالة</th>
+              <th className="font-medium pb-2">{t("purch.number")}</th>
+              <th className="font-medium pb-2">{t("purch.date")}</th>
+              <th className="font-medium pb-2">{t("purch.supplier")}</th>
+              <th className="font-medium pb-2">{t("purch.amount")}</th>
+              <th className="font-medium pb-2">{t("purch.status")}</th>
             </tr>
           </thead>
           <tbody>
