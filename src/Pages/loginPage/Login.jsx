@@ -2,11 +2,6 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import {
-  Brain,
-  ShieldCheck,
-  CloudSun,
-  Gauge,
-  Moon,
   Eye,
   EyeOff,
   Lock,
@@ -69,16 +64,6 @@ function BrandIcon({ id, size = 12, className = "", color }) {
     >
       <use href={`/icons.svg#${id}`} />
     </svg>
-  );
-}
-
-function FeatureBadge({ icon: Icon, label, color, extra }) {
-  return (
-    <div className="glow-badge rounded-2xl px-4 py-2 flex items-center gap-2 text-xs text-gray-200">
-      <Icon size={12} color={color} />
-      <span>{label}</span>
-      {extra}
-    </div>
   );
 }
 
@@ -315,7 +300,7 @@ function LoginCard() {
 }
 
 export default function LoginPage() {
-  const [dark, setDark] = useState(true);
+  const [isDark, setIsDark] = useState(true);
   const { t, dir } = useI18n();
 
   return (
@@ -334,40 +319,174 @@ export default function LoginPage() {
             ERP III
           </span>
         </div>
-        <div className="flex flex-wrap gap-2 justify-end">
-          <FeatureBadge
-            icon={Brain}
-            label={t("login.aiAssistant")}
-            color="#c084fc"
-          />
-          <FeatureBadge
-            icon={ShieldCheck}
-            label={t("login.advancedSecurity")}
-            color="#2b8cff"
-          />
-          <FeatureBadge
-            icon={CloudSun}
-            label={t("login.alwaysAvailable")}
-            color="#38bdf8"
-          />
-          <FeatureBadge
-            icon={Gauge}
-            label={t("login.fastPerformance")}
-            color="#f5b800"
-          />
-          <button
-            onClick={() => setDark((d) => !d)}
-            className="glow-badge rounded-2xl px-4 py-2 flex items-center gap-2 text-xs text-gray-200"
-          >
-            <Moon size={12} color="#a5b4fc" />
-            <span>{t("login.nightMode")}</span>
-            <span className="w-8 h-4 rounded-full toggle-track relative inline-block">
+<div className="relative z-10 flex items-center justify-end px-4 md:px-8 pt-3">
+          <div className="flex flex-wrap items-center gap-2">
+
+            {/* AI */}
+            <div className="glow-badge h-[58px] w-[123px] rounded-xl px-2.5 flex items-center gap-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="32"
+                height="32"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#00bfff"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M12 18V5" />
+                <path d="M15 13a4.17 4.17 0 0 1-3-4 4.17 4.17 0 0 1-3 4" />
+                <path d="M17.598 6.5A3 3 0 1 0 12 5a3 3 0 1 0-5.598 1.5" />
+                <path d="M17.997 5.125a4 4 0 0 1 2.526 5.77" />
+                <path d="M18 18a4 4 0 0 0 2-7.464" />
+                <path d="M19.967 17.483A4 4 0 1 1 12 18a4 4 0 1 1-7.967-.517" />
+                <path d="M6 18a4 4 0 0 1-2-7.464" />
+                <path d="M6.003 5.125a4 4 0 0 0-2.526 5.77" />
+              </svg>
+
+<div className="leading-tight" dir={dir}>
+                <div className="text-[12px] font-bold text-white">
+                  {t("login.badgeAiTitle")}
+                </div>
+                <div className="text-[10px] text-gray-300">
+                  {t("login.badgeAiSub")}
+                </div>
+              </div>
+            </div>
+
+            {/* Security */}
+            <div className="glow-badge h-[58px] w-[123px] rounded-xl px-2.5 flex items-center gap-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="32"
+                height="32"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#00c8ff"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+                <path d="m9 12 2 2 4-4" />
+              </svg>
+
+<div className="leading-tight" dir={dir}>
+                <div className="text-[12px] font-bold text-white">
+                  {t("login.badgeSecurityTitle")}
+                </div>
+                <div className="text-[10px] text-gray-300">
+                  {t("login.badgeSecuritySub")}
+                </div>
+              </div>
+            </div>
+
+            {/* Availability */}
+            <div className="glow-badge h-[58px] w-[123px] rounded-xl px-2.5 flex items-center gap-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="32"
+                height="32"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#00cfff"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M12 2v2" />
+                <path d="m4.93 4.93 1.41 1.41" />
+                <path d="M20 12h2" />
+                <path d="m19.07 4.93-1.41 1.41" />
+                <path d="M15.947 12.65a4 4 0 0 0-5.925-4.128" />
+                <path d="M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6Z" />
+              </svg>
+
+<div className="leading-tight" dir={dir}>
+                <div className="text-[12px] font-bold text-white">
+                  {t("login.badgeAvailTitle")}
+                </div>
+                <div className="text-[10px] text-gray-300">
+                  {t("login.badgeAvailSub")}
+                </div>
+              </div>
+            </div>
+
+            {/* Performance */}
+            <div className="glow-badge h-[58px] w-[123px] rounded-xl px-2.5 flex items-center gap-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="32"
+                height="32"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#f5b800"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="m12 14 4-4" />
+                <path d="M3.34 19a10 10 0 1 1 17.32 0" />
+              </svg>
+
+<div className="leading-tight" dir={dir}>
+                <div className="text-[12px] font-bold text-white">
+                  {t("login.badgePerfTitle")}
+                </div>
+                <div className="text-[10px] text-gray-300">
+                  {t("login.badgePerfSub")}
+                </div>
+              </div>
+            </div>
+
+            {/* Dark Mode */}
+            <button
+              type="button"
+onClick={() => setIsDark((d) => !d)}
+              className="glow-badge h-[58px] w-[132px] rounded-xl px-2.5 flex items-center gap-2"
+            >
+              {/* Moon */}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="31"
+                height="31"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#cbd5e1"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401Z" />
+              </svg>
+
+<div className="flex-1 leading-tight" dir={dir}>
+                <div className="text-[12px] font-bold text-white">
+                  {t("login.badgeNightTitle")}
+                </div>
+                <div className="text-[10px] text-gray-300">
+                  {t("login.badgeNightSub")}
+                </div>
+              </div>
+
+              {/* Toggle */}
               <span
-                className="toggle-thumb absolute top-0.5 w-3 h-3 bg-white rounded-full"
-                style={{ left: dark ? "2px" : "18px" }}
-              />
-            </span>
-          </button>
+                className={`relative inline-flex h-4 w-8 shrink-0 rounded-full transition-colors ${
+                  isDark
+                    ? "bg-blue-500 shadow-[0_0_8px_rgba(37,99,235,0.8)]"
+                    : "bg-gray-500 shadow-[0_0_8px_rgba(148,163,184,0.6)]"
+                }`}
+              >
+                <span
+                  className={`absolute top-[2px] left-[2px] h-3 w-3 rounded-full bg-white shadow-sm transition-transform ${
+                    isDark ? "translate-x-4" : "translate-x-0"
+                  }`}
+                />
+              </span>
+            </button>
+
+          </div>
         </div>
       </div>
 
