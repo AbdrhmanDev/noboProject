@@ -131,7 +131,7 @@ function LoginCard() {
     >
       {/* Background Glow */}
       <div className="absolute inset-0 rounded-[30px] overflow-hidden">
-        <div className="absolute -top-40 right-0 w-72 h-72 bg-violet-600/20 blur-[100px]" />
+        <div className="absolute -top-40 right-0 w-50 h-50 bg-violet-600/20 blur-[100px]" />
         <div className="absolute bottom-0 -left-20 w-64 h-64 bg-blue-500/20 blur-[100px]" />
       </div>
 
