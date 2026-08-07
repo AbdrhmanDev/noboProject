@@ -56,7 +56,7 @@ const socialBrands = [
   },
 ];
 
-function BrandIcon({ id, size = 14, className = "", color }) {
+function BrandIcon({ id, size = 12, className = "", color }) {
 return (
     <svg
       width={size}
@@ -74,7 +74,7 @@ return (
 function FeatureBadge({ icon: Icon, label, color, extra }) {
   return (
     <div className="glow-badge rounded-2xl px-4 py-2 flex items-center gap-2 text-xs text-gray-200">
-      <Icon size={14} color={color} />
+<Icon size={12} color={color} />
       <span>{label}</span>
       {extra}
     </div>
@@ -92,7 +92,7 @@ function SideFeature({ img, title, desc, color }) {
           boxShadow: `0 0 20px ${color}22`,
         }}
       >
-<img src={img} alt="" className="w-4 h-4 object-contain" />
+<img src={img} alt="" className="w-3 h-3 object-contain" />
       </div>
       <div>
         <div className="font-bold text-sm text-white">{title}</div>
@@ -119,14 +119,14 @@ function LoginCard() {
 className="
         relative
         w-full
-        max-w-[400px]
-        rounded-[28px]
+        max-w-[340px]
+        rounded-[24px]
         border
         border-white/10
         bg-[#0d1224]/70
         backdrop-blur-3xl
         shadow-[0_0_80px_rgba(124,92,255,.15)]
-        p-7
+        p-6
       "
     >
       {/* Background Glow */}
@@ -155,7 +155,7 @@ className="
           "
           >
             العربية
-            <ChevronDown size={14} />
+<ChevronDown size={12} />
           </button>
         </div>
 
@@ -238,7 +238,7 @@ flex
             focus-within:ring-violet-500/30
           "
           >
-            <Mail size={18} className="text-gray-400" />
+<Mail size={15} className="text-gray-400" />
             <input
               type="text"
               placeholder="Enter your email"
@@ -272,7 +272,7 @@ className="
             focus-within:ring-violet-500/30
           "
           >
-            <Lock size={18} className="text-gray-400" />
+<Lock size={15} className="text-gray-400" />
             <input
               type={showPassword ? "text" : "password"}
               placeholder="Enter your password"
@@ -284,7 +284,7 @@ className="
               "
             />
             <button onClick={() => setShowPassword(!showPassword)}>
-              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
             </button>
           </div>
         </div>
@@ -358,8 +358,8 @@ whileHover={{ y: -3, scale: 1.03 }}
             "
           >
 <img
-              src="https://www.svgrepo.com/show/475656/google-color.svg"
-              className="w-5"
+src="https://www.svgrepo.com/show/475656/google-color.svg"
+              className="w-4"
               alt=""
             />
           </motion.button>
@@ -379,8 +379,8 @@ whileHover={{ y: -3, scale: 1.03 }}
             "
           >
             <img
-              src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg"
-              className="w-5"
+src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg"
+              className="w-4"
               alt=""
             />
           </motion.button>
@@ -401,7 +401,7 @@ className="
           >
             <img
               src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg"
-              className="w-5 invert"
+              className="w-4 invert"
               alt=""
             />
           </motion.button>
@@ -463,7 +463,7 @@ export default function LoginPage() {
             onClick={() => setDark((d) => !d)}
             className="glow-badge rounded-2xl px-4 py-2 flex items-center gap-2 text-xs text-gray-200"
           >
-<Moon size={14} color="#a5b4fc" />
+<Moon size={12} color="#a5b4fc" />
             <span>الوضع الليلي راحة لعينيك</span>
             <span className="w-8 h-4 rounded-full toggle-track relative inline-block">
               <span
@@ -476,7 +476,7 @@ export default function LoginPage() {
       </div>
 
       {/* main */}
-<div className="relative z-10 grid lg:grid-cols-[360px_1fr_400px] gap-10 items-center max-w-[1700px] mx-auto px-10 pt-4">
+<div className="relative z-10 grid lg:grid-cols-[360px_1fr_340px] gap-10 items-center max-w-[1700px] mx-auto px-10 pt-4">
         {/* left */}
         <div className="space-y-8 order-2 lg:order-1 max-w-[360px]">
           <div>
@@ -599,7 +599,7 @@ export default function LoginPage() {
             className="glow-badge rounded-xl p-2.5 flex items-center justify-center text-gray-300 transition-all duration-200 hover:scale-105 hover:text-white hover:border-blue-500/60"
             style={{ color: s.color }}
           >
-<BrandIcon id={s.id} size={14} />
+<BrandIcon id={s.id} size={12} />
           </a>
         ))}
       </div>
