@@ -116,17 +116,17 @@ function LoginCard() {
       initial={{ opacity: 0, x: 60 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.7 }}
-      className="
+className="
         relative
         w-full
-        max-w-[430px]
-        rounded-[30px]
+        max-w-[520px]
+        rounded-[36px]
         border
         border-white/10
         bg-[#0d1224]/70
         backdrop-blur-3xl
         shadow-[0_0_80px_rgba(124,92,255,.15)]
-        p-8
+        p-10
       "
     >
       {/* Background Glow */}
