@@ -159,10 +159,10 @@ className="
           </button>
         </div>
 
-        {/* Header */}
+{/* Header */}
         <div className="mt-8 text-center">
-          <h1 className="text-4xl font-bold tracking-tight">Welcome Back</h1>
-          <p className="mt-3 text-gray-400 text-sm">
+          <h1 className="text-5xl font-bold tracking-tight">Welcome Back</h1>
+          <p className="mt-3 text-gray-400 text-base">
             Sign in to your NOBO ERP account
           </p>
         </div>
@@ -225,20 +225,20 @@ className="
             className="
             flex
             items-center
-            gap-3
-            h-14
+gap-3
+            h-16
             rounded-2xl
             border
             border-white/10
             bg-white/5
-            px-4
+            px-5
             transition
             focus-within:border-violet-500
             focus-within:ring-2
             focus-within:ring-violet-500/30
           "
           >
-            <Mail size={18} className="text-gray-400" />
+            <Mail size={22} className="text-gray-400" />
             <input
               type="text"
               placeholder="Enter your email"
@@ -259,20 +259,20 @@ className="
             className="
             flex
             items-center
-            gap-3
-            h-14
+gap-3
+            h-16
             rounded-2xl
             border
             border-white/10
             bg-white/5
-            px-4
+            px-5
             transition
             focus-within:border-violet-500
             focus-within:ring-2
             focus-within:ring-violet-500/30
           "
           >
-            <Lock size={18} className="text-gray-400" />
+            <Lock size={22} className="text-gray-400" />
             <input
               type={showPassword ? "text" : "password"}
               placeholder="Enter your password"
@@ -284,7 +284,7 @@ className="
               "
             />
             <button onClick={() => setShowPassword(!showPassword)}>
-              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              {showPassword ? <EyeOff size={22} /> : <Eye size={22} />}
             </button>
           </div>
         </div>
@@ -314,13 +314,14 @@ className="
           whileTap={{
             scale: 0.98,
           }}
-          className="
+className="
             mt-7
             w-full
-            h-14
+            h-16
             rounded-2xl
-            font-semibold
+            font-bold
             text-white
+            text-lg
             bg-gradient-to-r
             from-violet-600
             to-blue-500
@@ -342,9 +343,9 @@ className="
         {/* Social Login */}
         <div className="grid grid-cols-3 gap-3">
           <motion.button
-            whileHover={{ y: -3, scale: 1.03 }}
+whileHover={{ y: -3, scale: 1.03 }}
             className="
-              h-14
+              h-16
               rounded-2xl
               border
               border-white/10
@@ -356,16 +357,16 @@ className="
               justify-center
             "
           >
-            <img
+<img
               src="https://www.svgrepo.com/show/475656/google-color.svg"
-              className="w-6"
+              className="w-7"
               alt=""
             />
           </motion.button>
           <motion.button
-            whileHover={{ y: -3, scale: 1.03 }}
+whileHover={{ y: -3, scale: 1.03 }}
             className="
-              h-14
+              h-16
               rounded-2xl
               border
               border-white/10
@@ -379,14 +380,14 @@ className="
           >
             <img
               src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg"
-              className="w-6"
+              className="w-7"
               alt=""
             />
           </motion.button>
           <motion.button
             whileHover={{ y: -3, scale: 1.03 }}
-            className="
-              h-14
+className="
+              h-16
               rounded-2xl
               border
               border-white/10
@@ -400,7 +401,7 @@ className="
           >
             <img
               src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg"
-              className="w-5 invert"
+              className="w-6 invert"
               alt=""
             />
           </motion.button>
@@ -475,7 +476,7 @@ export default function LoginPage() {
       </div>
 
       {/* main */}
-      <div className="relative z-10 grid lg:grid-cols-[380px_1fr_430px] gap-12 items-center max-w-[1650px] mx-auto px-10 pt-4">
+<div className="relative z-10 grid lg:grid-cols-[360px_1fr_520px] gap-10 items-center max-w-[1700px] mx-auto px-10 pt-4">
         {/* left */}
         <div className="space-y-8 order-2 lg:order-1 max-w-[360px]">
           <div>
