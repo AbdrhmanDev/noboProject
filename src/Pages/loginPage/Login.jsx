@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { useI18n } from "../../i18n/I18nContext";
 import LanguageSwitcher from "../../i18n/LanguageSwitcher";
-import noboLogo from "../../assets/noboIIISvgREQuired.webp";
+import noboLogo from "../../assets/nobo-logo-transparent.png";
 import earthBall from "../../assets/earthBall.jpeg";
 import LogoNobo from "../../assets/LogoNobo.png";
 import sheild from "../../assets/icons/Sheild.png";
@@ -290,7 +290,11 @@ function LoginCard() {
         {/* Register */}
         <div className="mt-8 text-center">
           <p className="text-gray-400 text-sm">{t("login.newTo")}</p>
-          <button className="mt-2 font-semibold text-violet-400 hover:text-violet-300 transition">
+          <button
+            type="button"
+            onClick={() => navigate(ROUTES.SIGNUP)}
+            className="mt-2 font-semibold text-violet-400 hover:text-violet-300 transition"
+          >
             {t("login.createAccount")}
           </button>
         </div>
@@ -310,7 +314,7 @@ export default function LoginPage() {
     >
       <div className="bg-stars absolute inset-0 pointer-events-none" />
       {/* top badges */}
-      <div className="relative z-10 flex flex-wrap items-center justify-between gap-3 px-6 md:px-10 pt-6">
+      <div className="relative z-10 flex flex-wrap items-center justify-between gap-3 px-4 sm:px-6 md:px-10 pt-4 md:pt-6">
         <div className="flex items-center gap-2">
           <span className="text-lg font-black">
             <span className="brand-text">nobo</span>
@@ -319,8 +323,8 @@ export default function LoginPage() {
             ERP III
           </span>
         </div>
-<div className="relative z-10 flex items-center justify-end px-4 md:px-8 pt-3">
-          <div className="flex flex-wrap items-center gap-2">
+<div className="relative z-10 w-full max-w-full overflow-x-auto pt-3 scrollbar-none">
+          <div className="flex w-max items-center gap-2 pb-1">
 
             {/* AI */}
             <div className="glow-badge h-[58px] w-[123px] rounded-xl px-2.5 flex items-center gap-2">
@@ -491,9 +495,9 @@ onClick={() => setIsDark((d) => !d)}
       </div>
 
       {/* main */}
-      <div className="relative z-10 grid lg:grid-cols-[360px_1fr_340px] gap-10 items-center max-w-[1700px] mx-auto px-10 pt-4">
+      <div className="relative z-10 grid xl:grid-cols-[360px_minmax(0,1fr)_340px] gap-6 xl:gap-10 items-center max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-10 pt-4">
         {/* left */}
-        <div className="space-y-8 order-2 lg:order-1 max-w-[360px]">
+        <div className="hidden space-y-8 order-2 xl:order-1 max-w-[360px] xl:block">
           <div>
             <img
               src={noboLogo}
@@ -549,11 +553,11 @@ onClick={() => setIsDark((d) => !d)}
         </div>
 
         {/* center image */}
-        <div className="order-1 lg:order-2 flex items-center justify-center relative">
+        <div className="order-1 xl:order-2 flex items-center justify-center relative mx-auto w-full max-w-md xl:max-w-none">
           <img
             src={earthBall}
             alt=""
-            className="relative z-20 w-[640px] max-w-full h-auto object-contain rounded-3xl float"
+            className="relative z-20 w-full max-w-[640px] h-auto object-contain rounded-3xl float"
             style={{ filter: "brightness(1.05) contrast(1.02) saturate(1.05)" }}
           />
           <div className="absolute left-1/2 bottom-0 z-30 -translate-x-1/2 translate-y-8 md:translate-y-10 lg:translate-y-12 w-[640px] max-w-full pointer-events-none">
@@ -567,7 +571,7 @@ onClick={() => setIsDark((d) => !d)}
         </div>
 
         {/* right login card */}
-        <div className="order-3 flex items-center justify-center">
+        <div className="order-3 flex items-center justify-center pb-2 xl:pb-0">
           <LoginCard />
         </div>
       </div>

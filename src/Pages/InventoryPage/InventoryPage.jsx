@@ -26,7 +26,7 @@ export default function InventoryPage({ onLogout }) {
     <AppLayout onLogout={onLogout} activePath={ROUTES.INVENTORY}>
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <h1 className="text-xl font-black brand-text">{t("inv.title")}</h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button className="panel rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><ArrowLeftRight size={13} /> {t("inv.transfer")}</button>
           <button className="primary-btn rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><Plus size={13} /> {t("inv.addProduct")}</button>
         </div>

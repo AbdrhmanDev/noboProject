@@ -8,7 +8,7 @@ const GlobalStyle = () => (
 
     .bg-space{
           position:relative;
-          overflow:hidden;
+          overflow-x:hidden;
           background:#000;
           }
     .bg-stars{
@@ -201,11 +201,31 @@ const GlobalStyle = () => (
           0 0 25px rgba(43,140,255,.45);
           transition:.35s;
           }
-          .primary-btn:hover{
+        .primary-btn:hover{
           transform:translateY(-2px);
           box-shadow:
           0 0 45px rgba(43,140,255,.65);
           }
+        @media (max-width: 639px) {
+          .nobo-root .panel,
+          .nobo-root .stat-card { min-width: 0; }
+          .nobo-root .panel:has(> table) { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+          .nobo-root .panel > table { min-width: 560px; }
+          .nobo-root .panel > .flex.items-center.gap-2.mb-3,
+          .nobo-root .panel > .flex.items-center.gap-2.mb-4 { flex-wrap: wrap; }
+          .nobo-root .panel > .flex.items-center.gap-2.mb-3 .input-dark,
+          .nobo-root .panel > .flex.items-center.gap-2.mb-4 .input-dark { width: 100%; }
+          .nobo-root input,
+          .nobo-root select,
+          .nobo-root textarea { max-width: 100%; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .nobo-root *, .nobo-root *::before, .nobo-root *::after {
+            animation-duration: .01ms !important;
+            animation-iteration-count: 1 !important;
+            scroll-behavior: auto !important;
+          }
+        }
   `}</style>
 );
 

@@ -24,7 +24,7 @@ export default function SalesPage({ onLogout }) {
     <AppLayout onLogout={onLogout} activePath={ROUTES.SALES}>
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <h1 className="text-xl font-black brand-text">{t("sales.title")}</h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button className="panel rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><Filter size={13} /> {t("sales.filter")}</button>
           <button className="panel rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><Download size={13} /> {t("sales.export")}</button>
           <button className="primary-btn rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><Plus size={13} /> {t("sales.saleInvoice")}</button>

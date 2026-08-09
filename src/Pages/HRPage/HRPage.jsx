@@ -24,7 +24,7 @@ export default function HRPage({ onLogout }) {
     <AppLayout onLogout={onLogout} activePath={ROUTES.HR}>
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <h1 className="text-xl font-black brand-text">{t("hr.title")}</h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button className="panel rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><Calendar size={13} /> {t("hr.leaveRequest")}</button>
           <button className="primary-btn rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><UserPlus size={13} /> {t("hr.hire")}</button>
         </div>

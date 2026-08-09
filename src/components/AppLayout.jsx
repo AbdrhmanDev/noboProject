@@ -12,7 +12,7 @@ export default function AppLayout({ children, onLogout, activePath = ROUTES.DASH
   const { user } = useUser();
 
   return (
-    <div dir={dir} className="bg-space min-h-screen w-full text-white flex">
+    <div dir={dir} className="bg-space min-h-screen w-full text-white flex flex-col lg:flex-row">
       {/* sidebar (RTL: sits on the right) */}
       <aside
         className="
@@ -159,8 +159,24 @@ export default function AppLayout({ children, onLogout, activePath = ROUTES.DASH
       </aside>
 
       {/* main */}
-      <main className="flex-1 p-4 md:p-6 overflow-x-hidden">
+      <main className="min-w-0 flex-1 p-3 sm:p-4 md:p-6 overflow-x-hidden">
         <Header onLogout={onLogout} />
+        <nav className="mb-5 flex gap-2 overflow-x-auto pb-1 scrollbar-none lg:hidden">
+          {NAV_ITEMS.map((item) => {
+            const isActive = activePath === item.to;
+            return (
+              <button
+                key={item.to}
+                type="button"
+                onClick={() => navigate(item.to)}
+                className={`flex shrink-0 items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold transition ${isActive ? "border-blue-400/50 bg-blue-500/20 text-white" : "border-white/10 bg-white/5 text-gray-300"}`}
+              >
+                <item.icon size={14} />
+                {t(item.labelKey)}
+              </button>
+            );
+          })}
+        </nav>
         {children}
         <Footer />
       </main>

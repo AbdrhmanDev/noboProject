@@ -3,6 +3,7 @@ import GlobalStyle from "./styles/GlobalStyle";
 import { I18nProvider } from "./i18n/I18nContext";
 import { UserProvider } from "./context/UserContext";
 import LoginPage from "./Pages/loginPage/Login";
+import SignupPage from "./Pages/signupPage/Signup";
 import Dashboard from "./Pages/DashboardPage/Dashboard";
 import POSPage from "./Pages/POSPage/POSPage";
 import SalesPage from "./Pages/SalesPage/SalesPage";
@@ -29,6 +30,7 @@ export default function App() {
             <GlobalStyle />
             <Routes>
               <Route path={ROUTES.LOGIN} element={<LoginPage />} />
+              <Route path={ROUTES.SIGNUP} element={<SignupPage />} />
               <Route path={ROUTES.DASHBOARD} element={<Dashboard />} />
               <Route path={ROUTES.POS} element={<POSPage />} />
               <Route path={ROUTES.SALES} element={<SalesPage />} />
