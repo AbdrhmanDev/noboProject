@@ -304,7 +304,6 @@ function LoginCard() {
 }
 
 export default function LoginPage() {
-  const [isDark, setIsDark] = useState(true);
   const { t, dir } = useI18n();
 
   return (
@@ -443,52 +442,6 @@ export default function LoginPage() {
                 </div>
               </div>
             </div>
-
-            {/* Dark Mode */}
-            <button
-              type="button"
-onClick={() => setIsDark((d) => !d)}
-              className="glow-badge h-[58px] w-[132px] rounded-xl px-2.5 flex items-center gap-2"
-            >
-              {/* Moon */}
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="31"
-                height="31"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#cbd5e1"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401Z" />
-              </svg>
-
-<div className="flex-1 leading-tight" dir={dir}>
-                <div className="text-[12px] font-bold text-white">
-                  {t("login.badgeNightTitle")}
-                </div>
-                <div className="text-[10px] text-gray-300">
-                  {t("login.badgeNightSub")}
-                </div>
-              </div>
-
-              {/* Toggle */}
-              <span
-                className={`relative inline-flex h-4 w-8 shrink-0 rounded-full transition-colors ${
-                  isDark
-                    ? "bg-blue-500 shadow-[0_0_8px_rgba(37,99,235,0.8)]"
-                    : "bg-gray-500 shadow-[0_0_8px_rgba(148,163,184,0.6)]"
-                }`}
-              >
-                <span
-                  className={`absolute top-[2px] left-[2px] h-3 w-3 rounded-full bg-white shadow-sm transition-transform ${
-                    isDark ? "translate-x-4" : "translate-x-0"
-                  }`}
-                />
-              </span>
-            </button>
 
           </div>
         </div>
