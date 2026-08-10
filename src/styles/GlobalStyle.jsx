@@ -1,5 +1,20 @@
 const GlobalStyle = () => (
   <style>{`
+    :root {
+      --color-bg: #000;
+      --color-surface: #0d1728;
+      --color-surface-elevated: #111827;
+      --color-primary: #2b8cff;
+      --color-primary-light: #60a5fa;
+      --color-primary-deep: #4f6bff;
+      --color-danger: #ff3d6b;
+      --color-success: #17d9c4;
+      --color-warning: #f5b800;
+      --color-border: rgba(255,255,255,.08);
+      --radius-panel: 1rem;
+      --shadow-panel: 0 10px 30px rgba(0,0,0,.45), 0 0 25px rgba(43,140,255,.08);
+    }
+
     .nobo-root { font-family: 'Cairo', 'Tajawal', sans-serif; }
     .nobo-root, .nobo-root * { box-sizing: border-box; }
 
@@ -9,7 +24,7 @@ const GlobalStyle = () => (
     .bg-space{
           position:relative;
           overflow-x:hidden;
-          background:#000;
+          background:var(--color-bg);
           }
     .bg-stars{
             position:absolute;
@@ -64,10 +79,8 @@ const GlobalStyle = () => (
         rgba(8,11,20,.92)
         );
         backdrop-filter:blur(20px);
-        border:1px solid rgba(255,255,255,.08);
-        box-shadow:
-        0 10px 30px rgba(0,0,0,.45),
-        0 0 25px rgba(43,140,255,.08);
+        border:1px solid var(--color-border);
+        box-shadow:var(--shadow-panel);
         transition:.35s;
         }
     .panel:hover{
@@ -85,8 +98,8 @@ const GlobalStyle = () => (
     .login-card{
           position:relative;
           overflow:hidden;
-          background:#000;
-          border:2px solid #2b8cff;
+          background:var(--color-bg);
+          border:2px solid var(--color-primary);
           border-radius:28px;
           box-shadow:
           0 0 20px rgba(43,140,255,.45),
@@ -96,7 +109,7 @@ const GlobalStyle = () => (
           }
           .login-card:hover{
           transform:translateY(-4px);
-          border-color:#ff3d6b;
+          border-color:var(--color-danger);
           box-shadow:
           0 0 25px rgba(43,140,255,.55),
           0 0 80px rgba(255,61,107,.35);
@@ -114,7 +127,7 @@ const GlobalStyle = () => (
             rgba(255,255,255,.05),
             rgba(255,255,255,.02)
             );
-            border:1px solid rgba(255,255,255,.08);
+            border:1px solid var(--color-border);
             box-shadow:
             inset 0 2px 8px rgba(0,0,0,.45);
             transition:.3s;
@@ -123,7 +136,7 @@ const GlobalStyle = () => (
             border-color:#2b8cff66;
             }
         .input-dark:focus-within{
-            border-color:#2b8cff;
+            border-color:var(--color-primary);
             box-shadow:
             0 0 20px rgba(43,140,255,.35);
             }
@@ -150,13 +163,13 @@ const GlobalStyle = () => (
         .brand-text {
           font-family: 'Tajawal', 'Cairo', sans-serif;
           font-weight: 900;
-          background: linear-gradient(90deg,#ff3d6b,#f5b800,#2b8cff);
+          background: linear-gradient(90deg,var(--color-danger),var(--color-warning),var(--color-primary));
           -webkit-background-clip: text;
           background-clip: text;
           color: transparent;
         }
         .scrollbar-none::-webkit-scrollbar { display: none; }
-        .toggle-track { background: linear-gradient(90deg,#2b8cff,#8b5cf6); }
+        .toggle-track { background: linear-gradient(90deg,var(--color-primary),#8b5cf6); }
         .toggle-thumb { transition: transform .2s ease; }
         .stat-card{
           background:
@@ -165,7 +178,7 @@ const GlobalStyle = () => (
           rgba(18,24,40,.95),
           rgba(9,12,22,.92)
           );
-          border:1px solid rgba(255,255,255,.08);
+          border:1px solid var(--color-border);
           box-shadow:
           0 8px 25px rgba(0,0,0,.35);
           transition:.35s;
@@ -194,8 +207,8 @@ const GlobalStyle = () => (
           background:
           linear-gradient(
           90deg,
-          #2b8cff,
-          #4f6bff
+          var(--color-primary),
+          var(--color-primary-deep)
           );
           box-shadow:
           0 0 25px rgba(43,140,255,.45);
