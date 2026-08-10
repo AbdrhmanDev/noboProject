@@ -4,6 +4,7 @@ import {
   getCompanyPermissions,
   getMyCompanies,
 } from "../api/companiesApi";
+import type { EffectivePermissions } from "../types/company.types";
 
 export const companyQueryKeys = {
   all: ["companies"] as const,
@@ -38,4 +39,24 @@ export function useCompanyPermissions(companyId: string | null | undefined) {
 
 export function usePermissions(companyId: string | null | undefined) {
   return useCompanyPermissions(companyId);
+}
+
+export function hasEffectivePermission(
+  effectivePermissions: EffectivePermissions | null | undefined,
+  permission: string,
+) {
+  if (!effectivePermissions) return false;
+  return effectivePermissions.isOwner || effectivePermissions.permissions.includes(permission);
+}
+
+export function useHasPermission(
+  companyId: string | null | undefined,
+  permission: string,
+) {
+  const query = useCompanyPermissions(companyId);
+
+  return {
+    ...query,
+    hasPermission: hasEffectivePermission(query.data, permission),
+  };
 }

@@ -12,7 +12,13 @@ function TopWidget({ label, value, sub, color }) {
   );
 }
 
-export default function Header({ onLogout, companyName, onSwitchCompany }) {
+export default function Header({
+  onLogout,
+  companyName,
+  onSwitchCompany,
+  branchName,
+  onSwitchBranch,
+}) {
   const { t } = useI18n();
   const [isDark, setIsDark] = useState(() => typeof window !== "undefined" ? localStorage.getItem("nobo-theme") !== "light" : true);
   const [now, setNow] = useState(() => new Date());
@@ -86,6 +92,17 @@ export default function Header({ onLogout, companyName, onSwitchCompany }) {
             title={onSwitchCompany ? "Switch company" : companyName}
           >
             {companyName}
+          </button>
+        )}
+        {branchName && (
+          <button
+            type="button"
+            onClick={onSwitchBranch}
+            disabled={!onSwitchBranch}
+            className="max-w-[160px] truncate rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-slate-200 transition hover:border-blue-400/50 hover:bg-blue-500/10 disabled:cursor-default disabled:hover:border-white/10 disabled:hover:bg-white/5"
+            title={onSwitchBranch ? "Switch branch" : branchName}
+          >
+            {branchName}
           </button>
         )}
         <button type="button" onClick={() => setIsDark((prev) => !prev)} className="rounded-2xl border border-white/10 bg-white/5 p-2 text-slate-200 transition hover:border-blue-400/50 hover:bg-blue-500/10">

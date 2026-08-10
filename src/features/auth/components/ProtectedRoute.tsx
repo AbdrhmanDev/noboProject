@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { ROUTES } from "../../../utils/routes";
+import { BranchGate } from "../../branches/components/BranchGate";
 import { CompanyGate } from "../../companies/components/CompanyGate";
 import { useAuth } from "../hooks/useAuth";
 import { AuthBootState } from "./AuthBootState";
@@ -19,5 +20,9 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     return <Navigate to={ROUTES.LOGIN} replace state={{ from: location }} />;
   }
 
-  return <CompanyGate>{children}</CompanyGate>;
+  return (
+    <CompanyGate>
+      <BranchGate>{children}</BranchGate>
+    </CompanyGate>
+  );
 }

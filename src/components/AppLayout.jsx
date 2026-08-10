@@ -4,6 +4,9 @@ import Footer from "./Footer";
 import { useI18n } from "../i18n/I18nContext";
 import { useUser } from "../context/UserContext";
 import { useAuth } from "../features/auth/hooks/useAuth";
+import { useBranch } from "../features/branches/context/BranchContext";
+import { isBranchEnterable, useBranches } from "../features/branches/hooks/useBranches";
+import { useCurrentBranch } from "../features/branches/hooks/useCurrentBranch";
 import {
   getCompanyDisplayName,
   isCompanyEnterable,
@@ -21,10 +24,14 @@ export default function AppLayout({ children, onLogout }) {
   const { user } = useUser();
   const { logout } = useAuth();
   const { currentCompanyId, clearCompany } = useCompany();
+  const { clearBranch } = useBranch();
   const { data: companies = [] } = useMyCompanies();
+  const { data: branches = [] } = useBranches(currentCompanyId);
+  const currentBranch = useCurrentBranch();
   const handleLogout = onLogout || logout;
   const currentCompany = companies.find((company) => company.companyId === currentCompanyId);
   const switchableCompanies = companies.filter(isCompanyEnterable);
+  const switchableBranches = branches.filter(isBranchEnterable);
 
   return (
     <div dir={dir} className="bg-space min-h-screen w-full text-white flex flex-col lg:flex-row">
@@ -179,6 +186,8 @@ export default function AppLayout({ children, onLogout }) {
           onLogout={handleLogout}
           companyName={currentCompany ? getCompanyDisplayName(currentCompany) : ""}
           onSwitchCompany={switchableCompanies.length > 1 ? clearCompany : undefined}
+          branchName={currentBranch ? currentBranch.name : ""}
+          onSwitchBranch={switchableBranches.length > 1 ? clearBranch : undefined}
         />
         <nav className="mb-5 flex gap-2 overflow-x-auto pb-1 scrollbar-none lg:hidden">
           {NAV_ITEMS.map((item) => {

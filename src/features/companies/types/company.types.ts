@@ -18,4 +18,17 @@ export type MyCompany = {
 };
 
 export type CompanyDetails = unknown;
-export type CompanyPermissions = unknown;
+
+export type CompanyRoleSummary = {
+  roleId: string;
+  code: string;
+  name: string;
+};
+
+export type EffectivePermissions = {
+  isOwner: boolean;
+  permissions: string[];
+  roles: CompanyRoleSummary[];
+};
+
+export type CompanyPermissions = EffectivePermissions;
