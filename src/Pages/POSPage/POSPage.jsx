@@ -80,6 +80,10 @@ export default function POSPage() {
   const [shiftOpen, setShiftOpen] = useState(true);
   const [actualCash, setActualCash] = useState("4625");
   const [aiDismissed, setAiDismissed] = useState([]);
+  const theme = typeof document !== "undefined" ? document.documentElement.dataset.theme : "dark";
+  const isDark = theme !== "light";
+  const inputClass = `h-11 w-full rounded-xl border px-3 text-sm outline-none ${isDark ? 'border-slate-800 bg-slate-800 text-slate-200' : 'border-white/10 bg-slate-100 text-slate-900'}`;
+  const textareaClass = `h-28 w-full rounded-xl border p-3 text-xs outline-none ${isDark ? 'border-slate-800 bg-slate-800 text-slate-200' : 'border-white/10 bg-slate-100 text-slate-900'}`;
 
   const filteredProducts = useMemo(() => productList.filter((product) => (category === "الكل" || product.category === category) && `${product.name} ${product.sku}`.toLowerCase().includes(query.toLowerCase())), [category, query, productList]);
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
@@ -115,6 +119,7 @@ export default function POSPage() {
       category: newProduct.category,
       art: newProduct.art || "📦",
       color: newProduct.color || "from-slate-300/25 to-blue-900/10",
+      image: newProduct.image,
     };
     setProductList((cur) => [prod, ...cur]);
     setModal(null);
@@ -158,6 +163,22 @@ export default function POSPage() {
     });
     setLastDeleted(null);
     notify("تم استعادة المنتج.");
+  };
+
+  const handleNewImage = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setNewProduct((p) => ({ ...p, image: reader.result }));
+    reader.readAsDataURL(file);
+  };
+
+  const handleEditImage = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setEditingProduct((p) => ({ ...p, image: reader.result }));
+    reader.readAsDataURL(file);
   };
   const holdOrder = () => {
     if (!cart.length) return notify("أضف منتجات إلى السلة أولًا.");
@@ -208,9 +229,13 @@ export default function POSPage() {
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
               {filteredProducts.map((product) => (
                 <div key={product.id} role="button" tabIndex={0} onClick={() => addItem(product)} className="pos-product-card relative group overflow-hidden rounded-xl border p-2.5 text-right transition hover:-translate-y-0.5 hover:border-blue-400/60 hover:shadow-lg hover:shadow-blue-950/20">
-                  <div className={`relative mb-2 grid aspect-[1.3] place-items-center rounded-lg bg-gradient-to-br text-4xl ${product.color}`}>
+                  <div className={`relative mb-2 grid aspect-[1.3] place-items-center rounded-lg bg-gradient-to-br text-4xl ${product.color} overflow-hidden`}>
                     <span className="absolute left-2 top-2 text-slate-400/80">☆</span>
-                    {product.art}
+                    {product.image ? (
+                      <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <>{product.art}</>
+                    )}
                     <span className="absolute bottom-1.5 right-2 rounded px-1.5 py-0.5 text-[9px] pos-sku-badge">SKU {product.sku.replace("SKU ", "")}</span>
                   </div>
                   <div className="line-clamp-2 min-h-8 text-[11px] font-bold leading-4 pos-product-name">{product.name}</div>
@@ -263,15 +288,15 @@ export default function POSPage() {
       )}
       {modal === "addProduct" && <Modal title="إضافة منتج" onClose={() => setModal(null)}><div className="space-y-3">
         <label className="text-xs text-slate-400">اسم المنتج</label>
-        <input value={newProduct.name} onChange={(e) => setNewProduct((p) => ({ ...p, name: e.target.value }))} className="h-11 w-full rounded-xl border border-white/10 bg-slate-100 px-3 text-sm outline-none" />
+        <input value={newProduct.name} onChange={(e) => setNewProduct((p) => ({ ...p, name: e.target.value }))} className={inputClass} />
         <div className="grid grid-cols-2 gap-2">
           <div>
             <label className="text-xs text-slate-400">SKU</label>
-            <input value={newProduct.sku} onChange={(e) => setNewProduct((p) => ({ ...p, sku: e.target.value }))} className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-slate-100 px-3 text-sm outline-none" />
+            <input value={newProduct.sku} onChange={(e) => setNewProduct((p) => ({ ...p, sku: e.target.value }))} className={`mt-1 ${inputClass}`} />
           </div>
           <div>
             <label className="text-xs text-slate-400">الفئة</label>
-            <select value={newProduct.category} onChange={(e) => setNewProduct((p) => ({ ...p, category: e.target.value }))} className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-slate-100 px-3 text-sm outline-none">
+            <select value={newProduct.category} onChange={(e) => setNewProduct((p) => ({ ...p, category: e.target.value }))} className={`mt-1 ${inputClass}`}>
               {categories.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
             </select>
           </div>
@@ -279,31 +304,34 @@ export default function POSPage() {
         <div className="grid grid-cols-2 gap-2">
           <div>
             <label className="text-xs text-slate-400">السعر</label>
-            <input value={newProduct.price} onChange={(e) => setNewProduct((p) => ({ ...p, price: e.target.value }))} type="number" className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-slate-100 px-3 text-sm outline-none" />
+            <input value={newProduct.price} onChange={(e) => setNewProduct((p) => ({ ...p, price: e.target.value }))} type="number" className={`mt-1 ${inputClass}`} />
           </div>
           <div>
             <label className="text-xs text-slate-400">الكمية</label>
-            <input value={newProduct.stock} onChange={(e) => setNewProduct((p) => ({ ...p, stock: e.target.value }))} type="number" className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-slate-100 px-3 text-sm outline-none" />
+            <input value={newProduct.stock} onChange={(e) => setNewProduct((p) => ({ ...p, stock: e.target.value }))} type="number" className={`mt-1 ${inputClass}`} />
           </div>
         </div>
         <label className="text-xs text-slate-400">رمز المنتج</label>
-        <input value={newProduct.art} onChange={(e) => setNewProduct((p) => ({ ...p, art: e.target.value }))} className="h-11 w-full rounded-xl border border-white/10 bg-slate-100 px-3 text-sm outline-none" />
+        <input value={newProduct.art} onChange={(e) => setNewProduct((p) => ({ ...p, art: e.target.value }))} className={inputClass} />
+        <label className="text-xs text-slate-400">صورة المنتج (اختياري)</label>
+        <input type="file" accept="image/*" onChange={handleNewImage} className="mt-1 text-sm" />
+        {newProduct.image && <div className="mt-2"><img src={newProduct.image} alt="preview" className="h-20 w-20 rounded-md object-cover" /></div>}
         <label className="text-xs text-slate-400">ألوان الخلفية (Tailwind gradient classes)</label>
-        <input value={newProduct.color} onChange={(e) => setNewProduct((p) => ({ ...p, color: e.target.value }))} className="h-11 w-full rounded-xl border border-white/10 bg-slate-100 px-3 text-sm outline-none" />
+        <input value={newProduct.color} onChange={(e) => setNewProduct((p) => ({ ...p, color: e.target.value }))} className={inputClass} />
         <div className="pt-2"><button type="button" onClick={handleAddProduct} className="w-full rounded-xl bg-blue-600 py-2.5 text-xs font-bold">إضافة المنتج</button></div>
       </div></Modal>}
       {modal === "editProduct" && editingProduct && <Modal title="تعديل منتج" onClose={() => { setModal(null); setEditingProduct(null); }}>
         <div className="space-y-3">
           <label className="text-xs text-slate-400">اسم المنتج</label>
-          <input value={editingProduct.name} onChange={(e) => setEditingProduct((p) => ({ ...p, name: e.target.value }))} className="h-11 w-full rounded-xl border border-white/10 bg-slate-100 px-3 text-sm outline-none" />
+          <input value={editingProduct.name} onChange={(e) => setEditingProduct((p) => ({ ...p, name: e.target.value }))} className={inputClass} />
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label className="text-xs text-slate-400">SKU</label>
-              <input value={editingProduct.sku} onChange={(e) => setEditingProduct((p) => ({ ...p, sku: e.target.value }))} className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-slate-100 px-3 text-sm outline-none" />
+              <input value={editingProduct.sku} onChange={(e) => setEditingProduct((p) => ({ ...p, sku: e.target.value }))} className={`mt-1 ${inputClass}`} />
             </div>
             <div>
               <label className="text-xs text-slate-400">الفئة</label>
-              <select value={editingProduct.category} onChange={(e) => setEditingProduct((p) => ({ ...p, category: e.target.value }))} className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-slate-100 px-3 text-sm outline-none">
+              <select value={editingProduct.category} onChange={(e) => setEditingProduct((p) => ({ ...p, category: e.target.value }))} className={`mt-1 ${inputClass}`}>
                 {categories.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
               </select>
             </div>
@@ -311,17 +339,20 @@ export default function POSPage() {
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label className="text-xs text-slate-400">السعر</label>
-              <input value={editingProduct.price} onChange={(e) => setEditingProduct((p) => ({ ...p, price: e.target.value }))} type="number" className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-slate-100 px-3 text-sm outline-none" />
+              <input value={editingProduct.price} onChange={(e) => setEditingProduct((p) => ({ ...p, price: e.target.value }))} type="number" className={`mt-1 ${inputClass}`} />
             </div>
             <div>
               <label className="text-xs text-slate-400">الكمية</label>
-              <input value={editingProduct.stock} onChange={(e) => setEditingProduct((p) => ({ ...p, stock: e.target.value }))} type="number" className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-slate-100 px-3 text-sm outline-none" />
+              <input value={editingProduct.stock} onChange={(e) => setEditingProduct((p) => ({ ...p, stock: e.target.value }))} type="number" className={`mt-1 ${inputClass}`} />
             </div>
           </div>
           <label className="text-xs text-slate-400">رمز المنتج</label>
-          <input value={editingProduct.art} onChange={(e) => setEditingProduct((p) => ({ ...p, art: e.target.value }))} className="h-11 w-full rounded-xl border border-white/10 bg-slate-100 px-3 text-sm outline-none" />
+          <input value={editingProduct.art} onChange={(e) => setEditingProduct((p) => ({ ...p, art: e.target.value }))} className={inputClass} />
+          <label className="text-xs text-slate-400">صورة المنتج (اختياري)</label>
+          <input type="file" accept="image/*" onChange={handleEditImage} className="mt-1 text-sm" />
+          {editingProduct.image && <div className="mt-2"><img src={editingProduct.image} alt="preview" className="h-20 w-20 rounded-md object-cover" /></div>}
           <label className="text-xs text-slate-400">ألوان الخلفية (Tailwind gradient classes)</label>
-          <input value={editingProduct.color} onChange={(e) => setEditingProduct((p) => ({ ...p, color: e.target.value }))} className="h-11 w-full rounded-xl border border-white/10 bg-slate-100 px-3 text-sm outline-none" />
+          <input value={editingProduct.color} onChange={(e) => setEditingProduct((p) => ({ ...p, color: e.target.value }))} className={inputClass} />
           <div className="pt-2 grid grid-cols-2 gap-2"><button type="button" onClick={handleUpdateProduct} className="w-full rounded-xl bg-blue-600 py-2.5 text-xs font-bold">حفظ التعديلات</button><button type="button" onClick={() => { if (editingProduct) { handleDeleteProduct(editingProduct.id); setModal(null); setEditingProduct(null); } }} className="w-full rounded-xl bg-rose-600 py-2.5 text-xs font-bold">حذف</button></div>
         </div>
       </Modal>}
@@ -332,7 +363,7 @@ export default function POSPage() {
       {modal === "promotions" && <Modal title="Promotions Engine" onClose={() => setModal(null)}><div className="space-y-2 text-xs"><div className="rounded-xl border border-pink-400/20 bg-pink-500/10 p-3"><b>خصم 10% عام</b><p className="mt-1 text-slate-400">نشط · كل المنتجات · ينتهي 31 مايو</p></div><div className="rounded-xl border border-amber-400/20 bg-amber-500/10 p-3"><b>اشترِ 2 وخذ 1 مجانًا</b><p className="mt-1 text-slate-400">المشروبات · أولوية أقل من خصم العميل</p></div></div><button type="button" onClick={() => notify("تم فتح معالج إنشاء عرض جديد.")} className="mt-4 w-full rounded-xl bg-pink-600 py-2.5 text-xs font-bold">إنشاء عرض جديد</button></Modal>}
       {modal === "openShift" && <Modal title="فتح وردية جديدة" onClose={() => setModal(null)}><p className="text-xs leading-5 text-slate-500">سيتم تسجيل رصيد افتتاحي للكاشير أحمد محمد على POS-01.</p><input type="number" defaultValue="1500" className="mt-3 h-11 w-full rounded-xl border border-white/10 bg-slate-100 px-3 text-sm outline-none" /><button type="button" onClick={() => { setShiftOpen(true); setModal(null); notify("تم فتح الوردية وتسجيل الرصيد الافتتاحي."); }} className="mt-4 w-full rounded-xl bg-emerald-600 py-2.5 text-xs font-bold">تأكيد فتح الوردية</button></Modal>}
       {modal === "closeShift" && <Modal title="إغلاق الوردية" onClose={() => setModal(null)}><div className="grid grid-cols-2 gap-2"><Metric label="النقدية المتوقعة" value="4,625 SAR" tone="green" /><Metric label="النقدية الفعلية" value={`${actualCash || 0} SAR`} tone="gold" /></div><label className="mt-4 block text-xs text-slate-500">النقدية الفعلية بعد العد</label><input type="number" value={actualCash} onChange={(event) => setActualCash(event.target.value)} className="mt-2 h-11 w-full rounded-xl border border-white/10 bg-slate-100 px-3 text-sm outline-none" /><button type="button" onClick={() => { setShiftOpen(false); setModal(null); notify("تم إغلاق الوردية وحفظ تقرير الصندوق."); }} className="mt-4 w-full rounded-xl bg-rose-600 py-2.5 text-xs font-bold">تأكيد إغلاق الوردية</button></Modal>}
-      {modal === "askAi" && <Modal title="اسأل NOBO AI" onClose={() => setModal(null)}><textarea className="h-28 w-full rounded-xl border border-white/10 bg-slate-100 p-3 text-xs outline-none" placeholder="مثال: اقترح عرضًا على المشروبات الراكدة..." /><button type="button" onClick={() => { setModal(null); notify("تم إرسال سؤالك إلى NOBO AI."); }} className="mt-3 w-full rounded-xl bg-pink-600 py-2.5 text-xs font-bold">إرسال السؤال</button></Modal>}
+      {modal === "askAi" && <Modal title="اسأل NOBO AI" onClose={() => setModal(null)}><textarea className={textareaClass} placeholder="مثال: اقترح عرضًا على المشروبات الراكدة..." /><button type="button" onClick={() => { setModal(null); notify("تم إرسال سؤالك إلى NOBO AI."); }} className="mt-3 w-full rounded-xl bg-pink-600 py-2.5 text-xs font-bold">إرسال السؤال</button></Modal>}
       {modal === "aiConfirm" && <Modal title="تأكيد الإجراء المقترح" onClose={() => setModal(null)}><div className="rounded-xl border border-pink-400/20 bg-pink-500/10 p-3 text-xs leading-5 text-pink-50"><ShieldCheck size={17} className="mb-2 text-pink-300" />NOBO AI لا ينفذ أي عملية حساسة تلقائيًا. راجع الإجراء ثم أكّده ليتم فتح الشاشة المناسبة.</div><button type="button" onClick={() => { setModal(null); notify("تم تأكيد الاقتراح وفتح الإجراء المرتبط."); }} className="mt-4 w-full rounded-xl bg-pink-600 py-2.5 text-xs font-bold">تأكيد ومتابعة</button></Modal>}
       {modal === "success" && <Modal title="اكتملت عملية البيع" onClose={resetSale}><div className="py-4 text-center"><div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-500/15 text-emerald-300"><Check size={32} /></div><h3 className="mt-3 font-bold">تم إنشاء الفاتورة بنجاح</h3><p className="mt-1 text-xs text-slate-400">INV-000486 · تم إرسال العملية إلى ZATCA والطابعة.</p></div><div className="grid grid-cols-2 gap-2"><button type="button" onClick={() => notify("تم إرسال الإيصال للطباعة.")} className="rounded-xl border border-white/10 py-2.5 text-xs">طباعة الإيصال</button><button type="button" onClick={resetSale} className="rounded-xl bg-blue-600 py-2.5 text-xs font-bold">فاتورة جديدة</button></div></Modal>}
       </main>
