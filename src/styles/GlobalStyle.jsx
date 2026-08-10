@@ -219,7 +219,101 @@ const GlobalStyle = () => (
           box-shadow:
           0 0 45px rgba(43,140,255,.65);
           }
-        @media (max-width: 639px) {
+        .pos-product-card{
+          border-color: rgba(148,163,184,.16);
+          background: rgba(15,23,42,.92);
+          color: #e2e8f0;
+        }
+        .pos-product-card .pos-sku-badge{
+          background: rgba(15,23,42,.85);
+          color: #cbd5e1;
+        }
+        .pos-card-box{
+          border-color: rgba(255,255,255,.08);
+          background: rgba(15,23,42,.65);
+        }
+        [data-theme="light"] .pos-product-card{
+          border-color: rgba(148,163,184,.2);
+          background: rgba(255,255,255,.95);
+          color: #0f172a;
+        }
+        [data-theme="light"] .pos-product-card .pos-sku-badge{
+          background: rgba(241,245,249,.95);
+          color: #475569;
+        }
+        [data-theme="light"] .pos-card-box{
+          border-color: rgba(15,23,42,.1);
+          background: rgba(255,255,255,.95);
+        }
+    [data-theme="light"] .nobo-root { background: #f5f7ff; color: #111827; }
+    [data-theme="light"] .bg-space { background: #eff2ff; }
+    [data-theme="light"] .bg-stars { opacity: 0.15; }
+    [data-theme="light"] .nobo-root aside { background: #f8fafc; border-color: rgba(15,23,42,.12); }
+    [data-theme="light"] .nobo-root aside { background: #f8fafc !important; color: #111827; }
+    [data-theme="light"] .nobo-root aside.text-white,
+    [data-theme="light"] .nobo-root aside .text-white { color: #111827 !important; }
+    [data-theme="light"] .nobo-root aside .text-gray-500 { color: #64748b !important; }
+    [data-theme="light"] .nobo-root aside.bg-black,
+    [data-theme="light"] .nobo-root aside .bg-black { background: #e2e8f0 !important; }
+    [data-theme="light"] .nobo-root aside .bg-white\/5 { background: rgba(255,255,255,.9) !important; }
+    [data-theme="light"] .nobo-root aside .border-white\/10 { border-color: rgba(15,23,42,.12) !important; }
+    [data-theme="light"] .nobo-root aside .hover\:bg-blue-500\/10:hover { background: rgba(59,130,246,.08) !important; }
+    [data-theme="light"] .nobo-root aside .hover\:border-white\/20:hover { border-color: rgba(15,23,42,.12) !important; }
+    [data-theme="light"] .nobo-root aside .group:hover { background: rgba(59,130,246,.08); }
+    [data-theme="light"] .nobo-root aside .text-gray-300 { color: #64748b !important; }
+    [data-theme="light"] .nobo-root aside .bg-stars { opacity: 0.08; }
+    [data-theme="light"] .panel,
+    [data-theme="light"] .stat-card { background: rgba(255,255,255,.95); border-color: rgba(15,23,42,.08); box-shadow: 0 10px 25px rgba(15,23,42,.08); }
+    [data-theme="light"] .input-dark { background: rgba(15,23,42,.05); border-color: rgba(15,23,42,.12); box-shadow: inset 0 2px 8px rgba(15,23,42,.04); }
+    [data-theme="light"] .text-gray-400,
+    [data-theme="light"] .text-gray-500,
+    [data-theme="light"] .text-slate-400,
+    [data-theme="light"] .text-slate-500,
+    [data-theme="light"] .text-slate-300,
+    [data-theme="light"] .text-slate-200 { color: #4b5563; }
+    [data-theme="light"] .text-white { color: #111827; }
+    [data-theme="light"] .border-white\/10 { border-color: rgba(15,23,42,.1); }
+    [data-theme="light"] .border-white\/15 { border-color: rgba(15,23,42,.12); }
+    [data-theme="light"] .border-white\/8 { border-color: rgba(15,23,42,.08); }
+    [data-theme="light"] .bg-white\/5 { background: rgba(255,255,255,.85); }
+    [data-theme="light"] .bg-white\/10 { background: rgba(255,255,255,.9); }
+    [data-theme="light"] .bg-white\/25 { background: rgba(255,255,255,.92); }
+    [data-theme="light"] .bg-white\/30 { background: rgba(255,255,255,.95); }
+    [data-theme="light"] .bg-white\/\[0\.025\] { background: rgba(255,255,255,.95); }
+    [data-theme="light"] .bg-white\/\[0\.035\] { background: rgba(255,255,255,.96); }
+    [data-theme="light"] .bg-black { background: #f8fafc; }
+    [data-theme="light"] .bg-black\/20 { background: rgba(15,23,42,.05); }
+    [data-theme="light"] .bg-black\/50 { background: rgba(15,23,42,.1); }
+    [data-theme="light"] .bg-\[\#0d1728\] { background: #f8fafc; }
+    [data-theme="light"] .bg-\[\#0d1728\]\/95 { background: rgba(248,250,252,.95); }
+    [data-theme="light"] .bg-\[\#0d1728\]\/80 { background: rgba(248,250,252,.9); }
+    [data-theme="light"] .bg-\[\#111f36\] { background: #e5e7eb; }
+    [data-theme="light"] .bg-\[\#0c1627\] { background: #eef2ff !important; }
+    [data-theme="light"] .bg-\[\#0c1424\]\/85 { background: rgba(248,250,252,.85) !important; }
+    [data-theme="light"] .bg-\[\#10182a\] { background: #e2e8f0 !important; }
+    [data-theme="light"] .bg-\[\#10182a\]\/80 { background: rgba(226,232,240,.8) !important; }
+    [data-theme="light"] .bg-\[\#010713\]\/75 { background: rgba(255,255,255,.9) !important; }
+    [data-theme="light"] .bg-\[\#030713\]\/75 { background: rgba(255,255,255,.9) !important; }
+    [data-theme="light"] .bg-\[\#0d1224\]\/95 { background: rgba(248,250,252,.95) !important; }
+    [data-theme="light"] .bg-\[\#0d1224\]\/70 { background: rgba(248,250,252,.7) !important; }
+    [data-theme="light"] .bg-\[\#111f36\] { background: #e5e7eb !important; }
+    [data-theme="light"] .bg-\[\#0d1728\]\/95 { background: rgba(248,250,252,.95) !important; }
+    [data-theme="light"] .bg-\[\#0d1728\]\/80 { background: rgba(248,250,252,.9) !important; }
+    [data-theme="light"] .bg-\[\#0d1728\]\/10 { background: rgba(248,250,252,.9) !important; }
+    [data-theme="light"] .border-black\/10 { border-color: rgba(15,23,42,.1) !important; }
+    [data-theme="light"] .shadow-black\/20 { box-shadow: 0 10px 30px rgba(15,23,42,.12); }
+    [data-theme="light"] .shadow-black\/15 { box-shadow: 0 10px 20px rgba(15,23,42,.08); }
+    [data-theme="light"] .hover\:bg-white\/10:hover { background: rgba(15,23,42,.08) !important; }
+    [data-theme="light"] .hover\:bg-white\/5:hover { background: rgba(15,23,42,.05) !important; }
+    [data-theme="light"] .bg-white\/5:hover { background: rgba(255,255,255,.85) !important; }
+    [data-theme="light"] .bg-white\/10:hover { background: rgba(255,255,255,.9) !important; }
+    [data-theme="light"] .text-slate-100 { color: #0f172a !important; }
+    [data-theme="light"] .text-slate-200 { color: #334155 !important; }
+    [data-theme="light"] .text-blue-100 { color: #1d4ed8 !important; }
+    [data-theme="light"] .text-pink-100 { color: #be185d !important; }
+    [data-theme="light"] .text-amber-100 { color: #b45309 !important; }
+    [data-theme="light"] button, [data-theme="light"] input, [data-theme="light"] select, [data-theme="light"] textarea { color: #111827; }
+    @media (max-width: 639px) {
           .nobo-root .panel,
           .nobo-root .stat-card { min-width: 0; }
           .nobo-root .panel:has(> table) { overflow-x: auto; -webkit-overflow-scrolling: touch; }

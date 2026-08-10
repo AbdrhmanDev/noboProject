@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   AlertTriangle,
   Apple,
@@ -36,9 +35,6 @@ import {
   X,
 } from "lucide-react";
 import { ROUTES } from "../../utils/routes";
-import { NAV_ITEMS } from "../../utils/navItems";
-import { useI18n } from "../../i18n/I18nContext";
-import noboLogo from "../../assets/nobo-logo-transparent.png";
 import AppLayout from "../../components/AppLayout";
 
 const SAR = new Intl.NumberFormat("en-SA", {
@@ -274,8 +270,6 @@ function Modal({ title, children, onClose }) {
 }
 
 export default function POSPage() {
-  const navigate = useNavigate();
-  const { t, dir } = useI18n();
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("الكل");
   const [cart, setCart] = useState([]);
@@ -286,9 +280,26 @@ export default function POSPage() {
   const [heldOrders, setHeldOrders] = useState([]);
   const [modal, setModal] = useState(null);
   const [toast, setToast] = useState("");
+  const [productList, setProductList] = useState(() => initialProducts);
+  const [newProduct, setNewProduct] = useState({
+    name: "",
+    sku: "",
+    price: "",
+    stock: "",
+    category: categories[0].id,
+    art: "",
+    color: "from-slate-300/25 to-blue-900/10",
+  });
   const [shiftOpen, setShiftOpen] = useState(true);
   const [actualCash, setActualCash] = useState("4625");
   const [aiDismissed, setAiDismissed] = useState([]);
+  const theme =
+    typeof document !== "undefined"
+      ? document.documentElement.dataset.theme
+      : "dark";
+  const isDark = theme !== "light";
+  const inputClass = `h-11 w-full rounded-xl border px-3 text-sm outline-none ${isDark ? "border-slate-800 bg-slate-800 text-slate-200" : "border-white/10 bg-slate-100 text-slate-900"}`;
+  const textareaClass = `h-28 w-full rounded-xl border p-3 text-xs outline-none ${isDark ? "border-slate-800 bg-slate-800 text-slate-200" : "border-white/10 bg-slate-100 text-slate-900"}`;
 
   const filteredProducts = useMemo(
     () =>

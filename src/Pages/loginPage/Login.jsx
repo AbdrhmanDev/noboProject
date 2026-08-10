@@ -70,15 +70,8 @@ function BrandIcon({ id, size = 12, className = "", color }) {
 function SideFeature({ img, title, desc, color }) {
   return (
     <div className="flex items-start gap-3">
-      <div
-        className="mt-1 rounded-2xl p-3"
-        style={{
-          background: `${color}18`,
-          border: `1px solid ${color}55`,
-          boxShadow: `0 0 20px ${color}22`,
-        }}
-      >
-        <img src={img} alt="" className="w-3 h-3 object-contain" />
+      <div className="mt-1 p-0 flex items-center justify-center">
+        <img src={img} alt="" className="w-16 h-16 object-contain" />
       </div>
       <div>
         <div className="font-bold text-sm text-white">{title}</div>
@@ -304,7 +297,6 @@ function LoginCard() {
 }
 
 export default function LoginPage() {
-  const [isDark, setIsDark] = useState(true);
   const { t, dir } = useI18n();
 
   return (
@@ -444,52 +436,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Dark Mode */}
-            <button
-              type="button"
-onClick={() => setIsDark((d) => !d)}
-              className="glow-badge h-[58px] w-[132px] rounded-xl px-2.5 flex items-center gap-2"
-            >
-              {/* Moon */}
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="31"
-                height="31"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#cbd5e1"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401Z" />
-              </svg>
-
-<div className="flex-1 leading-tight" dir={dir}>
-                <div className="text-[12px] font-bold text-white">
-                  {t("login.badgeNightTitle")}
-                </div>
-                <div className="text-[10px] text-gray-300">
-                  {t("login.badgeNightSub")}
-                </div>
-              </div>
-
-              {/* Toggle */}
-              <span
-                className={`relative inline-flex h-4 w-8 shrink-0 rounded-full transition-colors ${
-                  isDark
-                    ? "bg-blue-500 shadow-[0_0_8px_rgba(37,99,235,0.8)]"
-                    : "bg-gray-500 shadow-[0_0_8px_rgba(148,163,184,0.6)]"
-                }`}
-              >
-                <span
-                  className={`absolute top-[2px] left-[2px] h-3 w-3 rounded-full bg-white shadow-sm transition-transform ${
-                    isDark ? "translate-x-4" : "translate-x-0"
-                  }`}
-                />
-              </span>
-            </button>
-
           </div>
         </div>
       </div>
@@ -579,27 +525,18 @@ onClick={() => setIsDark((d) => !d)}
       {/* stats & compliance row — 6 photos only (no rectangles) */}
       <div className="relative z-10 max-w-7xl mx-auto mt-10 px-4 flex flex-wrap items-center justify-center gap-6">
         {[
-          { img: sheild, label: t("login.trusted") },
-          { img: Charge, label: t("login.compliance") },
-          { img: Cloud, label: t("login.availability") },
-          { img: analysis, label: t("login.instaReports"), scale: true },
-          { img: Signal, label: t("login.multiLang") },
-          { img: Speaker, label: t("login.supportAll"), scale: true },
-        ].map((s, i) => (
-          <div
-            key={i}
-            className="flex flex-col items-center justify-center gap-1.5 text-center"
-          >
-            <img
-              src={s.img}
-              alt=""
-              className={`w-24 h-24 object-contain ${s.scale ? "scale-150" : ""}`}
-            />
-            <div className="text-[11px] text-gray-400 leading-snug max-w-[160px]">
-              {s.label}
+            { img: sheild, label: t("login.trusted") },
+            { img: Charge, label: t("login.compliance") },
+            { img: Cloud, label: t("login.availability") },
+            { img: analysis, label: t("login.instaReports") },
+            { img: Signal, label: t("login.multiLang") },
+            { img: Speaker, label: t("login.supportAll") },
+          ].map((s, i) => (
+            <div key={i} className="flex flex-col items-center justify-center gap-1.5 text-center">
+              <img src={s.img} alt="" className="w-16 h-16 object-contain" />
+              <div className="text-[11px] text-gray-400 leading-snug max-w-[160px]">{s.label}</div>
             </div>
-          </div>
-        ))}
+          ))}
       </div>
 
       {/* social follow row */}
@@ -613,10 +550,10 @@ onClick={() => setIsDark((d) => !d)}
             rel="noopener noreferrer"
             aria-label={s.label}
             title={s.label}
-            className="glow-badge rounded-xl p-2.5 flex items-center justify-center text-gray-300 transition-all duration-200 hover:scale-105 hover:text-white hover:border-blue-500/60"
+            className="glow-badge p-3 flex items-center justify-center text-gray-300 transition-all duration-200 hover:scale-105 hover:text-white hover:border-blue-500/60"
             style={{ color: s.color }}
           >
-            <BrandIcon id={s.id} size={12} />
+            <BrandIcon id={s.id} size={16} />
           </a>
         ))}
       </div>
