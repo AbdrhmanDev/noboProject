@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { ROUTES } from "../../utils/routes";
 import AppLayout from "../../components/AppLayout";
+import { PosOperationalGate } from "../../features/pos/components/PosOperationalGate";
 
 const SAR = new Intl.NumberFormat("en-SA", {
   style: "currency",
@@ -411,7 +412,8 @@ export default function POSPage() {
   return (
     <AppLayout activePath={ROUTES.POS}>
       <main className="min-w-0 flex-1 p-3 sm:p-4 xl:p-5">
-        <div className="mx-auto max-w-[1680px] space-y-4" dir="rtl">
+        <PosOperationalGate>
+          <div className="mx-auto max-w-[1680px] space-y-4" dir="rtl">
           <header className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-[#0c1424]/85 p-3 shadow-lg shadow-black/15 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <div className="rounded-xl border border-blue-400/25 bg-blue-500/10 px-3 py-2">
@@ -946,7 +948,8 @@ export default function POSPage() {
                 ))}
             </div>
           </section>
-        </div>
+          </div>
+        </PosOperationalGate>
 
         {toast && (
           <div className="fixed bottom-5 left-1/2 z-[110] -translate-x-1/2 rounded-xl border border-blue-400/25 bg-[#10182a] px-4 py-3 text-xs font-bold text-blue-100 shadow-xl">
