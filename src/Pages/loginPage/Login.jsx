@@ -70,15 +70,8 @@ function BrandIcon({ id, size = 12, className = "", color }) {
 function SideFeature({ img, title, desc, color }) {
   return (
     <div className="flex items-start gap-3">
-      <div
-        className="mt-1 rounded-2xl p-3"
-        style={{
-          background: `${color}18`,
-          border: `1px solid ${color}55`,
-          boxShadow: `0 0 20px ${color}22`,
-        }}
-      >
-        <img src={img} alt="" className="w-3 h-3 object-contain" />
+      <div className="mt-1 p-0 flex items-center justify-center">
+        <img src={img} alt="" className="w-16 h-16 object-contain" />
       </div>
       <div>
         <div className="font-bold text-sm text-white">{title}</div>
@@ -532,27 +525,18 @@ export default function LoginPage() {
       {/* stats & compliance row — 6 photos only (no rectangles) */}
       <div className="relative z-10 max-w-7xl mx-auto mt-10 px-4 flex flex-wrap items-center justify-center gap-6">
         {[
-          { img: sheild, label: t("login.trusted") },
-          { img: Charge, label: t("login.compliance") },
-          { img: Cloud, label: t("login.availability") },
-          { img: analysis, label: t("login.instaReports"), scale: true },
-          { img: Signal, label: t("login.multiLang") },
-          { img: Speaker, label: t("login.supportAll"), scale: true },
-        ].map((s, i) => (
-          <div
-            key={i}
-            className="flex flex-col items-center justify-center gap-1.5 text-center"
-          >
-            <img
-              src={s.img}
-              alt=""
-              className={`w-24 h-24 object-contain ${s.scale ? "scale-150" : ""}`}
-            />
-            <div className="text-[11px] text-gray-400 leading-snug max-w-[160px]">
-              {s.label}
+            { img: sheild, label: t("login.trusted") },
+            { img: Charge, label: t("login.compliance") },
+            { img: Cloud, label: t("login.availability") },
+            { img: analysis, label: t("login.instaReports") },
+            { img: Signal, label: t("login.multiLang") },
+            { img: Speaker, label: t("login.supportAll") },
+          ].map((s, i) => (
+            <div key={i} className="flex flex-col items-center justify-center gap-1.5 text-center">
+              <img src={s.img} alt="" className="w-16 h-16 object-contain" />
+              <div className="text-[11px] text-gray-400 leading-snug max-w-[160px]">{s.label}</div>
             </div>
-          </div>
-        ))}
+          ))}
       </div>
 
       {/* social follow row */}
@@ -566,10 +550,10 @@ export default function LoginPage() {
             rel="noopener noreferrer"
             aria-label={s.label}
             title={s.label}
-            className="glow-badge rounded-xl p-2.5 flex items-center justify-center text-gray-300 transition-all duration-200 hover:scale-105 hover:text-white hover:border-blue-500/60"
+            className="glow-badge p-3 flex items-center justify-center text-gray-300 transition-all duration-200 hover:scale-105 hover:text-white hover:border-blue-500/60"
             style={{ color: s.color }}
           >
-            <BrandIcon id={s.id} size={12} />
+            <BrandIcon id={s.id} size={16} />
           </a>
         ))}
       </div>
