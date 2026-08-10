@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Eye,
   EyeOff,
@@ -9,6 +11,8 @@ import {
 } from "lucide-react";
 import { useI18n } from "../../i18n/I18nContext";
 import LanguageSwitcher from "../../i18n/LanguageSwitcher";
+import { useAuth } from "../../features/auth/hooks/useAuth";
+import { loginSchema } from "../../features/auth/schemas/login.schema";
 import noboLogo from "../../assets/nobo-logo-transparent.png";
 import earthBall from "../../assets/earthBall.jpeg";
 import LogoNobo from "../../assets/LogoNobo.png";
@@ -67,7 +71,7 @@ function BrandIcon({ id, size = 12, className = "", color }) {
   );
 }
 
-function SideFeature({ img, title, desc, color }) {
+function SideFeature({ img, title, desc }) {
   return (
     <div className="flex items-start gap-3">
       <div className="mt-1 p-0 flex items-center justify-center">
@@ -84,11 +88,50 @@ function SideFeature({ img, title, desc, color }) {
 function LoginCard() {
   const [showPassword, setShowPassword] = useState(false);
   const [mode, setMode] = useState("online");
+  const [serverError, setServerError] = useState("");
   const navigate = useNavigate();
-  const { t } = useI18n();
+  const location = useLocation();
+  const { t, lang } = useI18n();
+  const { login } = useAuth();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
 
-  const handleSignIn = () => {
-    navigate(ROUTES.DASHBOARD);
+  const message = (key) => {
+    const ar = {
+      "auth.emailRequired": "البريد الإلكتروني مطلوب.",
+      "auth.emailInvalid": "أدخل بريدًا إلكترونيًا صحيحًا.",
+      "auth.passwordRequired": "كلمة المرور مطلوبة.",
+      "auth.signInFailed": "تعذر تسجيل الدخول. تحقق من بياناتك وحاول مرة أخرى.",
+    };
+    const en = {
+      "auth.emailRequired": "Email is required.",
+      "auth.emailInvalid": "Enter a valid email address.",
+      "auth.passwordRequired": "Password is required.",
+      "auth.signInFailed": "Sign-in failed. Check your credentials and try again.",
+    };
+
+    return (lang === "ar" ? ar : en)[key] || key;
+  };
+
+  const handleSignIn = async (values) => {
+    setServerError("");
+
+    try {
+      await login(values);
+      const from = location.state?.from?.pathname || ROUTES.DASHBOARD;
+      navigate(from, { replace: true });
+    } catch {
+      setServerError(message("auth.signInFailed"));
+    }
   };
 
   return (
@@ -167,77 +210,109 @@ function LoginCard() {
           </div>
         </div>
 
-        {/* Email */}
-        <div className="mt-6">
-          <label className="block text-xs mb-1.5 text-gray-300">
-            {t("login.emailLabel")}
-          </label>
-          <div className="flex items-center gap-3 h-12 rounded-xl border border-white/10 bg-white/5 px-4 transition focus-within:border-violet-500 focus-within:ring-2 focus-within:ring-violet-500/30">
-            <Mail size={15} className="text-gray-400" />
-            <input
-              type="text"
-              placeholder={t("login.emailPlaceholder")}
-              className="flex-1 bg-transparent outline-none placeholder:text-gray-500"
-            />
+        <form onSubmit={handleSubmit(handleSignIn)} noValidate>
+          {/* Email */}
+          <div className="mt-6">
+            <label className="block text-xs mb-1.5 text-gray-300">
+              {t("login.emailLabel")}
+            </label>
+            <div className="flex items-center gap-3 h-12 rounded-xl border border-white/10 bg-white/5 px-4 transition focus-within:border-violet-500 focus-within:ring-2 focus-within:ring-violet-500/30">
+              <Mail size={15} className="text-gray-400" />
+              <input
+                type="email"
+                autoComplete="email"
+                placeholder={t("login.emailPlaceholder")}
+                disabled={isSubmitting}
+                {...register("email")}
+                className="flex-1 bg-transparent outline-none placeholder:text-gray-500 disabled:cursor-not-allowed disabled:opacity-60"
+              />
+            </div>
+            {errors.email?.message && (
+              <p className="mt-1.5 text-xs text-rose-300">
+                {message(errors.email.message)}
+              </p>
+            )}
           </div>
-        </div>
 
-        {/* Password */}
-        <div className="mt-4">
-          <label className="block text-xs mb-1.5 text-gray-300">
-            {t("login.passwordLabel")}
-          </label>
-          <div className="flex items-center gap-3 h-12 rounded-xl border border-white/10 bg-white/5 px-4 transition focus-within:border-violet-500 focus-within:ring-2 focus-within:ring-violet-500/30">
-            <Lock size={15} className="text-gray-400" />
-            <input
-              type={showPassword ? "text" : "password"}
-              placeholder={t("login.passwordPlaceholder")}
-              className="flex-1 bg-transparent outline-none placeholder:text-gray-500"
-            />
-            <button onClick={() => setShowPassword(!showPassword)}>
-              {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+          {/* Password */}
+          <div className="mt-4">
+            <label className="block text-xs mb-1.5 text-gray-300">
+              {t("login.passwordLabel")}
+            </label>
+            <div className="flex items-center gap-3 h-12 rounded-xl border border-white/10 bg-white/5 px-4 transition focus-within:border-violet-500 focus-within:ring-2 focus-within:ring-violet-500/30">
+              <Lock size={15} className="text-gray-400" />
+              <input
+                type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
+                placeholder={t("login.passwordPlaceholder")}
+                disabled={isSubmitting}
+                {...register("password")}
+                className="flex-1 bg-transparent outline-none placeholder:text-gray-500 disabled:cursor-not-allowed disabled:opacity-60"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                disabled={isSubmitting}
+              >
+                {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+              </button>
+            </div>
+            {errors.password?.message && (
+              <p className="mt-1.5 text-xs text-rose-300">
+                {message(errors.password.message)}
+              </p>
+            )}
+          </div>
+
+          {/* Remember + Forgot */}
+          <div className="mt-5 flex items-center justify-between text-sm">
+            <label className="flex items-center gap-2 text-gray-400 cursor-pointer">
+              <input
+                type="checkbox"
+                className="w-4 h-4 accent-violet-600"
+                defaultChecked
+                disabled={isSubmitting}
+              />
+              {t("login.remember")}
+            </label>
+            <button type="button" className="text-violet-400 hover:text-violet-300 transition">
+              {t("login.forgot")}
             </button>
           </div>
-        </div>
 
-        {/* Remember + Forgot */}
-        <div className="mt-5 flex items-center justify-between text-sm">
-          <label className="flex items-center gap-2 text-gray-400 cursor-pointer">
-            <input
-              type="checkbox"
-              className="w-4 h-4 accent-violet-600"
-              defaultChecked
-            />
-            {t("login.remember")}
-          </label>
-          <button className="text-violet-400 hover:text-violet-300 transition">
-            {t("login.forgot")}
-          </button>
-        </div>
+          {serverError && (
+            <div className="mt-4 rounded-xl border border-rose-400/25 bg-rose-500/10 px-3 py-2 text-xs text-rose-100">
+              {serverError}
+            </div>
+          )}
 
-        {/* Sign In */}
-        <motion.button
-          onClick={handleSignIn}
-          whileHover={{ scale: 1.02, boxShadow: "0 0 35px rgba(124,92,255,.35)" }}
-          whileTap={{ scale: 0.98 }}
-          className="
-            mt-6
-            w-full
-            h-12
-            rounded-xl
-            font-bold
-            text-white
-            text-base
-            bg-gradient-to-r
-            from-violet-600
-            to-blue-500
-            hover:from-violet-500
-            hover:to-blue-400
-            transition-all
-          "
-        >
-          {t("login.signin")}
-        </motion.button>
+          {/* Sign In */}
+          <motion.button
+            type="submit"
+            disabled={isSubmitting}
+            whileHover={isSubmitting ? undefined : { scale: 1.02, boxShadow: "0 0 35px rgba(124,92,255,.35)" }}
+            whileTap={isSubmitting ? undefined : { scale: 0.98 }}
+            className="
+              mt-6
+              w-full
+              h-12
+              rounded-xl
+              font-bold
+              text-white
+              text-base
+              bg-gradient-to-r
+              from-violet-600
+              to-blue-500
+              hover:from-violet-500
+              hover:to-blue-400
+              transition-all
+              disabled:cursor-not-allowed
+              disabled:opacity-65
+            "
+          >
+            {isSubmitting ? "..." : t("login.signin")}
+          </motion.button>
+        </form>
 
         {/* Divider */}
         <div className="my-6 flex items-center">

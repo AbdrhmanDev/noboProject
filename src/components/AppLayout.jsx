@@ -3,6 +3,13 @@ import Header from "./Header";
 import Footer from "./Footer";
 import { useI18n } from "../i18n/I18nContext";
 import { useUser } from "../context/UserContext";
+import { useAuth } from "../features/auth/hooks/useAuth";
+import {
+  getCompanyDisplayName,
+  isCompanyEnterable,
+  useCompany,
+} from "../features/companies/context/CompanyContext";
+import { useMyCompanies } from "../features/companies/hooks/useCompanies";
 import { ROUTES } from "../utils/routes";
 import { NAV_ITEMS } from "../utils/navItems";
 
@@ -12,6 +19,12 @@ export default function AppLayout({ children, onLogout }) {
   const activePath = (location?.hash && location.hash.replace("#", "")) || location?.pathname || ROUTES.DASHBOARD;
   const { t, dir } = useI18n();
   const { user } = useUser();
+  const { logout } = useAuth();
+  const { currentCompanyId, clearCompany } = useCompany();
+  const { data: companies = [] } = useMyCompanies();
+  const handleLogout = onLogout || logout;
+  const currentCompany = companies.find((company) => company.companyId === currentCompanyId);
+  const switchableCompanies = companies.filter(isCompanyEnterable);
 
   return (
     <div dir={dir} className="bg-space min-h-screen w-full text-white flex flex-col lg:flex-row">
@@ -162,7 +175,11 @@ export default function AppLayout({ children, onLogout }) {
 
       {/* main */}
       <main className="min-w-0 flex-1 p-3 sm:p-4 md:p-6 overflow-x-hidden">
-        <Header onLogout={onLogout} />
+        <Header
+          onLogout={handleLogout}
+          companyName={currentCompany ? getCompanyDisplayName(currentCompany) : ""}
+          onSwitchCompany={switchableCompanies.length > 1 ? clearCompany : undefined}
+        />
         <nav className="mb-5 flex gap-2 overflow-x-auto pb-1 scrollbar-none lg:hidden">
           {NAV_ITEMS.map((item) => {
             const isActive = activePath === item.to;

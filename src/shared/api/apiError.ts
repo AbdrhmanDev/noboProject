@@ -39,6 +39,20 @@ function getString(data: UnknownRecord, keys: string[]): string | undefined {
   return undefined;
 }
 
+function getProblemError(data: UnknownRecord, key: "code" | "message"): string | undefined {
+  const errors = data.errors;
+  if (!Array.isArray(errors)) return undefined;
+
+  for (const entry of errors) {
+    if (isRecord(entry)) {
+      const value = entry[key];
+      if (typeof value === "string" && value.trim().length > 0) return value;
+    }
+  }
+
+  return undefined;
+}
+
 export function normalizeApiError(error: unknown): ApiError {
   if (isRecord(error) && isRecord(error.response)) {
     const response = error.response;
@@ -48,8 +62,9 @@ export function normalizeApiError(error: unknown): ApiError {
     if (isRecord(data)) {
       return {
         status,
-        code: getString(data, ["code", "errorCode", "type"]),
+        code: getString(data, ["code", "errorCode", "type"]) || getProblemError(data, "code"),
         message:
+          getProblemError(data, "message") ||
           getString(data, ["message", "detail", "title", "error"]) ||
           "Request failed.",
         validationErrors: normalizeValidationErrors(data.errors),

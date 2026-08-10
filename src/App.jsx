@@ -1,6 +1,8 @@
 import { HashRouter, Routes, Route } from "react-router-dom";
 import GlobalStyle from "./styles/GlobalStyle";
 import { AppProviders } from "./app/providers/AppProviders";
+import { ProtectedRoute } from "./features/auth/components/ProtectedRoute";
+import { PublicOnlyRoute } from "./features/auth/components/PublicOnlyRoute";
 import LoginPage from "./Pages/loginPage/Login";
 import SignupPage from "./Pages/signupPage/Signup";
 import Dashboard from "./Pages/DashboardPage/Dashboard";
@@ -21,28 +23,30 @@ import NotFound from "./Pages/NotFound/notFound";
 import { ROUTES } from "./utils/routes";
 
 export default function App() {
+  const protectedPage = (page) => <ProtectedRoute>{page}</ProtectedRoute>;
+
   return (
     <AppProviders>
       <HashRouter>
         <div className="nobo-root">
           <GlobalStyle />
           <Routes>
-            <Route path={ROUTES.LOGIN} element={<LoginPage />} />
-            <Route path={ROUTES.SIGNUP} element={<SignupPage />} />
-            <Route path={ROUTES.DASHBOARD} element={<Dashboard />} />
-            <Route path={ROUTES.POS} element={<POSPage />} />
-            <Route path={ROUTES.SALES} element={<SalesPage />} />
-            <Route path={ROUTES.PURCHASES} element={<PurchasesPage />} />
-            <Route path={ROUTES.INVENTORY} element={<InventoryPage />} />
-            <Route path={ROUTES.CUSTOMERS} element={<CustomersPage />} />
-            <Route path={ROUTES.SUPPLIERS} element={<SuppliersPage />} />
-            <Route path={ROUTES.ACCOUNTING} element={<AccountingPage />} />
-            <Route path={ROUTES.REPORTS} element={<ReportsPage />} />
-            <Route path={ROUTES.PROJECTS} element={<ProjectsPage />} />
-            <Route path={ROUTES.HR} element={<HRPage />} />
-            <Route path={ROUTES.SETTINGS} element={<SettingsPage />} />
-            <Route path={ROUTES.MORE} element={<MorePage />} />
-            <Route path={ROUTES.PROFILE} element={<ProfilePage />} />
+            <Route path={ROUTES.LOGIN} element={<PublicOnlyRoute><LoginPage /></PublicOnlyRoute>} />
+            <Route path={ROUTES.SIGNUP} element={<PublicOnlyRoute><SignupPage /></PublicOnlyRoute>} />
+            <Route path={ROUTES.DASHBOARD} element={protectedPage(<Dashboard />)} />
+            <Route path={ROUTES.POS} element={protectedPage(<POSPage />)} />
+            <Route path={ROUTES.SALES} element={protectedPage(<SalesPage />)} />
+            <Route path={ROUTES.PURCHASES} element={protectedPage(<PurchasesPage />)} />
+            <Route path={ROUTES.INVENTORY} element={protectedPage(<InventoryPage />)} />
+            <Route path={ROUTES.CUSTOMERS} element={protectedPage(<CustomersPage />)} />
+            <Route path={ROUTES.SUPPLIERS} element={protectedPage(<SuppliersPage />)} />
+            <Route path={ROUTES.ACCOUNTING} element={protectedPage(<AccountingPage />)} />
+            <Route path={ROUTES.REPORTS} element={protectedPage(<ReportsPage />)} />
+            <Route path={ROUTES.PROJECTS} element={protectedPage(<ProjectsPage />)} />
+            <Route path={ROUTES.HR} element={protectedPage(<HRPage />)} />
+            <Route path={ROUTES.SETTINGS} element={protectedPage(<SettingsPage />)} />
+            <Route path={ROUTES.MORE} element={protectedPage(<MorePage />)} />
+            <Route path={ROUTES.PROFILE} element={protectedPage(<ProfilePage />)} />
             <Route path={ROUTES.NOT_FOUND} element={<NotFound />} />
           </Routes>
         </div>

@@ -12,7 +12,7 @@ function TopWidget({ label, value, sub, color }) {
   );
 }
 
-export default function Header({ onLogout }) {
+export default function Header({ onLogout, companyName, onSwitchCompany }) {
   const { t } = useI18n();
   const [isDark, setIsDark] = useState(() => typeof window !== "undefined" ? localStorage.getItem("nobo-theme") !== "light" : true);
   const [now, setNow] = useState(() => new Date());
@@ -77,6 +77,17 @@ export default function Header({ onLogout }) {
         <TopWidget label={t("header.silver")} value="28.56" sub="+0.78%" color="#c084fc" />
       </div>
       <div className="flex items-center justify-end gap-3">
+        {companyName && (
+          <button
+            type="button"
+            onClick={onSwitchCompany}
+            disabled={!onSwitchCompany}
+            className="max-w-[180px] truncate rounded-2xl border border-blue-400/25 bg-blue-500/10 px-3 py-2 text-xs font-bold text-blue-100 transition hover:border-blue-400/50 hover:bg-blue-500/15 disabled:cursor-default disabled:hover:border-blue-400/25 disabled:hover:bg-blue-500/10"
+            title={onSwitchCompany ? "Switch company" : companyName}
+          >
+            {companyName}
+          </button>
+        )}
         <button type="button" onClick={() => setIsDark((prev) => !prev)} className="rounded-2xl border border-white/10 bg-white/5 p-2 text-slate-200 transition hover:border-blue-400/50 hover:bg-blue-500/10">
           {isDark ? <Moon size={18} /> : <Sun size={18} />}
         </button>
