@@ -1,4 +1,5 @@
 import { Plus, AlertTriangle, Package, ArrowLeftRight, Search } from "lucide-react";
+import { useState } from "react";
 import AppLayout from "../../components/AppLayout";
 import { useI18n } from "../../i18n/I18nContext";
 import { ROUTES } from "../../utils/routes";
@@ -22,13 +23,18 @@ const lowStock = items.filter((i) => i.qty <= i.min);
 
 export default function InventoryPage({ onLogout }) {
   const { t } = useI18n();
+  const [itemsList, setItemsList] = useState(items);
+  const [showAddProduct, setShowAddProduct] = useState(false);
+  const [newProduct, setNewProduct] = useState({ name: "", sku: "", qty: 0, loc: "" });
+  const [showTransfer, setShowTransfer] = useState(false);
+  const [transfer, setTransfer] = useState({ sku: "", qty: 0, to: "" });
   return (
     <AppLayout onLogout={onLogout} activePath={ROUTES.INVENTORY}>
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <h1 className="text-xl font-black brand-text">{t("inv.title")}</h1>
         <div className="flex flex-wrap gap-2">
-          <button className="panel rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><ArrowLeftRight size={13} /> {t("inv.transfer")}</button>
-          <button className="primary-btn rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><Plus size={13} /> {t("inv.addProduct")}</button>
+          <button onClick={() => setShowTransfer(true)} className="panel rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><ArrowLeftRight size={13} /> {t("inv.transfer")}</button>
+          <button onClick={() => setShowAddProduct(true)} className="primary-btn rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><Plus size={13} /> {t("inv.addProduct")}</button>
         </div>
       </div>
 
@@ -64,7 +70,7 @@ export default function InventoryPage({ onLogout }) {
               </tr>
             </thead>
             <tbody>
-              {items.map((it, i) => (
+              {itemsList.map((it, i) => (
                 <tr key={i} className="border-t border-white/5">
                   <td className="py-2.5 text-gray-200">{it.name}</td>
                   <td className="py-2.5 text-blue-400">{it.sku}</td>
@@ -76,6 +82,50 @@ export default function InventoryPage({ onLogout }) {
             </tbody>
           </table>
         </div>
+
+        {showAddProduct && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="w-full max-w-md bg-gray-900 rounded-2xl p-4">
+              <h3 className="font-bold mb-3">{t("inv.createProduct")}</h3>
+              <div className="space-y-2">
+                <input value={newProduct.name} onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })} placeholder={t("inv.product") } className="w-full input-dark p-2 rounded" />
+                <input value={newProduct.sku} onChange={(e) => setNewProduct({ ...newProduct, sku: e.target.value })} placeholder="SKU" className="w-full input-dark p-2 rounded" />
+                <input value={newProduct.qty} onChange={(e) => setNewProduct({ ...newProduct, qty: Number(e.target.value) })} placeholder={t("inv.qty")} className="w-full input-dark p-2 rounded" />
+                <input value={newProduct.loc} onChange={(e) => setNewProduct({ ...newProduct, loc: e.target.value })} placeholder={t("inv.location")} className="w-full input-dark p-2 rounded" />
+                <div className="flex gap-2 justify-end mt-3">
+                  <button onClick={() => setShowAddProduct(false)} className="panel px-3 py-2 rounded">{t("common.cancel")}</button>
+                  <button onClick={() => {
+                    setItemsList([{ name: newProduct.name || "-", sku: newProduct.sku || `SKU-${Date.now()}`, qty: newProduct.qty || 0, min: 1, loc: newProduct.loc || "مستودع" }, ...itemsList]);
+                    setNewProduct({ name: "", sku: "", qty: 0, loc: "" });
+                    setShowAddProduct(false);
+                  }} className="primary-btn px-3 py-2 rounded">{t("common.save")}</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showTransfer && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="w-full max-w-md bg-gray-900 rounded-2xl p-4">
+              <h3 className="font-bold mb-3">{t("inv.transferStock")}</h3>
+              <div className="space-y-2">
+                <input value={transfer.sku} onChange={(e) => setTransfer({ ...transfer, sku: e.target.value })} placeholder="SKU" className="w-full input-dark p-2 rounded" />
+                <input value={transfer.qty} onChange={(e) => setTransfer({ ...transfer, qty: Number(e.target.value) })} placeholder={t("inv.qty")} className="w-full input-dark p-2 rounded" />
+                <input value={transfer.to} onChange={(e) => setTransfer({ ...transfer, to: e.target.value })} placeholder={t("inv.location")} className="w-full input-dark p-2 rounded" />
+                <div className="flex gap-2 justify-end mt-3">
+                  <button onClick={() => setShowTransfer(false)} className="panel px-3 py-2 rounded">{t("common.cancel")}</button>
+                  <button onClick={() => {
+                    // simple stock transfer simulation: decrement matching sku
+                    setItemsList(itemsList.map(it => it.sku === transfer.sku ? { ...it, qty: Math.max(0, it.qty - transfer.qty) } : it));
+                    setTransfer({ sku: "", qty: 0, to: "" });
+                    setShowTransfer(false);
+                  }} className="primary-btn px-3 py-2 rounded">{t("common.save")}</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* low stock alerts */}
         <div className="panel rounded-2xl p-4">

@@ -1,4 +1,5 @@
 import { Plus, Truck, Search } from "lucide-react";
+import { useState } from "react";
 import AppLayout from "../../components/AppLayout";
 import { useI18n } from "../../i18n/I18nContext";
 import { ROUTES } from "../../utils/routes";
@@ -20,13 +21,19 @@ const purchases = [
 
 export default function PurchasesPage({ onLogout }) {
   const { t } = useI18n();
+  const [purchasesList, setPurchasesList] = useState([
+    { no: "PO-2025-1234", date: "25 مايو 2025", supplier: "شركة التقنية المتكاملة", amount: "12,400", status: "مستلمة" },
+    { no: "PO-2025-1233", date: "24 مايو 2025", supplier: "مجموعة الخليج", amount: "8,750", status: "قيد الشحن" },
+  ]);
+  const [showAddPurchase, setShowAddPurchase] = useState(false);
+  const [newPurchase, setNewPurchase] = useState({ supplier: "", amount: "" });
   return (
     <AppLayout onLogout={onLogout} activePath={ROUTES.PURCHASES}>
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <h1 className="text-xl font-black brand-text">{t("purch.title")}</h1>
         <div className="flex flex-wrap gap-2">
           <button className="panel rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><Truck size={13} /> {t("purch.purchaseOrder")}</button>
-          <button className="primary-btn rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><Plus size={13} /> {t("purch.purchaseInvoice")}</button>
+          <button onClick={() => setShowAddPurchase(true)} className="primary-btn rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><Plus size={13} /> {t("purch.purchaseInvoice")}</button>
         </div>
       </div>
 
@@ -61,7 +68,7 @@ export default function PurchasesPage({ onLogout }) {
             </tr>
           </thead>
           <tbody>
-            {purchases.map((p, i) => (
+            {purchasesList.map((p, i) => (
               <tr key={i} className="border-t border-white/5">
                 <td className="py-2.5 text-blue-400">{p.no}</td>
                 <td className="py-2.5 text-gray-300">{p.date}</td>
@@ -79,6 +86,27 @@ export default function PurchasesPage({ onLogout }) {
           </tbody>
         </table>
       </div>
+      {showAddPurchase && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="w-full max-w-md bg-gray-900 rounded-2xl p-4">
+            <h3 className="font-bold mb-3">{t("purch.createPurchase")}</h3>
+            <div className="space-y-2">
+              <input value={newPurchase.supplier} onChange={(e) => setNewPurchase({ ...newPurchase, supplier: e.target.value })} placeholder={t("purch.supplier")} className="w-full input-dark p-2 rounded" />
+              <input value={newPurchase.amount} onChange={(e) => setNewPurchase({ ...newPurchase, amount: e.target.value })} placeholder={t("purch.amount")} className="w-full input-dark p-2 rounded" />
+              <div className="flex gap-2 justify-end mt-3">
+                <button onClick={() => setShowAddPurchase(false)} className="panel px-3 py-2 rounded">{t("common.cancel")}</button>
+                <button onClick={() => {
+                  const id = `PO-${Date.now()}`;
+                  const today = new Date().toLocaleDateString("ar-SA");
+                  setPurchasesList([{ no: id, date: today, supplier: newPurchase.supplier || "-", amount: newPurchase.amount || "0", status: "معلقة" }, ...purchasesList]);
+                  setNewPurchase({ supplier: "", amount: "" });
+                  setShowAddPurchase(false);
+                }} className="primary-btn px-3 py-2 rounded">{t("common.save")}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </AppLayout>
   );
 }

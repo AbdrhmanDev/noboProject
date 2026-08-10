@@ -1,4 +1,5 @@
 import { UserPlus, Mail, Phone, Search } from "lucide-react";
+import { useState } from "react";
 import AppLayout from "../../components/AppLayout";
 import { useI18n } from "../../i18n/I18nContext";
 import { ROUTES } from "../../utils/routes";
@@ -20,13 +21,16 @@ const customers = [
 
 export default function CustomersPage({ onLogout }) {
   const { t } = useI18n();
+  const [customersList, setCustomersList] = useState(customers);
+  const [showAddCustomer, setShowAddCustomer] = useState(false);
+  const [newCustomer, setNewCustomer] = useState({ name: "", email: "", phone: "" });
   return (
     <AppLayout onLogout={onLogout} activePath={ROUTES.CUSTOMERS}>
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <h1 className="text-xl font-black brand-text">{t("cust.title")}</h1>
         <div className="flex flex-wrap gap-2">
           <button className="panel rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><Mail size={13} /> {t("cust.emailCampaign")}</button>
-          <button className="primary-btn rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><UserPlus size={13} /> {t("cust.newCustomer")}</button>
+          <button onClick={() => setShowAddCustomer(true)} className="primary-btn rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><UserPlus size={13} /> {t("cust.newCustomer")}</button>
         </div>
       </div>
 
@@ -61,7 +65,7 @@ export default function CustomersPage({ onLogout }) {
             </tr>
           </thead>
           <tbody>
-            {customers.map((c, i) => (
+            {customersList.map((c, i) => (
               <tr key={i} className="border-t border-white/5">
                 <td className="py-2.5">
                   <div className="flex items-center gap-2">
@@ -84,6 +88,26 @@ export default function CustomersPage({ onLogout }) {
           </tbody>
         </table>
       </div>
+      {showAddCustomer && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="w-full max-w-md bg-gray-900 rounded-2xl p-4">
+            <h3 className="font-bold mb-3">{t("cust.createCustomer")}</h3>
+            <div className="space-y-2">
+              <input value={newCustomer.name} onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })} placeholder={t("cust.customer")} className="w-full input-dark p-2 rounded" />
+              <input value={newCustomer.email} onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })} placeholder={t("cust.email")} className="w-full input-dark p-2 rounded" />
+              <input value={newCustomer.phone} onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })} placeholder={t("cust.phone")} className="w-full input-dark p-2 rounded" />
+              <div className="flex gap-2 justify-end mt-3">
+                <button onClick={() => setShowAddCustomer(false)} className="panel px-3 py-2 rounded">{t("common.cancel")}</button>
+                <button onClick={() => {
+                  setCustomersList([{ name: newCustomer.name || "-", email: newCustomer.email || "", phone: newCustomer.phone || "", total: "0", type: "فردي", avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${Date.now()}` }, ...customersList]);
+                  setNewCustomer({ name: "", email: "", phone: "" });
+                  setShowAddCustomer(false);
+                }} className="primary-btn px-3 py-2 rounded">{t("common.save")}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </AppLayout>
   );
 }

@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Header from "./Header";
 import Footer from "./Footer";
 import { useI18n } from "../i18n/I18nContext";
@@ -6,8 +6,10 @@ import { useUser } from "../context/UserContext";
 import { ROUTES } from "../utils/routes";
 import { NAV_ITEMS } from "../utils/navItems";
 
-export default function AppLayout({ children, onLogout, activePath = ROUTES.DASHBOARD }) {
+export default function AppLayout({ children, onLogout }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const activePath = (location?.hash && location.hash.replace("#", "")) || location?.pathname || ROUTES.DASHBOARD;
   const { t, dir } = useI18n();
   const { user } = useUser();
 

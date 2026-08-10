@@ -289,6 +289,16 @@ export const translations = {
     "rep.channelsDesc": "أداء قنوات البيع المختلفة",
     "rep.opExpenses": "تقرير المصاريف التشغيلية",
     "rep.opExpensesDesc": "تفاصيل المصروفات حسب الفئة",
+    "rep.exportReport": "تصدير تقرير",
+    "rep.exportReportDesc": "اختر صيغة التقرير لتنزيله فورًا.",
+    "rep.downloadExcel": "تنزيل Excel",
+    "rep.downloadPdf": "تنزيل PDF",
+    "rep.reportType": "نوع التقرير",
+    "rep.branchPlaceholder": "فرع (اختياري)",
+    "rep.createReport": "إنشاء التقرير",
+    "rep.customReportDesc": "حدد الفلاتر لإنشاء تقرير مخصص.",
+    "rep.exportSuccess": "تم تصدير التقرير بنجاح.",
+    "rep.customReportCreated": "تم إنشاء التقرير المخصص.",
 
     // ---- Projects ----
     "proj.title": "المشاريع",

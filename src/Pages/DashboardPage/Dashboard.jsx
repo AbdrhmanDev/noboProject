@@ -10,6 +10,7 @@ import {
 import AppLayout from "../../components/AppLayout";
 import { useI18n } from "../../i18n/I18nContext";
 import { ROUTES } from "../../utils/routes";
+import { Link } from "react-router-dom";
 
 /* ---------------------------------- data ---------------------------------- */
 
@@ -106,14 +107,14 @@ export default function Dashboard({ onLogout }) {
     <AppLayout onLogout={onLogout} activePath={ROUTES.DASHBOARD}>
       {/* quick actions */}
       <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1 mb-6">
-        <QuickAction icon={Receipt} label={t("dash.saleInvoice")} />
-        <QuickAction icon={FileText} label={t("dash.purchaseInvoice")} />
-        <QuickAction icon={Package} label={t("dash.addProduct")} />
-        <QuickAction icon={UserPlus} label={t("dash.newCustomer")} />
-        <QuickAction icon={BarChart3} label={t("dash.salesReport")} />
-        <QuickAction icon={ArrowLeftRight} label={t("dash.transferStock")} />
-        <QuickAction icon={Receipt} label={t("dash.newExpense")} />
-        <QuickAction icon={UserPlus} label={t("dash.addUser")} />
+          <Link to={ROUTES.SALES} className="inline-block"><QuickAction icon={Receipt} label={t("dash.saleInvoice")} /></Link>
+          <Link to={ROUTES.PURCHASES} className="inline-block"><QuickAction icon={FileText} label={t("dash.purchaseInvoice")} /></Link>
+          <Link to={ROUTES.INVENTORY} className="inline-block"><QuickAction icon={Package} label={t("dash.addProduct")} /></Link>
+          <Link to={ROUTES.CUSTOMERS} className="inline-block"><QuickAction icon={UserPlus} label={t("dash.newCustomer")} /></Link>
+          <Link to={ROUTES.REPORTS} className="inline-block"><QuickAction icon={BarChart3} label={t("dash.salesReport")} /></Link>
+          <Link to={ROUTES.INVENTORY} className="inline-block"><QuickAction icon={ArrowLeftRight} label={t("dash.transferStock")} /></Link>
+          <Link to={ROUTES.ACCOUNTING} className="inline-block"><QuickAction icon={Receipt} label={t("dash.newExpense")} /></Link>
+          <Link to={ROUTES.SETTINGS} className="inline-block"><QuickAction icon={UserPlus} label={t("dash.addUser")} /></Link>
       </div>
 
       {/* stat cards */}

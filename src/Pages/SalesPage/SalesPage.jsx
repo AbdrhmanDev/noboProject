@@ -1,4 +1,5 @@
 import { Plus, Filter, Download } from "lucide-react";
+import { useState } from "react";
 import AppLayout from "../../components/AppLayout";
 import { useI18n } from "../../i18n/I18nContext";
 import { ROUTES } from "../../utils/routes";
@@ -10,16 +11,19 @@ const stats = [
   { labelKey: "sales.avgInvoice", value: "392 ر.س", color: "#17d9c4" },
 ];
 
-const invoices = [
-  { no: "INV-2025-1054", date: "25 مايو 2025", customer: "مؤسسة السليم", amount: "4,850", status: "مدفوعة" },
-  { no: "INV-2025-1053", date: "25 مايو 2025", customer: "شركة النور", amount: "2,300", status: "مدفوعة" },
-  { no: "INV-2025-1052", date: "24 مايو 2025", customer: "محلات الشرق", amount: "1,540", status: "معلقة" },
-  { no: "INV-2025-1051", date: "24 مايو 2025", customer: "مكتبة الفلاح", amount: "890", status: "مدفوعة" },
-  { no: "INV-2025-1050", date: "23 مايو 2025", customer: "شركة الأمل", amount: "3,120", status: "ملغاة" },
-];
+// initial invoices moved into component state
 
 export default function SalesPage({ onLogout }) {
   const { t } = useI18n();
+  const [invoices, setInvoices] = useState([
+    { no: "INV-2025-1054", date: "25 مايو 2025", customer: "مؤسسة السليم", amount: "4,850", status: "مدفوعة" },
+    { no: "INV-2025-1053", date: "25 مايو 2025", customer: "شركة النور", amount: "2,300", status: "مدفوعة" },
+    { no: "INV-2025-1052", date: "24 مايو 2025", customer: "محلات الشرق", amount: "1,540", status: "معلقة" },
+    { no: "INV-2025-1051", date: "24 مايو 2025", customer: "مكتبة الفلاح", amount: "890", status: "مدفوعة" },
+    { no: "INV-2025-1050", date: "23 مايو 2025", customer: "شركة الأمل", amount: "3,120", status: "ملغاة" },
+  ]);
+  const [showAddInvoice, setShowAddInvoice] = useState(false);
+  const [newInvoice, setNewInvoice] = useState({ customer: "", amount: "" });
   return (
     <AppLayout onLogout={onLogout} activePath={ROUTES.SALES}>
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
@@ -27,7 +31,7 @@ export default function SalesPage({ onLogout }) {
         <div className="flex flex-wrap gap-2">
           <button className="panel rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><Filter size={13} /> {t("sales.filter")}</button>
           <button className="panel rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><Download size={13} /> {t("sales.export")}</button>
-          <button className="primary-btn rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><Plus size={13} /> {t("sales.saleInvoice")}</button>
+          <button onClick={() => setShowAddInvoice(true)} className="primary-btn rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><Plus size={13} /> {t("sales.saleInvoice")}</button>
         </div>
       </div>
 
@@ -73,6 +77,27 @@ export default function SalesPage({ onLogout }) {
           </tbody>
         </table>
       </div>
+      {showAddInvoice && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="w-full max-w-md bg-gray-900 rounded-2xl p-4">
+            <h3 className="font-bold mb-3">{t("sales.createInvoice")}</h3>
+            <div className="space-y-2">
+              <input value={newInvoice.customer} onChange={(e) => setNewInvoice({ ...newInvoice, customer: e.target.value })} placeholder={t("sales.customer")} className="w-full input-dark p-2 rounded" />
+              <input value={newInvoice.amount} onChange={(e) => setNewInvoice({ ...newInvoice, amount: e.target.value })} placeholder={t("sales.amount")} className="w-full input-dark p-2 rounded" />
+              <div className="flex gap-2 justify-end mt-3">
+                <button onClick={() => setShowAddInvoice(false)} className="panel px-3 py-2 rounded">{t("common.cancel")}</button>
+                <button onClick={() => {
+                  const id = `INV-${Date.now()}`;
+                  const today = new Date().toLocaleDateString("ar-SA");
+                  setInvoices([{ no: id, date: today, customer: newInvoice.customer || "-", amount: newInvoice.amount || "0", status: "معلقة" }, ...invoices]);
+                  setNewInvoice({ customer: "", amount: "" });
+                  setShowAddInvoice(false);
+                }} className="primary-btn px-3 py-2 rounded">{t("common.save")}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </AppLayout>
   );
 }
