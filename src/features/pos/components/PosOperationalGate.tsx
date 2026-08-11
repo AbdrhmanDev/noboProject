@@ -85,11 +85,15 @@ export function PosOperationalGate({ children }: PosOperationalGateProps) {
     );
   }
 
-  if (!isPosTerminalContextReady) {
+  if (!terminals) {
     return <LoadingState label="Preparing POS terminal..." />;
   }
 
-  if (!terminals?.length) {
+  if (!isPosTerminalContextReady && currentPosTerminalId) {
+    return <LoadingState label="Preparing POS terminal..." />;
+  }
+
+  if (!terminals.length) {
     return (
       <EmptyState
         title="No POS terminals found"

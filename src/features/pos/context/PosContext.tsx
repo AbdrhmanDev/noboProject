@@ -198,17 +198,20 @@ export function PosProvider({ children }: PosProviderProps) {
     terminalsLoading,
   ]);
 
+  const resolvedPosTerminalContextReady =
+    isPosTerminalContextReady || terminalsError || Array.isArray(terminals);
+
   const value = useMemo<PosContextValue>(
     () => ({
       currentPosTerminalId,
       selectPosTerminal,
       clearPosTerminal,
-      isPosTerminalContextReady,
+      isPosTerminalContextReady: resolvedPosTerminalContextReady,
     }),
     [
       clearPosTerminal,
       currentPosTerminalId,
-      isPosTerminalContextReady,
+      resolvedPosTerminalContextReady,
       selectPosTerminal,
     ],
   );
