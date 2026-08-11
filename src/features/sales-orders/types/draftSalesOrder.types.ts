@@ -67,6 +67,14 @@ export type DraftSalesOrderDiscount = {
   appliedAtUtc: string;
 };
 
+export type DraftSalesOrderKitchenTicket = {
+  kitchenTicketId: string;
+  kitchenStationId: string;
+  kitchenStationCode: string;
+  kitchenStationName: string;
+  status: "New" | "Preparing" | "Ready" | "Cancelled" | string;
+};
+
 export type DraftSalesOrder = {
   salesOrderId: string;
   companyId: string;
@@ -77,7 +85,15 @@ export type DraftSalesOrder = {
   fulfillmentType: SalesOrderFulfillmentType;
   restaurantTableId: string | null;
   status: "Draft" | "Confirmed" | "Cancelled" | "Closed";
+  cancellationKind?: "Standard" | "PreparedVoid" | string | null;
   draftVersion: number;
+  confirmedAtUtc?: string | null;
+  confirmedByUserId?: string | null;
+  cancelledAtUtc?: string | null;
+  cancelledByUserId?: string | null;
+  cancellationReason?: string | null;
+  closedAtUtc?: string | null;
+  closedByUserId?: string | null;
   subtotalAmount: number;
   isTaxEnabled: boolean;
   priceListTaxMode: string | null;
@@ -87,12 +103,19 @@ export type DraftSalesOrder = {
   grossAmount: number;
   currencyMinorUnitDigits: number;
   payableAmount: number;
+  grossPaidAmount?: number;
+  refundedAmount?: number;
+  netPaidAmount?: number;
+  remainingAmount?: number;
+  isFullyPaid?: boolean;
   createdByUserId: string;
   createdAtUtc: string;
   wasAlreadyCreated?: boolean;
   discount: DraftSalesOrderDiscount | null;
   taxSummaries: unknown[];
   lines: DraftSalesOrderLine[];
+  payments?: unknown[];
+  kitchenTickets?: DraftSalesOrderKitchenTicket[];
 };
 
 export type ConfirmSalesOrderKitchenTicketItemModifier = {
@@ -127,4 +150,59 @@ export type ConfirmSalesOrderResponse = {
   confirmedByUserId: string;
   wasAlreadyConfirmed: boolean;
   kitchenTickets: ConfirmSalesOrderKitchenTicket[];
+};
+
+export type CloseSalesOrderResponse = {
+  salesOrderId: string;
+  status: "Closed";
+  closedAtUtc: string;
+  closedByUserId: string;
+  payableAmount: number;
+  grossPaidAmount: number;
+  refundedAmount: number;
+  netPaidAmount: number;
+  paidAmount: number;
+  remainingAmount: number;
+  wasAlreadyClosed: boolean;
+};
+
+export type CancelSalesOrderRequest = {
+  reason: string;
+};
+
+export type CancelSalesOrderResponse = {
+  salesOrderId: string;
+  status: "Cancelled";
+  cancelledAtUtc: string;
+  cancelledByUserId: string;
+  cancellationReason: string;
+  wasAlreadyCancelled: boolean;
+  inventoryReversed: boolean;
+  inventoryStockTransactionId: string | null;
+};
+
+export type VoidPreparedSalesOrderRequest = {
+  reason: string;
+};
+
+export type VoidPreparedSalesOrderKitchenTicket = {
+  kitchenTicketId: string;
+  status: string;
+  startedAtUtc: string | null;
+  startedByUserId: string | null;
+  readyAtUtc: string | null;
+  readyByUserId: string | null;
+  cancelledAtUtc: string | null;
+  cancelledByUserId: string | null;
+};
+
+export type VoidPreparedSalesOrderResponse = {
+  salesOrderId: string;
+  status: "Cancelled";
+  cancellationKind: "PreparedVoid";
+  cancelledAtUtc: string;
+  cancelledByUserId: string;
+  cancellationReason: string;
+  wasAlreadyVoided: boolean;
+  kitchenTickets: VoidPreparedSalesOrderKitchenTicket[];
 };

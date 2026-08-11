@@ -1,19 +1,28 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   AlertTriangle,
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  Ban,
   Banknote,
   Barcode,
   Bot,
   Box,
+  Calculator,
   Check,
   Package,
+  CircleCheckBig,
   CircleDollarSign,
   CreditCard,
   Crown,
   Database,
   Gift,
+  History,
+  LockKeyhole,
   Minus,
   Layers3,
+  Monitor,
   PauseCircle,
   Plus,
   Printer,
@@ -40,11 +49,16 @@ import { useHasPermission } from "../../features/companies/hooks/useCompanies";
 import { PosOperationalGate } from "../../features/pos/components/PosOperationalGate";
 import { usePos } from "../../features/pos/context/PosContext";
 import { useOpenPosShift } from "../../features/pos/hooks/useOpenPosShift";
+import { useClosePosShift } from "../../features/pos/hooks/useClosePosShift";
+import { useManualCashMovement } from "../../features/pos/hooks/useManualCashMovement";
 import { useSellableCatalog } from "../../features/pos/hooks/useSellableCatalog";
 import {
   useConfirmSalesOrder,
   useCreateDraftSalesOrder,
+  useCloseSalesOrder,
+  useCancelSalesOrder,
   useDraftSalesOrderDetails,
+  useVoidPreparedSalesOrder,
   useUpdateDraftSalesOrder,
 } from "../../features/sales-orders/hooks/useDraftSalesOrder";
 import {
@@ -63,7 +77,12 @@ const UNCATEGORIZED_CATEGORY_ID = "__uncategorized__";
 const SALES_ORDERS_CREATE_PERMISSION = "SalesOrders.Create";
 const SALES_ORDERS_APPLY_DISCOUNT_PERMISSION = "SalesOrders.ApplyDiscount";
 const SALES_ORDERS_CONFIRM_PERMISSION = "SalesOrders.Confirm";
+const SALES_ORDERS_CLOSE_PERMISSION = "SalesOrders.Close";
+const SALES_ORDERS_CANCEL_PERMISSION = "SalesOrders.Cancel";
+const SALES_ORDERS_VOID_PREPARED_PERMISSION = "SalesOrders.VoidPrepared";
 const RESTAURANT_VIEW_PERMISSION = "Restaurant.View";
+const POS_ADJUST_CASH_DRAWER_PERMISSION = "Pos.AdjustCashDrawer";
+const POS_CLOSE_SHIFT_PERMISSION = "Pos.CloseShift";
 const PAYMENTS_VIEW_PERMISSION = "Payments.View";
 const PAYMENTS_RECEIVE_PERMISSION = "Payments.Receive";
 const PAYMENTS_REFUND_PERMISSION = "Payments.Refund";
@@ -116,6 +135,29 @@ function parseMoneyInput(value, minorUnitDigits) {
   return { amount, error: "" };
 }
 
+function parseNonNegativeMoneyInput(value, minorUnitDigits) {
+  const normalized = String(value || "").trim();
+
+  if (!isPositiveDecimalInput(normalized) && normalized !== "0") {
+    return { amount: null, error: "Enter a valid counted cash amount." };
+  }
+
+  if (getDecimalScale(normalized) > minorUnitDigits) {
+    return {
+      amount: null,
+      error: `Amount supports up to ${minorUnitDigits} decimal places.`,
+    };
+  }
+
+  const amount = Number(normalized);
+
+  if (!Number.isFinite(amount) || amount < 0) {
+    return { amount: null, error: "Counted cash must be zero or greater." };
+  }
+
+  return { amount, error: "" };
+}
+
 function formatPaymentDate(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
@@ -124,6 +166,24 @@ function formatPaymentDate(value) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);
+}
+
+function getCashMovementLabel(type) {
+  if (type === "CashIn") return "Cash In";
+  if (type === "CashOut") return "Cash Out";
+  if (type === "CashPayment") return "Cash Payment";
+  if (type === "CashRefund") return "Cash Refund";
+  return type;
+}
+
+function getCashMovementTone(type) {
+  if (type === "CashIn" || type === "CashPayment") return "text-emerald-300";
+  if (type === "CashOut" || type === "CashRefund") return "text-rose-300";
+  return "text-slate-300";
+}
+
+function isManualCashMovement(type) {
+  return type === "CashIn" || type === "CashOut";
 }
 function IconButton({
   icon: Icon,
@@ -170,15 +230,20 @@ function Metric({ label, value, detail, tone = "blue" }) {
   );
 }
 
-function Modal({ title, children, onClose }) {
+function Modal({ title, children, onClose, size = "md" }) {
+  const sizes = {
+    md: "max-w-md",
+    lg: "max-w-2xl",
+  };
+
   return (
     <div className="fixed inset-0 z-[100] grid place-items-center bg-[#030713]/75 p-4 backdrop-blur-sm">
       <div
         role="dialog"
         aria-modal="true"
-        className="w-full max-w-md rounded-2xl border border-white/15 bg-[#10182a] p-5 shadow-2xl"
+        className={`flex max-h-[calc(100vh-2rem)] w-full flex-col overflow-hidden rounded-2xl border border-white/15 bg-[#10182a] p-5 shadow-2xl ${sizes[size]}`}
       >
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex shrink-0 items-center justify-between">
           <h2 className="font-bold">{title}</h2>
           <button
             type="button"
@@ -188,13 +253,14 @@ function Modal({ title, children, onClose }) {
             <X size={18} />
           </button>
         </div>
-        {children}
+        <div className="min-h-0 overflow-y-auto pr-1 scrollbar-none">{children}</div>
       </div>
     </div>
   );
 }
 
 export default function POSPage() {
+  const navigate = useNavigate();
   const { status } = useAuth();
   const { currentCompanyId } = useCompany();
   const { currentBranchId } = useBranch();
@@ -217,9 +283,29 @@ export default function POSPage() {
     currentCompanyId,
     SALES_ORDERS_CONFIRM_PERMISSION,
   );
+  const closePermissionQuery = useHasPermission(
+    currentCompanyId,
+    SALES_ORDERS_CLOSE_PERMISSION,
+  );
+  const cancelPermissionQuery = useHasPermission(
+    currentCompanyId,
+    SALES_ORDERS_CANCEL_PERMISSION,
+  );
+  const voidPreparedPermissionQuery = useHasPermission(
+    currentCompanyId,
+    SALES_ORDERS_VOID_PREPARED_PERMISSION,
+  );
   const restaurantPermissionQuery = useHasPermission(
     currentCompanyId,
     RESTAURANT_VIEW_PERMISSION,
+  );
+  const cashDrawerPermissionQuery = useHasPermission(
+    currentCompanyId,
+    POS_ADJUST_CASH_DRAWER_PERMISSION,
+  );
+  const closeShiftPermissionQuery = useHasPermission(
+    currentCompanyId,
+    POS_CLOSE_SHIFT_PERMISSION,
   );
   const paymentsViewPermissionQuery = useHasPermission(
     currentCompanyId,
@@ -247,6 +333,19 @@ export default function POSPage() {
     canLoadCatalog,
   );
   const openShiftId = openShiftQuery.data?.posShiftId || null;
+  const hasOpenShift = Boolean(openShiftId);
+  const cashMovementMutation = useManualCashMovement(
+    currentCompanyId,
+    currentBranchId,
+    currentPosTerminalId,
+    openShiftId,
+  );
+  const closeShiftMutation = useClosePosShift(
+    currentCompanyId,
+    currentBranchId,
+    currentPosTerminalId,
+    openShiftId,
+  );
   const draftScope = `${currentCompanyId || ""}:${currentBranchId || ""}:${currentPosTerminalId || ""}:${openShiftId || ""}`;
   const [draftSession, setDraftSession] = useState({
     scope: "",
@@ -270,6 +369,21 @@ export default function POSPage() {
     draftSalesOrderId,
   );
   const confirmSalesOrderMutation = useConfirmSalesOrder(
+    currentCompanyId,
+    currentBranchId,
+    draftSalesOrderId,
+  );
+  const closeSalesOrderMutation = useCloseSalesOrder(
+    currentCompanyId,
+    currentBranchId,
+    draftSalesOrderId,
+  );
+  const cancelSalesOrderMutation = useCancelSalesOrder(
+    currentCompanyId,
+    currentBranchId,
+    draftSalesOrderId,
+  );
+  const voidPreparedSalesOrderMutation = useVoidPreparedSalesOrder(
     currentCompanyId,
     currentBranchId,
     draftSalesOrderId,
@@ -310,17 +424,26 @@ export default function POSPage() {
   const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState("");
   const [paymentAmountInput, setPaymentAmountInput] = useState("");
   const [refundDraft, setRefundDraft] = useState(null);
+  const [lifecycleDraft, setLifecycleDraft] = useState(null);
+  const [cashMovementDraft, setCashMovementDraft] = useState({
+    type: "CashIn",
+    amount: "",
+    reason: "",
+  });
   const [modal, setModal] = useState(null);
   const [toast, setToast] = useState("");
   const [selectedVariantProduct, setSelectedVariantProduct] = useState(null);
   const [selectedModifierVariant, setSelectedModifierVariant] = useState(null);
   const [modifierSelections, setModifierSelections] = useState({});
-  const [shiftOpen, setShiftOpen] = useState(true);
-  const [actualCash, setActualCash] = useState("4625");
+  const [countedCashInput, setCountedCashInput] = useState("");
+  const [closingNoteInput, setClosingNoteInput] = useState("");
+  const [lastClosedShift, setLastClosedShift] = useState(null);
   const [aiDismissed, setAiDismissed] = useState([]);
   const draftOrder = draftDetailsQuery.data || null;
   const draftLines = draftOrder?.lines ?? [];
   const isConfirmedOrder = draftOrder?.status === "Confirmed";
+  const isClosedOrder = draftOrder?.status === "Closed";
+  const isCancelledOrder = draftOrder?.status === "Cancelled";
   const canEditDraft = !draftOrder || draftOrder.status === "Draft";
   const effectiveOrderType = draftOrder?.fulfillmentType || orderType;
   const effectiveRestaurantTableId =
@@ -337,6 +460,18 @@ export default function POSPage() {
     createDraftMutation.isPending ||
     updateDraftMutation.isPending ||
     confirmSalesOrderMutation.isPending;
+  const kitchenTickets = draftOrder?.kitchenTickets || [];
+  const readyKitchenTicketCount = kitchenTickets.filter(
+    (ticket) => ticket.status === "Ready",
+  ).length;
+  const kitchenReady =
+    kitchenTickets.length === 0 || readyKitchenTicketCount === kitchenTickets.length;
+  const preparationStarted = kitchenTickets.some((ticket) =>
+    ["Preparing", "Ready"].includes(ticket.status),
+  );
+  const hasCancelledKitchenTicket = kitchenTickets.some(
+    (ticket) => ticket.status === "Cancelled",
+  );
   const selectedRestaurantTable = useMemo(
     () =>
       seatingQuery.data
@@ -448,8 +583,10 @@ export default function POSPage() {
     paymentState?.currencyMinorUnitDigits ||
     draftOrder?.currencyMinorUnitDigits ||
     2;
-  const remainingAmount = paymentState?.remainingAmount ?? total;
-  const isFullyPaid = Boolean(paymentState?.isFullyPaid);
+  const remainingAmount =
+    paymentState?.remainingAmount ?? draftOrder?.remainingAmount ?? total;
+  const netPaidAmount = paymentState?.netPaidAmount ?? draftOrder?.netPaidAmount ?? 0;
+  const isFullyPaid = Boolean(paymentState?.isFullyPaid ?? draftOrder?.isFullyPaid);
   const paymentAmount = parseMoneyInput(
     paymentAmountInput,
     settlementMinorUnitDigits,
@@ -465,6 +602,95 @@ export default function POSPage() {
     !paymentAmount.error &&
     paymentAmount.amount !== null &&
     paymentAmount.amount <= remainingAmount;
+  const shouldShowPaymentPanel = isConfirmedOrder || isClosedOrder || isCancelledOrder;
+  const canRefundPayments = isConfirmedOrder && paymentsRefundPermissionQuery.hasPermission;
+  const closeBlockers = [];
+
+  if (!isConfirmedOrder) {
+    closeBlockers.push("Order must be Confirmed.");
+  }
+
+  if (!isFullyPaid) {
+    closeBlockers.push(
+      `Payment remaining ${formatMoney(
+        remainingAmount,
+        settlementCurrencyCode,
+        settlementMinorUnitDigits,
+      )}`,
+    );
+  }
+
+  if (!kitchenReady) {
+    closeBlockers.push(
+      `Kitchen ready ${readyKitchenTicketCount}/${kitchenTickets.length}`,
+    );
+  }
+
+  if (!closePermissionQuery.hasPermission) {
+    closeBlockers.push("SalesOrders.Close permission is required.");
+  }
+
+  const canCloseOrder =
+    isConfirmedOrder &&
+    isFullyPaid &&
+    kitchenReady &&
+    closePermissionQuery.hasPermission &&
+    !closeSalesOrderMutation.isPending;
+  const canRequestCancel =
+    Boolean(draftOrder) &&
+    !isClosedOrder &&
+    !isCancelledOrder &&
+    (draftOrder.status === "Draft" || (isConfirmedOrder && !preparationStarted)) &&
+    netPaidAmount === 0 &&
+    cancelPermissionQuery.hasPermission &&
+    !cancelSalesOrderMutation.isPending;
+  const canRequestPreparedVoid =
+    isConfirmedOrder &&
+    preparationStarted &&
+    !hasCancelledKitchenTicket &&
+    netPaidAmount === 0 &&
+    voidPreparedPermissionQuery.hasPermission &&
+    !voidPreparedSalesOrderMutation.isPending;
+  const lifecycleBlocker =
+    netPaidAmount > 0
+      ? "Refund the payment before cancelling this order."
+      : hasCancelledKitchenTicket
+        ? "Order kitchen state changed. Refresh before lifecycle action."
+        : "";
+  const shiftCurrencyCode = openShiftQuery.data?.currencyCode || catalogCurrencyCode;
+  const shiftMinorUnitDigits =
+    openShiftQuery.data?.currencyMinorUnitDigits ||
+    draftOrder?.currencyMinorUnitDigits ||
+    2;
+  const expectedCashAmount = openShiftQuery.data?.expectedCashAmount ?? 0;
+  const cashMovements = openShiftQuery.data?.cashMovements || [];
+  const recentCashMovements = [...cashMovements]
+    .sort((a, b) => new Date(b.createdAtUtc) - new Date(a.createdAtUtc))
+    .slice(0, 6);
+  const cashMovementAmount = parseMoneyInput(
+    cashMovementDraft.amount,
+    shiftMinorUnitDigits,
+  );
+  const countedCash = parseNonNegativeMoneyInput(
+    countedCashInput,
+    shiftMinorUnitDigits,
+  );
+  const variancePreview =
+    countedCash.amount === null ? 0 : countedCash.amount - expectedCashAmount;
+  const canCloseShift =
+    hasOpenShift &&
+    closeShiftPermissionQuery.hasPermission &&
+    !closeShiftMutation.isPending &&
+    !countedCash.error &&
+    countedCash.amount !== null &&
+    closingNoteInput.trim().length <= 500;
+  const canSubmitCashMovement =
+    hasOpenShift &&
+    cashDrawerPermissionQuery.hasPermission &&
+    !cashMovementMutation.isPending &&
+    !cashMovementAmount.error &&
+    cashMovementAmount.amount !== null &&
+    cashMovementDraft.reason.trim().length > 0;
   const notify = (message) => {
     setToast(message);
     window.setTimeout(() => setToast(""), 3000);
@@ -627,6 +853,10 @@ export default function POSPage() {
       "SalesOrderPayment.NotAvailable",
       "PosShift.NotOpen",
       "PosShift.InsufficientExpectedCash",
+      "SalesOrder.NotClosable",
+      "SalesOrder.PaymentIncomplete",
+      "SalesOrder.KitchenIncomplete",
+      "SalesOrder.NotAvailable",
     ];
 
     if (staleCodes.includes(error?.code)) {
@@ -634,6 +864,200 @@ export default function POSPage() {
     }
 
     notify(error?.message || "Payment request failed.");
+  };
+  const handleCloseError = (error) => {
+    const staleCodes = [
+      "SalesOrder.NotClosable",
+      "SalesOrder.PaymentIncomplete",
+      "SalesOrder.KitchenIncomplete",
+      "SalesOrder.NotAvailable",
+    ];
+
+    if (staleCodes.includes(error?.code)) {
+      refreshPaymentState();
+      invalidateRestaurantSeating(currentCompanyId, currentBranchId);
+    }
+
+    notify(error?.message || "Unable to close sales order.");
+  };
+  const handleLifecycleError = (error) => {
+    const staleCodes = [
+      "SalesOrder.NotAvailable",
+      "SalesOrder.NotCancellable",
+      "SalesOrder.NotVoidable",
+      "SalesOrder.RefundRequired",
+      "SalesOrder.PreparationAlreadyStarted",
+      "SalesOrder.PreparationNotStarted",
+      "SalesOrder.CancellationStateInconsistent",
+      "SalesOrder.VoidStateInconsistent",
+      "SalesOrder.InvalidSettlementState",
+    ];
+
+    if (staleCodes.includes(error?.code)) {
+      refreshPaymentState();
+      invalidateRestaurantSeating(currentCompanyId, currentBranchId);
+    }
+
+    notify(error?.message || "Unable to update sales order lifecycle.");
+  };
+  const closeCurrentOrder = async () => {
+    if (!draftSalesOrderId || !draftOrder) return;
+
+    if (!closePermissionQuery.hasPermission) {
+      notify("SalesOrders.Close permission is required.");
+      return;
+    }
+
+    try {
+      await closeSalesOrderMutation.mutateAsync();
+      setModal(null);
+      await draftDetailsQuery.refetch();
+      await paymentHistoryQuery.refetch();
+      await openShiftQuery.refetch();
+      invalidateRestaurantSeating(currentCompanyId, currentBranchId);
+      notify("Sales order closed.");
+    } catch (error) {
+      handleCloseError(error);
+    }
+  };
+  const openLifecycleModal = (action) => {
+    setLifecycleDraft({ action, reason: "" });
+    setModal(action === "preparedVoid" ? "preparedVoidOrder" : "cancelOrder");
+  };
+  const runLifecycleAction = async () => {
+    if (!lifecycleDraft || !draftSalesOrderId) return;
+
+    const reason = lifecycleDraft.reason.trim();
+    if (!reason) {
+      notify("Cancellation reason is required.");
+      return;
+    }
+
+    try {
+      if (lifecycleDraft.action === "preparedVoid") {
+        await voidPreparedSalesOrderMutation.mutateAsync({ reason });
+        notify("Prepared order voided.");
+      } else {
+        await cancelSalesOrderMutation.mutateAsync({ reason });
+        notify("Sales order cancelled.");
+      }
+
+      setLifecycleDraft(null);
+      setModal(null);
+      await draftDetailsQuery.refetch();
+      await paymentHistoryQuery.refetch();
+      invalidateRestaurantSeating(currentCompanyId, currentBranchId);
+    } catch (error) {
+      handleLifecycleError(error);
+    }
+  };
+  const handleCashMovementError = (error) => {
+    const staleCodes = [
+      "PosShift.NotAvailable",
+      "PosShift.NotOpen",
+      "PosShift.InsufficientExpectedCash",
+      "PosCashMovement.InvalidType",
+      "PosCashMovement.InvalidAmount",
+      "PosCashMovement.AmountPrecisionInvalid",
+      "PosCashMovement.InvalidInput",
+      "PosCashMovement.IdempotencyKeyConflict",
+    ];
+
+    if (staleCodes.includes(error?.code)) {
+      openShiftQuery.refetch();
+    }
+
+    notify(error?.message || "Unable to create cash movement.");
+  };
+  const submitCashMovement = async () => {
+    if (!openShiftId) {
+      notify("Open POS shift is required.");
+      return;
+    }
+
+    if (!cashDrawerPermissionQuery.hasPermission) {
+      notify("Pos.AdjustCashDrawer permission is required.");
+      return;
+    }
+
+    if (cashMovementAmount.error || cashMovementAmount.amount === null) {
+      notify(cashMovementAmount.error || "Enter a valid cash movement amount.");
+      return;
+    }
+
+    if (!cashMovementDraft.reason.trim()) {
+      notify("Cash movement reason is required.");
+      return;
+    }
+
+    try {
+      await cashMovementMutation.mutateAsync({
+        type: cashMovementDraft.type,
+        amount: cashMovementAmount.amount,
+        reason: cashMovementDraft.reason,
+      });
+      setCashMovementDraft({
+        type: cashMovementDraft.type,
+        amount: "",
+        reason: "",
+      });
+      await openShiftQuery.refetch();
+      notify(`${getCashMovementLabel(cashMovementDraft.type)} recorded.`);
+    } catch (error) {
+      handleCashMovementError(error);
+    }
+  };
+  const handleCloseShiftError = (error) => {
+    const staleCodes = [
+      "PosShift.NotAvailable",
+      "PosShift.AlreadyClosed",
+      "PosShift.InvalidCountedCash",
+      "PosShift.CountedCashPrecisionInvalid",
+      "PosShift.InvalidInput",
+    ];
+
+    if (staleCodes.includes(error?.code)) {
+      openShiftQuery.refetch();
+    }
+
+    notify(error?.message || "Unable to close POS shift.");
+  };
+  const closeCurrentShift = async () => {
+    if (!openShiftId) {
+      notify("Open POS shift is required.");
+      return;
+    }
+
+    if (!closeShiftPermissionQuery.hasPermission) {
+      notify("Pos.CloseShift permission is required.");
+      return;
+    }
+
+    if (countedCash.error || countedCash.amount === null) {
+      notify(countedCash.error || "Enter counted cash.");
+      return;
+    }
+
+    if (closingNoteInput.trim().length > 500) {
+      notify("Closing note must be 500 characters or fewer.");
+      return;
+    }
+
+    try {
+      const result = await closeShiftMutation.mutateAsync({
+        countedCashAmount: countedCash.amount,
+        closingNote: closingNoteInput.trim() || null,
+      });
+      setLastClosedShift(result);
+      setCountedCashInput("");
+      setClosingNoteInput("");
+      setCashMovementDraft({ type: "CashIn", amount: "", reason: "" });
+      startNewOrder();
+      await openShiftQuery.refetch();
+      notify("POS shift closed.");
+    } catch (error) {
+      handleCloseShiftError(error);
+    }
   };
   const receiveCurrentPayment = async () => {
     if (!selectedPaymentMethod || !draftSalesOrderId) return;
@@ -733,6 +1157,7 @@ export default function POSPage() {
     setPaymentAmountInput("");
     setSelectedPaymentMethodId("");
     setRefundDraft(null);
+    setLifecycleDraft(null);
     setCustomer(null);
     setSelectedVariantProduct(null);
     setSelectedModifierVariant(null);
@@ -931,11 +1356,29 @@ export default function POSPage() {
               </div>
               <button
                 type="button"
-                onClick={() => setModal(shiftOpen ? "closeShift" : "openShift")}
-                className={`rounded-xl border px-3 py-2 text-xs font-bold ${shiftOpen ? "border-emerald-400/25 bg-emerald-500/10 text-emerald-200" : "border-amber-400/25 bg-amber-500/10 text-amber-200"}`}
+                onClick={() => setModal(hasOpenShift ? "closeShift" : "openShift")}
+                className={`rounded-xl border px-3 py-2 text-xs font-bold ${hasOpenShift ? "border-emerald-400/25 bg-emerald-500/10 text-emerald-200" : "border-amber-400/25 bg-amber-500/10 text-amber-200"}`}
               >
                 <span className="ml-1 inline-block h-2 w-2 rounded-full bg-current" />
-                {shiftOpen ? "وردية نشطة · 05:42 س" : "فتح وردية"}
+                {hasOpenShift
+                  ? `Open shift - ${formatPaymentDate(openShiftQuery.data?.openedAtUtc)}`
+                  : "Open shift"}
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate(ROUTES.POS_SHIFT_HISTORY)}
+                className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold text-slate-200 hover:border-blue-400/40 hover:bg-blue-500/10"
+              >
+                <History size={14} />
+                Shift History
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate(ROUTES.POS_TERMINALS_ADMIN)}
+                className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold text-slate-200 hover:border-blue-400/40 hover:bg-blue-500/10"
+              >
+                <Monitor size={14} />
+                Terminals
               </button>
             </div>
             <div className="flex flex-1 items-center gap-2 lg:max-w-xl">
@@ -1129,9 +1572,11 @@ export default function POSPage() {
                   <span>Order status</span>
                   <span
                     className={`rounded-full px-2 py-0.5 font-bold ${
-                      isConfirmedOrder
-                        ? "bg-emerald-500/15 text-emerald-300"
-                        : "bg-blue-500/15 text-blue-300"
+                      isCancelledOrder
+                        ? "bg-rose-500/15 text-rose-300"
+                        : isConfirmedOrder || isClosedOrder
+                          ? "bg-emerald-500/15 text-emerald-300"
+                          : "bg-blue-500/15 text-blue-300"
                     }`}
                   >
                     {draftOrder?.status || "New"}
@@ -1352,7 +1797,7 @@ export default function POSPage() {
                     </span>
                   </div>
                 </div>
-                                {isConfirmedOrder && (
+                                {shouldShowPaymentPanel && (
                   <div className="mt-3 space-y-3 rounded-xl border border-white/10 bg-black/10 p-3">
                     <div className="grid grid-cols-3 gap-2 text-[10px]">
                       <Metric
@@ -1388,12 +1833,12 @@ export default function POSPage() {
                         Fully Paid
                       </div>
                     )}
-                    {!paymentsReceivePermissionQuery.hasPermission && (
+                    {isConfirmedOrder && !paymentsReceivePermissionQuery.hasPermission && (
                       <div className="rounded-lg border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
                         Payments.Receive permission is required.
                       </div>
                     )}
-                    {paymentsReceivePermissionQuery.hasPermission && (
+                    {isConfirmedOrder && paymentsReceivePermissionQuery.hasPermission && (
                       <>
                         <div className="grid grid-cols-2 gap-2">
                           {paymentMethodsQuery.isLoading && (
@@ -1525,7 +1970,7 @@ export default function POSPage() {
                                 type="button"
                                 disabled={
                                   payment.refundableAmount <= 0 ||
-                                  !paymentsRefundPermissionQuery.hasPermission
+                                  !canRefundPayments
                                 }
                                 onClick={() => openRefundModal(payment)}
                                 className="rounded-lg border border-rose-400/25 px-2 py-1 font-bold text-rose-200 disabled:cursor-not-allowed disabled:opacity-40"
@@ -1539,7 +1984,62 @@ export default function POSPage() {
                     )}
                   </div>
                 )}
-                <div className="mt-3 grid grid-cols-3 gap-2">
+                {!isClosedOrder && !isCancelledOrder && draftOrder && (
+                  <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.025] p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="text-xs font-bold text-slate-100">
+                          Lifecycle
+                        </div>
+                        <div className="mt-1 text-[10px] text-slate-500">
+                          {preparationStarted
+                            ? "Preparation has started"
+                            : "Preparation has not started"}
+                        </div>
+                      </div>
+                      {preparationStarted ? (
+                        <button
+                          type="button"
+                          disabled={!canRequestPreparedVoid}
+                          onClick={() => openLifecycleModal("preparedVoid")}
+                          className="flex shrink-0 items-center gap-1.5 rounded-lg border border-amber-400/25 bg-amber-500/10 px-3 py-2 text-[10px] font-bold text-amber-100 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          <AlertTriangle size={13} />
+                          Prepared Void
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled={!canRequestCancel}
+                          onClick={() => openLifecycleModal("cancel")}
+                          className="flex shrink-0 items-center gap-1.5 rounded-lg border border-rose-400/25 bg-rose-500/10 px-3 py-2 text-[10px] font-bold text-rose-100 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          <Ban size={13} />
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                    {lifecycleBlocker && (
+                      <div className="mt-2 rounded-lg border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-[10px] text-amber-100">
+                        {lifecycleBlocker}
+                      </div>
+                    )}
+                    {!preparationStarted &&
+                      !cancelPermissionQuery.hasPermission && (
+                        <div className="mt-2 text-[10px] text-slate-500">
+                          SalesOrders.Cancel permission is required.
+                        </div>
+                      )}
+                    {preparationStarted &&
+                      !voidPreparedPermissionQuery.hasPermission && (
+                        <div className="mt-2 text-[10px] text-slate-500">
+                          SalesOrders.VoidPrepared permission is required.
+                        </div>
+                      )}
+                  </div>
+                )}
+                {!isClosedOrder && !isCancelledOrder && (
+                  <div className="mt-3 grid grid-cols-3 gap-2">
                   <IconButton
                     icon={PauseCircle}
                     label="حفظ مؤقت"
@@ -1555,20 +2055,48 @@ export default function POSPage() {
                     label="حركة نقدية"
                     onClick={() => setModal("cashMovement")}
                   />
-                </div>
-                {isConfirmedOrder ? (
+                  </div>
+                )}
+                {isClosedOrder || isCancelledOrder ? (
                   <button
                     type="button"
                     onClick={startNewOrder}
                     className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-slate-700 text-sm font-black transition hover:bg-slate-600"
                   >
-                    <Plus size={18} />
+                    {isClosedOrder ? (
+                      <CircleCheckBig size={18} />
+                    ) : (
+                      <Ban size={18} />
+                    )}
+                    {isClosedOrder
+                      ? "Closed -"
+                      : draftOrder?.cancellationKind === "PreparedVoid"
+                        ? "Prepared Void -"
+                        : "Cancelled -"}
+                    <Plus size={16} />
                     New Order
                   </button>
+                ) : isConfirmedOrder ? (
+                  <div className="mt-3 space-y-2">
+                    {closeBlockers.length > 0 && (
+                      <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-[10px] leading-4 text-amber-100">
+                        {closeBlockers[0]}
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      disabled={!canCloseOrder}
+                      onClick={() => setModal("closeOrder")}
+                      className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 text-sm font-black shadow-lg shadow-emerald-950/30 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <CircleCheckBig size={19} />
+                      Close Order
+                    </button>
+                  </div>
                 ) : (
                   <button
                     type="button"
-                    disabled={!shiftOpen || !canConfirmOrder}
+                    disabled={!hasOpenShift || !canConfirmOrder}
                     onClick={confirmCurrentOrder}
                     className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-l from-blue-600 to-[#0A84FF] text-sm font-black shadow-lg shadow-blue-950/40 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
                   >
@@ -1598,23 +2126,42 @@ export default function POSPage() {
                   إدارة الوردية
                 </button>
               </div>
-              <div className="grid grid-cols-2 gap-2">
+                            <div className="grid grid-cols-2 gap-2">
                 <Metric
-                  label="النقدية المتوقعة"
-                  value="4,625"
-                  detail="SAR"
+                  label="Expected cash"
+                  value={formatMoney(
+                    expectedCashAmount,
+                    shiftCurrencyCode,
+                    shiftMinorUnitDigits,
+                  )}
+                  detail="Server"
                   tone="green"
                 />
                 <Metric
-                  label="النقدية الفعلية"
-                  value={actualCash || "0"}
-                  detail="SAR"
+                  label="Manual In / Out"
+                  value={`${formatMoney(
+                    openShiftQuery.data?.cashInAmount ?? 0,
+                    shiftCurrencyCode,
+                    shiftMinorUnitDigits,
+                  )} / ${formatMoney(
+                    openShiftQuery.data?.cashOutAmount ?? 0,
+                    shiftCurrencyCode,
+                    shiftMinorUnitDigits,
+                  )}`}
+                  detail="Current shift"
                   tone="gold"
                 />
               </div>
               <div className="mt-3 flex items-center justify-between rounded-xl bg-white/[0.03] p-2 text-[11px]">
-                <span className="text-slate-400">فرق الصندوق</span>
-                <span className="font-bold text-emerald-300">0.00 SAR</span>
+                <span className="text-slate-400">Drawer activity</span>
+                <button
+                  type="button"
+                  disabled={!openShiftId || !cashDrawerPermissionQuery.hasPermission}
+                  onClick={() => setModal("cashMovement")}
+                  className="font-bold text-emerald-300 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Cash In / Out
+                </button>
               </div>
             </div>
             <div className="rounded-2xl border border-white/10 bg-[#0c1627] p-4">
@@ -2003,6 +2550,177 @@ export default function POSPage() {
             </div>
           </Modal>
         )}
+        {modal === "closeOrder" && draftOrder && (
+          <Modal
+            title="Close Order"
+            onClose={() => {
+              setModal(null);
+            }}
+          >
+            <div className="space-y-3">
+              <div className="rounded-xl border border-emerald-400/20 bg-emerald-500/10 p-3">
+                <div className="flex items-center gap-2 text-xs font-bold text-emerald-100">
+                  <CircleCheckBig size={16} />
+                  Ready to close
+                </div>
+                <div className="mt-1 text-[10px] text-emerald-200/80">
+                  #{draftOrder.salesOrderId.slice(-8)}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Metric
+                  label="Total"
+                  value={formatMoney(
+                    total,
+                    settlementCurrencyCode,
+                    settlementMinorUnitDigits,
+                  )}
+                  tone="blue"
+                />
+                <Metric
+                  label="Net paid"
+                  value={formatMoney(
+                    paymentState?.netPaidAmount ?? draftOrder.netPaidAmount ?? 0,
+                    settlementCurrencyCode,
+                    settlementMinorUnitDigits,
+                  )}
+                  tone="green"
+                />
+              </div>
+              <div className="rounded-xl border border-white/10 bg-white/[0.025] p-3 text-xs text-slate-300">
+                <div className="flex justify-between gap-3">
+                  <span className="text-slate-500">Type</span>
+                  <span className="font-bold">{effectiveOrderType}</span>
+                </div>
+                {selectedRestaurantTable && (
+                  <div className="mt-2 flex justify-between gap-3">
+                    <span className="text-slate-500">Table</span>
+                    <span className="font-bold">
+                      {selectedRestaurantTable.floorName} آ·{" "}
+                      {selectedRestaurantTable.code}
+                    </span>
+                  </div>
+                )}
+                <div className="mt-2 flex justify-between gap-3">
+                  <span className="text-slate-500">Kitchen</span>
+                  <span className="font-bold">
+                    {kitchenTickets.length === 0
+                      ? "No tickets"
+                      : `${readyKitchenTicketCount}/${kitchenTickets.length} Ready`}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                disabled={!canCloseOrder}
+                onClick={closeCurrentOrder}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-2.5 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <CircleCheckBig size={15} />
+                Confirm Close
+              </button>
+            </div>
+          </Modal>
+        )}
+        {(modal === "cancelOrder" || modal === "preparedVoidOrder") &&
+          lifecycleDraft &&
+          draftOrder && (
+            <Modal
+              title={
+                lifecycleDraft.action === "preparedVoid"
+                  ? "Prepared Void"
+                  : "Cancel Order"
+              }
+              onClose={() => {
+                setLifecycleDraft(null);
+                setModal(null);
+              }}
+            >
+              <div className="space-y-3">
+                <div
+                  className={`rounded-xl border p-3 ${
+                    lifecycleDraft.action === "preparedVoid"
+                      ? "border-amber-400/20 bg-amber-500/10"
+                      : "border-rose-400/20 bg-rose-500/10"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 text-xs font-bold text-slate-100">
+                    {lifecycleDraft.action === "preparedVoid" ? (
+                      <AlertTriangle size={16} className="text-amber-300" />
+                    ) : (
+                      <Ban size={16} className="text-rose-300" />
+                    )}
+                    #{draftOrder.salesOrderId.slice(-8)}
+                  </div>
+                  <p className="mt-2 text-[11px] leading-5 text-slate-300">
+                    {lifecycleDraft.action === "preparedVoid"
+                      ? "This order has entered preparation. Backend will cancel kitchen tickets for prepared void and will not be treated as a normal pre-preparation cancel."
+                      : "This order will be cancelled. Backend owns any allowed inventory reversal and table release side effects."}
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Metric
+                    label="Net paid"
+                    value={formatMoney(
+                      netPaidAmount,
+                      settlementCurrencyCode,
+                      settlementMinorUnitDigits,
+                    )}
+                    tone={netPaidAmount === 0 ? "green" : "gold"}
+                  />
+                  <Metric
+                    label="Kitchen"
+                    value={
+                      kitchenTickets.length === 0
+                        ? "No tickets"
+                        : preparationStarted
+                          ? "Started"
+                          : "New"
+                    }
+                    tone={preparationStarted ? "gold" : "blue"}
+                  />
+                </div>
+                <label className="block text-xs text-slate-400">Reason</label>
+                <textarea
+                  value={lifecycleDraft.reason}
+                  onChange={(event) =>
+                    setLifecycleDraft((draft) =>
+                      draft ? { ...draft, reason: event.target.value } : draft,
+                    )
+                  }
+                  className="h-20 w-full rounded-xl border border-white/10 bg-black/20 p-3 text-xs outline-none"
+                />
+                {netPaidAmount > 0 && (
+                  <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+                    Refund the payment before this lifecycle action.
+                  </div>
+                )}
+                <button
+                  type="button"
+                  disabled={
+                    lifecycleDraft.action === "preparedVoid"
+                      ? !canRequestPreparedVoid
+                      : !canRequestCancel
+                  }
+                  onClick={runLifecycleAction}
+                  className={`flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-50 ${
+                    lifecycleDraft.action === "preparedVoid"
+                      ? "bg-amber-600 text-white"
+                      : "bg-rose-600 text-white"
+                  }`}
+                >
+                  {lifecycleDraft.action === "preparedVoid" ? (
+                    <AlertTriangle size={15} />
+                  ) : (
+                    <Ban size={15} />
+                  )}
+                  {lifecycleDraft.action === "preparedVoid"
+                    ? "Confirm Prepared Void"
+                    : "Confirm Cancel"}
+                </button>
+              </div>
+            </Modal>
+          )}
         {modal === "customer" && (
           <Modal title="اختيار عميل" onClose={() => setModal(null)}>
             <div className="space-y-2">
@@ -2098,30 +2816,112 @@ export default function POSPage() {
           </Modal>
         )}
         {modal === "cashMovement" && (
-          <Modal title="حركة نقدية" onClose={() => setModal(null)}>
-            <div className="grid grid-cols-2 gap-2">
+          <Modal title="Cash Drawer Movement" onClose={() => setModal(null)}>
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCashMovementDraft((draft) => ({ ...draft, type: "CashIn" }))}
+                  className={`flex items-center justify-center gap-2 rounded-xl border p-3 text-xs font-bold ${cashMovementDraft.type === "CashIn" ? "border-emerald-400 bg-emerald-500/15 text-emerald-100" : "border-white/10 bg-white/[0.025] text-slate-300"}`}
+                >
+                  <ArrowDownToLine size={15} />
+                  Cash In
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCashMovementDraft((draft) => ({ ...draft, type: "CashOut" }))}
+                  className={`flex items-center justify-center gap-2 rounded-xl border p-3 text-xs font-bold ${cashMovementDraft.type === "CashOut" ? "border-rose-400 bg-rose-500/15 text-rose-100" : "border-white/10 bg-white/[0.025] text-slate-300"}`}
+                >
+                  <ArrowUpFromLine size={15} />
+                  Cash Out
+                </button>
+              </div>
+
+              <Metric
+                label="Expected cash"
+                value={formatMoney(expectedCashAmount, shiftCurrencyCode, shiftMinorUnitDigits)}
+                detail="Server-owned drawer balance"
+                tone="green"
+              />
+
+              {!openShiftId && (
+                <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+                  Open POS shift is required.
+                </div>
+              )}
+              {!cashDrawerPermissionQuery.hasPermission && (
+                <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+                  Pos.AdjustCashDrawer permission is required.
+                </div>
+              )}
+
+              <label className="block text-xs text-slate-400">Amount</label>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={cashMovementDraft.amount}
+                onChange={(event) => setCashMovementDraft((draft) => ({ ...draft, amount: event.target.value }))}
+                className="h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm outline-none"
+                placeholder={formatMoney(0, shiftCurrencyCode, shiftMinorUnitDigits)}
+              />
+              {cashMovementDraft.amount && cashMovementAmount.error && (
+                <p className="text-[10px] text-amber-200">{cashMovementAmount.error}</p>
+              )}
+
+              <label className="block text-xs text-slate-400">Reason</label>
+              <textarea
+                value={cashMovementDraft.reason}
+                onChange={(event) => setCashMovementDraft((draft) => ({ ...draft, reason: event.target.value }))}
+                className="h-20 w-full rounded-xl border border-white/10 bg-black/20 p-3 text-xs outline-none"
+              />
+
               <button
                 type="button"
-                onClick={() => notify("تم فتح نموذج إضافة نقدية مع سجل تدقيق.")}
-                className="rounded-xl border border-emerald-400/25 bg-emerald-500/10 p-4 text-xs font-bold text-emerald-100"
+                disabled={!canSubmitCashMovement}
+                onClick={submitCashMovement}
+                className={`flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-50 ${cashMovementDraft.type === "CashIn" ? "bg-emerald-600" : "bg-rose-600"}`}
               >
-                Paid In
-                <br />
-                <span className="text-[10px] font-normal text-emerald-300">
-                  إضافة نقدية
-                </span>
+                {cashMovementDraft.type === "CashIn" ? <ArrowDownToLine size={15} /> : <ArrowUpFromLine size={15} />}
+                Record {getCashMovementLabel(cashMovementDraft.type)}
               </button>
-              <button
-                type="button"
-                onClick={() => notify("تم فتح نموذج إخراج نقدية ويتطلب سببًا.")}
-                className="rounded-xl border border-amber-400/25 bg-amber-500/10 p-4 text-xs font-bold text-amber-100"
-              >
-                Paid Out
-                <br />
-                <span className="text-[10px] font-normal text-amber-300">
-                  إخراج نقدية
-                </span>
-              </button>
+
+              <div className="border-t border-white/10 pt-3">
+                <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase text-slate-500">
+                  <History size={13} />
+                  Current shift drawer activity
+                </div>
+                <div className="max-h-48 space-y-2 overflow-y-auto pr-1 scrollbar-none">
+                  {recentCashMovements.length === 0 && (
+                    <div className="rounded-xl border border-dashed border-white/10 p-4 text-center text-xs text-slate-500">
+                      No cash movement yet.
+                    </div>
+                  )}
+                  {recentCashMovements.map((movement) => {
+                    const manual = isManualCashMovement(movement.type);
+
+                    return (
+                      <div key={movement.id} className="rounded-xl border border-white/10 bg-white/[0.025] p-2.5">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 text-xs font-bold text-slate-100">
+                              <span>{getCashMovementLabel(movement.type)}</span>
+                              <span className="rounded-full bg-white/5 px-1.5 py-0.5 text-[9px] text-slate-400">
+                                {manual ? "Manual" : "Automatic"}
+                              </span>
+                            </div>
+                            <div className="mt-1 truncate text-[10px] text-slate-500">
+                              {movement.reason || "Server generated"} - {formatPaymentDate(movement.createdAtUtc)}
+                            </div>
+                          </div>
+                          <div className={`shrink-0 text-xs font-black ${getCashMovementTone(movement.type)}`}>
+                            {formatMoney(movement.amountDelta, shiftCurrencyCode, shiftMinorUnitDigits)}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </Modal>
         )}
@@ -2151,58 +2951,161 @@ export default function POSPage() {
           </Modal>
         )}
         {modal === "openShift" && (
-          <Modal title="فتح وردية جديدة" onClose={() => setModal(null)}>
-            <p className="text-xs leading-5 text-slate-400">
-              سيتم تسجيل رصيد افتتاحي للكاشير أحمد محمد على POS-01.
-            </p>
-            <input
-              type="number"
-              defaultValue="1500"
-              className="mt-3 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm outline-none"
-            />
+          <Modal title="Open POS shift" onClose={() => setModal(null)}>
+            <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 p-3 text-xs leading-5 text-amber-50">
+              <LockKeyhole size={17} className="mb-2 text-amber-300" />
+              Open shift setup is handled by the POS operational gate before the workspace renders.
+            </div>
             <button
               type="button"
-              onClick={() => {
-                setShiftOpen(true);
-                setModal(null);
-                notify("تم فتح الوردية وتسجيل الرصيد الافتتاحي.");
-              }}
-              className="mt-4 w-full rounded-xl bg-emerald-600 py-2.5 text-xs font-bold"
+              onClick={() => setModal(null)}
+              className="mt-4 w-full rounded-xl bg-slate-700 py-2.5 text-xs font-bold text-white"
             >
-              تأكيد فتح الوردية
+              Close
             </button>
           </Modal>
         )}
         {modal === "closeShift" && (
-          <Modal title="إغلاق الوردية" onClose={() => setModal(null)}>
-            <div className="grid grid-cols-2 gap-2">
-              <Metric label="النقدية المتوقعة" value="4,625 SAR" tone="green" />
-              <Metric
-                label="النقدية الفعلية"
-                value={`${actualCash || 0} SAR`}
-                tone="gold"
-              />
+          <Modal title="Close POS shift" onClose={() => setModal(null)} size="lg">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 rounded-xl border border-rose-400/20 bg-rose-500/10 p-2.5 text-xs leading-5 text-rose-50">
+                <LockKeyhole size={16} className="shrink-0 text-rose-300" />
+                <span>Cash reconciliation for the current open shift.</span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 lg:grid-cols-3">
+                <Metric
+                  label="Terminal"
+                  value={openShiftQuery.data?.terminalCode || currentPosTerminalId || "-"}
+                  detail={openShiftQuery.data?.terminalName || "Current POS"}
+                  tone="blue"
+                />
+                <Metric
+                  label="Opened"
+                  value={formatPaymentDate(openShiftQuery.data?.openedAtUtc) || "-"}
+                  detail={openShiftQuery.data?.posShiftId || "No open shift"}
+                  tone="gold"
+                />
+                <Metric
+                  label="Opening float"
+                  value={formatMoney(
+                    openShiftQuery.data?.openingFloatAmount ?? 0,
+                    shiftCurrencyCode,
+                    shiftMinorUnitDigits,
+                  )}
+                  detail="Server snapshot"
+                  tone="blue"
+                />
+                <Metric
+                  label="Cash payments"
+                  value={formatMoney(
+                    openShiftQuery.data?.cashPaymentsAmount ?? 0,
+                    shiftCurrencyCode,
+                    shiftMinorUnitDigits,
+                  )}
+                  detail="Sales cash"
+                  tone="green"
+                />
+                <Metric
+                  label="Cash refunds"
+                  value={formatMoney(
+                    openShiftQuery.data?.cashRefundsAmount ?? 0,
+                    shiftCurrencyCode,
+                    shiftMinorUnitDigits,
+                  )}
+                  detail="Refunded cash"
+                  tone="pink"
+                />
+                <Metric
+                  label="Cash In / Out"
+                  value={`${formatMoney(openShiftQuery.data?.cashInAmount ?? 0, shiftCurrencyCode, shiftMinorUnitDigits)} / ${formatMoney(openShiftQuery.data?.cashOutAmount ?? 0, shiftCurrencyCode, shiftMinorUnitDigits)}`}
+                  detail="Manual drawer movements"
+                  tone="gold"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <Metric
+                  label="Expected cash"
+                  value={formatMoney(expectedCashAmount, shiftCurrencyCode, shiftMinorUnitDigits)}
+                  detail="Opening float + cash movements"
+                  tone="green"
+                />
+                <Metric
+                  label="Variance preview"
+                  value={formatMoney(variancePreview, shiftCurrencyCode, shiftMinorUnitDigits)}
+                  detail="Counted cash - expected cash"
+                  tone={variancePreview < 0 ? "pink" : variancePreview > 0 ? "gold" : "green"}
+                />
+              </div>
+
+              <label className="block text-xs font-semibold text-slate-300">
+                Counted cash
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={countedCashInput}
+                  onChange={(event) => setCountedCashInput(event.target.value)}
+                  className="mt-2 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60"
+                  placeholder="0.00"
+                />
+              </label>
+              {countedCash.error && countedCashInput.trim() && (
+                <div className="rounded-xl border border-rose-400/20 bg-rose-500/10 px-3 py-2 text-[11px] text-rose-100">
+                  {countedCash.error}
+                </div>
+              )}
+
+              <label className="block text-xs font-semibold text-slate-300">
+                Closing note
+                <textarea
+                  value={closingNoteInput}
+                  onChange={(event) => setClosingNoteInput(event.target.value)}
+                  maxLength={500}
+                  className="mt-2 h-16 w-full resize-none rounded-xl border border-white/10 bg-black/20 p-3 text-sm text-white outline-none focus:border-blue-400/60"
+                  placeholder="Optional note"
+                />
+              </label>
+              <div className={`text-[11px] ${closingNoteInput.trim().length > 500 ? "text-rose-300" : "text-slate-500"}`}>
+                {closingNoteInput.trim().length}/500
+              </div>
+
+              {!hasOpenShift && (
+                <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100">
+                  Open POS shift is required.
+                </div>
+              )}
+              {!closeShiftPermissionQuery.hasPermission && (
+                <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100">
+                  Pos.CloseShift permission is required.
+                </div>
+              )}
+
+              {lastClosedShift && (
+                <div className="rounded-xl border border-emerald-400/20 bg-emerald-500/10 p-3 text-xs text-emerald-50">
+                  <div className="mb-2 flex items-center gap-2 font-bold">
+                    <Calculator size={16} className="text-emerald-300" />
+                    Last close result
+                  </div>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                    <span>Expected: {formatMoney(lastClosedShift.expectedCashAmountAtClose, shiftCurrencyCode, shiftMinorUnitDigits)}</span>
+                    <span>Counted: {formatMoney(lastClosedShift.countedCashAmount, shiftCurrencyCode, shiftMinorUnitDigits)}</span>
+                    <span>Variance: {formatMoney(lastClosedShift.cashVarianceAmount, shiftCurrencyCode, shiftMinorUnitDigits)}</span>
+                  </div>
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={closeCurrentShift}
+                disabled={!canCloseShift}
+                className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-rose-600 text-xs font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <LockKeyhole size={16} />
+                {closeShiftMutation.isPending ? "Closing shift..." : "Confirm close shift"}
+              </button>
             </div>
-            <label className="mt-4 block text-xs text-slate-400">
-              النقدية الفعلية بعد العد
-            </label>
-            <input
-              type="number"
-              value={actualCash}
-              onChange={(event) => setActualCash(event.target.value)}
-              className="mt-2 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm outline-none"
-            />
-            <button
-              type="button"
-              onClick={() => {
-                setShiftOpen(false);
-                setModal(null);
-                notify("تم إغلاق الوردية وحفظ تقرير الصندوق.");
-              }}
-              className="mt-4 w-full rounded-xl bg-rose-600 py-2.5 text-xs font-bold"
-            >
-              تأكيد إغلاق الوردية
-            </button>
           </Modal>
         )}
         {modal === "askAi" && (

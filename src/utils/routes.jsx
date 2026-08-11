@@ -4,6 +4,8 @@ export const ROUTES = {
   SIGNUP: "/signup",
   DASHBOARD: "/dashboard",
   POS: "/POSPage",
+  POS_SHIFT_HISTORY: "/pos/shifts",
+  POS_TERMINALS_ADMIN: "/pos/terminals/admin",
   KITCHEN: "/kitchen",
   SALES: "/sales",
   PURCHASES: "/purchases",

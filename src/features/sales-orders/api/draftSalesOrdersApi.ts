@@ -1,9 +1,14 @@
 import { httpClient } from "../../../shared/api/httpClient";
 import type {
+  CancelSalesOrderRequest,
+  CancelSalesOrderResponse,
+  CloseSalesOrderResponse,
   ConfirmSalesOrderResponse,
   CreateDraftSalesOrderRequest,
   DraftSalesOrder,
   UpdateDraftSalesOrderRequest,
+  VoidPreparedSalesOrderRequest,
+  VoidPreparedSalesOrderResponse,
 } from "../types/draftSalesOrder.types";
 
 function salesOrdersBaseUrl(companyId: string, branchId: string) {
@@ -74,6 +79,46 @@ export async function confirmSalesOrder(
   return response.data;
 }
 
+export async function closeSalesOrder(
+  companyId: string,
+  branchId: string,
+  salesOrderId: string,
+) {
+  const response = await httpClient.post<CloseSalesOrderResponse>(
+    `${salesOrdersBaseUrl(companyId, branchId)}/${salesOrderId}/close`,
+  );
+
+  return response.data;
+}
+
+export async function cancelSalesOrder(
+  companyId: string,
+  branchId: string,
+  salesOrderId: string,
+  payload: CancelSalesOrderRequest,
+) {
+  const response = await httpClient.post<CancelSalesOrderResponse>(
+    `${salesOrdersBaseUrl(companyId, branchId)}/${salesOrderId}/cancel`,
+    payload,
+  );
+
+  return response.data;
+}
+
+export async function voidPreparedSalesOrder(
+  companyId: string,
+  branchId: string,
+  salesOrderId: string,
+  payload: VoidPreparedSalesOrderRequest,
+) {
+  const response = await httpClient.post<VoidPreparedSalesOrderResponse>(
+    `${salesOrdersBaseUrl(companyId, branchId)}/${salesOrderId}/void-prepared`,
+    payload,
+  );
+
+  return response.data;
+}
+
 function normalizeDraftDetails(data: Record<string, any>): DraftSalesOrder {
   if ("priceListId" in data && "lines" in data && data.lines?.[0]?.unitPrice !== undefined) {
     return data as DraftSalesOrder;
@@ -92,6 +137,14 @@ function normalizeDraftDetails(data: Record<string, any>): DraftSalesOrder {
     restaurantTableId: data.restaurantTable?.restaurantTableId || null,
     status: data.status,
     draftVersion: data.draftVersion,
+    confirmedAtUtc: data.confirmedAtUtc || null,
+    confirmedByUserId: data.confirmedByUserId || null,
+    cancelledAtUtc: data.cancelledAtUtc || null,
+    cancelledByUserId: data.cancelledByUserId || null,
+    cancellationReason: data.cancellationReason || null,
+    closedAtUtc: data.closedAtUtc || null,
+    closedByUserId: data.closedByUserId || null,
+    cancellationKind: data.cancellationKind || null,
     subtotalAmount: data.subtotalAmount,
     isTaxEnabled: Boolean(data.taxSummaries?.length),
     priceListTaxMode: null,
@@ -101,6 +154,11 @@ function normalizeDraftDetails(data: Record<string, any>): DraftSalesOrder {
     grossAmount: data.grossAmount,
     currencyMinorUnitDigits: data.currencyMinorUnitDigits,
     payableAmount: data.payableAmount,
+    grossPaidAmount: data.grossPaidAmount,
+    refundedAmount: data.refundedAmount,
+    netPaidAmount: data.netPaidAmount,
+    remainingAmount: data.remainingAmount,
+    isFullyPaid: data.isFullyPaid,
     createdByUserId: data.createdByUserId,
     createdAtUtc: data.createdAtUtc,
     discount: discount
@@ -116,6 +174,14 @@ function normalizeDraftDetails(data: Record<string, any>): DraftSalesOrder {
         }
       : null,
     taxSummaries: data.taxSummaries || [],
+    payments: data.payments || [],
+    kitchenTickets: (data.kitchenTickets || []).map((ticket: Record<string, any>) => ({
+      kitchenTicketId: ticket.kitchenTicketId,
+      kitchenStationId: ticket.kitchenStationId,
+      kitchenStationCode: ticket.kitchenStationCode,
+      kitchenStationName: ticket.kitchenStationName,
+      status: ticket.status,
+    })),
     lines: (data.lines || []).map((line: Record<string, any>) => ({
       salesOrderLineId: line.salesOrderLineId,
       lineNumber: line.lineNumber,

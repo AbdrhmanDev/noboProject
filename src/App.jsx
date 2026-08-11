@@ -7,6 +7,8 @@ import LoginPage from "./Pages/loginPage/Login";
 import SignupPage from "./Pages/signupPage/Signup";
 import Dashboard from "./Pages/DashboardPage/Dashboard";
 import POSPage from "./Pages/POSPage/POSPage";
+import POSShiftHistoryPage from "./Pages/POSShiftHistoryPage/POSShiftHistoryPage";
+import POSTerminalAdminPage from "./Pages/POSTerminalAdminPage/POSTerminalAdminPage";
 import KitchenPage from "./Pages/KitchenPage/KitchenPage";
 import SalesPage from "./Pages/SalesPage/SalesPage";
 import PurchasesPage from "./Pages/PurchasesPage/PurchasesPage";
@@ -36,6 +38,8 @@ export default function App() {
             <Route path={ROUTES.SIGNUP} element={<PublicOnlyRoute><SignupPage /></PublicOnlyRoute>} />
             <Route path={ROUTES.DASHBOARD} element={protectedPage(<Dashboard />)} />
             <Route path={ROUTES.POS} element={protectedPage(<POSPage />)} />
+            <Route path={ROUTES.POS_SHIFT_HISTORY} element={protectedPage(<POSShiftHistoryPage />)} />
+            <Route path={ROUTES.POS_TERMINALS_ADMIN} element={protectedPage(<POSTerminalAdminPage />)} />
             <Route path={ROUTES.KITCHEN} element={protectedPage(<KitchenPage />)} />
             <Route path={ROUTES.SALES} element={protectedPage(<SalesPage />)} />
             <Route path={ROUTES.PURCHASES} element={protectedPage(<PurchasesPage />)} />
