@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   CheckCircle2,
   ChefHat,
@@ -6,6 +7,7 @@ import {
   CookingPot,
   Flame,
   RefreshCw,
+  Settings,
   Timer,
   Utensils,
 } from "lucide-react";
@@ -173,6 +175,7 @@ function TicketCard({
 }
 
 export default function KitchenPage() {
+  const navigate = useNavigate();
   const { currentCompanyId } = useCompany();
   const { currentBranchId } = useBranch();
   const [selectedStationId, setSelectedStationId] = useState(null);
@@ -282,15 +285,25 @@ export default function KitchenPage() {
                 تذاكر مؤكدة من الطلبات الحقيقية حسب محطة المطبخ
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => ticketsQuery.refetch()}
-              disabled={!effectiveStationId || ticketsQuery.isFetching}
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 text-xs font-bold text-slate-200 transition hover:border-blue-400/40 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <RefreshCw size={15} className={ticketsQuery.isFetching ? "animate-spin" : ""} />
-              تحديث
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => navigate(ROUTES.KITCHEN_ADMIN)}
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 text-xs font-bold text-slate-200 transition hover:border-blue-400/40"
+              >
+                <Settings size={15} />
+                Configuration
+              </button>
+              <button
+                type="button"
+                onClick={() => ticketsQuery.refetch()}
+                disabled={!effectiveStationId || ticketsQuery.isFetching}
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 text-xs font-bold text-slate-200 transition hover:border-blue-400/40 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <RefreshCw size={15} className={ticketsQuery.isFetching ? "animate-spin" : ""} />
+                Refresh
+              </button>
+            </div>
           </header>
 
           {!currentCompanyId || !currentBranchId ? (

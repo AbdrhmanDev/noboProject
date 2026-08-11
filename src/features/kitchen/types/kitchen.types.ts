@@ -56,3 +56,87 @@ export type KitchenTicketLifecycleResponse = {
   readyByUserId: string | null;
   wasAlreadyInState: boolean;
 };
+
+export type KitchenStationStatus = "Active" | "Suspended";
+
+export type KitchenStationFilters = {
+  status?: KitchenStationStatus | "";
+  search?: string;
+};
+
+export type CreateKitchenStationRequest = {
+  code: string;
+  name: string;
+  sortOrder: number;
+};
+
+export type CreateKitchenStationResponse = {
+  kitchenStationId: string;
+  branchId: string;
+  code: string;
+  name: string;
+  sortOrder: number;
+  status: KitchenStationStatus;
+  createdAtUtc: string;
+};
+
+export type KitchenStationListItem = CreateKitchenStationResponse & {
+  routeCount: number;
+};
+
+export type KitchenStationRouteSummary = {
+  productVariantKitchenRouteId: string;
+  productVariantId: string;
+  productName: string;
+  variantName: string;
+  sku: string | null;
+  isEnabled: boolean;
+  sortOrder: number;
+  createdAtUtc: string;
+  updatedAtUtc: string;
+};
+
+export type KitchenStationDetails = CreateKitchenStationResponse & {
+  routes: KitchenStationRouteSummary[];
+};
+
+export type UpdateKitchenStationRequest = {
+  code: string;
+  name: string;
+  sortOrder: number;
+};
+
+export type ChangeKitchenStationStatusRequest = {
+  status: KitchenStationStatus;
+};
+
+export type SetProductVariantKitchenRouteRequest = {
+  isEnabled: boolean;
+  sortOrder: number;
+};
+
+export type SetProductVariantKitchenRouteResponse = {
+  productVariantKitchenRouteId: string;
+  branchId: string;
+  productVariantId: string;
+  kitchenStationId: string;
+  isEnabled: boolean;
+  sortOrder: number;
+  createdAtUtc: string;
+  updatedAtUtc: string;
+  wasCreated: boolean;
+};
+
+export type ProductVariantKitchenRoute = {
+  productVariantKitchenRouteId: string;
+  branchId: string;
+  productVariantId: string;
+  kitchenStationId: string;
+  kitchenStationCode: string;
+  kitchenStationName: string;
+  kitchenStationStatus: KitchenStationStatus;
+  isEnabled: boolean;
+  sortOrder: number;
+  createdAtUtc: string;
+  updatedAtUtc: string;
+};

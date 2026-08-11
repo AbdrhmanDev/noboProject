@@ -9,7 +9,9 @@ import Dashboard from "./Pages/DashboardPage/Dashboard";
 import POSPage from "./Pages/POSPage/POSPage";
 import POSShiftHistoryPage from "./Pages/POSShiftHistoryPage/POSShiftHistoryPage";
 import POSTerminalAdminPage from "./Pages/POSTerminalAdminPage/POSTerminalAdminPage";
+import RestaurantAdminPage from "./Pages/RestaurantAdminPage/RestaurantAdminPage";
 import KitchenPage from "./Pages/KitchenPage/KitchenPage";
+import KitchenAdminPage from "./Pages/KitchenAdminPage/KitchenAdminPage";
 import SalesPage from "./Pages/SalesPage/SalesPage";
 import PurchasesPage from "./Pages/PurchasesPage/PurchasesPage";
 import InventoryPage from "./Pages/InventoryPage/InventoryPage";
@@ -40,7 +42,9 @@ export default function App() {
             <Route path={ROUTES.POS} element={protectedPage(<POSPage />)} />
             <Route path={ROUTES.POS_SHIFT_HISTORY} element={protectedPage(<POSShiftHistoryPage />)} />
             <Route path={ROUTES.POS_TERMINALS_ADMIN} element={protectedPage(<POSTerminalAdminPage />)} />
+            <Route path={ROUTES.RESTAURANT_ADMIN} element={protectedPage(<RestaurantAdminPage />)} />
             <Route path={ROUTES.KITCHEN} element={protectedPage(<KitchenPage />)} />
+            <Route path={ROUTES.KITCHEN_ADMIN} element={protectedPage(<KitchenAdminPage />)} />
             <Route path={ROUTES.SALES} element={protectedPage(<SalesPage />)} />
             <Route path={ROUTES.PURCHASES} element={protectedPage(<PurchasesPage />)} />
             <Route path={ROUTES.INVENTORY} element={protectedPage(<InventoryPage />)} />
