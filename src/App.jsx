@@ -7,6 +7,7 @@ import LoginPage from "./Pages/loginPage/Login";
 import SignupPage from "./Pages/signupPage/Signup";
 import Dashboard from "./Pages/DashboardPage/Dashboard";
 import POSPage from "./Pages/POSPage/POSPage";
+import KitchenPage from "./Pages/KitchenPage/KitchenPage";
 import SalesPage from "./Pages/SalesPage/SalesPage";
 import PurchasesPage from "./Pages/PurchasesPage/PurchasesPage";
 import InventoryPage from "./Pages/InventoryPage/InventoryPage";
@@ -35,6 +36,7 @@ export default function App() {
             <Route path={ROUTES.SIGNUP} element={<PublicOnlyRoute><SignupPage /></PublicOnlyRoute>} />
             <Route path={ROUTES.DASHBOARD} element={protectedPage(<Dashboard />)} />
             <Route path={ROUTES.POS} element={protectedPage(<POSPage />)} />
+            <Route path={ROUTES.KITCHEN} element={protectedPage(<KitchenPage />)} />
             <Route path={ROUTES.SALES} element={protectedPage(<SalesPage />)} />
             <Route path={ROUTES.PURCHASES} element={protectedPage(<PurchasesPage />)} />
             <Route path={ROUTES.INVENTORY} element={protectedPage(<InventoryPage />)} />

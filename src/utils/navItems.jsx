@@ -1,5 +1,5 @@
 import {
-  Home, ScanLine, ShoppingBag, ShoppingCart, Boxes, Contact, Truck,
+  Home, ScanLine, ChefHat, ShoppingBag, ShoppingCart, Boxes, Contact, Truck,
   Calculator, BarChart3, Briefcase, UserCog, Settings, MoreHorizontal,
 } from "lucide-react";
 import { ROUTES } from "./routes";
@@ -7,6 +7,7 @@ import { ROUTES } from "./routes";
 export const NAV_ITEMS = [
   { icon: Home, labelKey: "nav.dashboard", to: ROUTES.DASHBOARD },
   { icon: ScanLine, labelKey: "nav.pos", to: ROUTES.POS },
+  { icon: ChefHat, labelKey: "KDS", to: ROUTES.KITCHEN },
   { icon: ShoppingBag, labelKey: "nav.sales", to: ROUTES.SALES },
   { icon: ShoppingCart, labelKey: "nav.purchases", to: ROUTES.PURCHASES },
   { icon: Boxes, labelKey: "nav.inventory", to: ROUTES.INVENTORY },

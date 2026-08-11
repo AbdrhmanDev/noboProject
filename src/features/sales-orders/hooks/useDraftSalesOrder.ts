@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  confirmSalesOrder,
   createDraftSalesOrder,
   getSalesOrderDetails,
   updateDraftSalesOrder,
@@ -84,6 +85,34 @@ export function useUpdateDraftSalesOrder(
         ),
         draft,
       );
+    },
+  });
+}
+
+export function useConfirmSalesOrder(
+  companyId: string | null | undefined,
+  branchId: string | null | undefined,
+  salesOrderId: string | null | undefined,
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () =>
+      confirmSalesOrder(
+        companyId as string,
+        branchId as string,
+        salesOrderId as string,
+      ),
+    onSuccess: async () => {
+      if (!companyId || !branchId || !salesOrderId) return;
+
+      await queryClient.invalidateQueries({
+        queryKey: draftSalesOrderQueryKeys.details(
+          companyId,
+          branchId,
+          salesOrderId,
+        ),
+      });
     },
   });
 }

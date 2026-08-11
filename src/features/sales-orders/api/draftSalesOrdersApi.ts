@@ -1,5 +1,6 @@
 import { httpClient } from "../../../shared/api/httpClient";
 import type {
+  ConfirmSalesOrderResponse,
   CreateDraftSalesOrderRequest,
   DraftSalesOrder,
   UpdateDraftSalesOrderRequest,
@@ -59,6 +60,18 @@ export async function getSalesOrderDetails(
   );
 
   return normalizeDraftDetails(response.data);
+}
+
+export async function confirmSalesOrder(
+  companyId: string,
+  branchId: string,
+  salesOrderId: string,
+) {
+  const response = await httpClient.post<ConfirmSalesOrderResponse>(
+    `${salesOrdersBaseUrl(companyId, branchId)}/${salesOrderId}/confirm`,
+  );
+
+  return response.data;
 }
 
 function normalizeDraftDetails(data: Record<string, any>): DraftSalesOrder {

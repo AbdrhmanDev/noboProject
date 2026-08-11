@@ -13,12 +13,11 @@ import {
   Database,
   Gift,
   Minus,
-  Nfc,
   Layers3,
   PauseCircle,
   Plus,
   Printer,
-  QrCode,
+  ReceiptText,
   RotateCcw,
   Search,
   ShieldCheck,
@@ -43,42 +42,89 @@ import { usePos } from "../../features/pos/context/PosContext";
 import { useOpenPosShift } from "../../features/pos/hooks/useOpenPosShift";
 import { useSellableCatalog } from "../../features/pos/hooks/useSellableCatalog";
 import {
+  useConfirmSalesOrder,
   useCreateDraftSalesOrder,
   useDraftSalesOrderDetails,
   useUpdateDraftSalesOrder,
 } from "../../features/sales-orders/hooks/useDraftSalesOrder";
+import {
+  useActivePaymentMethods,
+  useReceiveSalesOrderPayment,
+  useRefundSalesOrderPayment,
+  useSalesOrderPayments,
+} from "../../features/payments/hooks/usePayments";
+import {
+  useInvalidateRestaurantSeating,
+  useRestaurantSeating,
+} from "../../features/restaurant/hooks/useRestaurantSeating";
 
 const ALL_CATEGORY_ID = "__all__";
 const UNCATEGORIZED_CATEGORY_ID = "__uncategorized__";
 const SALES_ORDERS_CREATE_PERMISSION = "SalesOrders.Create";
 const SALES_ORDERS_APPLY_DISCOUNT_PERMISSION = "SalesOrders.ApplyDiscount";
+const SALES_ORDERS_CONFIRM_PERMISSION = "SalesOrders.Confirm";
+const RESTAURANT_VIEW_PERMISSION = "Restaurant.View";
+const PAYMENTS_VIEW_PERMISSION = "Payments.View";
+const PAYMENTS_RECEIVE_PERMISSION = "Payments.Receive";
+const PAYMENTS_REFUND_PERMISSION = "Payments.Refund";
 const DEFAULT_FULFILLMENT_TYPE = "Takeaway";
+const ORDER_TYPES = ["Takeaway", "DineIn", "Delivery"];
 
-const paymentMethods = [
-  {
-    id: "cash",
-    label: "نقدي",
-    icon: Banknote,
-    key: "F9",
-    color: "text-emerald-300",
-  },
-  {
-    id: "card",
-    label: "بطاقة",
-    icon: CreditCard,
-    key: "F10",
-    color: "text-blue-300",
-  },
-  {
-    id: "nfc",
-    label: "NFC / Tap",
-    icon: Nfc,
-    key: "F11",
-    color: "text-violet-300",
-  },
-  { id: "qr", label: "QR", icon: QrCode, key: "F12", color: "text-amber-300" },
-];
+function getPaymentMethodIcon(kind) {
+  if (kind === "Cash") return Banknote;
+  if (kind === "Card") return CreditCard;
+  return WalletCards;
+}
 
+function getPaymentMethodColor(kind) {
+  if (kind === "Cash") return "text-emerald-300";
+  if (kind === "Card") return "text-blue-300";
+  if (kind === "BankTransfer") return "text-violet-300";
+  return "text-amber-300";
+}
+
+function getDecimalScale(value) {
+  const normalized = String(value || "").trim();
+  if (!normalized.includes(".")) return 0;
+  return normalized.split(".")[1]?.length || 0;
+}
+
+function isPositiveDecimalInput(value) {
+  return /^\d+(\.\d+)?$/.test(String(value || "").trim());
+}
+
+function parseMoneyInput(value, minorUnitDigits) {
+  const normalized = String(value || "").trim();
+
+  if (!isPositiveDecimalInput(normalized)) {
+    return { amount: null, error: "Enter a valid positive amount." };
+  }
+
+  if (getDecimalScale(normalized) > minorUnitDigits) {
+    return {
+      amount: null,
+      error: `Amount supports up to ${minorUnitDigits} decimal places.`,
+    };
+  }
+
+  const amount = Number(normalized);
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return { amount: null, error: "Amount must be greater than zero." };
+  }
+
+  return { amount, error: "" };
+}
+
+function formatPaymentDate(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+
+  return new Intl.DateTimeFormat("ar-SA", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
 function IconButton({
   icon: Icon,
   label,
@@ -167,6 +213,26 @@ export default function POSPage() {
     currentCompanyId,
     SALES_ORDERS_APPLY_DISCOUNT_PERMISSION,
   );
+  const confirmPermissionQuery = useHasPermission(
+    currentCompanyId,
+    SALES_ORDERS_CONFIRM_PERMISSION,
+  );
+  const restaurantPermissionQuery = useHasPermission(
+    currentCompanyId,
+    RESTAURANT_VIEW_PERMISSION,
+  );
+  const paymentsViewPermissionQuery = useHasPermission(
+    currentCompanyId,
+    PAYMENTS_VIEW_PERMISSION,
+  );
+  const paymentsReceivePermissionQuery = useHasPermission(
+    currentCompanyId,
+    PAYMENTS_RECEIVE_PERMISSION,
+  );
+  const paymentsRefundPermissionQuery = useHasPermission(
+    currentCompanyId,
+    PAYMENTS_REFUND_PERMISSION,
+  );
   const canLoadCatalog =
     status === "authenticated" &&
     Boolean(currentCompanyId) &&
@@ -203,12 +269,47 @@ export default function POSPage() {
     currentBranchId,
     draftSalesOrderId,
   );
+  const confirmSalesOrderMutation = useConfirmSalesOrder(
+    currentCompanyId,
+    currentBranchId,
+    draftSalesOrderId,
+  );
+  const paymentMethodsQuery = useActivePaymentMethods(
+    currentCompanyId,
+    Boolean(draftSalesOrderId) &&
+      !paymentsReceivePermissionQuery.isLoading &&
+      paymentsReceivePermissionQuery.hasPermission,
+  );
+  const paymentHistoryQuery = useSalesOrderPayments(
+    currentCompanyId,
+    currentBranchId,
+    draftSalesOrderId,
+    Boolean(draftSalesOrderId) &&
+      !paymentsViewPermissionQuery.isLoading &&
+      paymentsViewPermissionQuery.hasPermission,
+  );
+  const receivePaymentMutation = useReceiveSalesOrderPayment(
+    currentCompanyId,
+    currentBranchId,
+    draftSalesOrderId,
+    currentPosTerminalId,
+  );
+  const refundPaymentMutation = useRefundSalesOrderPayment(
+    currentCompanyId,
+    currentBranchId,
+    draftSalesOrderId,
+    currentPosTerminalId,
+  );
+  const invalidateRestaurantSeating = useInvalidateRestaurantSeating();
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState(ALL_CATEGORY_ID);
+  const [orderType, setOrderType] = useState(DEFAULT_FULFILLMENT_TYPE);
+  const [selectedRestaurantTableId, setSelectedRestaurantTableId] = useState(null);
   const [discountInput, setDiscountInput] = useState("");
   const [customer, setCustomer] = useState(null);
-  const [tender, setTender] = useState("cash");
-  const [cashGiven, setCashGiven] = useState(0);
+  const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState("");
+  const [paymentAmountInput, setPaymentAmountInput] = useState("");
+  const [refundDraft, setRefundDraft] = useState(null);
   const [modal, setModal] = useState(null);
   const [toast, setToast] = useState("");
   const [selectedVariantProduct, setSelectedVariantProduct] = useState(null);
@@ -219,8 +320,44 @@ export default function POSPage() {
   const [aiDismissed, setAiDismissed] = useState([]);
   const draftOrder = draftDetailsQuery.data || null;
   const draftLines = draftOrder?.lines ?? [];
+  const isConfirmedOrder = draftOrder?.status === "Confirmed";
+  const canEditDraft = !draftOrder || draftOrder.status === "Draft";
+  const effectiveOrderType = draftOrder?.fulfillmentType || orderType;
+  const effectiveRestaurantTableId =
+    draftOrder?.restaurantTableId ||
+    (effectiveOrderType === "DineIn" ? selectedRestaurantTableId : null);
+  const seatingQuery = useRestaurantSeating(
+    currentCompanyId,
+    currentBranchId,
+    effectiveOrderType === "DineIn" &&
+      !restaurantPermissionQuery.isLoading &&
+      restaurantPermissionQuery.hasPermission,
+  );
   const isDraftMutationPending =
-    createDraftMutation.isPending || updateDraftMutation.isPending;
+    createDraftMutation.isPending ||
+    updateDraftMutation.isPending ||
+    confirmSalesOrderMutation.isPending;
+  const selectedRestaurantTable = useMemo(
+    () =>
+      seatingQuery.data
+        ?.flatMap((floor) =>
+          floor.tables.map((table) => ({
+            ...table,
+            floorName: floor.name,
+          })),
+        )
+        .find((table) => table.restaurantTableId === effectiveRestaurantTableId) ||
+      null,
+    [effectiveRestaurantTableId, seatingQuery.data],
+  );
+  const canConfirmOrder =
+    Boolean(draftOrder) &&
+    draftOrder?.status === "Draft" &&
+    draftLines.length > 0 &&
+    !isDraftMutationPending &&
+    !confirmPermissionQuery.isLoading &&
+    confirmPermissionQuery.hasPermission &&
+    (effectiveOrderType !== "DineIn" || Boolean(effectiveRestaurantTableId));
   const catalogItems = useMemo(
     () => sellableCatalogQuery.data?.items ?? [],
     [sellableCatalogQuery.data],
@@ -297,7 +434,37 @@ export default function POSPage() {
   const discountValue = draftOrder?.discountAmount ?? 0;
   const vat = draftOrder?.taxAmount ?? 0;
   const total = draftOrder?.payableAmount ?? 0;
-  const cashChange = Math.max(0, Number(cashGiven || 0) - total);
+  const paymentMethods = paymentMethodsQuery.data ?? [];
+  const selectedPaymentMethod =
+    paymentMethods.find(
+      (method) => method.paymentMethodId === selectedPaymentMethodId,
+    ) ||
+    paymentMethods[0] ||
+    null;
+  const paymentState = paymentHistoryQuery.data;
+  const settlementCurrencyCode =
+    paymentState?.currencyCode || draftOrder?.currencyCode || catalogCurrencyCode;
+  const settlementMinorUnitDigits =
+    paymentState?.currencyMinorUnitDigits ||
+    draftOrder?.currencyMinorUnitDigits ||
+    2;
+  const remainingAmount = paymentState?.remainingAmount ?? total;
+  const isFullyPaid = Boolean(paymentState?.isFullyPaid);
+  const paymentAmount = parseMoneyInput(
+    paymentAmountInput,
+    settlementMinorUnitDigits,
+  );
+  const canReceivePayment =
+    isConfirmedOrder &&
+    !isFullyPaid &&
+    remainingAmount > 0 &&
+    Boolean(selectedPaymentMethod) &&
+    paymentsReceivePermissionQuery.hasPermission &&
+    !paymentMethodsQuery.isLoading &&
+    !receivePaymentMutation.isPending &&
+    !paymentAmount.error &&
+    paymentAmount.amount !== null &&
+    paymentAmount.amount <= remainingAmount;
   const notify = (message) => {
     setToast(message);
     window.setTimeout(() => setToast(""), 3000);
@@ -317,9 +484,14 @@ export default function POSPage() {
           reason: draftOrder.discount.reason,
         }
       : null;
-  const buildDraftPayload = (lines, discount = getDraftDiscountInput()) => ({
-    fulfillmentType: draftOrder?.fulfillmentType || DEFAULT_FULFILLMENT_TYPE,
-    restaurantTableId: draftOrder?.restaurantTableId || null,
+  const buildDraftPayload = (
+    lines,
+    discount = getDraftDiscountInput(),
+    fulfillmentType = effectiveOrderType,
+    restaurantTableId = effectiveRestaurantTableId,
+  ) => ({
+    fulfillmentType,
+    restaurantTableId: fulfillmentType === "DineIn" ? restaurantTableId : null,
     lines,
     discount,
   });
@@ -333,7 +505,14 @@ export default function POSPage() {
     notify(error?.message || "Unable to update draft order.");
   };
   const replaceDraftLines = async (lines, discount = getDraftDiscountInput()) => {
-    if (!currentCompanyId || !currentBranchId || !lines.length) return;
+    if (!canEditDraft || !currentCompanyId || !currentBranchId || !lines.length) {
+      return;
+    }
+
+    if (effectiveOrderType === "DineIn" && !effectiveRestaurantTableId) {
+      notify("Select a table before adding dine-in items.");
+      return;
+    }
 
     try {
       if (!draftOrder) {
@@ -355,8 +534,215 @@ export default function POSPage() {
   const notifyDraftRequiresLine = () => {
     notify("Draft requires at least one line. Cancel will be integrated later.");
   };
+  const updateDraftContext = async (nextOrderType, nextRestaurantTableId) => {
+    if (!draftOrder || !draftLines.length || !canEditDraft) return;
+
+    if (nextOrderType === "DineIn" && !nextRestaurantTableId) {
+      notify("Select a table to switch this draft to dine-in.");
+      return;
+    }
+
+    try {
+      await updateDraftMutation.mutateAsync({
+        ...buildDraftPayload(
+          mapDraftLinesToRequest(),
+          getDraftDiscountInput(),
+          nextOrderType,
+          nextOrderType === "DineIn" ? nextRestaurantTableId : null,
+        ),
+        expectedDraftVersion: draftOrder.draftVersion,
+      });
+    } catch (error) {
+      handleDraftError(error);
+    }
+  };
+  const handleOrderTypeChange = (nextOrderType) => {
+    if (!canEditDraft || nextOrderType === effectiveOrderType) return;
+
+    setOrderType(nextOrderType);
+
+    if (nextOrderType !== "DineIn") {
+      setSelectedRestaurantTableId(null);
+      updateDraftContext(nextOrderType, null);
+      return;
+    }
+
+    updateDraftContext(nextOrderType, selectedRestaurantTableId);
+  };
+  const handleTableSelect = (table) => {
+    if (!canEditDraft || table.isOccupied) return;
+
+    setOrderType("DineIn");
+    setSelectedRestaurantTableId(table.restaurantTableId);
+    updateDraftContext("DineIn", table.restaurantTableId);
+  };
+  const confirmCurrentOrder = async () => {
+    if (!draftSalesOrderId || !draftOrder || !draftLines.length) return;
+
+    if (!confirmPermissionQuery.hasPermission) {
+      notify("SalesOrders.Confirm permission is required.");
+      return;
+    }
+
+    if (effectiveOrderType === "DineIn" && !effectiveRestaurantTableId) {
+      notify("Select a table before confirming dine-in order.");
+      return;
+    }
+
+    try {
+      await confirmSalesOrderMutation.mutateAsync();
+      setSelectedVariantProduct(null);
+      setSelectedModifierVariant(null);
+      setModifierSelections({});
+      setModal(null);
+      await draftDetailsQuery.refetch();
+      invalidateRestaurantSeating(currentCompanyId, currentBranchId);
+      notify("Sales order confirmed.");
+    } catch (error) {
+      if (
+        error?.code === "SalesOrder.DraftVersionConflict" ||
+        error?.code === "SalesOrder.NotReadyForConfirmation"
+      ) {
+        draftDetailsQuery.refetch();
+        notify("Order changed. Review the latest server state before confirming.");
+        return;
+      }
+
+      handleDraftError(error);
+    }
+  };
+  const refreshPaymentState = () => {
+    paymentHistoryQuery.refetch();
+    draftDetailsQuery.refetch();
+    openShiftQuery.refetch();
+  };
+  const handlePaymentError = (error) => {
+    const staleCodes = [
+      "Payment.SalesOrderNotSettlementReady",
+      "Payment.AlreadyFullyPaid",
+      "Payment.AmountExceedsRemaining",
+      "PaymentRefund.SalesOrderNotRefundable",
+      "PaymentRefund.AlreadyFullyRefunded",
+      "PaymentRefund.AmountExceedsRefundable",
+      "SalesOrderPayment.NotAvailable",
+      "PosShift.NotOpen",
+      "PosShift.InsufficientExpectedCash",
+    ];
+
+    if (staleCodes.includes(error?.code)) {
+      refreshPaymentState();
+    }
+
+    notify(error?.message || "Payment request failed.");
+  };
+  const receiveCurrentPayment = async () => {
+    if (!selectedPaymentMethod || !draftSalesOrderId) return;
+
+    if (!paymentsReceivePermissionQuery.hasPermission) {
+      notify("Payments.Receive permission is required.");
+      return;
+    }
+
+    if (paymentAmount.error || paymentAmount.amount === null) {
+      notify(paymentAmount.error || "Enter a valid payment amount.");
+      return;
+    }
+
+    if (paymentAmount.amount > remainingAmount) {
+      notify("Payment amount exceeds the remaining balance.");
+      return;
+    }
+
+    try {
+      await receivePaymentMutation.mutateAsync({
+        paymentMethodId: selectedPaymentMethod.paymentMethodId,
+        amount: paymentAmount.amount,
+        posShiftId: openShiftId,
+      });
+      setPaymentAmountInput("");
+      notify("Payment received.");
+      refreshPaymentState();
+    } catch (error) {
+      handlePaymentError(error);
+    }
+  };
+  const openRefundModal = (payment) => {
+    setRefundDraft({
+      payment,
+      amount: String(payment.refundableAmount || ""),
+      reason: "",
+      confirmation: false,
+    });
+    setModal("refundPayment");
+  };
+  const refundCurrentPayment = async () => {
+    if (!refundDraft?.payment || !draftSalesOrderId) return;
+
+    if (!paymentsRefundPermissionQuery.hasPermission) {
+      notify("Payments.Refund permission is required.");
+      return;
+    }
+
+    if (!refundDraft.confirmation) {
+      notify("Confirm the refund before processing.");
+      return;
+    }
+
+    const refundAmount = parseMoneyInput(
+      refundDraft.amount,
+      refundDraft.payment.currencyMinorUnitDigits,
+    );
+
+    if (refundAmount.error || refundAmount.amount === null) {
+      notify(refundAmount.error || "Enter a valid refund amount.");
+      return;
+    }
+
+    if (refundAmount.amount > refundDraft.payment.refundableAmount) {
+      notify("Refund amount exceeds the refundable amount.");
+      return;
+    }
+
+    if (!refundDraft.reason.trim()) {
+      notify("Refund reason is required.");
+      return;
+    }
+
+    try {
+      await refundPaymentMutation.mutateAsync({
+        salesOrderPaymentId: refundDraft.payment.salesOrderPaymentId,
+        payload: {
+          amount: refundAmount.amount,
+          posShiftId: openShiftId,
+          reason: refundDraft.reason,
+        },
+      });
+      setRefundDraft(null);
+      setModal(null);
+      notify("Refund processed.");
+      refreshPaymentState();
+    } catch (error) {
+      handlePaymentError(error);
+    }
+  };
+  const startNewOrder = () => {
+    setDraftSession({ scope: "", salesOrderId: null });
+    setOrderType(DEFAULT_FULFILLMENT_TYPE);
+    setSelectedRestaurantTableId(null);
+    setDiscountInput("");
+    setPaymentAmountInput("");
+    setSelectedPaymentMethodId("");
+    setRefundDraft(null);
+    setCustomer(null);
+    setSelectedVariantProduct(null);
+    setSelectedModifierVariant(null);
+    setModifierSelections({});
+    setModal(null);
+  };
 
   const addSellableVariant = async (variant, modifierOptionIds = []) => {
+    if (!canEditDraft) return;
+
     setSelectedVariantProduct(null);
     setSelectedModifierVariant(null);
     setModifierSelections({});
@@ -382,6 +768,8 @@ export default function POSPage() {
     await replaceDraftLines(requestLines);
   };
   const selectVariantForDraft = (variant) => {
+    if (!canEditDraft) return;
+
     if (variant.modifierGroups?.length) {
       setSelectedModifierVariant(variant);
       setModifierSelections({});
@@ -392,6 +780,8 @@ export default function POSPage() {
     addSellableVariant(variant);
   };
   const addItem = (product) => {
+    if (!canEditDraft) return;
+
     if (product.variants.length === 1) {
       selectVariantForDraft(product.variants[0]);
       return;
@@ -401,6 +791,8 @@ export default function POSPage() {
     setModal("variant");
   };
   const changeQty = (salesOrderLineId, amount) => {
+    if (!canEditDraft) return;
+
     const requestLines = mapDraftLinesToRequest();
     const index = draftLines.findIndex(
       (line) => line.salesOrderLineId === salesOrderLineId,
@@ -422,6 +814,8 @@ export default function POSPage() {
     replaceDraftLines(requestLines);
   };
   const removeDraftLine = (salesOrderLineId) => {
+    if (!canEditDraft) return;
+
     const index = draftLines.findIndex(
       (line) => line.salesOrderLineId === salesOrderLineId,
     );
@@ -440,11 +834,9 @@ export default function POSPage() {
   const holdOrder = () => {
     notify("Draft hold is not integrated yet.");
   };
-  const completeSale = () => {
-    if (!draftLines.length) return notify("Cart is empty. Select a product first.");
-    notify("Draft is ready for review. Confirm will be integrated next.");
-  };
   const applyDraftDiscount = () => {
+    if (!canEditDraft) return;
+
     if (!draftOrder || !draftLines.length) {
       notify("Create a draft before applying a discount.");
       return;
@@ -565,7 +957,7 @@ export default function POSPage() {
             </div>
           </header>
 
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_390px]">
+          <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_390px]">
             <section className="min-w-0 space-y-4">
               <div className="grid grid-flow-col auto-cols-[82px] gap-2 overflow-x-auto pb-1 scrollbar-none sm:auto-cols-[96px]">
                 {catalogCategories.map(({ id, label, icon: Icon }) => (
@@ -661,7 +1053,8 @@ export default function POSPage() {
                         type="button"
                         key={product.productId}
                         onClick={() => addItem(product)}
-                        className="group overflow-hidden rounded-xl border border-white/10 bg-[#0d1728] p-2.5 text-right transition hover:-translate-y-0.5 hover:border-blue-400/60 hover:bg-[#111f36] hover:shadow-lg hover:shadow-blue-950/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400"
+                        disabled={!canEditDraft || isDraftMutationPending}
+                        className="group overflow-hidden rounded-xl border border-white/10 bg-[#0d1728] p-2.5 text-right transition hover:-translate-y-0.5 hover:border-blue-400/60 hover:bg-[#111f36] hover:shadow-lg hover:shadow-blue-950/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <div className="relative mb-2 grid aspect-[1.3] place-items-center rounded-lg border border-white/8 bg-white/[0.025]">
                           <Package size={28} className="text-blue-300/80" />
@@ -698,7 +1091,7 @@ export default function POSPage() {
               )}
             </section>
 
-            <aside className="flex min-h-[620px] flex-col rounded-2xl border border-white/10 bg-[#0d1728]/95 p-3 shadow-xl shadow-black/20 xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)]">
+            <aside className="flex min-h-[620px] flex-col rounded-2xl border border-white/10 bg-[#0d1728]/95 p-3 shadow-xl shadow-black/20 xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto xl:scrollbar-none">
               <div className="mb-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="grid h-8 w-8 place-items-center rounded-lg bg-blue-500/15 text-blue-300">
@@ -731,6 +1124,106 @@ export default function POSPage() {
                   </button>
                 </div>
               )}
+              <div className="mb-3 space-y-2 rounded-xl border border-white/10 bg-white/[0.025] p-2">
+                <div className="flex items-center justify-between gap-2 text-[10px] text-slate-400">
+                  <span>Order status</span>
+                  <span
+                    className={`rounded-full px-2 py-0.5 font-bold ${
+                      isConfirmedOrder
+                        ? "bg-emerald-500/15 text-emerald-300"
+                        : "bg-blue-500/15 text-blue-300"
+                    }`}
+                  >
+                    {draftOrder?.status || "New"}
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-1">
+                  {ORDER_TYPES.map((type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      disabled={!canEditDraft || isDraftMutationPending}
+                      onClick={() => handleOrderTypeChange(type)}
+                      className={`rounded-lg border px-2 py-1.5 text-[10px] font-bold transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                        effectiveOrderType === type
+                          ? "border-blue-400 bg-blue-500/15 text-blue-100"
+                          : "border-white/10 bg-black/10 text-slate-400 hover:bg-white/10"
+                      }`}
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
+                {effectiveOrderType === "DineIn" && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2 text-[10px] text-slate-400">
+                      <span>Table</span>
+                      <span className="text-blue-300">
+                        {selectedRestaurantTable
+                          ? `${selectedRestaurantTable.floorName} · ${selectedRestaurantTable.code}`
+                          : "Required"}
+                      </span>
+                    </div>
+                    {restaurantPermissionQuery.isLoading && (
+                      <p className="rounded-lg bg-black/10 px-2 py-2 text-[10px] text-slate-500">
+                        Checking restaurant access...
+                      </p>
+                    )}
+                    {!restaurantPermissionQuery.isLoading &&
+                      !restaurantPermissionQuery.hasPermission && (
+                        <p className="rounded-lg border border-amber-400/20 bg-amber-500/10 px-2 py-2 text-[10px] text-amber-100">
+                          Restaurant.View permission is required.
+                        </p>
+                      )}
+                    {seatingQuery.isLoading && (
+                      <p className="rounded-lg bg-black/10 px-2 py-2 text-[10px] text-slate-500">
+                        Loading tables...
+                      </p>
+                    )}
+                    {seatingQuery.isError && (
+                      <p className="rounded-lg border border-rose-400/20 bg-rose-500/10 px-2 py-2 text-[10px] text-rose-100">
+                        Unable to load restaurant seating.
+                      </p>
+                    )}
+                    {seatingQuery.data?.map((floor) => (
+                      <div key={floor.restaurantFloorId}>
+                        <div className="mb-1 text-[10px] font-bold text-slate-400">
+                          {floor.name}
+                        </div>
+                        <div className="grid grid-cols-3 gap-1">
+                          {floor.tables.map((table) => (
+                            <button
+                              key={table.restaurantTableId}
+                              type="button"
+                              disabled={
+                                !canEditDraft ||
+                                isDraftMutationPending ||
+                                table.isOccupied
+                              }
+                              onClick={() => handleTableSelect(table)}
+                              className={`rounded-lg border px-2 py-1.5 text-[10px] transition disabled:cursor-not-allowed disabled:opacity-45 ${
+                                effectiveRestaurantTableId ===
+                                table.restaurantTableId
+                                  ? "border-emerald-400 bg-emerald-500/15 text-emerald-100"
+                                  : "border-white/10 bg-black/10 text-slate-300 hover:bg-white/10"
+                              }`}
+                            >
+                              <span className="block truncate font-bold">
+                                {table.code}
+                              </span>
+                              <span className="block truncate text-[9px] text-slate-500">
+                                {table.isOccupied
+                                  ? `${table.openSalesOrderCount} open`
+                                  : table.name || "Available"}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
               <div className="min-h-36 flex-1 space-y-2 overflow-y-auto pr-1 scrollbar-none">
                 {!draftLines.length && (
                   <div className="grid min-h-36 place-items-center rounded-xl border border-dashed border-white/10 text-center">
@@ -779,7 +1272,7 @@ export default function POSPage() {
                       <button
                         type="button"
                         onClick={() => removeDraftLine(item.salesOrderLineId)}
-                        disabled={isDraftMutationPending}
+                        disabled={!canEditDraft || isDraftMutationPending}
                         className="text-slate-500 hover:text-rose-300 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <Trash2 size={15} />
@@ -790,7 +1283,7 @@ export default function POSPage() {
                         <button
                           type="button"
                           onClick={() => changeQty(item.salesOrderLineId, -1)}
-                          disabled={isDraftMutationPending}
+                          disabled={!canEditDraft || isDraftMutationPending}
                           className="grid h-7 w-7 place-items-center text-slate-300 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           <Minus size={13} />
@@ -801,7 +1294,7 @@ export default function POSPage() {
                         <button
                           type="button"
                           onClick={() => changeQty(item.salesOrderLineId, 1)}
-                          disabled={isDraftMutationPending}
+                          disabled={!canEditDraft || isDraftMutationPending}
                           className="grid h-7 w-7 place-items-center text-blue-300 hover:bg-blue-500/15 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           <Plus size={13} />
@@ -817,11 +1310,13 @@ export default function POSPage() {
                     </div>
                   </div>
                 ))}
-              </div>              <div className="mt-3 border-t border-white/10 pt-3">
+              </div>
+              <div className="mt-3 max-h-[52vh] overflow-y-auto border-t border-white/10 pt-3 pr-1 scrollbar-none xl:max-h-none">
                 <button
                   type="button"
                   onClick={() => setModal("discount")}
-                  className="mb-2 flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/[0.025] px-3 py-2 text-xs text-slate-300 hover:border-pink-400/35"
+                  disabled={!canEditDraft || isDraftMutationPending}
+                  className="mb-2 flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/[0.025] px-3 py-2 text-xs text-slate-300 hover:border-pink-400/35 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <span className="flex items-center gap-2">
                     <Gift size={14} className="text-pink-300" />
@@ -857,38 +1352,191 @@ export default function POSPage() {
                     </span>
                   </div>
                 </div>
-                <div className="mt-3 grid grid-cols-4 gap-2">
-                  {paymentMethods.map(
-                    ({ id, label, icon: Icon, key, color }) => (
-                      <button
-                        type="button"
-                        key={id}
-                        onClick={() => setTender(id)}
-                        className={`rounded-xl border py-2 text-center transition ${tender === id ? "border-blue-400 bg-blue-500/15" : "border-white/10 bg-white/[0.025] hover:bg-white/10"}`}
-                      >
-                        <Icon size={16} className={`mx-auto ${color}`} />
-                        <span className="mt-1 block text-[10px] font-bold">
-                          {label}
-                        </span>
-                        <span className="text-[9px] text-slate-500">{key}</span>
-                      </button>
-                    ),
-                  )}
-                </div>
-                {tender === "cash" && (
-                  <div className="mt-2 flex items-center gap-2 rounded-xl bg-emerald-500/8 p-2">
-                    <Banknote size={16} className="text-emerald-300" />
-                    <input
-                      type="number"
-                      min="0"
-                      value={cashGiven}
-                      onChange={(event) => setCashGiven(event.target.value)}
-                      className="min-w-0 flex-1 bg-transparent text-xs outline-none"
-                      placeholder="المبلغ المستلم"
-                    />
-                    <span className="text-[10px] text-emerald-300">
-                      الباقي {formatMoney(cashChange, catalogCurrencyCode, 2)}
-                    </span>
+                                {isConfirmedOrder && (
+                  <div className="mt-3 space-y-3 rounded-xl border border-white/10 bg-black/10 p-3">
+                    <div className="grid grid-cols-3 gap-2 text-[10px]">
+                      <Metric
+                        label="Paid"
+                        value={formatMoney(
+                          paymentState?.netPaidAmount ?? 0,
+                          settlementCurrencyCode,
+                          settlementMinorUnitDigits,
+                        )}
+                        tone="green"
+                      />
+                      <Metric
+                        label="Refunded"
+                        value={formatMoney(
+                          paymentState?.refundedAmount ?? 0,
+                          settlementCurrencyCode,
+                          settlementMinorUnitDigits,
+                        )}
+                        tone="pink"
+                      />
+                      <Metric
+                        label="Remaining"
+                        value={formatMoney(
+                          remainingAmount,
+                          settlementCurrencyCode,
+                          settlementMinorUnitDigits,
+                        )}
+                        tone={isFullyPaid ? "green" : "gold"}
+                      />
+                    </div>
+                    {isFullyPaid && (
+                      <div className="rounded-lg border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 text-xs font-bold text-emerald-100">
+                        Fully Paid
+                      </div>
+                    )}
+                    {!paymentsReceivePermissionQuery.hasPermission && (
+                      <div className="rounded-lg border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+                        Payments.Receive permission is required.
+                      </div>
+                    )}
+                    {paymentsReceivePermissionQuery.hasPermission && (
+                      <>
+                        <div className="grid grid-cols-2 gap-2">
+                          {paymentMethodsQuery.isLoading && (
+                            <div className="col-span-2 rounded-lg bg-white/[0.025] px-3 py-2 text-xs text-slate-400">
+                              Loading payment methods...
+                            </div>
+                          )}
+                          {!paymentMethodsQuery.isLoading &&
+                            paymentMethods.map((method) => {
+                              const Icon = getPaymentMethodIcon(method.kind);
+
+                              return (
+                                <button
+                                  type="button"
+                                  key={method.paymentMethodId}
+                                  onClick={() =>
+                                    setSelectedPaymentMethodId(
+                                      method.paymentMethodId,
+                                    )
+                                  }
+                                  className={`rounded-xl border px-3 py-2 text-center transition ${
+                                    selectedPaymentMethod?.paymentMethodId ===
+                                    method.paymentMethodId
+                                      ? "border-blue-400 bg-blue-500/15"
+                                      : "border-white/10 bg-white/[0.025] hover:bg-white/10"
+                                  }`}
+                                >
+                                  <Icon
+                                    size={16}
+                                    className={`mx-auto ${getPaymentMethodColor(
+                                      method.kind,
+                                    )}`}
+                                  />
+                                  <span className="mt-1 block truncate text-[10px] font-bold">
+                                    {method.name}
+                                  </span>
+                                  <span className="text-[9px] text-slate-500">
+                                    {method.code} · {method.kind}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          {!paymentMethodsQuery.isLoading &&
+                            paymentMethods.length === 0 && (
+                              <div className="col-span-2 rounded-lg border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+                                No active payment methods available.
+                              </div>
+                            )}
+                        </div>
+                        <div className="flex items-center gap-2 rounded-xl bg-emerald-500/8 p-2">
+                          <CircleDollarSign
+                            size={16}
+                            className="text-emerald-300"
+                          />
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            value={paymentAmountInput}
+                            onChange={(event) =>
+                              setPaymentAmountInput(event.target.value)
+                            }
+                            className="min-w-0 flex-1 bg-transparent text-xs outline-none"
+                            placeholder="Payment amount"
+                          />
+                          <button
+                            type="button"
+                            disabled={!canReceivePayment}
+                            onClick={receiveCurrentPayment}
+                            className="rounded-lg bg-emerald-600 px-3 py-2 text-[10px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            Receive
+                          </button>
+                        </div>
+                        {paymentAmountInput &&
+                          (paymentAmount.error ||
+                            paymentAmount.amount > remainingAmount) && (
+                            <p className="text-[10px] text-amber-200">
+                              {paymentAmount.error ||
+                                "Payment amount exceeds remaining balance."}
+                            </p>
+                          )}
+                      </>
+                    )}
+                    {paymentsViewPermissionQuery.hasPermission && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-slate-500">
+                          <ReceiptText size={13} />
+                          Payments
+                        </div>
+                        {paymentHistoryQuery.isLoading && (
+                          <div className="rounded-lg bg-white/[0.025] px-3 py-2 text-xs text-slate-400">
+                            Loading payment history...
+                          </div>
+                        )}
+                        {(paymentState?.payments || []).map((payment) => (
+                          <div
+                            key={payment.salesOrderPaymentId}
+                            className="rounded-lg border border-white/10 bg-white/[0.025] p-2"
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <div className="truncate text-xs font-bold text-slate-100">
+                                  {payment.paymentMethod.name}
+                                </div>
+                                <div className="mt-0.5 text-[10px] text-slate-500">
+                                  {payment.paymentMethod.code} ·{" "}
+                                  {payment.paymentMethod.kind} ·{" "}
+                                  {formatPaymentDate(payment.receivedAtUtc)}
+                                </div>
+                              </div>
+                              <div className="text-right text-xs font-black text-emerald-300">
+                                {formatMoney(
+                                  payment.amount,
+                                  payment.currencyCode,
+                                  payment.currencyMinorUnitDigits,
+                                )}
+                              </div>
+                            </div>
+                            <div className="mt-2 flex items-center justify-between gap-2 text-[10px] text-slate-400">
+                              <span>
+                                Refunded{" "}
+                                {formatMoney(
+                                  payment.refundedAmount,
+                                  payment.currencyCode,
+                                  payment.currencyMinorUnitDigits,
+                                )}
+                              </span>
+                              <button
+                                type="button"
+                                disabled={
+                                  payment.refundableAmount <= 0 ||
+                                  !paymentsRefundPermissionQuery.hasPermission
+                                }
+                                onClick={() => openRefundModal(payment)}
+                                className="rounded-lg border border-rose-400/25 px-2 py-1 font-bold text-rose-200 disabled:cursor-not-allowed disabled:opacity-40"
+                              >
+                                Refund
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
                 <div className="mt-3 grid grid-cols-3 gap-2">
@@ -908,18 +1556,29 @@ export default function POSPage() {
                     onClick={() => setModal("cashMovement")}
                   />
                 </div>
-                <button
-                  type="button"
-                  disabled={!shiftOpen || isDraftMutationPending}
-                  onClick={completeSale}
-                  className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-l from-blue-600 to-[#0A84FF] text-sm font-black shadow-lg shadow-blue-950/40 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <Check size={19} />
-                  Review Draft · {formatMoney(total, catalogCurrencyCode, 2)}
-                  <kbd className="mr-2 rounded bg-white/10 px-1.5 py-0.5 text-[10px]">
-                    F1
-                  </kbd>
-                </button>
+                {isConfirmedOrder ? (
+                  <button
+                    type="button"
+                    onClick={startNewOrder}
+                    className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-slate-700 text-sm font-black transition hover:bg-slate-600"
+                  >
+                    <Plus size={18} />
+                    New Order
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={!shiftOpen || !canConfirmOrder}
+                    onClick={confirmCurrentOrder}
+                    className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-l from-blue-600 to-[#0A84FF] text-sm font-black shadow-lg shadow-blue-950/40 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <Check size={19} />
+                    Confirm Order · {formatMoney(total, catalogCurrencyCode, 2)}
+                    <kbd className="mr-2 rounded bg-white/10 px-1.5 py-0.5 text-[10px]">
+                      F1
+                    </kbd>
+                  </button>
+                )}
               </div>
             </aside>
           </div>
@@ -1228,7 +1887,9 @@ export default function POSPage() {
             </div>
             <button
               type="button"
-              disabled={!modifierSelectionIsValid || isDraftMutationPending}
+              disabled={
+                !canEditDraft || !modifierSelectionIsValid || isDraftMutationPending
+              }
               onClick={() => {
                 addSellableVariant(
                   selectedModifierVariant,
@@ -1240,6 +1901,106 @@ export default function POSPage() {
             >
               Add to Draft
             </button>
+          </Modal>
+        )}
+        {modal === "refundPayment" && refundDraft?.payment && (
+          <Modal
+            title="Refund Payment"
+            onClose={() => {
+              setRefundDraft(null);
+              setModal(null);
+            }}
+          >
+            <div className="space-y-3">
+              <div className="rounded-xl border border-white/10 bg-white/[0.025] p-3">
+                <div className="text-xs font-bold text-slate-100">
+                  {refundDraft.payment.paymentMethod.name}
+                </div>
+                <div className="mt-1 text-[10px] text-slate-500">
+                  {refundDraft.payment.paymentMethod.code} آ·{" "}
+                  {refundDraft.payment.paymentMethod.kind}
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <Metric
+                  label="Original"
+                  value={formatMoney(
+                    refundDraft.payment.amount,
+                    refundDraft.payment.currencyCode,
+                    refundDraft.payment.currencyMinorUnitDigits,
+                  )}
+                  tone="blue"
+                />
+                <Metric
+                  label="Refunded"
+                  value={formatMoney(
+                    refundDraft.payment.refundedAmount,
+                    refundDraft.payment.currencyCode,
+                    refundDraft.payment.currencyMinorUnitDigits,
+                  )}
+                  tone="pink"
+                />
+                <Metric
+                  label="Refundable"
+                  value={formatMoney(
+                    refundDraft.payment.refundableAmount,
+                    refundDraft.payment.currencyCode,
+                    refundDraft.payment.currencyMinorUnitDigits,
+                  )}
+                  tone="gold"
+                />
+              </div>
+              <label className="block text-xs text-slate-400">
+                Refund amount
+              </label>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={refundDraft.amount}
+                onChange={(event) =>
+                  setRefundDraft((draft) =>
+                    draft ? { ...draft, amount: event.target.value } : draft,
+                  )
+                }
+                className="h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm outline-none"
+              />
+              <label className="block text-xs text-slate-400">Reason</label>
+              <textarea
+                value={refundDraft.reason}
+                onChange={(event) =>
+                  setRefundDraft((draft) =>
+                    draft ? { ...draft, reason: event.target.value } : draft,
+                  )
+                }
+                className="h-20 w-full rounded-xl border border-white/10 bg-black/20 p-3 text-xs outline-none"
+              />
+              <label className="flex items-center gap-2 rounded-xl border border-rose-400/20 bg-rose-500/10 p-3 text-xs text-rose-100">
+                <input
+                  type="checkbox"
+                  checked={refundDraft.confirmation}
+                  onChange={(event) =>
+                    setRefundDraft((draft) =>
+                      draft
+                        ? { ...draft, confirmation: event.target.checked }
+                        : draft,
+                    )
+                  }
+                />
+                Confirm money refund
+              </label>
+              <button
+                type="button"
+                disabled={
+                  refundPaymentMutation.isPending ||
+                  !paymentsRefundPermissionQuery.hasPermission
+                }
+                onClick={refundCurrentPayment}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-rose-600 py-2.5 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <RotateCcw size={15} />
+                Process Refund
+              </button>
+            </div>
           </Modal>
         )}
         {modal === "customer" && (
@@ -1318,7 +2079,11 @@ export default function POSPage() {
             <button
               type="button"
               onClick={applyDraftDiscount}
-              disabled={isDraftMutationPending || !discountPermissionQuery.hasPermission}
+              disabled={
+                !canEditDraft ||
+                isDraftMutationPending ||
+                !discountPermissionQuery.hasPermission
+              }
               className="mt-4 w-full rounded-xl bg-pink-600 py-2.5 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-50"
             >
               Apply Discount

@@ -94,3 +94,37 @@ export type DraftSalesOrder = {
   taxSummaries: unknown[];
   lines: DraftSalesOrderLine[];
 };
+
+export type ConfirmSalesOrderKitchenTicketItemModifier = {
+  modifierGroupName: string;
+  modifierOptionName: string;
+};
+
+export type ConfirmSalesOrderKitchenTicketItem = {
+  kitchenTicketItemId: string;
+  salesOrderLineId: string;
+  lineNumber: number;
+  productName: string;
+  variantName: string;
+  quantity: number;
+  uomCode: string;
+  modifiers: ConfirmSalesOrderKitchenTicketItemModifier[];
+};
+
+export type ConfirmSalesOrderKitchenTicket = {
+  kitchenTicketId: string;
+  kitchenStationId: string;
+  kitchenStationCode: string;
+  kitchenStationName: string;
+  status: string;
+  items: ConfirmSalesOrderKitchenTicketItem[];
+};
+
+export type ConfirmSalesOrderResponse = {
+  salesOrderId: string;
+  status: "Confirmed";
+  confirmedAtUtc: string;
+  confirmedByUserId: string;
+  wasAlreadyConfirmed: boolean;
+  kitchenTickets: ConfirmSalesOrderKitchenTicket[];
+};
