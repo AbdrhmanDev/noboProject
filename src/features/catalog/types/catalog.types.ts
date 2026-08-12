@@ -4,6 +4,12 @@ export type CatalogStatusFilter = {
   status?: CatalogAdminStatus | "";
 };
 
+export type BranchProductVariantAvailabilityFilters = {
+  search?: string;
+  pageNumber?: number;
+  pageSize?: number;
+};
+
 export type CategoryAdmin = {
   categoryId: string;
   companyId: string;
@@ -31,6 +37,13 @@ export type ChangeCatalogStatusRequest = {
 
 export type ProductAdminFilters = {
   categoryId?: string | "";
+  status?: CatalogAdminStatus | "";
+  search?: string;
+  pageNumber?: number;
+  pageSize?: number;
+};
+
+export type ModifierGroupFilters = {
   status?: CatalogAdminStatus | "";
   search?: string;
   pageNumber?: number;
@@ -115,6 +128,44 @@ export type ProductVariantAdmin = {
   createdAtUtc: string;
 };
 
+export type BranchProductVariantAvailability = {
+  availabilityId: string | null;
+  branchId: string;
+  productId: string;
+  productName: string;
+  productStatus: CatalogAdminStatus;
+  productVariantId: string;
+  variantName: string;
+  sku: string | null;
+  variantStatus: CatalogAdminStatus;
+  isConfigured: boolean;
+  isAvailable: boolean;
+  createdAtUtc: string | null;
+  updatedAtUtc: string | null;
+};
+
+export type BranchProductVariantAvailabilityListResponse = {
+  pageNumber: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+  items: BranchProductVariantAvailability[];
+};
+
+export type SetBranchProductVariantAvailabilityRequest = {
+  isAvailable: boolean;
+};
+
+export type SetBranchProductVariantAvailabilityResponse = {
+  availabilityId: string;
+  branchId: string;
+  productVariantId: string;
+  isAvailable: boolean;
+  createdAtUtc: string;
+  updatedAtUtc: string;
+  wasCreated: boolean;
+};
+
 export type CreateProductVariantRequest = {
   name: string;
   sku: string | null;
@@ -148,3 +199,102 @@ export type UnitOfMeasure = {
   dimension: string;
   allowsFractionalQuantity: boolean;
 };
+
+export type ModifierGroupListItem = {
+  modifierGroupId: string;
+  companyId: string;
+  name: string;
+  status: CatalogAdminStatus;
+  createdAtUtc: string;
+  optionCount: number;
+};
+
+export type ModifierGroupListResponse = {
+  pageNumber: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+  items: ModifierGroupListItem[];
+};
+
+export type ModifierGroupOptionSummary = {
+  modifierOptionId: string;
+  name: string;
+  sortOrder: number;
+  status: CatalogAdminStatus;
+  createdAtUtc: string;
+};
+
+export type ModifierGroupDetails = Omit<ModifierGroupListItem, "optionCount"> & {
+  options: ModifierGroupOptionSummary[];
+};
+
+export type CreateModifierGroupRequest = {
+  name: string;
+};
+
+export type CreateModifierGroupResponse = Omit<ModifierGroupDetails, "options">;
+
+export type UpdateModifierGroupRequest = CreateModifierGroupRequest;
+
+export type ModifierOptionListResponse = {
+  items: ModifierOptionAdmin[];
+};
+
+export type ModifierOptionAdmin = {
+  modifierOptionId: string;
+  modifierGroupId: string;
+  groupName: string;
+  name: string;
+  sortOrder: number;
+  status: CatalogAdminStatus;
+  createdAtUtc: string;
+};
+
+export type CreateModifierOptionRequest = {
+  name: string;
+  sortOrder: number;
+};
+
+export type CreateModifierOptionResponse = Omit<
+  ModifierOptionAdmin,
+  "groupName"
+>;
+
+export type UpdateModifierOptionRequest = CreateModifierOptionRequest;
+
+export type ProductVariantModifierGroup = {
+  productVariantId: string;
+  productVariantName: string;
+  modifierGroupId: string;
+  modifierGroupName: string;
+  modifierGroupStatus: CatalogAdminStatus;
+  minSelections: number;
+  maxSelections: number;
+  sortOrder: number;
+  isEnabled: boolean;
+  createdAtUtc: string;
+  updatedAtUtc: string;
+  optionCount: number;
+};
+
+export type ProductVariantModifierGroupListResponse = {
+  items: ProductVariantModifierGroup[];
+};
+
+export type SetProductVariantModifierGroupRequest = {
+  minSelections: number;
+  maxSelections: number;
+  sortOrder: number;
+  isEnabled: boolean;
+};
+
+export type SetProductVariantModifierGroupResponse =
+  SetProductVariantModifierGroupRequest & {
+    productVariantModifierGroupId: string;
+    productVariantId: string;
+    modifierGroupId: string;
+    createdAtUtc: string;
+    updatedAtUtc: string;
+    wasCreated: boolean;
+  };

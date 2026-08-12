@@ -8,6 +8,8 @@ export const ROUTES = {
   POS_TERMINALS_ADMIN: "/pos/terminals/admin",
   CATALOG_ADMIN: "/catalog/admin",
   PAYMENT_METHODS_ADMIN: "/payments/methods/admin",
+  PRICING_ADMIN: "/pricing/admin",
+  TAX_ADMIN: "/tax/admin",
   RESTAURANT_ADMIN: "/restaurant/admin",
   KITCHEN: "/kitchen",
   KITCHEN_ADMIN: "/kitchen/admin",
