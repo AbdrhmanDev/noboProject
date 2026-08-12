@@ -23,6 +23,23 @@
 POS Module Coverage: Complete for existing POS Operational and POS Terminal Admin endpoints. Other admin modules remain deferred below.
 
 | GET | `/api/companies/{companyId}/branches/{branchId}/catalog/sellable` | POS sellable catalog | `SalesOrders.Create` | `useSellableCatalog` | POS product/category grid | Integrated |
+| POST | `/api/companies/{companyId}/catalog/categories` | Catalog categories admin | `Catalog.Manage` | `useCreateCategory` | Catalog Admin category create form | Integrated |
+| GET | `/api/companies/{companyId}/catalog/categories` | Catalog categories admin | `Catalog.View` | `useCategories` | Catalog Admin category list/status filter and parent selectors | Integrated |
+| GET | `/api/companies/{companyId}/catalog/categories/{categoryId}` | Catalog categories admin | `Catalog.View` | `useCategoryDetails` | Catalog Admin category details/edit panel | Integrated |
+| PUT | `/api/companies/{companyId}/catalog/categories/{categoryId}` | Catalog categories admin | `Catalog.Manage` | `useUpdateCategory` | Catalog Admin category update form | Integrated |
+| PUT | `/api/companies/{companyId}/catalog/categories/{categoryId}/status` | Catalog categories admin | `Catalog.Manage` | `useChangeCategoryStatus` | Catalog Admin category activate/suspend action | Integrated |
+| POST | `/api/companies/{companyId}/catalog/products` | Catalog products admin | `Catalog.Manage` | `useCreateProduct` | Catalog Admin product create form with real category selector | Integrated |
+| GET | `/api/companies/{companyId}/catalog/products` | Catalog products admin | `Catalog.View` | `useProducts` | Catalog Admin product paged list with category/status/search filters | Integrated |
+| GET | `/api/companies/{companyId}/catalog/products/{productId}` | Catalog products admin | `Catalog.View` | `useProductDetails` | Catalog Admin product details with variant summaries and tax read-only fields | Integrated |
+| PUT | `/api/companies/{companyId}/catalog/products/{productId}` | Catalog products admin | `Catalog.Manage` | `useUpdateProduct` | Catalog Admin product update form | Integrated |
+| PUT | `/api/companies/{companyId}/catalog/products/{productId}/status` | Catalog products admin | `Catalog.Manage` | `useChangeProductStatus` | Catalog Admin product activate/suspend action | Integrated |
+| PUT | `/api/companies/{companyId}/catalog/products/{productId}/sales-tax-category` | Product tax assignment | `Tax.Manage` | Not implemented | Tax module mutation deferred; Catalog Admin displays tax assignment read-only | Pending |
+| POST | `/api/companies/{companyId}/catalog/products/{productId}/variants` | Catalog product variants admin | `Catalog.Manage` | `useCreateProductVariant` | Catalog Admin variant create form with active unit-of-measure selector | Integrated |
+| GET | `/api/companies/{companyId}/catalog/products/{productId}/variants` | Catalog product variants admin | `Catalog.View` | `useProductVariants` | Catalog Admin variant list/status filter under selected product | Integrated |
+| GET | `/api/companies/{companyId}/catalog/products/{productId}/variants/{productVariantId}` | Catalog product variants admin | `Catalog.View` | `useProductVariantDetails` | Catalog Admin variant details/edit panel | Integrated |
+| PUT | `/api/companies/{companyId}/catalog/products/{productId}/variants/{productVariantId}` | Catalog product variants admin | `Catalog.Manage` | `useUpdateProductVariant` | Catalog Admin variant update form | Integrated |
+| PUT | `/api/companies/{companyId}/catalog/products/{productId}/variants/{productVariantId}/status` | Catalog product variants admin | `Catalog.Manage` | `useChangeProductVariantStatus` | Catalog Admin variant activate/suspend action | Integrated |
+| GET | `/api/units-of-measure` | Unit of measure reference data | Authenticated | `useActiveUnitsOfMeasure` | Catalog Admin variant sales UOM selector | Integrated |
 | POST | `/api/companies/{companyId}/branches/{branchId}/sales-orders` | Draft sales orders | `SalesOrders.Create`; `SalesOrders.ApplyDiscount` when discount included | `useCreateDraftSalesOrder` | First cart item creates backend Draft | Integrated |
 | GET | `/api/companies/{companyId}/branches/{branchId}/sales-orders/{salesOrderId}` | Sales order details | `SalesOrders.View` | `useDraftSalesOrderDetails` | Draft refetch/stale conflict recovery | Integrated |
 | PUT | `/api/companies/{companyId}/branches/{branchId}/sales-orders/{salesOrderId}/draft` | Draft sales orders | `SalesOrders.EditDraft`; `SalesOrders.ApplyDiscount` when discount included | `useUpdateDraftSalesOrder` | Quantity, line rebuild, modifiers, discount | Integrated |
@@ -31,6 +48,11 @@ POS Module Coverage: Complete for existing POS Operational and POS Terminal Admi
 | POST | `/api/companies/{companyId}/branches/{branchId}/sales-orders/{salesOrderId}/cancel` | Sales order cancel | `SalesOrders.Cancel` | `useCancelSalesOrder` | POS Cancel action before preparation | Integrated |
 | POST | `/api/companies/{companyId}/branches/{branchId}/sales-orders/{salesOrderId}/void-prepared` | Prepared sales order void | `SalesOrders.VoidPrepared` | `useVoidPreparedSalesOrder` | POS Prepared Void action after preparation starts | Integrated |
 | GET | `/api/companies/{companyId}/payments/methods` | Operational payment methods | `Payments.Receive` | `useActivePaymentMethods` | POS active payment method selector | Integrated |
+| POST | `/api/companies/{companyId}/payments/methods` | Payment method admin | `Payments.Configure` | `useCreatePaymentMethod` | Payment Methods create form with immutable Kind selection | Integrated |
+| GET | `/api/companies/{companyId}/payments/admin/methods` | Payment method admin | `Payments.Configure` | `usePaymentMethods` | Payment Methods admin list with status/kind/search filters | Integrated |
+| GET | `/api/companies/{companyId}/payments/admin/methods/{paymentMethodId}` | Payment method admin | `Payments.Configure` | `usePaymentMethodDetails` | Payment Methods details/edit panel | Integrated |
+| PUT | `/api/companies/{companyId}/payments/admin/methods/{paymentMethodId}` | Payment method admin | `Payments.Configure` | `useUpdatePaymentMethod` | Payment Methods update form for code/name/sort order | Integrated |
+| PUT | `/api/companies/{companyId}/payments/admin/methods/{paymentMethodId}/status` | Payment method admin | `Payments.Configure` | `useChangePaymentMethodStatus` | Payment Methods activate/suspend action | Integrated |
 | GET | `/api/companies/{companyId}/branches/{branchId}/sales-orders/{salesOrderId}/payments` | Sales order payment history | `Payments.View` | `useSalesOrderPayments` | POS payment totals/history/refundable amounts | Integrated |
 | POST | `/api/companies/{companyId}/branches/{branchId}/sales-orders/{salesOrderId}/payments` | Receive sales order payment | `Payments.Receive` | `useReceiveSalesOrderPayment` | POS receive payment action | Integrated |
 | POST | `/api/companies/{companyId}/branches/{branchId}/sales-orders/{salesOrderId}/payments/{salesOrderPaymentId}/refunds` | Refund sales order payment | `Payments.Refund` | `useRefundSalesOrderPayment` | POS historical payment refund action | Integrated |
@@ -56,6 +78,10 @@ POS Module Coverage: Complete for existing POS Operational and POS Terminal Admi
 | PUT | `/api/companies/{companyId}/branches/{branchId}/kitchen/admin/stations/{kitchenStationId}/status` | Kitchen station admin | `Kitchen.Manage` | `useChangeKitchenStationStatus` | Kitchen Configuration activate/suspend action | Integrated |
 | PUT | `/api/companies/{companyId}/branches/{branchId}/kitchen/routes/variants/{productVariantId}/stations/{kitchenStationId}` | Kitchen routing admin | `Kitchen.Manage` | `useSetProductVariantKitchenRoute` | Kitchen Configuration route assign/enable/disable | Integrated |
 | GET | `/api/companies/{companyId}/branches/{branchId}/kitchen/routes/variants/{productVariantId}` | Kitchen routing admin | `Kitchen.View` | `useProductVariantKitchenRoutes` | Kitchen Configuration variant route list | Integrated |
+
+Payments Operational Coverage: Complete. Payment Methods Admin Coverage: Complete. Payments Module Coverage: Complete for existing Payment and Payment Method endpoints.
+
+Catalog Operational Coverage: Complete. Catalog Core Admin Coverage: Complete. Catalog Modifiers Admin: Pending. Tax assignment mutation: Pending for Tax module.
 
 Restaurant Operational Coverage: Complete. Restaurant Admin Coverage: Complete. Restaurant Module Coverage: Complete for existing Restaurant endpoints.
 

@@ -1,11 +1,17 @@
 import { httpClient } from "../../../shared/api/httpClient";
 import type {
   ActivePaymentMethod,
+  ChangePaymentMethodStatusRequest,
+  CreatePaymentMethodRequest,
+  PaymentMethodAdmin,
+  PaymentMethodAdminFilters,
+  PaymentMethodResponse,
   ReceiveSalesOrderPaymentRequest,
   RefundSalesOrderPaymentRequest,
   SalesOrderPaymentHistory,
   SalesOrderPaymentRefundResponse,
   SalesOrderPaymentResponse,
+  UpdatePaymentMethodRequest,
 } from "../types/payment.types";
 
 function salesOrderPaymentsUrl(
@@ -14,6 +20,18 @@ function salesOrderPaymentsUrl(
   salesOrderId: string,
 ) {
   return `/api/companies/${companyId}/branches/${branchId}/sales-orders/${salesOrderId}/payments`;
+}
+
+function paymentsUrl(companyId: string) {
+  return `/api/companies/${companyId}/payments`;
+}
+
+function compactParams(filters: object) {
+  return Object.fromEntries(
+    Object.entries(filters).filter(
+      ([, value]) => value !== undefined && value !== null && value !== "",
+    ),
+  );
 }
 
 function createPaymentIdempotencyKey(prefix: string) {
@@ -26,7 +44,70 @@ function createPaymentIdempotencyKey(prefix: string) {
 
 export async function getActivePaymentMethods(companyId: string) {
   const response = await httpClient.get<ActivePaymentMethod[]>(
-    `/api/companies/${companyId}/payments/methods`,
+    `${paymentsUrl(companyId)}/methods`,
+  );
+
+  return response.data;
+}
+
+export async function getPaymentMethods(
+  companyId: string,
+  filters: PaymentMethodAdminFilters = {},
+) {
+  const response = await httpClient.get<PaymentMethodAdmin[]>(
+    `${paymentsUrl(companyId)}/admin/methods`,
+    {
+      params: compactParams(filters),
+    },
+  );
+
+  return response.data;
+}
+
+export async function getPaymentMethodDetails(
+  companyId: string,
+  paymentMethodId: string,
+) {
+  const response = await httpClient.get<PaymentMethodAdmin>(
+    `${paymentsUrl(companyId)}/admin/methods/${paymentMethodId}`,
+  );
+
+  return response.data;
+}
+
+export async function createPaymentMethod(
+  companyId: string,
+  payload: CreatePaymentMethodRequest,
+) {
+  const response = await httpClient.post<PaymentMethodResponse>(
+    `${paymentsUrl(companyId)}/methods`,
+    payload,
+  );
+
+  return response.data;
+}
+
+export async function updatePaymentMethod(
+  companyId: string,
+  paymentMethodId: string,
+  payload: UpdatePaymentMethodRequest,
+) {
+  const response = await httpClient.put<PaymentMethodAdmin>(
+    `${paymentsUrl(companyId)}/admin/methods/${paymentMethodId}`,
+    payload,
+  );
+
+  return response.data;
+}
+
+export async function changePaymentMethodStatus(
+  companyId: string,
+  paymentMethodId: string,
+  payload: ChangePaymentMethodStatusRequest,
+) {
+  const response = await httpClient.put<PaymentMethodAdmin>(
+    `${paymentsUrl(companyId)}/admin/methods/${paymentMethodId}/status`,
+    payload,
   );
 
   return response.data;

@@ -1,5 +1,13 @@
 export type PaymentMethodKind = "Cash" | "Card" | "BankTransfer" | "Other";
 
+export type PaymentMethodAdminStatus = "Active" | "Suspended";
+
+export type PaymentMethodAdminFilters = {
+  status?: PaymentMethodAdminStatus | "";
+  kind?: PaymentMethodKind | "";
+  search?: string;
+};
+
 export type ActivePaymentMethod = {
   paymentMethodId: string;
   companyId: string;
@@ -7,6 +15,34 @@ export type ActivePaymentMethod = {
   name: string;
   kind: PaymentMethodKind;
   sortOrder: number;
+};
+
+export type PaymentMethodAdmin = ActivePaymentMethod & {
+  status: PaymentMethodAdminStatus;
+  isActive: boolean;
+  createdAtUtc: string;
+};
+
+export type CreatePaymentMethodRequest = {
+  code: string;
+  name: string;
+  kind: PaymentMethodKind;
+  sortOrder: number;
+};
+
+export type PaymentMethodResponse = ActivePaymentMethod & {
+  isActive: boolean;
+  createdAtUtc: string;
+};
+
+export type UpdatePaymentMethodRequest = {
+  code: string;
+  name: string;
+  sortOrder: number;
+};
+
+export type ChangePaymentMethodStatusRequest = {
+  status: PaymentMethodAdminStatus;
 };
 
 export type SalesOrderPaymentMethod = {

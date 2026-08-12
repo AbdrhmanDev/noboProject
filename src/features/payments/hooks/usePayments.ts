@@ -2,26 +2,60 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { posQueryKeys } from "../../pos/hooks/usePosTerminals";
 import { draftSalesOrderQueryKeys } from "../../sales-orders/hooks/useDraftSalesOrder";
 import {
+  changePaymentMethodStatus,
+  createPaymentMethod,
   getActivePaymentMethods,
+  getPaymentMethodDetails,
+  getPaymentMethods,
   getSalesOrderPayments,
   receiveSalesOrderPayment,
   refundSalesOrderPayment,
+  updatePaymentMethod,
 } from "../api/paymentsApi";
 import type {
+  ChangePaymentMethodStatusRequest,
+  CreatePaymentMethodRequest,
+  PaymentMethodAdminFilters,
   ReceiveSalesOrderPaymentRequest,
   RefundSalesOrderPaymentRequest,
+  UpdatePaymentMethodRequest,
 } from "../types/payment.types";
 
 export const paymentQueryKeys = {
   all: ["payments"] as const,
   activeMethods: (companyId: string) =>
     ["payments", companyId, "methods", "active"] as const,
+  adminMethods: (companyId: string, filters: PaymentMethodAdminFilters = {}) =>
+    ["payments", companyId, "admin", "methods", filters] as const,
+  adminMethod: (companyId: string, paymentMethodId: string) =>
+    ["payments", companyId, "admin", "methods", paymentMethodId] as const,
   salesOrderPayments: (
     companyId: string,
     branchId: string,
     salesOrderId: string,
   ) => ["payments", companyId, branchId, salesOrderId, "history"] as const,
 };
+
+function invalidatePaymentMethodAdmin(
+  queryClient: ReturnType<typeof useQueryClient>,
+  companyId: string | null | undefined,
+  paymentMethodId?: string | null,
+) {
+  if (!companyId) return;
+
+  queryClient.invalidateQueries({
+    queryKey: ["payments", companyId, "admin", "methods"],
+  });
+  queryClient.invalidateQueries({
+    queryKey: paymentQueryKeys.activeMethods(companyId),
+  });
+
+  if (paymentMethodId) {
+    queryClient.invalidateQueries({
+      queryKey: paymentQueryKeys.adminMethod(companyId, paymentMethodId),
+    });
+  }
+}
 
 function invalidatePaymentState(
   queryClient: ReturnType<typeof useQueryClient>,
@@ -58,6 +92,73 @@ export function useActivePaymentMethods(
     queryKey: paymentQueryKeys.activeMethods(companyId || ""),
     queryFn: () => getActivePaymentMethods(companyId as string),
     enabled: Boolean(companyId) && enabled,
+  });
+}
+
+export function usePaymentMethods(
+  companyId: string | null | undefined,
+  filters: PaymentMethodAdminFilters = {},
+  enabled = true,
+) {
+  return useQuery({
+    queryKey: paymentQueryKeys.adminMethods(companyId || "", filters),
+    queryFn: () => getPaymentMethods(companyId as string, filters),
+    enabled: Boolean(companyId) && enabled,
+  });
+}
+
+export function usePaymentMethodDetails(
+  companyId: string | null | undefined,
+  paymentMethodId: string | null | undefined,
+  enabled = true,
+) {
+  return useQuery({
+    queryKey: paymentQueryKeys.adminMethod(companyId || "", paymentMethodId || ""),
+    queryFn: () =>
+      getPaymentMethodDetails(companyId as string, paymentMethodId as string),
+    enabled: Boolean(companyId) && Boolean(paymentMethodId) && enabled,
+  });
+}
+
+export function useCreatePaymentMethod(companyId: string | null | undefined) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: CreatePaymentMethodRequest) =>
+      createPaymentMethod(companyId as string, payload),
+    onSuccess: () => invalidatePaymentMethodAdmin(queryClient, companyId),
+  });
+}
+
+export function useUpdatePaymentMethod(
+  companyId: string | null | undefined,
+  paymentMethodId: string | null | undefined,
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: UpdatePaymentMethodRequest) =>
+      updatePaymentMethod(companyId as string, paymentMethodId as string, payload),
+    onSuccess: () =>
+      invalidatePaymentMethodAdmin(queryClient, companyId, paymentMethodId),
+  });
+}
+
+export function useChangePaymentMethodStatus(
+  companyId: string | null | undefined,
+  paymentMethodId: string | null | undefined,
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: ChangePaymentMethodStatusRequest) =>
+      changePaymentMethodStatus(
+        companyId as string,
+        paymentMethodId as string,
+        payload,
+      ),
+    onSuccess: () =>
+      invalidatePaymentMethodAdmin(queryClient, companyId, paymentMethodId),
   });
 }
 

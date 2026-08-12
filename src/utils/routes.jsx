@@ -6,6 +6,8 @@ export const ROUTES = {
   POS: "/POSPage",
   POS_SHIFT_HISTORY: "/pos/shifts",
   POS_TERMINALS_ADMIN: "/pos/terminals/admin",
+  CATALOG_ADMIN: "/catalog/admin",
+  PAYMENT_METHODS_ADMIN: "/payments/methods/admin",
   RESTAURANT_ADMIN: "/restaurant/admin",
   KITCHEN: "/kitchen",
   KITCHEN_ADMIN: "/kitchen/admin",
