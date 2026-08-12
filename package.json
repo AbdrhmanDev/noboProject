@@ -13,7 +13,6 @@
   "dependencies": {
     "@animateicons/react": "^0.4.3",
     "@hookform/resolvers": "^5.7.1",
-    "@rolldown/binding-win32-x64-msvc": "^1.2.2",
     "@tailwindcss/vite": "^4.3.3",
     "@tanstack/react-query": "^5.101.4",
     "axios": "^1.19.0",
