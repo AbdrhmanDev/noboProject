@@ -4,6 +4,7 @@ import { useCompany } from "../../companies/context/CompanyContext";
 import { useHasPermission } from "../../companies/hooks/useCompanies";
 import { useBranch } from "../context/BranchContext";
 import { isBranchEnterable, useBranches } from "../hooks/useBranches";
+import { BranchOnboarding } from "./BranchOnboarding";
 import { BranchSelector } from "./BranchSelector";
 
 const BRANCHES_VIEW_PERMISSION = "Branches.View";
@@ -89,10 +90,7 @@ export function BranchGate({ children }: BranchGateProps) {
   if (!branches?.length) {
     return (
       <BranchGateShell>
-        <EmptyState
-          title="No branches found"
-          message="This company does not have configured branches yet."
-        />
+        <BranchOnboarding />
       </BranchGateShell>
     );
   }
