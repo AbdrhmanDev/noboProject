@@ -20,6 +20,7 @@ import KitchenAdminPage from "./Pages/KitchenAdminPage/KitchenAdminPage";
 import SalesPage from "./Pages/SalesPage/SalesPage";
 import PurchasesPage from "./Pages/PurchasesPage/PurchasesPage";
 import InventoryPage from "./Pages/InventoryPage/InventoryPage";
+import InventoryAdminPage from "./Pages/InventoryAdminPage/InventoryAdminPage";
 import CustomersPage from "./Pages/CustomersPage/CustomersPage";
 import SuppliersPage from "./Pages/SuppliersPage/SuppliersPage";
 import AccountingPage from "./Pages/AccountingPage/AccountingPage";
@@ -58,6 +59,7 @@ export default function App() {
             <Route path={ROUTES.SALES} element={protectedPage(<SalesPage />)} />
             <Route path={ROUTES.PURCHASES} element={protectedPage(<PurchasesPage />)} />
             <Route path={ROUTES.INVENTORY} element={protectedPage(<InventoryPage />)} />
+            <Route path={ROUTES.INVENTORY_ADMIN} element={protectedPage(<InventoryAdminPage />)} />
             <Route path={ROUTES.CUSTOMERS} element={protectedPage(<CustomersPage />)} />
             <Route path={ROUTES.SUPPLIERS} element={protectedPage(<SuppliersPage />)} />
             <Route path={ROUTES.ACCOUNTING} element={protectedPage(<AccountingPage />)} />

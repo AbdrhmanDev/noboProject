@@ -17,6 +17,7 @@ export const ROUTES = {
   SALES: "/sales",
   PURCHASES: "/purchases",
   INVENTORY: "/inventory",
+  INVENTORY_ADMIN: "/inventory/admin",
   CUSTOMERS: "/customers",
   SUPPLIERS: "/suppliers",
   ACCOUNTING: "/accounting",
