@@ -71,6 +71,7 @@ import {
   useRefundSalesOrderPayment,
   useSalesOrderPayments,
 } from "../../features/payments/hooks/usePayments";
+import { PaymentMethodOnboarding } from "../../features/payments/components/PaymentMethodOnboarding";
 import {
   useInvalidateRestaurantSeating,
   useRestaurantSeating,
@@ -434,6 +435,7 @@ export default function POSPage() {
   );
   const invalidateRestaurantSeating = useInvalidateRestaurantSeating();
   const [taxCategoryBanner, setTaxCategoryBanner] = useState(null);
+  const [showAddPaymentMethod, setShowAddPaymentMethod] = useState(false);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState(ALL_CATEGORY_ID);
   const [orderType, setOrderType] = useState(DEFAULT_FULFILLMENT_TYPE);
@@ -862,7 +864,7 @@ export default function POSPage() {
       setSelectedVariantProduct(null);
       setSelectedModifierVariant(null);
       setModifierSelections({});
-      setModal(null);
+      setModal(effectiveOrderType === "DineIn" ? null : "payment");
       await draftDetailsQuery.refetch();
       invalidateRestaurantSeating(currentCompanyId, currentBranchId);
       notify("Sales order confirmed.");
@@ -1443,7 +1445,7 @@ export default function POSPage() {
           </header>
 
           <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_390px]">
-            <section className="min-w-0 space-y-4">
+            <section className="flex min-w-0 flex-col gap-4 xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)]">
               <div className="grid grid-flow-col auto-cols-[82px] gap-2 overflow-x-auto pb-1 scrollbar-none sm:auto-cols-[96px]">
                 {catalogCategories.map(({ id, label, icon: Icon }) => (
                   <button
@@ -1518,6 +1520,7 @@ export default function POSPage() {
                   </div>
                 </div>
               )}
+              <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1 scrollbar-none">
               {catalogPermissionQuery.isLoading && (
                 <LoadingState label="Checking catalog access..." />
               )}
@@ -1628,6 +1631,7 @@ export default function POSPage() {
                   })}
                 </div>
               )}
+              </div>
             </section>
 
             <aside className="flex min-h-[620px] flex-col rounded-2xl border border-white/10 bg-[#0d1728]/95 p-3 shadow-xl shadow-black/20 xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto xl:scrollbar-none">
@@ -1852,7 +1856,7 @@ export default function POSPage() {
                   </div>
                 ))}
               </div>
-              <div className="mt-3 max-h-[52vh] overflow-y-auto border-t border-white/10 pt-3 pr-1 scrollbar-none xl:max-h-none">
+              <div className="mt-3 shrink-0 border-t border-white/10 pt-3">
                 <button
                   type="button"
                   onClick={() => setModal("discount")}
@@ -1893,195 +1897,42 @@ export default function POSPage() {
                     </span>
                   </div>
                 </div>
-                                {shouldShowPaymentPanel && (
-                  <div className="mt-3 space-y-3 rounded-xl border border-white/10 bg-black/10 p-3">
-                    <div className="grid grid-cols-3 gap-2 text-[10px]">
-                      <Metric
-                        label="Paid"
-                        value={formatMoney(
-                          paymentState?.netPaidAmount ?? 0,
-                          settlementCurrencyCode,
-                          settlementMinorUnitDigits,
-                        )}
-                        tone="green"
-                      />
-                      <Metric
-                        label="Refunded"
-                        value={formatMoney(
-                          paymentState?.refundedAmount ?? 0,
-                          settlementCurrencyCode,
-                          settlementMinorUnitDigits,
-                        )}
-                        tone="pink"
-                      />
-                      <Metric
-                        label="Remaining"
-                        value={formatMoney(
-                          remainingAmount,
-                          settlementCurrencyCode,
-                          settlementMinorUnitDigits,
-                        )}
-                        tone={isFullyPaid ? "green" : "gold"}
-                      />
-                    </div>
-                    {isFullyPaid && (
-                      <div className="rounded-lg border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 text-xs font-bold text-emerald-100">
-                        Fully Paid
-                      </div>
-                    )}
-                    {isConfirmedOrder && !paymentsReceivePermissionQuery.hasPermission && (
-                      <div className="rounded-lg border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
-                        Payments.Receive permission is required.
-                      </div>
-                    )}
-                    {isConfirmedOrder && paymentsReceivePermissionQuery.hasPermission && (
-                      <>
-                        <div className="grid grid-cols-2 gap-2">
-                          {paymentMethodsQuery.isLoading && (
-                            <div className="col-span-2 rounded-lg bg-white/[0.025] px-3 py-2 text-xs text-slate-400">
-                              Loading payment methods...
-                            </div>
-                          )}
-                          {!paymentMethodsQuery.isLoading &&
-                            paymentMethods.map((method) => {
-                              const Icon = getPaymentMethodIcon(method.kind);
-
-                              return (
-                                <button
-                                  type="button"
-                                  key={method.paymentMethodId}
-                                  onClick={() =>
-                                    setSelectedPaymentMethodId(
-                                      method.paymentMethodId,
-                                    )
-                                  }
-                                  className={`rounded-xl border px-3 py-2 text-center transition ${
-                                    selectedPaymentMethod?.paymentMethodId ===
-                                    method.paymentMethodId
-                                      ? "border-blue-400 bg-blue-500/15"
-                                      : "border-white/10 bg-white/[0.025] hover:bg-white/10"
-                                  }`}
-                                >
-                                  <Icon
-                                    size={16}
-                                    className={`mx-auto ${getPaymentMethodColor(
-                                      method.kind,
-                                    )}`}
-                                  />
-                                  <span className="mt-1 block truncate text-[10px] font-bold">
-                                    {method.name}
-                                  </span>
-                                  <span className="text-[9px] text-slate-500">
-                                    {method.code} · {method.kind}
-                                  </span>
-                                </button>
-                              );
-                            })}
-                          {!paymentMethodsQuery.isLoading &&
-                            paymentMethods.length === 0 && (
-                              <div className="col-span-2 rounded-lg border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
-                                No active payment methods available.
-                              </div>
-                            )}
-                        </div>
-                        <div className="flex items-center gap-2 rounded-xl bg-emerald-500/8 p-2">
-                          <CircleDollarSign
-                            size={16}
-                            className="text-emerald-300"
-                          />
-                          <input
-                            type="text"
-                            inputMode="decimal"
-                            value={paymentAmountInput}
-                            onChange={(event) =>
-                              setPaymentAmountInput(event.target.value)
-                            }
-                            className="min-w-0 flex-1 bg-transparent text-xs outline-none"
-                            placeholder="Payment amount"
-                          />
-                          <button
-                            type="button"
-                            disabled={!canReceivePayment}
-                            onClick={receiveCurrentPayment}
-                            className="rounded-lg bg-emerald-600 px-3 py-2 text-[10px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            Receive
-                          </button>
-                        </div>
-                        {paymentAmountInput &&
-                          (paymentAmount.error ||
-                            paymentAmount.amount > remainingAmount) && (
-                            <p className="text-[10px] text-amber-200">
-                              {paymentAmount.error ||
-                                "Payment amount exceeds remaining balance."}
-                            </p>
-                          )}
-                      </>
-                    )}
-                    {paymentsViewPermissionQuery.hasPermission && (
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-slate-500">
-                          <ReceiptText size={13} />
-                          Payments
-                        </div>
-                        {paymentHistoryQuery.isLoading && (
-                          <div className="rounded-lg bg-white/[0.025] px-3 py-2 text-xs text-slate-400">
-                            Loading payment history...
-                          </div>
-                        )}
-                        {(paymentState?.payments || []).map((payment) => (
-                          <div
-                            key={payment.salesOrderPaymentId}
-                            className="rounded-lg border border-white/10 bg-white/[0.025] p-2"
-                          >
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="min-w-0">
-                                <div className="truncate text-xs font-bold text-slate-100">
-                                  {payment.paymentMethod.name}
-                                </div>
-                                <div className="mt-0.5 text-[10px] text-slate-500">
-                                  {payment.paymentMethod.code} ·{" "}
-                                  {payment.paymentMethod.kind} ·{" "}
-                                  {formatPaymentDate(payment.receivedAtUtc)}
-                                </div>
-                              </div>
-                              <div className="text-right text-xs font-black text-emerald-300">
-                                {formatMoney(
-                                  payment.amount,
-                                  payment.currencyCode,
-                                  payment.currencyMinorUnitDigits,
-                                )}
-                              </div>
-                            </div>
-                            <div className="mt-2 flex items-center justify-between gap-2 text-[10px] text-slate-400">
-                              <span>
-                                Refunded{" "}
-                                {formatMoney(
-                                  payment.refundedAmount,
-                                  payment.currencyCode,
-                                  payment.currencyMinorUnitDigits,
-                                )}
-                              </span>
-                              <button
-                                type="button"
-                                disabled={
-                                  payment.refundableAmount <= 0 ||
-                                  !canRefundPayments
-                                }
-                                onClick={() => openRefundModal(payment)}
-                                className="rounded-lg border border-rose-400/25 px-2 py-1 font-bold text-rose-200 disabled:cursor-not-allowed disabled:opacity-40"
-                              >
-                                Refund
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                {shouldShowPaymentPanel && (
+                  <div className="mt-3 grid grid-cols-3 gap-2 text-[10px]">
+                    <Metric
+                      label="Paid"
+                      value={formatMoney(
+                        paymentState?.netPaidAmount ?? 0,
+                        settlementCurrencyCode,
+                        settlementMinorUnitDigits,
+                      )}
+                      tone="green"
+                    />
+                    <Metric
+                      label="Refunded"
+                      value={formatMoney(
+                        paymentState?.refundedAmount ?? 0,
+                        settlementCurrencyCode,
+                        settlementMinorUnitDigits,
+                      )}
+                      tone="pink"
+                    />
+                    <Metric
+                      label="Remaining"
+                      value={formatMoney(
+                        remainingAmount,
+                        settlementCurrencyCode,
+                        settlementMinorUnitDigits,
+                      )}
+                      tone={isFullyPaid ? "green" : "gold"}
+                    />
                   </div>
                 )}
+              </div>
+
+              <div className="mt-3 max-h-[22vh] min-h-0 space-y-3 overflow-y-auto pr-1 scrollbar-none">
                 {!isClosedOrder && !isCancelledOrder && draftOrder && (
-                  <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.025] p-3">
+                  <div className="rounded-xl border border-white/10 bg-white/[0.025] p-3">
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
                         <div className="text-xs font-bold text-slate-100">
@@ -2135,7 +1986,7 @@ export default function POSPage() {
                   </div>
                 )}
                 {!isClosedOrder && !isCancelledOrder && (
-                  <div className="mt-3 grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-3 gap-2">
                   <IconButton
                     icon={PauseCircle}
                     label="حفظ مؤقت"
@@ -2153,11 +2004,77 @@ export default function POSPage() {
                   />
                   </div>
                 )}
+                {shouldShowPaymentPanel &&
+                  paymentsViewPermissionQuery.hasPermission &&
+                  (paymentHistoryQuery.isLoading ||
+                    (paymentState?.payments || []).length > 0) && (
+                    <div className="space-y-2 rounded-xl border border-white/10 bg-black/10 p-3">
+                      <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-slate-500">
+                        <ReceiptText size={13} />
+                        Payments
+                      </div>
+                      {paymentHistoryQuery.isLoading && (
+                        <div className="rounded-lg bg-white/[0.025] px-3 py-2 text-xs text-slate-400">
+                          Loading payment history...
+                        </div>
+                      )}
+                      {(paymentState?.payments || []).map((payment) => (
+                        <div
+                          key={payment.salesOrderPaymentId}
+                          className="rounded-lg border border-white/10 bg-white/[0.025] p-2"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="truncate text-xs font-bold text-slate-100">
+                                {payment.paymentMethod.name}
+                              </div>
+                              <div className="mt-0.5 text-[10px] text-slate-500">
+                                {payment.paymentMethod.code} ·{" "}
+                                {payment.paymentMethod.kind} ·{" "}
+                                {formatPaymentDate(payment.receivedAtUtc)}
+                              </div>
+                            </div>
+                            <div className="text-right text-xs font-black text-emerald-300">
+                              {formatMoney(
+                                payment.amount,
+                                payment.currencyCode,
+                                payment.currencyMinorUnitDigits,
+                              )}
+                            </div>
+                          </div>
+                          <div className="mt-2 flex items-center justify-between gap-2 text-[10px] text-slate-400">
+                            <span>
+                              Refunded{" "}
+                              {formatMoney(
+                                payment.refundedAmount,
+                                payment.currencyCode,
+                                payment.currencyMinorUnitDigits,
+                              )}
+                            </span>
+                            <button
+                              type="button"
+                              disabled={
+                                payment.refundableAmount <= 0 ||
+                                !canRefundPayments
+                              }
+                              onClick={() => openRefundModal(payment)}
+                              className="rounded-lg border border-rose-400/25 px-2 py-1 font-bold text-rose-200 disabled:cursor-not-allowed disabled:opacity-40"
+                            >
+                              Refund
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+              </div>
+
+              <div className="mt-3 shrink-0">
                 {isClosedOrder || isCancelledOrder ? (
                   <button
                     type="button"
                     onClick={startNewOrder}
-                    className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-slate-700 text-sm font-black transition hover:bg-slate-600"
+                    className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-slate-700 text-sm font-black transition hover:bg-slate-600"
                   >
                     {isClosedOrder ? (
                       <CircleCheckBig size={18} />
@@ -2172,8 +2089,40 @@ export default function POSPage() {
                     <Plus size={16} />
                     New Order
                   </button>
+                ) : isConfirmedOrder && !isFullyPaid ? (
+                  <button
+                    type="button"
+                    onClick={() => setModal("payment")}
+                    className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 text-sm font-black shadow-lg shadow-emerald-950/30 transition hover:brightness-110"
+                  >
+                    <WalletCards size={19} />
+                    Pay ·{" "}
+                    {formatMoney(
+                      remainingAmount,
+                      settlementCurrencyCode,
+                      settlementMinorUnitDigits,
+                    )}
+                  </button>
+                ) : isConfirmedOrder && !kitchenReady ? (
+                  <div className="space-y-2">
+                    <div className="rounded-xl border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-100">
+                      <div className="font-bold">Payment complete</div>
+                      <div className="mt-0.5 text-[10px] text-emerald-200/80">
+                        Order sent to kitchen · {readyKitchenTicketCount}/
+                        {kitchenTickets.length} ready
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={startNewOrder}
+                      className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 text-sm font-black shadow-lg shadow-blue-950/30 transition hover:brightness-110"
+                    >
+                      <Plus size={18} />
+                      New Order
+                    </button>
+                  </div>
                 ) : isConfirmedOrder ? (
-                  <div className="mt-3 space-y-2">
+                  <div className="space-y-2">
                     {closeBlockers.length > 0 && (
                       <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-[10px] leading-4 text-amber-100">
                         {closeBlockers[0]}
@@ -2194,10 +2143,11 @@ export default function POSPage() {
                     type="button"
                     disabled={!hasOpenShift || !canConfirmOrder}
                     onClick={confirmCurrentOrder}
-                    className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-l from-blue-600 to-[#0A84FF] text-sm font-black shadow-lg shadow-blue-950/40 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-l from-blue-600 to-[#0A84FF] text-sm font-black shadow-lg shadow-blue-950/40 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Check size={19} />
-                    Confirm Order · {formatMoney(total, catalogCurrencyCode, 2)}
+                    {effectiveOrderType === "DineIn" ? "Confirm Order" : "Confirm & Pay"} ·{" "}
+                    {formatMoney(total, catalogCurrencyCode, 2)}
                     <kbd className="mr-2 rounded bg-white/10 px-1.5 py-0.5 text-[10px]">
                       F1
                     </kbd>
@@ -2643,6 +2593,271 @@ export default function POSPage() {
                 <RotateCcw size={15} />
                 Process Refund
               </button>
+            </div>
+          </Modal>
+        )}
+        {modal === "payment" && draftOrder && (
+          <Modal
+            title="Payment"
+            onClose={() => {
+              setModal(null);
+              setShowAddPaymentMethod(false);
+            }}
+          >
+            <div className="space-y-4">
+              <div className="rounded-xl border border-white/10 bg-black/20 p-4 text-center">
+                <div className="text-[10px] font-bold uppercase text-slate-500">
+                  Total Due
+                </div>
+                <div className="mt-1 text-3xl font-black text-blue-300">
+                  {formatMoney(total, catalogCurrencyCode, 2)}
+                </div>
+                {netPaidAmount > 0 && (
+                  <div className="mt-2 flex items-center justify-center gap-4 text-xs text-slate-400">
+                    <span>
+                      Paid{" "}
+                      {formatMoney(
+                        netPaidAmount,
+                        settlementCurrencyCode,
+                        settlementMinorUnitDigits,
+                      )}
+                    </span>
+                    <span className="font-bold text-amber-300">
+                      Remaining{" "}
+                      {formatMoney(
+                        remainingAmount,
+                        settlementCurrencyCode,
+                        settlementMinorUnitDigits,
+                      )}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {isFullyPaid ? (
+                <div className="space-y-3 text-center">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-500/15">
+                    <CircleCheckBig size={24} className="text-emerald-300" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold text-white">
+                      Payment complete
+                    </div>
+                    <div className="mt-1 text-xs text-slate-400">
+                      {kitchenTickets.length > 0
+                        ? `Order sent to kitchen · ${readyKitchenTicketCount}/${kitchenTickets.length} ready`
+                        : "Order confirmed."}
+                    </div>
+                  </div>
+                  <div className="grid gap-2">
+                    {kitchenReady && closePermissionQuery.hasPermission && (
+                      <button
+                        type="button"
+                        onClick={() => setModal("closeOrder")}
+                        className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 text-sm font-bold text-white hover:brightness-110"
+                      >
+                        <CircleCheckBig size={17} />
+                        Close Order
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={startNewOrder}
+                      className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 text-sm font-bold text-white hover:brightness-110"
+                    >
+                      <Plus size={17} />
+                      New Order
+                    </button>
+                  </div>
+                </div>
+              ) : !paymentsReceivePermissionQuery.hasPermission ? (
+                <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 px-3 py-3 text-xs text-amber-100">
+                  Payments.Receive permission is required to collect payment.
+                </div>
+              ) : (
+                <>
+                  {paymentMethodsQuery.isLoading && (
+                    <div className="rounded-xl bg-white/[0.025] px-3 py-3 text-center text-xs text-slate-400">
+                      Loading payment methods...
+                    </div>
+                  )}
+                  {!paymentMethodsQuery.isLoading &&
+                    paymentMethods.length === 0 &&
+                    (showAddPaymentMethod ? (
+                      <PaymentMethodOnboarding
+                        onCreated={() => {
+                          paymentMethodsQuery.refetch();
+                          setShowAddPaymentMethod(false);
+                        }}
+                      />
+                    ) : (
+                      <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 p-4 text-center">
+                        <div className="text-sm font-bold text-amber-100">
+                          Payment Setup Required
+                        </div>
+                        <p className="mt-1 text-xs text-amber-100/80">
+                          No active payment methods are configured for this
+                          company. Add at least one method to accept payments.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setShowAddPaymentMethod(true)}
+                          className="mt-3 inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-bold text-white hover:brightness-110"
+                        >
+                          <Plus size={16} />
+                          Add Payment Method
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => navigate(ROUTES.PAYMENT_METHODS_ADMIN)}
+                          className="mt-3 block w-full text-[11px] font-semibold text-blue-300 hover:text-blue-200"
+                        >
+                          Manage in Payment Methods Admin
+                        </button>
+                      </div>
+                    ))}
+                  {!paymentMethodsQuery.isLoading && paymentMethods.length > 0 && (
+                    <>
+                      <div className="grid grid-cols-2 gap-2">
+                        {paymentMethods.map((method) => {
+                          const Icon = getPaymentMethodIcon(method.kind);
+
+                          return (
+                            <button
+                              type="button"
+                              key={method.paymentMethodId}
+                              onClick={() =>
+                                setSelectedPaymentMethodId(method.paymentMethodId)
+                              }
+                              className={`rounded-xl border px-3 py-3 text-center transition ${
+                                selectedPaymentMethod?.paymentMethodId ===
+                                method.paymentMethodId
+                                  ? "border-blue-400 bg-blue-500/15"
+                                  : "border-white/10 bg-white/[0.025] hover:bg-white/10"
+                              }`}
+                            >
+                              <Icon
+                                size={20}
+                                className={`mx-auto ${getPaymentMethodColor(method.kind)}`}
+                              />
+                              <span className="mt-1.5 block truncate text-xs font-bold">
+                                {method.name}
+                              </span>
+                              <span className="text-[10px] text-slate-500">
+                                {method.kind}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 rounded-xl bg-emerald-500/8 p-2">
+                          <CircleDollarSign size={16} className="text-emerald-300" />
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            value={paymentAmountInput}
+                            onChange={(event) =>
+                              setPaymentAmountInput(event.target.value)
+                            }
+                            className="min-w-0 flex-1 bg-transparent text-sm outline-none"
+                            placeholder="Payment amount"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setPaymentAmountInput(String(remainingAmount))
+                            }
+                            className="shrink-0 rounded-lg border border-white/10 px-2 py-1.5 text-[10px] font-bold text-slate-300 hover:bg-white/10"
+                          >
+                            Exact Amount
+                          </button>
+                        </div>
+                        {paymentAmountInput &&
+                          (paymentAmount.error ||
+                            paymentAmount.amount > remainingAmount) && (
+                            <p className="text-[10px] text-amber-200">
+                              {paymentAmount.error ||
+                                "Payment amount exceeds remaining balance."}
+                            </p>
+                          )}
+                        <button
+                          type="button"
+                          disabled={!canReceivePayment}
+                          onClick={receiveCurrentPayment}
+                          className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 text-sm font-black text-white shadow-lg shadow-emerald-950/30 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {receivePaymentMutation.isPending
+                            ? "..."
+                            : `Receive${
+                                paymentAmount.amount !== null
+                                  ? ` ${formatMoney(
+                                      paymentAmount.amount,
+                                      settlementCurrencyCode,
+                                      settlementMinorUnitDigits,
+                                    )}`
+                                  : ""
+                              }`}
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+
+              {paymentsViewPermissionQuery.hasPermission &&
+                (paymentState?.payments || []).length > 0 && (
+                  <div className="space-y-2 border-t border-white/10 pt-3">
+                    <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-slate-500">
+                      <ReceiptText size={13} />
+                      Payment History
+                    </div>
+                    {(paymentState?.payments || []).map((payment) => (
+                      <div
+                        key={payment.salesOrderPaymentId}
+                        className="rounded-lg border border-white/10 bg-white/[0.025] p-2"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="truncate text-xs font-bold text-slate-100">
+                              {payment.paymentMethod.name}
+                            </div>
+                            <div className="mt-0.5 text-[10px] text-slate-500">
+                              {payment.paymentMethod.code} · {payment.paymentMethod.kind}{" "}
+                              · {formatPaymentDate(payment.receivedAtUtc)}
+                            </div>
+                          </div>
+                          <div className="text-right text-xs font-black text-emerald-300">
+                            {formatMoney(
+                              payment.amount,
+                              payment.currencyCode,
+                              payment.currencyMinorUnitDigits,
+                            )}
+                          </div>
+                        </div>
+                        <div className="mt-2 flex items-center justify-between gap-2 text-[10px] text-slate-400">
+                          <span>
+                            Refunded{" "}
+                            {formatMoney(
+                              payment.refundedAmount,
+                              payment.currencyCode,
+                              payment.currencyMinorUnitDigits,
+                            )}
+                          </span>
+                          <button
+                            type="button"
+                            disabled={payment.refundableAmount <= 0 || !canRefundPayments}
+                            onClick={() => openRefundModal(payment)}
+                            className="rounded-lg border border-rose-400/25 px-2 py-1 font-bold text-rose-200 disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            Refund
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
             </div>
           </Modal>
         )}
