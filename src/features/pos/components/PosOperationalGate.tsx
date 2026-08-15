@@ -8,6 +8,7 @@ import { useOpenPosShift } from "../hooks/useOpenPosShift";
 import { isTerminalEnterable, usePosTerminals } from "../hooks/usePosTerminals";
 import { OpenShiftPanel } from "./OpenShiftPanel";
 import { OpenShiftSummary } from "./OpenShiftSummary";
+import { PosTerminalOnboarding } from "./PosTerminalOnboarding";
 import { PosTerminalSelector } from "./PosTerminalSelector";
 
 const POS_VIEW_PERMISSION = "Pos.View";
@@ -94,12 +95,7 @@ export function PosOperationalGate({ children }: PosOperationalGateProps) {
   }
 
   if (!terminals.length) {
-    return (
-      <EmptyState
-        title="No POS terminals found"
-        message="This branch does not have configured POS terminals."
-      />
-    );
+    return <PosTerminalOnboarding />;
   }
 
   if (!terminals.some((terminal) => isTerminalEnterable(terminal.status))) {
