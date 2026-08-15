@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 import {
   Boxes,
   CircleCheck,
@@ -1179,11 +1180,16 @@ function NumberField({ label, value, onChange, min = "0" }) {
   );
 }
 
+const CATALOG_ADMIN_TABS = ["categories", "products", "modifiers"];
+
 export default function CatalogAdminPage() {
   const { currentCompanyId } = useCompany();
   const { currentBranchId } = useBranch();
   const currentBranch = useCurrentBranch();
-  const [tab, setTab] = useState("categories");
+  const location = useLocation();
+  const [tab, setTab] = useState(() =>
+    CATALOG_ADMIN_TABS.includes(location.state?.tab) ? location.state.tab : "categories",
+  );
   const [categoryStatus, setCategoryStatus] = useState("");
   const [productStatus, setProductStatus] = useState("");
   const [variantStatus, setVariantStatus] = useState("");

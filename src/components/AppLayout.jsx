@@ -15,6 +15,7 @@ import {
 import { useMyCompanies } from "../features/companies/hooks/useCompanies";
 import { ROUTES } from "../utils/routes";
 import { NAV_ITEMS } from "../utils/navItems";
+import { InventoryNavGroup } from "../features/inventory/components/InventoryNavGroup";
 
 export default function AppLayout({ children, onLogout }) {
   const navigate = useNavigate();
@@ -98,6 +99,10 @@ export default function AppLayout({ children, onLogout }) {
         </button>
         <nav className="space-y-1 overflow-y-auto scrollbar-none">
           {NAV_ITEMS.slice(1).map((item, i) => {
+            if (item.to === ROUTES.INVENTORY) {
+              return <InventoryNavGroup key={i} activePath={activePath} navigate={navigate} />;
+            }
+
             const isActive = activePath === item.to;
             return (
               <div

@@ -48,6 +48,7 @@ export function ProductVariantPicker({
             </option>
           ))}
         </select>
+        {!productId && <p className="mt-1 text-[11px] text-slate-500">Select a product first</p>}
       </label>
     </div>
   );

@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
-import { Plus, RefreshCw, SlidersHorizontal, Trash2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { ExternalLink, Plus, RefreshCw, SlidersHorizontal, Trash2 } from "lucide-react";
 import { EmptyState, ErrorState, LoadingState } from "../../../shared/components/ui";
+import { ROUTES } from "../../../utils/routes";
 import {
   useActiveUnitsOfMeasure,
   useModifierGroupDetails,
@@ -19,7 +21,25 @@ function getErrorMessage(error) {
   return error?.message || "Request failed.";
 }
 
+function ManageModifiersEmptyState({ title, message, onManageModifiers }) {
+  return (
+    <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.015] p-5 text-center">
+      <h3 className="text-sm font-bold text-slate-200">{title}</h3>
+      <p className="mx-auto mt-1 max-w-md text-xs leading-5 text-slate-500">{message}</p>
+      <button
+        type="button"
+        onClick={onManageModifiers}
+        className="mt-3 inline-flex items-center gap-2 rounded-xl border border-blue-400/30 bg-blue-500/10 px-4 py-2 text-xs font-bold text-blue-200 transition hover:bg-blue-500/20"
+      >
+        <ExternalLink size={14} />
+        Manage Modifiers
+      </button>
+    </div>
+  );
+}
+
 export function ModifierAdjustmentPanel({ companyId, canView, canConfigure }) {
+  const navigate = useNavigate();
   const [productId, setProductId] = useState(null);
   const [productVariantId, setProductVariantId] = useState(null);
   const [modifierGroupId, setModifierGroupId] = useState(null);
@@ -133,6 +153,10 @@ export function ModifierAdjustmentPanel({ companyId, canView, canConfigure }) {
     }
   };
 
+  const goToManageModifiers = () => {
+    navigate(ROUTES.CATALOG_ADMIN, { state: { tab: "modifiers" } });
+  };
+
   const enabledModifierGroups = (variantModifierGroupsQuery.data?.items || []).filter(
     (group) => group.isEnabled && group.modifierGroupStatus === "Active",
   );
@@ -192,6 +216,9 @@ export function ModifierAdjustmentPanel({ companyId, canView, canConfigure }) {
                 </option>
               ))}
             </select>
+            {!productVariantId && (
+              <p className="mt-1 text-[11px] text-slate-500">Select a variant first</p>
+            )}
           </label>
           <label className="text-xs font-semibold text-slate-400">
             Modifier option
@@ -208,13 +235,31 @@ export function ModifierAdjustmentPanel({ companyId, canView, canConfigure }) {
                 </option>
               ))}
             </select>
+            {!modifierGroupId && productVariantId && (
+              <p className="mt-1 text-[11px] text-slate-500">Select a modifier group first</p>
+            )}
           </label>
         </div>
-        {productVariantId && enabledModifierGroups.length === 0 && !variantModifierGroupsQuery.isLoading && (
-          <div className="rounded-xl border border-white/10 bg-white/[0.025] px-3 py-2 text-xs text-slate-400">
-            This variant has no enabled modifier groups.
-          </div>
-        )}
+
+        {productVariantId &&
+          enabledModifierGroups.length === 0 &&
+          !variantModifierGroupsQuery.isLoading && (
+            <ManageModifiersEmptyState
+              title="No modifier options available"
+              message="This variant has no enabled modifier groups yet. Modifier options are created and managed in Catalog before they can be linked to inventory adjustments."
+              onManageModifiers={goToManageModifiers}
+            />
+          )}
+
+        {modifierGroupId &&
+          modifierOptions.length === 0 &&
+          !modifierGroupDetailsQuery.isLoading && (
+            <ManageModifiersEmptyState
+              title="No modifier options available"
+              message="This modifier group has no active modifier options yet. Modifier options are created and managed in Catalog before they can be linked to inventory adjustments."
+              onManageModifiers={goToManageModifiers}
+            />
+          )}
       </section>
 
       {!modifierOptionId ? (
