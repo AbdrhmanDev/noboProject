@@ -1,16 +1,22 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  createCompany,
   getCompanyDetails,
   getCompanyPermissions,
   getMyCompanies,
 } from "../api/companiesApi";
-import type { EffectivePermissions } from "../types/company.types";
+import { getBusinessSectors } from "../api/businessSectorsApi";
+import type { CreateCompanyRequest, EffectivePermissions } from "../types/company.types";
 
 export const companyQueryKeys = {
   all: ["companies"] as const,
   mine: ["companies", "mine"] as const,
   details: (companyId: string) => ["companies", companyId, "details"] as const,
   permissions: (companyId: string) => ["companies", companyId, "permissions"] as const,
+};
+
+export const businessSectorQueryKeys = {
+  all: ["business-sectors"] as const,
 };
 
 export function useMyCompanies(enabled = true) {
@@ -39,6 +45,24 @@ export function useCompanyPermissions(companyId: string | null | undefined) {
 
 export function usePermissions(companyId: string | null | undefined) {
   return useCompanyPermissions(companyId);
+}
+
+export function useBusinessSectors() {
+  return useQuery({
+    queryKey: businessSectorQueryKeys.all,
+    queryFn: getBusinessSectors,
+  });
+}
+
+export function useCreateCompany() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: CreateCompanyRequest) => createCompany(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: companyQueryKeys.mine });
+    },
+  });
 }
 
 export function hasEffectivePermission(

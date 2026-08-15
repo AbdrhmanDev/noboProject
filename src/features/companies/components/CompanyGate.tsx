@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
-import { EmptyState, ErrorState, LoadingState } from "../../../shared/components/ui";
+import { ErrorState, LoadingState } from "../../../shared/components/ui";
 import { useCompany } from "../context/CompanyContext";
 import { useCompanyDetails, useCompanyPermissions, useMyCompanies } from "../hooks/useCompanies";
+import { CompanyOnboarding } from "./CompanyOnboarding";
 import { CompanySelector } from "./CompanySelector";
 
 type CompanyGateProps = {
@@ -49,10 +50,7 @@ export function CompanyGate({ children }: CompanyGateProps) {
   if (!companies?.length) {
     return (
       <CompanyGateShell>
-        <EmptyState
-          title="No companies found"
-          message="Your account is not linked to any company."
-        />
+        <CompanyOnboarding />
       </CompanyGateShell>
     );
   }
