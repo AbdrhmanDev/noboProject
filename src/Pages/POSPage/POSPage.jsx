@@ -76,6 +76,7 @@ import {
   useInvalidateRestaurantSeating,
   useRestaurantSeating,
 } from "../../features/restaurant/hooks/useRestaurantSeating";
+import { RestaurantSeatingOnboarding } from "../../features/restaurant/components/RestaurantSeatingOnboarding";
 
 const ALL_CATEGORY_ID = "__all__";
 const UNCATEGORIZED_CATEGORY_ID = "__uncategorized__";
@@ -469,11 +470,11 @@ export default function POSPage() {
   const effectiveOrderType = draftOrder?.fulfillmentType || orderType;
   const effectiveRestaurantTableId =
     draftOrder?.restaurantTableId ||
-    (effectiveOrderType === "DineIn" ? selectedRestaurantTableId : null);
+    (orderType === "DineIn" ? selectedRestaurantTableId : null);
   const seatingQuery = useRestaurantSeating(
     currentCompanyId,
     currentBranchId,
-    effectiveOrderType === "DineIn" &&
+    orderType === "DineIn" &&
       !restaurantPermissionQuery.isLoading &&
       restaurantPermissionQuery.hasPermission,
   );
@@ -513,7 +514,7 @@ export default function POSPage() {
     !isDraftMutationPending &&
     !confirmPermissionQuery.isLoading &&
     confirmPermissionQuery.hasPermission &&
-    (effectiveOrderType !== "DineIn" || Boolean(effectiveRestaurantTableId));
+    (orderType !== "DineIn" || Boolean(effectiveRestaurantTableId));
   const catalogItems = useMemo(
     () => sellableCatalogQuery.data?.items ?? [],
     [sellableCatalogQuery.data],
@@ -779,7 +780,7 @@ export default function POSPage() {
       return;
     }
 
-    if (effectiveOrderType === "DineIn" && !effectiveRestaurantTableId) {
+    if (orderType === "DineIn" && !effectiveRestaurantTableId) {
       notify("Select a table before adding dine-in items.");
       return;
     }
@@ -827,7 +828,7 @@ export default function POSPage() {
     }
   };
   const handleOrderTypeChange = (nextOrderType) => {
-    if (!canEditDraft || nextOrderType === effectiveOrderType) return;
+    if (!canEditDraft || nextOrderType === orderType) return;
 
     setOrderType(nextOrderType);
 
@@ -854,7 +855,7 @@ export default function POSPage() {
       return;
     }
 
-    if (effectiveOrderType === "DineIn" && !effectiveRestaurantTableId) {
+    if (orderType === "DineIn" && !effectiveRestaurantTableId) {
       notify("Select a table before confirming dine-in order.");
       return;
     }
@@ -864,7 +865,7 @@ export default function POSPage() {
       setSelectedVariantProduct(null);
       setSelectedModifierVariant(null);
       setModifierSelections({});
-      setModal(effectiveOrderType === "DineIn" ? null : "payment");
+      setModal(orderType === "DineIn" ? null : "payment");
       await draftDetailsQuery.refetch();
       invalidateRestaurantSeating(currentCompanyId, currentBranchId);
       notify("Sales order confirmed.");
@@ -1690,7 +1691,7 @@ export default function POSPage() {
                       disabled={!canEditDraft || isDraftMutationPending}
                       onClick={() => handleOrderTypeChange(type)}
                       className={`rounded-lg border px-2 py-1.5 text-[10px] font-bold transition disabled:cursor-not-allowed disabled:opacity-50 ${
-                        effectiveOrderType === type
+                        orderType === type
                           ? "border-blue-400 bg-blue-500/15 text-blue-100"
                           : "border-white/10 bg-black/10 text-slate-400 hover:bg-white/10"
                       }`}
@@ -1699,7 +1700,7 @@ export default function POSPage() {
                     </button>
                   ))}
                 </div>
-                {effectiveOrderType === "DineIn" && (
+                {orderType === "DineIn" && (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between gap-2 text-[10px] text-slate-400">
                       <span>Table</span>
@@ -1730,6 +1731,25 @@ export default function POSPage() {
                         Unable to load restaurant seating.
                       </p>
                     )}
+                    {!seatingQuery.isLoading &&
+                      !seatingQuery.isError &&
+                      seatingQuery.data &&
+                      !seatingQuery.data.some((floor) => floor.tables.length > 0) && (
+                        <>
+                          <RestaurantSeatingOnboarding
+                            onCompleted={() =>
+                              invalidateRestaurantSeating(currentCompanyId, currentBranchId)
+                            }
+                          />
+                          <button
+                            type="button"
+                            onClick={() => navigate(ROUTES.RESTAURANT_ADMIN)}
+                            className="block w-full text-[10px] font-semibold text-blue-300 hover:text-blue-200"
+                          >
+                            Manage in Restaurant Admin
+                          </button>
+                        </>
+                      )}
                     {seatingQuery.data?.map((floor) => (
                       <div key={floor.restaurantFloorId}>
                         <div className="mb-1 text-[10px] font-bold text-slate-400">
@@ -2146,7 +2166,7 @@ export default function POSPage() {
                     className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-l from-blue-600 to-[#0A84FF] text-sm font-black shadow-lg shadow-blue-950/40 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Check size={19} />
-                    {effectiveOrderType === "DineIn" ? "Confirm Order" : "Confirm & Pay"} ·{" "}
+                    {orderType === "DineIn" ? "Confirm Order" : "Confirm & Pay"} ·{" "}
                     {formatMoney(total, catalogCurrencyCode, 2)}
                     <kbd className="mr-2 rounded bg-white/10 px-1.5 py-0.5 text-[10px]">
                       F1
