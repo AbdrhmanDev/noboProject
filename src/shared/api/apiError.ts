@@ -62,7 +62,7 @@ export function normalizeApiError(error: unknown): ApiError {
     if (isRecord(data)) {
       return {
         status,
-        code: getString(data, ["code", "errorCode", "type"]) || getProblemError(data, "code"),
+        code: getProblemError(data, "code") || getString(data, ["code", "errorCode", "type"]),
         message:
           getProblemError(data, "message") ||
           getString(data, ["message", "detail", "title", "error"]) ||

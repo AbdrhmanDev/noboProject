@@ -47,6 +47,10 @@ import { useBranch } from "../../features/branches/context/BranchContext";
 import { useCompany } from "../../features/companies/context/CompanyContext";
 import { useHasPermission } from "../../features/companies/hooks/useCompanies";
 import { PosOperationalGate } from "../../features/pos/components/PosOperationalGate";
+import { PriceListOnboarding } from "../../features/pricing/components/PriceListOnboarding";
+import { FirstProductOnboarding } from "../../features/catalog/components/FirstProductOnboarding";
+import { TaxSettingsOnboarding } from "../../features/tax/components/TaxSettingsOnboarding";
+import { useCompanyTaxSettings } from "../../features/tax/hooks/useTax";
 import { usePos } from "../../features/pos/context/PosContext";
 import { useOpenPosShift } from "../../features/pos/hooks/useOpenPosShift";
 import { useClosePosShift } from "../../features/pos/hooks/useClosePosShift";
@@ -86,6 +90,8 @@ const POS_CLOSE_SHIFT_PERMISSION = "Pos.CloseShift";
 const PAYMENTS_VIEW_PERMISSION = "Payments.View";
 const PAYMENTS_RECEIVE_PERMISSION = "Payments.Receive";
 const PAYMENTS_REFUND_PERMISSION = "Payments.Refund";
+const CATALOG_MANAGE_PERMISSION = "Catalog.Manage";
+const PRICING_MANAGE_PERMISSION = "Pricing.Manage";
 const DEFAULT_FULFILLMENT_TYPE = "Takeaway";
 const ORDER_TYPES = ["Takeaway", "DineIn", "Delivery"];
 
@@ -319,6 +325,14 @@ export default function POSPage() {
     currentCompanyId,
     PAYMENTS_REFUND_PERMISSION,
   );
+  const catalogManagePermissionQuery = useHasPermission(
+    currentCompanyId,
+    CATALOG_MANAGE_PERMISSION,
+  );
+  const pricingManagePermissionQuery = useHasPermission(
+    currentCompanyId,
+    PRICING_MANAGE_PERMISSION,
+  );
   const canLoadCatalog =
     status === "authenticated" &&
     Boolean(currentCompanyId) &&
@@ -331,6 +345,10 @@ export default function POSPage() {
     currentCompanyId,
     currentBranchId,
     canLoadCatalog,
+  );
+  const taxSettingsQuery = useCompanyTaxSettings(currentCompanyId, canLoadCatalog);
+  const taxSetupRequired = Boolean(
+    taxSettingsQuery.data && !taxSettingsQuery.data.isConfigured,
   );
   const openShiftId = openShiftQuery.data?.posShiftId || null;
   const hasOpenShift = Boolean(openShiftId);
@@ -415,6 +433,7 @@ export default function POSPage() {
     currentPosTerminalId,
   );
   const invalidateRestaurantSeating = useInvalidateRestaurantSeating();
+  const [taxCategoryBanner, setTaxCategoryBanner] = useState(null);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState(ALL_CATEGORY_ID);
   const [orderType, setOrderType] = useState(DEFAULT_FULFILLMENT_TYPE);
@@ -721,10 +740,33 @@ export default function POSPage() {
     lines,
     discount,
   });
-  const handleDraftError = (error) => {
+  const handleDraftError = (error, lines) => {
     if (error?.code === "SalesOrder.DraftVersionConflict") {
       draftDetailsQuery.refetch();
       notify("Sales order changed. Cart was refreshed.");
+      return;
+    }
+
+    if (error?.code === "Tax.CompanySettingsNotConfigured") {
+      taxSettingsQuery.refetch();
+      notify("Tax settings must be configured before selling. Complete tax setup.");
+      return;
+    }
+
+    if (error?.code === "Tax.ProductTaxCategoryNotConfigured") {
+      const names = Array.from(
+        new Set(
+          (lines || [])
+            .map(
+              (line) =>
+                catalogItems.find((item) => item.productVariantId === line.productVariantId)
+                  ?.productName,
+            )
+            .filter(Boolean),
+        ),
+      );
+      setTaxCategoryBanner(names.length ? names : ["This product"]);
+      notify("This product needs a tax category before it can be sold.");
       return;
     }
 
@@ -754,7 +796,7 @@ export default function POSPage() {
         expectedDraftVersion: draftOrder.draftVersion,
       });
     } catch (error) {
-      handleDraftError(error);
+      handleDraftError(error, lines);
     }
   };
   const notifyDraftRequiresLine = () => {
@@ -1450,6 +1492,32 @@ export default function POSPage() {
                 </div>
               </div>
 
+              {taxCategoryBanner && (
+                <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-400/25 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+                  <span>
+                    Tax category required — tax is enabled for this company, but{" "}
+                    {taxCategoryBanner.join(", ")}{" "}
+                    {taxCategoryBanner.length > 1 ? "have" : "has"} no tax category.
+                  </span>
+                  <div className="flex shrink-0 items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => navigate(ROUTES.TAX_ADMIN)}
+                      className="font-semibold text-amber-200 hover:text-white"
+                    >
+                      Configure
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTaxCategoryBanner(null)}
+                      className="text-amber-300/70 hover:text-white"
+                      aria-label="Dismiss"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                </div>
+              )}
               {catalogPermissionQuery.isLoading && (
                 <LoadingState label="Checking catalog access..." />
               )}
@@ -1470,21 +1538,49 @@ export default function POSPage() {
               {sellableCatalogQuery.isLoading && (
                 <LoadingState label="Loading sellable catalog..." />
               )}
-              {sellableCatalogQuery.isError && (
-                <ErrorState
-                  title="Sellable catalog unavailable"
-                  message="Unable to load sellable products for this branch."
-                />
-              )}
+              {sellableCatalogQuery.isError &&
+                (sellableCatalogQuery.error?.code === "PriceList.ActiveDefaultNotConfigured" ? (
+                  <PriceListOnboarding onCreated={() => sellableCatalogQuery.refetch()} />
+                ) : (
+                  <ErrorState
+                    title="Sellable catalog unavailable"
+                    message="Unable to load sellable products for this branch."
+                  />
+                ))}
               {sellableCatalogQuery.data &&
                 !sellableCatalogQuery.isLoading &&
-                !filteredProducts.length && (
+                !filteredProducts.length &&
+                (query || category !== ALL_CATEGORY_ID ? (
                   <EmptyState
                     title="No sellable products are available for this branch"
                     message="Try another category or search term."
                   />
+                ) : catalogManagePermissionQuery.hasPermission &&
+                  pricingManagePermissionQuery.hasPermission ? (
+                  <FirstProductOnboarding
+                    onCompleted={() => sellableCatalogQuery.refetch()}
+                  />
+                ) : (
+                  <EmptyState
+                    title="No sellable products are available for this branch"
+                    message="Try another category or search term."
+                  />
+                ))}
+              {sellableCatalogQuery.data &&
+                filteredProducts.length > 0 &&
+                taxSettingsQuery.isLoading && (
+                  <LoadingState label="Checking tax settings..." />
                 )}
-              {sellableCatalogQuery.data && filteredProducts.length > 0 && (
+              {sellableCatalogQuery.data &&
+                filteredProducts.length > 0 &&
+                !taxSettingsQuery.isLoading &&
+                taxSetupRequired && (
+                  <TaxSettingsOnboarding onCompleted={() => taxSettingsQuery.refetch()} />
+                )}
+              {sellableCatalogQuery.data &&
+                filteredProducts.length > 0 &&
+                !taxSettingsQuery.isLoading &&
+                !taxSetupRequired && (
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
                   {filteredProducts.map((product) => {
                     const hasModifiers = product.variants.some(
