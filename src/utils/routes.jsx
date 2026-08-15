@@ -1,7 +1,8 @@
 // Application route constants
 export const ROUTES = {
   LOGIN: "/",
-  SIGNUP: "/signup",
+  REGISTER: "/register",
+  CONFIRM_EMAIL: "/confirm-email",
   DASHBOARD: "/dashboard",
   POS: "/POSPage",
   POS_SHIFT_HISTORY: "/pos/shifts",

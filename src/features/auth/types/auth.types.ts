@@ -21,3 +21,36 @@ export type LoginRequest = {
 };
 
 export type AuthStatus = "checking" | "authenticated" | "anonymous";
+
+export type RegisterRequest = {
+  displayName: string;
+  email: string;
+  password: string;
+};
+
+export type RegisterResponse = {
+  userId: string;
+  displayName: string;
+  email: string;
+  emailConfirmed: boolean;
+  confirmationEmailSent: boolean;
+};
+
+export type ConfirmEmailRequest = {
+  userId: string;
+  encodedToken: string;
+};
+
+export type ConfirmEmailResponse = {
+  userId: string;
+  email: string;
+  emailConfirmed: boolean;
+};
+
+export type ResendConfirmationRequest = {
+  email: string;
+};
+
+export type ResendConfirmationResponse = {
+  message: string;
+};

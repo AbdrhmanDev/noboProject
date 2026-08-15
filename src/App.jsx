@@ -4,7 +4,8 @@ import { AppProviders } from "./app/providers/AppProviders";
 import { ProtectedRoute } from "./features/auth/components/ProtectedRoute";
 import { PublicOnlyRoute } from "./features/auth/components/PublicOnlyRoute";
 import LoginPage from "./Pages/loginPage/Login";
-import SignupPage from "./Pages/signupPage/Signup";
+import RegisterPage from "./Pages/registerPage/Register";
+import ConfirmEmailPage from "./Pages/confirmEmailPage/ConfirmEmail";
 import Dashboard from "./Pages/DashboardPage/Dashboard";
 import POSPage from "./Pages/POSPage/POSPage";
 import POSShiftHistoryPage from "./Pages/POSShiftHistoryPage/POSShiftHistoryPage";
@@ -41,7 +42,8 @@ export default function App() {
           <GlobalStyle />
           <Routes>
             <Route path={ROUTES.LOGIN} element={<PublicOnlyRoute><LoginPage /></PublicOnlyRoute>} />
-            <Route path={ROUTES.SIGNUP} element={<PublicOnlyRoute><SignupPage /></PublicOnlyRoute>} />
+            <Route path={ROUTES.REGISTER} element={<PublicOnlyRoute><RegisterPage /></PublicOnlyRoute>} />
+            <Route path={ROUTES.CONFIRM_EMAIL} element={<PublicOnlyRoute><ConfirmEmailPage /></PublicOnlyRoute>} />
             <Route path={ROUTES.DASHBOARD} element={protectedPage(<Dashboard />)} />
             <Route path={ROUTES.POS} element={protectedPage(<POSPage />)} />
             <Route path={ROUTES.POS_SHIFT_HISTORY} element={protectedPage(<POSShiftHistoryPage />)} />
