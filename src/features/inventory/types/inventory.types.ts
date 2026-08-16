@@ -142,3 +142,118 @@ export type SetModifierOptionInventoryAdjustmentResponse = {
   updatedAtUtc: string;
   wasCreated: boolean;
 };
+
+// Stock
+
+export type InventoryStockItem = {
+  inventoryItemId: string;
+  code: string;
+  name: string;
+  quantityOnHand: number;
+  baseUnitOfMeasure: InventoryUnitOfMeasure;
+};
+
+export type InventoryLocationStock = {
+  inventoryLocationId: string;
+  code: string;
+  name: string;
+  items: InventoryStockItem[];
+};
+
+// Manual Stock Adjustment
+
+export type PostManualStockAdjustmentLineRequest = {
+  inventoryItemId: string;
+  quantityDelta: number;
+};
+
+export type PostManualStockAdjustmentRequest = {
+  reason: string | null;
+  lines: PostManualStockAdjustmentLineRequest[];
+};
+
+export type PostManualStockAdjustmentLineResponse = {
+  inventoryItemId: string;
+  inventoryItemCode: string;
+  inventoryItemName: string;
+  quantityDelta: number;
+  baseUnitOfMeasure: InventoryUnitOfMeasure;
+};
+
+export type PostManualStockAdjustmentResponse = {
+  inventoryStockTransactionId: string;
+  type: string;
+  inventoryLocationId: string;
+  inventoryLocationCode: string;
+  inventoryLocationName: string;
+  reason: string | null;
+  createdByUserId: string;
+  createdAtUtc: string;
+  wasAlreadyProcessed: boolean;
+  lines: PostManualStockAdjustmentLineResponse[];
+};
+
+// Ledger
+
+export type InventoryTransactionType = "ManualAdjustment" | "SalesConsumption" | "SalesReversal";
+
+export type InventoryStockTransactionFilters = {
+  inventoryLocationId?: string;
+  inventoryItemId?: string;
+  transactionType?: InventoryTransactionType | "";
+  createdFromUtc?: string;
+  createdToUtc?: string;
+  salesOrderId?: string;
+  pageNumber?: number;
+  pageSize?: number;
+};
+
+export type InventoryStockTransactionListItem = {
+  inventoryStockTransactionId: string;
+  companyId: string;
+  branchId: string;
+  inventoryLocationId: string;
+  inventoryLocationCode: string;
+  inventoryLocationName: string;
+  transactionType: string;
+  sourceSalesOrderId: string | null;
+  reversesInventoryStockTransactionId: string | null;
+  reason: string | null;
+  createdByUserId: string;
+  createdAtUtc: string;
+  lineCount: number;
+};
+
+export type InventoryStockTransactionListResponse = {
+  pageNumber: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+  items: InventoryStockTransactionListItem[];
+};
+
+export type InventoryStockTransactionLine = {
+  inventoryStockTransactionLineId: string;
+  inventoryItemId: string;
+  inventoryItemCode: string;
+  inventoryItemName: string;
+  quantityDelta: number;
+  baseUnitOfMeasure: InventoryUnitOfMeasure;
+  createdAtUtc: string;
+};
+
+export type InventoryStockTransactionDetails = {
+  inventoryStockTransactionId: string;
+  companyId: string;
+  branchId: string;
+  inventoryLocationId: string;
+  inventoryLocationCode: string;
+  inventoryLocationName: string;
+  transactionType: string;
+  sourceSalesOrderId: string | null;
+  reversesInventoryStockTransactionId: string | null;
+  reason: string | null;
+  createdByUserId: string;
+  createdAtUtc: string;
+  lines: InventoryStockTransactionLine[];
+};

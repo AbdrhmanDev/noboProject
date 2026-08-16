@@ -9,9 +9,13 @@ import {
   getInventoryItems,
   getInventoryLocationDetails,
   getInventoryLocations,
+  getInventoryLocationStock,
+  getInventoryStockTransactionDetails,
+  getInventoryStockTransactions,
   getModifierOptionInventoryAdjustments,
   getOperationalInventoryLocations,
   getProductVariantInventoryConsumption,
+  postManualStockAdjustment,
   removeModifierOptionInventoryAdjustment,
   removeProductVariantInventoryComponent,
   setModifierOptionInventoryAdjustment,
@@ -26,6 +30,8 @@ import type {
   CreateInventoryLocationRequest,
   InventoryItemFilters,
   InventoryLocationFilters,
+  InventoryStockTransactionFilters,
+  PostManualStockAdjustmentRequest,
   SetModifierOptionInventoryAdjustmentRequest,
   SetProductVariantInventoryComponentRequest,
   UpdateInventoryItemRequest,
@@ -49,6 +55,15 @@ export const inventoryQueryKeys = {
     ["inventory", companyId, "consumption", "variants", productVariantId] as const,
   modifierAdjustments: (companyId: string, modifierOptionId: string) =>
     ["inventory", companyId, "consumption", "modifier-options", modifierOptionId] as const,
+  locationStock: (companyId: string, branchId: string, inventoryLocationId: string) =>
+    ["inventory", companyId, branchId, "stock", inventoryLocationId] as const,
+  transactions: (
+    companyId: string,
+    branchId: string,
+    filters: InventoryStockTransactionFilters = {},
+  ) => ["inventory", companyId, branchId, "transactions", filters] as const,
+  transaction: (companyId: string, branchId: string, inventoryStockTransactionId: string) =>
+    ["inventory", companyId, branchId, "transactions", "detail", inventoryStockTransactionId] as const,
 };
 
 function invalidateInventoryItems(
@@ -106,6 +121,23 @@ function invalidateModifierAdjustments(
   queryClient.invalidateQueries({
     queryKey: inventoryQueryKeys.modifierAdjustments(companyId, modifierOptionId),
   });
+}
+
+function invalidateStockAndLedger(
+  queryClient: ReturnType<typeof useQueryClient>,
+  companyId: string | null | undefined,
+  branchId: string | null | undefined,
+  inventoryLocationId: string | null | undefined,
+) {
+  if (!companyId || !branchId) return;
+
+  if (inventoryLocationId) {
+    queryClient.invalidateQueries({
+      queryKey: inventoryQueryKeys.locationStock(companyId, branchId, inventoryLocationId),
+    });
+  }
+
+  queryClient.invalidateQueries({ queryKey: ["inventory", companyId, branchId, "transactions"] });
 }
 
 // Inventory Items
@@ -389,5 +421,86 @@ export function useRemoveModifierOptionInventoryAdjustment(
         inventoryItemId,
       ),
     onSuccess: () => invalidateModifierAdjustments(queryClient, companyId, modifierOptionId),
+  });
+}
+
+// Stock
+
+export function useInventoryLocationStock(
+  companyId: string | null | undefined,
+  branchId: string | null | undefined,
+  inventoryLocationId: string | null | undefined,
+  enabled = true,
+) {
+  return useQuery({
+    queryKey: inventoryQueryKeys.locationStock(
+      companyId || "",
+      branchId || "",
+      inventoryLocationId || "",
+    ),
+    queryFn: () =>
+      getInventoryLocationStock(companyId as string, branchId as string, inventoryLocationId as string),
+    enabled: Boolean(companyId) && Boolean(branchId) && Boolean(inventoryLocationId) && enabled,
+  });
+}
+
+// Manual Stock Adjustment
+
+export function usePostManualStockAdjustment(
+  companyId: string | null | undefined,
+  branchId: string | null | undefined,
+  inventoryLocationId: string | null | undefined,
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: PostManualStockAdjustmentRequest) =>
+      postManualStockAdjustment(
+        companyId as string,
+        branchId as string,
+        inventoryLocationId as string,
+        payload,
+      ),
+    onSuccess: () =>
+      invalidateStockAndLedger(queryClient, companyId, branchId, inventoryLocationId),
+  });
+}
+
+// Ledger
+
+export function useInventoryStockTransactions(
+  companyId: string | null | undefined,
+  branchId: string | null | undefined,
+  filters: InventoryStockTransactionFilters = {},
+  enabled = true,
+) {
+  return useQuery({
+    queryKey: inventoryQueryKeys.transactions(companyId || "", branchId || "", filters),
+    queryFn: () =>
+      getInventoryStockTransactions(companyId as string, branchId as string, filters),
+    enabled: Boolean(companyId) && Boolean(branchId) && enabled,
+  });
+}
+
+export function useInventoryStockTransactionDetails(
+  companyId: string | null | undefined,
+  branchId: string | null | undefined,
+  inventoryStockTransactionId: string | null | undefined,
+  enabled = true,
+) {
+  return useQuery({
+    queryKey: inventoryQueryKeys.transaction(
+      companyId || "",
+      branchId || "",
+      inventoryStockTransactionId || "",
+    ),
+    queryFn: () =>
+      getInventoryStockTransactionDetails(
+        companyId as string,
+        branchId as string,
+        inventoryStockTransactionId as string,
+      ),
+    enabled:
+      Boolean(companyId) && Boolean(branchId) && Boolean(inventoryStockTransactionId) && enabled,
   });
 }

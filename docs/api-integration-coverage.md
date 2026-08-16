@@ -132,6 +132,10 @@ POS Module Coverage: Complete for existing POS Operational and POS Terminal Admi
 | GET | `/api/companies/{companyId}/inventory/consumption/modifier-options/{modifierOptionId}` | Modifier option inventory adjustments | `Inventory.View` | `useModifierOptionInventoryAdjustments` | Inventory Admin Modifier Adjustments list | Integrated |
 | PUT | `/api/companies/{companyId}/inventory/consumption/modifier-options/{modifierOptionId}/items/{inventoryItemId}` | Modifier option inventory adjustments | `Inventory.Configure` | `useSetModifierOptionInventoryAdjustment` | Inventory Admin Modifier Adjustments add/update signed quantity delta | Integrated |
 | DELETE | `/api/companies/{companyId}/inventory/consumption/modifier-options/{modifierOptionId}/items/{inventoryItemId}` | Modifier option inventory adjustments | `Inventory.Configure` | `useRemoveModifierOptionInventoryAdjustment` | Inventory Admin Modifier Adjustments remove adjustment (not idempotent, second delete surfaces `ModifierOptionInventoryAdjustment.NotAvailable`) | Integrated |
+| GET | `/api/companies/{companyId}/branches/{branchId}/inventory/locations/{inventoryLocationId}/stock` | Inventory stock | `Inventory.View` | `useInventoryLocationStock` | Inventory Operations Stock tab current quantity-on-hand per item at selected location | Integrated |
+| POST | `/api/companies/{companyId}/branches/{branchId}/inventory/locations/{inventoryLocationId}/adjustments` | Manual stock adjustment | `Inventory.AdjustStock` | `usePostManualStockAdjustment` | Inventory Operations Adjust Stock dialog (signed quantity delta, Idempotency-Key header) | Integrated |
+| GET | `/api/companies/{companyId}/branches/{branchId}/inventory/transactions` | Inventory stock transaction ledger | `Inventory.View` | `useInventoryStockTransactions` | Inventory Operations Ledger tab list with location/item/type/date filters and pagination | Integrated |
+| GET | `/api/companies/{companyId}/branches/{branchId}/inventory/transactions/{inventoryStockTransactionId}` | Inventory stock transaction ledger | `Inventory.View` | `useInventoryStockTransactionDetails` | Inventory Operations Ledger transaction details dialog | Integrated |
 
 Payments Operational Coverage: Complete. Payment Methods Admin Coverage: Complete. Payments Module Coverage: Complete for existing Payment and Payment Method endpoints.
 
@@ -145,4 +149,4 @@ Restaurant Operational Coverage: Complete. Restaurant Admin Coverage: Complete. 
 
 Kitchen Operational Coverage: Complete. Kitchen Admin Coverage: Complete. Kitchen Module Coverage: Complete for existing Kitchen endpoints.
 
-Inventory Items Admin Coverage: Complete. Inventory Locations Admin Coverage: Complete. Variant Consumption Coverage: Complete. Modifier Inventory Adjustment Coverage: Complete. Inventory Configuration Coverage: Complete. Inventory Stock/Ledger Coverage: Pending.
+Inventory Items Admin Coverage: Complete. Inventory Locations Admin Coverage: Complete. Variant Consumption Coverage: Complete. Modifier Inventory Adjustment Coverage: Complete. Inventory Configuration Coverage: Complete. Inventory Stock Coverage: Complete. Manual Stock Adjustment Coverage: Complete. Inventory Ledger Coverage: Complete. Transaction Details Coverage: Complete. Inventory Module Coverage: Complete.

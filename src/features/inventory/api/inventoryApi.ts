@@ -9,7 +9,13 @@ import type {
   InventoryItemListResponse,
   InventoryLocation,
   InventoryLocationFilters,
+  InventoryLocationStock,
+  InventoryStockTransactionDetails,
+  InventoryStockTransactionFilters,
+  InventoryStockTransactionListResponse,
   ModifierOptionInventoryAdjustments,
+  PostManualStockAdjustmentRequest,
+  PostManualStockAdjustmentResponse,
   ProductVariantInventoryConsumption,
   SetModifierOptionInventoryAdjustmentRequest,
   SetModifierOptionInventoryAdjustmentResponse,
@@ -251,4 +257,74 @@ export async function removeModifierOptionInventoryAdjustment(
   await httpClient.delete(
     `${companyInventoryUrl(companyId)}/consumption/modifier-options/${modifierOptionId}/items/${inventoryItemId}`,
   );
+}
+
+// Stock
+
+export async function getInventoryLocationStock(
+  companyId: string,
+  branchId: string,
+  inventoryLocationId: string,
+) {
+  const response = await httpClient.get<InventoryLocationStock>(
+    `${branchInventoryUrl(companyId, branchId)}/locations/${inventoryLocationId}/stock`,
+  );
+
+  return response.data;
+}
+
+// Manual Stock Adjustment
+
+function createInventoryAdjustmentIdempotencyKey() {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return `inventory-adjustment-${crypto.randomUUID()}`;
+  }
+
+  return `inventory-adjustment-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+export async function postManualStockAdjustment(
+  companyId: string,
+  branchId: string,
+  inventoryLocationId: string,
+  payload: PostManualStockAdjustmentRequest,
+) {
+  const response = await httpClient.post<PostManualStockAdjustmentResponse>(
+    `${branchInventoryUrl(companyId, branchId)}/locations/${inventoryLocationId}/adjustments`,
+    payload,
+    {
+      headers: {
+        "Idempotency-Key": createInventoryAdjustmentIdempotencyKey(),
+      },
+    },
+  );
+
+  return response.data;
+}
+
+// Ledger
+
+export async function getInventoryStockTransactions(
+  companyId: string,
+  branchId: string,
+  filters: InventoryStockTransactionFilters = {},
+) {
+  const response = await httpClient.get<InventoryStockTransactionListResponse>(
+    `${branchInventoryUrl(companyId, branchId)}/transactions`,
+    { params: compactParams(filters) },
+  );
+
+  return response.data;
+}
+
+export async function getInventoryStockTransactionDetails(
+  companyId: string,
+  branchId: string,
+  inventoryStockTransactionId: string,
+) {
+  const response = await httpClient.get<InventoryStockTransactionDetails>(
+    `${branchInventoryUrl(companyId, branchId)}/transactions/${inventoryStockTransactionId}`,
+  );
+
+  return response.data;
 }
