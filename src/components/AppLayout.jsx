@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Header from "./Header";
 import Footer from "./Footer";
@@ -16,6 +17,14 @@ import { useMyCompanies } from "../features/companies/hooks/useCompanies";
 import { ROUTES } from "../utils/routes";
 import { NAV_ITEMS } from "../utils/navItems";
 import { InventoryNavGroup } from "../features/inventory/components/InventoryNavGroup";
+import { KitchenNavGroup } from "../features/kitchen/components/KitchenNavGroup";
+import { PermissionNavItem } from "./PermissionNavItem";
+import { ComingSoonNavItem } from "./ComingSoonNavItem";
+
+const NAV_GROUPS = {
+  inventory: InventoryNavGroup,
+  kitchen: KitchenNavGroup,
+};
 
 export default function AppLayout({ children, onLogout }) {
   const navigate = useNavigate();
@@ -98,9 +107,35 @@ export default function AppLayout({ children, onLogout }) {
           {t("layout.home")}
         </button>
         <nav className="space-y-1 overflow-y-auto scrollbar-none">
-          {NAV_ITEMS.slice(1).map((item, i) => {
-            if (item.to === ROUTES.INVENTORY) {
-              return <InventoryNavGroup key={i} activePath={activePath} navigate={navigate} />;
+          {NAV_ITEMS.slice(1).map((item, i, arr) => {
+            const showDivider = item.comingSoon && !arr[i - 1]?.comingSoon;
+
+            if (item.comingSoon) {
+              return (
+                <Fragment key={i}>
+                  {showDivider && <div className="my-2 border-t border-white/10" />}
+                  <ComingSoonNavItem icon={item.icon} labelKey={item.labelKey} />
+                </Fragment>
+              );
+            }
+
+            if (item.kind === "group") {
+              const GroupComponent = NAV_GROUPS[item.module];
+              return <GroupComponent key={i} activePath={activePath} navigate={navigate} />;
+            }
+
+            if (item.permission) {
+              return (
+                <PermissionNavItem
+                  key={i}
+                  icon={item.icon}
+                  labelKey={item.labelKey}
+                  to={item.to}
+                  permission={item.permission}
+                  activePath={activePath}
+                  navigate={navigate}
+                />
+              );
             }
 
             const isActive = activePath === item.to;
@@ -195,7 +230,34 @@ export default function AppLayout({ children, onLogout }) {
           onSwitchBranch={switchableBranches.length > 1 ? clearBranch : undefined}
         />
         <nav className="mb-5 flex gap-2 overflow-x-auto pb-1 scrollbar-none lg:hidden">
-          {NAV_ITEMS.map((item) => {
+          {NAV_ITEMS.filter((item) => !item.comingSoon).map((item, i) => {
+            if (item.kind === "group") {
+              const GroupComponent = NAV_GROUPS[item.module];
+              return (
+                <GroupComponent
+                  key={item.module}
+                  activePath={activePath}
+                  navigate={navigate}
+                  variant="mobile"
+                />
+              );
+            }
+
+            if (item.permission) {
+              return (
+                <PermissionNavItem
+                  key={i}
+                  icon={item.icon}
+                  labelKey={item.labelKey}
+                  to={item.to}
+                  permission={item.permission}
+                  activePath={activePath}
+                  navigate={navigate}
+                  variant="mobile"
+                />
+              );
+            }
+
             const isActive = activePath === item.to;
             return (
               <button

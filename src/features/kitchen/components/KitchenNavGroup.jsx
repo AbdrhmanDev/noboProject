@@ -1,36 +1,33 @@
-import { Boxes, Layers3, Wrench } from "lucide-react";
+import { ChefHat, Flame, Settings } from "lucide-react";
 import { useI18n } from "../../../i18n/I18nContext";
 import { useCompany } from "../../companies/context/CompanyContext";
 import { useHasPermission } from "../../companies/hooks/useCompanies";
 import { ROUTES } from "../../../utils/routes";
 import { NavGroup } from "../../../components/NavGroup";
 
-const INVENTORY_VIEW_PERMISSION = "Inventory.View";
-const INVENTORY_CONFIGURE_PERMISSION = "Inventory.Configure";
+const KITCHEN_VIEW_PERMISSION = "Kitchen.View";
+const KITCHEN_MANAGE_PERMISSION = "Kitchen.Manage";
 
-export function InventoryNavGroup({ activePath, navigate, variant = "desktop" }) {
+export function KitchenNavGroup({ activePath, navigate, variant = "desktop" }) {
   const { t } = useI18n();
   const { currentCompanyId } = useCompany();
-  const viewPermissionQuery = useHasPermission(currentCompanyId, INVENTORY_VIEW_PERMISSION);
-  const configurePermissionQuery = useHasPermission(
-    currentCompanyId,
-    INVENTORY_CONFIGURE_PERMISSION,
-  );
+  const viewPermissionQuery = useHasPermission(currentCompanyId, KITCHEN_VIEW_PERMISSION);
+  const managePermissionQuery = useHasPermission(currentCompanyId, KITCHEN_MANAGE_PERMISSION);
 
   const canViewOperations = Boolean(currentCompanyId) && viewPermissionQuery.hasPermission;
-  const canViewConfiguration = Boolean(currentCompanyId) && configurePermissionQuery.hasPermission;
+  const canViewConfiguration = Boolean(currentCompanyId) && managePermissionQuery.hasPermission;
 
   const items = [
     {
-      to: ROUTES.INVENTORY,
-      labelKey: "nav.inventoryOperations",
-      icon: Layers3,
+      to: ROUTES.KITCHEN,
+      labelKey: "nav.kitchenOperations",
+      icon: Flame,
       visible: canViewOperations,
     },
     {
-      to: ROUTES.INVENTORY_ADMIN,
-      labelKey: "nav.inventoryConfiguration",
-      icon: Wrench,
+      to: ROUTES.KITCHEN_ADMIN,
+      labelKey: "nav.kitchenConfiguration",
+      icon: Settings,
       visible: canViewConfiguration,
     },
   ];
@@ -48,16 +45,16 @@ export function InventoryNavGroup({ activePath, navigate, variant = "desktop" })
           isActive ? "border-blue-400/50 bg-blue-500/20 text-white" : "border-white/10 bg-white/5 text-gray-300"
         }`}
       >
-        <Boxes size={14} />
-        {t("nav.inventory")}
+        <ChefHat size={14} />
+        {t("nav.kitchen")}
       </button>
     );
   }
 
   return (
     <NavGroup
-      icon={Boxes}
-      labelKey="nav.inventory"
+      icon={ChefHat}
+      labelKey="nav.kitchen"
       activePath={activePath}
       navigate={navigate}
       items={items}
