@@ -8,7 +8,6 @@ import { ROUTES } from "../../../../utils/routes";
 export function PaymentModal({
   draftOrder,
   total,
-  catalogCurrencyCode,
   netPaidAmount,
   settlementCurrencyCode,
   settlementMinorUnitDigits,
@@ -46,18 +45,20 @@ export function PaymentModal({
     <PosModal title="Payment" onClose={onClose}>
       <div className="space-y-4">
         <div className="rounded-xl border border-white/10 bg-black/20 p-4 text-center">
-          <div className="text-[10px] font-bold uppercase text-slate-500">Total Due</div>
+          <div className="text-[10px] font-bold uppercase text-slate-500">
+            {netPaidAmount > 0 ? "Amount Due Now" : "Total Due"}
+          </div>
           <div className="mt-1 text-3xl font-black text-blue-300">
-            {formatMoney(total, catalogCurrencyCode, 2)}
+            {formatMoney(remainingAmount, settlementCurrencyCode, settlementMinorUnitDigits)}
           </div>
           {netPaidAmount > 0 && (
             <div className="mt-2 flex items-center justify-center gap-4 text-xs text-slate-400">
               <span>
-                Paid {formatMoney(netPaidAmount, settlementCurrencyCode, settlementMinorUnitDigits)}
+                Order Total{" "}
+                {formatMoney(total, settlementCurrencyCode, settlementMinorUnitDigits)}
               </span>
-              <span className="font-bold text-amber-300">
-                Remaining{" "}
-                {formatMoney(remainingAmount, settlementCurrencyCode, settlementMinorUnitDigits)}
+              <span className="font-bold text-emerald-300">
+                Paid {formatMoney(netPaidAmount, settlementCurrencyCode, settlementMinorUnitDigits)}
               </span>
             </div>
           )}

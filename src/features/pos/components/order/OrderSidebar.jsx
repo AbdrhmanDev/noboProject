@@ -31,6 +31,7 @@ export function OrderSidebar({
   catalogCurrencyCode,
   changeQty,
   removeDraftLine,
+  isLinePending,
   // OrderSummary
   onOpenDiscount,
   subtotal,
@@ -102,7 +103,7 @@ export function OrderSidebar({
         draftOrder={draftOrder}
         catalogCurrencyCode={catalogCurrencyCode}
         canEditDraft={canEditDraft}
-        isDraftMutationPending={isDraftMutationPending}
+        isLinePending={isLinePending}
         changeQty={changeQty}
         removeDraftLine={removeDraftLine}
       />

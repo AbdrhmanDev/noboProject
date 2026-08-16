@@ -173,7 +173,17 @@ function normalizeDraftDetails(data: Record<string, any>): DraftSalesOrder {
           appliedAtUtc: discount.appliedAtUtc,
         }
       : null,
-    taxSummaries: data.taxSummaries || [],
+    taxSummaries: (data.taxSummaries || []).map((summary: Record<string, any>) => ({
+      taxCategoryId: summary.taxCategoryId,
+      taxCategoryCode: summary.taxCategoryCodeSnapshot ?? summary.taxCategoryCode,
+      taxCategoryName: summary.taxCategoryNameSnapshot ?? summary.taxCategoryName,
+      treatment: summary.taxTreatmentSnapshot ?? summary.treatment,
+      ratePercent: summary.taxRatePercentSnapshot ?? summary.ratePercent,
+      configuredAmount: summary.configuredAmount,
+      netAmount: summary.netAmount,
+      taxAmount: summary.taxAmount,
+      grossAmount: summary.grossAmount,
+    })),
     payments: data.payments || [],
     kitchenTickets: (data.kitchenTickets || []).map((ticket: Record<string, any>) => ({
       kitchenTicketId: ticket.kitchenTicketId,

@@ -323,22 +323,44 @@ export default function PricingAdminPage() {
 
   const submitPriceList = async () => {
     try {
-      const result =
-        priceListMode === "create"
-          ? await createPriceListMutation.mutateAsync({
-              name: priceListForm.name,
-              isDefault: priceListForm.isDefault,
-              taxMode: priceListForm.taxMode,
-            })
-          : await updatePriceListMutation.mutateAsync({ name: priceListForm.name });
-      setPriceListMode("edit");
-      setSelectedPriceListId(result.priceListId);
+      if (priceListMode === "create") {
+        const created = await createPriceListMutation.mutateAsync({
+          name: priceListForm.name,
+          isDefault: priceListForm.isDefault,
+          taxMode: priceListForm.taxMode,
+        });
+        setPriceListMode("edit");
+        setSelectedPriceListId(created.priceListId);
+        setPriceListForm({
+          name: created.name,
+          isDefault: created.isDefault,
+          taxMode: created.taxMode || "Inclusive",
+        });
+        showNotice("Price list created.");
+        return;
+      }
+
+      // Name and TaxMode are two separate backend endpoints/domain mutators
+      // (UpdatePriceList only ever touches Name; TaxMode requires the
+      // dedicated tax-mode endpoint). Saving from this single form must
+      // never silently drop a Tax Mode change just because the cashier used
+      // the primary Save button instead of the separate "Save tax mode"
+      // action, so both are persisted here whenever they changed.
+      const result = await updatePriceListMutation.mutateAsync({ name: priceListForm.name });
+
+      let taxMode = result.taxMode;
+      const currentTaxMode = selectedPriceList?.taxMode || "Inclusive";
+      if (priceListForm.taxMode && priceListForm.taxMode !== currentTaxMode) {
+        const taxModeResult = await taxModeMutation.mutateAsync({ taxMode: priceListForm.taxMode });
+        taxMode = taxModeResult.taxMode;
+      }
+
       setPriceListForm({
         name: result.name,
         isDefault: result.isDefault,
-        taxMode: result.taxMode || "Inclusive",
+        taxMode: taxMode || "Inclusive",
       });
-      showNotice(`Price list ${priceListMode === "create" ? "created" : "updated"}.`);
+      showNotice("Price list updated.");
     } catch (error) {
       showNotice(getErrorMessage(error));
     }
@@ -566,7 +588,12 @@ export default function PricingAdminPage() {
                       </label>
                     </div>
                     <div className="rounded-xl border border-white/10 bg-white/[0.025] px-3 py-2 text-xs text-slate-400">
-                      Currency and default selection are established when the price list is created. Tax mode has its own backend update.
+                      Currency and default selection are fixed at creation and cannot be changed
+                      afterward — create another price list if you need different values. Tax mode
+                      can be changed here; it is saved automatically together with the name
+                      (backend applies it through a separate tax-mode update, so the "Save tax
+                      mode" button below is only needed if you want to change tax mode without
+                      touching the name).
                     </div>
                     {!canManage && (
                       <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">

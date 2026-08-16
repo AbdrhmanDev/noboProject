@@ -2,6 +2,24 @@ import { Gift } from "lucide-react";
 import { formatMoney } from "../../../../shared/utils/formatters";
 import { Metric } from "../PosPrimitives";
 
+function getTaxLabel(draftOrder) {
+  const summaries = draftOrder?.taxSummaries || [];
+
+  if (!draftOrder?.isTaxEnabled || summaries.length === 0) {
+    return "ضريبة القيمة المضافة";
+  }
+
+  const distinctRates = Array.from(
+    new Set(summaries.map((summary) => Number(summary.ratePercent))),
+  );
+
+  if (distinctRates.length === 1) {
+    return `ضريبة القيمة المضافة ${distinctRates[0]}%`;
+  }
+
+  return "ضريبة القيمة المضافة (أسعار متعددة)";
+}
+
 export function OrderSummary({
   draftOrder,
   canEditDraft,
@@ -51,7 +69,7 @@ export function OrderSummary({
           <span>- {formatMoney(discountValue, catalogCurrencyCode, 2)}</span>
         </div>
         <div className="flex justify-between text-slate-400">
-          <span>ضريبة القيمة المضافة 15%</span>
+          <span>{getTaxLabel(draftOrder)}</span>
           <span>{formatMoney(vat, catalogCurrencyCode, 2)}</span>
         </div>
         <div className="mt-2 flex items-end justify-between border-t border-white/10 pt-2">

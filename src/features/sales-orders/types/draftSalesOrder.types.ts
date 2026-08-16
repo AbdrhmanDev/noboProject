@@ -67,6 +67,18 @@ export type DraftSalesOrderDiscount = {
   appliedAtUtc: string;
 };
 
+export type DraftSalesOrderTaxSummary = {
+  taxCategoryId: string;
+  taxCategoryCode: string;
+  taxCategoryName: string;
+  treatment: string;
+  ratePercent: number;
+  configuredAmount: number;
+  netAmount: number;
+  taxAmount: number;
+  grossAmount: number;
+};
+
 export type DraftSalesOrderKitchenTicket = {
   kitchenTicketId: string;
   kitchenStationId: string;
@@ -112,7 +124,7 @@ export type DraftSalesOrder = {
   createdAtUtc: string;
   wasAlreadyCreated?: boolean;
   discount: DraftSalesOrderDiscount | null;
-  taxSummaries: unknown[];
+  taxSummaries: DraftSalesOrderTaxSummary[];
   lines: DraftSalesOrderLine[];
   payments?: unknown[];
   kitchenTickets?: DraftSalesOrderKitchenTicket[];

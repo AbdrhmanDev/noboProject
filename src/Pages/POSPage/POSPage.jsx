@@ -35,6 +35,7 @@ import {
   useVoidPreparedSalesOrder,
   useUpdateDraftSalesOrder,
 } from "../../features/sales-orders/hooks/useDraftSalesOrder";
+import { useDraftLineEditor } from "../../features/pos/hooks/useDraftLineEditor";
 import {
   useActivePaymentMethods,
   useReceiveSalesOrderPayment,
@@ -611,8 +612,43 @@ export default function POSPage() {
     }
   };
   const notifyDraftRequiresLine = () => {
-    notify("Draft requires at least one line. Cancel will be integrated later.");
+    notify("This is the last item. Cancel the order instead of removing it.");
   };
+  const commitDraftLines = async (requestLines, baseDraft) => {
+    if (!currentCompanyId || !currentBranchId) return null;
+
+    if (orderType === "DineIn" && !effectiveRestaurantTableId) {
+      notify("Select a table before adding dine-in items.");
+      return null;
+    }
+
+    const payload = buildDraftPayload(requestLines, getDraftDiscountInput());
+
+    if (!baseDraft) {
+      const created = await createDraftMutation.mutateAsync(payload);
+      setDraftSession({ scope: draftScope, salesOrderId: created.salesOrderId });
+      return created;
+    }
+
+    return await updateDraftMutation.mutateAsync({
+      ...payload,
+      expectedDraftVersion: baseDraft.draftVersion,
+    });
+  };
+  const refetchDraftForLineEditor = async () => {
+    const result = await draftDetailsQuery.refetch();
+    return result.data ?? null;
+  };
+  const lineEditor = useDraftLineEditor({
+    draftOrder,
+    canEditDraft,
+    mapDraftLinesToRequest,
+    commitDraftLines,
+    refetchDraft: refetchDraftForLineEditor,
+    onRequiresAtLeastOneLine: notifyDraftRequiresLine,
+    onCommitError: handleDraftError,
+  });
+  const displayDraftLines = lineEditor.getDisplayLines();
   const updateDraftContext = async (nextOrderType, nextRestaurantTableId) => {
     if (!draftOrder || !draftLines.length || !canEditDraft) return;
 
@@ -657,6 +693,11 @@ export default function POSPage() {
   };
   const confirmCurrentOrder = async () => {
     if (!draftSalesOrderId || !draftOrder || !draftLines.length) return;
+
+    if (lineEditor.hasPendingEdits()) {
+      notify("Finish updating the cart before confirming.");
+      return;
+    }
 
     if (!confirmPermissionQuery.hasPermission) {
       notify("SalesOrders.Confirm permission is required.");
@@ -1069,45 +1110,10 @@ export default function POSPage() {
     setModal("variant");
   };
   const changeQty = (salesOrderLineId, amount) => {
-    if (!canEditDraft) return;
-
-    const requestLines = mapDraftLinesToRequest();
-    const index = draftLines.findIndex(
-      (line) => line.salesOrderLineId === salesOrderLineId,
-    );
-    if (index < 0) return;
-
-    const nextQuantity = Number(requestLines[index].quantity) + amount;
-    if (nextQuantity <= 0) {
-      requestLines.splice(index, 1);
-    } else {
-      requestLines[index] = { ...requestLines[index], quantity: nextQuantity };
-    }
-
-    if (!requestLines.length) {
-      notifyDraftRequiresLine();
-      return;
-    }
-
-    replaceDraftLines(requestLines);
+    lineEditor.changeQuantity(salesOrderLineId, amount);
   };
   const removeDraftLine = (salesOrderLineId) => {
-    if (!canEditDraft) return;
-
-    const index = draftLines.findIndex(
-      (line) => line.salesOrderLineId === salesOrderLineId,
-    );
-    if (index < 0) return;
-
-    const requestLines = mapDraftLinesToRequest();
-    requestLines.splice(index, 1);
-
-    if (!requestLines.length) {
-      notifyDraftRequiresLine();
-      return;
-    }
-
-    replaceDraftLines(requestLines);
+    lineEditor.removeLine(salesOrderLineId);
   };
   const holdOrder = () => {
     notify("Draft hold is not integrated yet.");
@@ -1279,7 +1285,7 @@ export default function POSPage() {
 
             <OrderSidebar
               navigate={navigate}
-              draftLines={draftLines}
+              draftLines={displayDraftLines}
               customer={customer}
               setCustomer={setCustomer}
               onOpenCustomer={() => setModal("customer")}
@@ -1302,6 +1308,7 @@ export default function POSPage() {
               catalogCurrencyCode={catalogCurrencyCode}
               changeQty={changeQty}
               removeDraftLine={removeDraftLine}
+              isLinePending={lineEditor.isLinePending}
               onOpenDiscount={() => setModal("discount")}
               subtotal={subtotal}
               discountValue={discountValue}
@@ -1413,7 +1420,6 @@ export default function POSPage() {
           <PaymentModal
             draftOrder={draftOrder}
             total={total}
-            catalogCurrencyCode={catalogCurrencyCode}
             netPaidAmount={netPaidAmount}
             settlementCurrencyCode={settlementCurrencyCode}
             settlementMinorUnitDigits={settlementMinorUnitDigits}
@@ -1426,6 +1432,8 @@ export default function POSPage() {
             onClose={() => {
               setModal(null);
               setShowAddPaymentMethod(false);
+              setPaymentAmountInput("");
+              setSelectedPaymentMethodId("");
             }}
             onOpenCloseOrder={() => setModal("closeOrder")}
             startNewOrder={startNewOrder}
