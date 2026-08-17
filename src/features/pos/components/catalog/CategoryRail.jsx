@@ -50,7 +50,6 @@ export function CategoryRail({ categories, activeCategoryId, onSelect }) {
   }, [updateEdges]);
 
   useLayoutEffect(() => {
-    setRtl(isDocumentRtl());
     updateEdges();
   }, [updateEdges, categories]);
 
@@ -62,6 +61,16 @@ export function CategoryRail({ categories, activeCategoryId, onSelect }) {
     observer.observe(el);
     return () => observer.disconnect();
   }, [scheduleUpdateEdges]);
+
+  useEffect(() => {
+    if (typeof document === "undefined" || typeof MutationObserver === "undefined") return undefined;
+
+    const root = document.documentElement;
+    const syncRtl = () => setRtl(isDocumentRtl());
+    const observer = new MutationObserver(syncRtl);
+    observer.observe(root, { attributes: true, attributeFilter: ["dir"] });
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const chip = chipRefs.current.get(activeCategoryId);
