@@ -73,6 +73,7 @@ export type ProductAdminListItem = {
   salesTaxCategoryName: string | null;
   name: string;
   description: string | null;
+  imageUrl: string | null;
   sortOrder: number;
   status: CatalogAdminStatus;
   createdAtUtc: string;
@@ -96,6 +97,7 @@ export type CreateProductRequest = {
   description: string | null;
   categoryId: string | null;
   sortOrder: number;
+  imageUrl: string | null;
 };
 
 export type CreateProductResponse = {
@@ -104,6 +106,7 @@ export type CreateProductResponse = {
   categoryId: string | null;
   name: string;
   description: string | null;
+  imageUrl: string | null;
   sortOrder: number;
   status: CatalogAdminStatus;
   createdAtUtc: string;

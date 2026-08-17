@@ -373,6 +373,7 @@ export default function POSPage() {
         productId: item.productId,
         productName: item.productName,
         productDescription: item.productDescription,
+        imageUrl: item.productImageUrl || null,
         categoryId: item.categoryId || UNCATEGORIZED_CATEGORY_ID,
         categoryName: item.categoryName || "غير مصنف",
         startingPrice: variant.price,

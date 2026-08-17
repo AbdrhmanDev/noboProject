@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="Fries">
+  <rect width="200" height="200" rx="24" fill="#241608"/>
+  <path d="M52 96 148 96 138 168a10 10 0 0 1-10 8H62a10 10 0 0 1-10-8L52 96z" fill="#D6362A"/>
+  <rect x="56" y="84" width="88" height="18" rx="4" fill="#E44A3B"/>
+  <text x="100" y="98" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#FBEAD8" font-weight="700">FRIES</text>
+  <g fill="#F1C24B">
+    <rect x="66" y="46" width="12" height="56" rx="5" transform="rotate(-6 72 74)"/>
+    <rect x="82" y="38" width="12" height="66" rx="5" transform="rotate(-2 88 71)"/>
+    <rect x="98" y="34" width="12" height="70" rx="5"/>
+    <rect x="114" y="40" width="12" height="64" rx="5" transform="rotate(3 120 72)"/>
+    <rect x="128" y="48" width="12" height="54" rx="5" transform="rotate(7 134 75)"/>
+  </g>
+</svg>

@@ -73,6 +73,7 @@ const EMPTY_PRODUCT_FORM = {
   description: "",
   categoryId: "",
   sortOrder: "0",
+  imageUrl: "",
 };
 const EMPTY_VARIANT_FORM = {
   name: "",
@@ -318,6 +319,35 @@ function ProductForm({
           className="mt-1 w-full rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
         />
       </label>
+      <div className="flex items-end gap-3">
+        <label className="flex-1 text-xs font-semibold text-slate-400">
+          Image URL
+          <input
+            value={form.imageUrl}
+            onChange={(event) =>
+              setForm((draft) => ({ ...draft, imageUrl: event.target.value }))
+            }
+            placeholder="/demo-products/burger.svg or https://…"
+            maxLength={2048}
+            disabled={!canManage || isPending}
+            className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+          />
+        </label>
+        <div className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl border border-white/10 bg-white/[0.025]">
+          {form.imageUrl ? (
+            <img
+              src={form.imageUrl}
+              alt=""
+              className="h-full w-full object-cover"
+              onError={(event) => {
+                event.currentTarget.style.display = "none";
+              }}
+            />
+          ) : (
+            <Package size={18} className="text-slate-500" />
+          )}
+        </div>
+      </div>
       <ActionRow
         mode={mode}
         entity="product"
@@ -1395,6 +1425,7 @@ export default function CatalogAdminPage() {
       description: product.description || "",
       categoryId: product.categoryId || "",
       sortOrder: String(product.sortOrder),
+      imageUrl: product.imageUrl || "",
     });
     setVariantForm(EMPTY_VARIANT_FORM);
   };
@@ -1447,6 +1478,7 @@ export default function CatalogAdminPage() {
         description: productForm.description.trim() || null,
         categoryId: productForm.categoryId || null,
         sortOrder,
+        imageUrl: productForm.imageUrl.trim() || null,
       };
       const result =
         productMode === "create"
@@ -1459,6 +1491,7 @@ export default function CatalogAdminPage() {
         description: result.description || "",
         categoryId: result.categoryId || "",
         sortOrder: String(result.sortOrder),
+        imageUrl: result.imageUrl || "",
       });
       showNotice(`Product ${productMode === "create" ? "created" : "updated"}.`);
     } catch (error) {

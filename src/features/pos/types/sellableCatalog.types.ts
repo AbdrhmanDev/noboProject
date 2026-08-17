@@ -28,6 +28,7 @@ export type BranchSellableCatalogItem = {
   productId: string;
   productName: string;
   productDescription: string | null;
+  productImageUrl: string | null;
   productVariantId: string;
   variantName: string;
   sku: string | null;

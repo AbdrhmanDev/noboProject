@@ -168,7 +168,8 @@ const GlobalStyle = () => (
           background-clip: text;
           color: transparent;
         }
-        .scrollbar-none::-webkit-scrollbar { display: none; }
+        .scrollbar-none { scrollbar-width: none; -ms-overflow-style: none; }
+        .scrollbar-none::-webkit-scrollbar { display: none; width: 0; height: 0; }
         .toggle-track { background: linear-gradient(90deg,var(--color-primary),#8b5cf6); }
         .toggle-thumb { transition: transform .2s ease; }
         .stat-card{

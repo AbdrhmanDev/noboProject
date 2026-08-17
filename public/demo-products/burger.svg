@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="Burger">
+  <rect width="200" height="200" rx="24" fill="#241608"/>
+  <ellipse cx="100" cy="72" rx="58" ry="30" fill="#E3A857"/>
+  <path d="M42 72c0-24 26-40 58-40s58 16 58 40H42z" fill="#EDB86B"/>
+  <circle cx="78" cy="58" r="4" fill="#F6D9A0"/>
+  <circle cx="100" cy="50" r="4" fill="#F6D9A0"/>
+  <circle cx="122" cy="58" r="4" fill="#F6D9A0"/>
+  <circle cx="90" cy="66" r="3.5" fill="#F6D9A0"/>
+  <circle cx="112" cy="66" r="3.5" fill="#F6D9A0"/>
+  <rect x="40" y="88" width="120" height="14" rx="7" fill="#4C9A3F"/>
+  <rect x="38" y="104" width="124" height="16" rx="6" fill="#B23A2E"/>
+  <rect x="42" y="122" width="116" height="16" rx="6" fill="#7A4A1E"/>
+  <rect x="40" y="140" width="120" height="26" rx="13" fill="#DE9A4C"/>
+</svg>

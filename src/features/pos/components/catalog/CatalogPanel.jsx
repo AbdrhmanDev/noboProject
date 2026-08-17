@@ -6,6 +6,7 @@ import { PriceListOnboarding } from "../../../pricing/components/PriceListOnboar
 import { FirstProductOnboarding } from "../../../catalog/components/FirstProductOnboarding";
 import { TaxSettingsOnboarding } from "../../../tax/components/TaxSettingsOnboarding";
 import { IconButton } from "../PosPrimitives";
+import { CategoryRail } from "./CategoryRail";
 
 export const ALL_CATEGORY_ID = "__all__";
 export const UNCATEGORIZED_CATEGORY_ID = "__uncategorized__";
@@ -34,19 +35,7 @@ export function CatalogPanel({
 }) {
   return (
     <section className="flex min-w-0 flex-col gap-4 xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)]">
-      <div className="grid grid-flow-col auto-cols-[82px] gap-2 overflow-x-auto pb-1 scrollbar-none sm:auto-cols-[96px]">
-        {catalogCategories.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => setCategory(id)}
-            className={`flex min-h-[66px] flex-col items-center justify-center gap-1 rounded-xl border px-2 text-[10px] font-semibold transition ${category === id ? "border-blue-400/70 bg-blue-500/15 text-blue-100 shadow-lg shadow-blue-950/30" : "border-white/10 bg-[#0d1728] text-slate-400 hover:border-white/20 hover:bg-white/[0.06]"}`}
-          >
-            <Icon size={18} className={category === id ? "text-blue-300" : "text-slate-500"} />
-            <span className="max-w-full truncate">{label}</span>
-          </button>
-        ))}
-      </div>
+      <CategoryRail categories={catalogCategories} activeCategoryId={category} onSelect={setCategory} />
 
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/8 bg-white/[0.02] px-3 py-2.5">
         <div>
@@ -171,8 +160,19 @@ export function CatalogPanel({
                     disabled={!canEditDraft || isDraftMutationPending}
                     className="group overflow-hidden rounded-xl border border-white/10 bg-[#0d1728] p-2.5 text-right transition hover:-translate-y-0.5 hover:border-blue-400/60 hover:bg-[#111f36] hover:shadow-lg hover:shadow-blue-950/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    <div className="relative mb-2 grid aspect-[1.3] place-items-center rounded-lg border border-white/8 bg-white/[0.025]">
+                    <div className="relative mb-2 grid aspect-[1.3] place-items-center overflow-hidden rounded-lg border border-white/8 bg-white/[0.025]">
                       <Package size={28} className="text-blue-300/80" />
+                      {product.imageUrl && (
+                        <img
+                          src={product.imageUrl}
+                          alt=""
+                          loading="lazy"
+                          className="absolute inset-0 h-full w-full object-cover"
+                          onError={(event) => {
+                            event.currentTarget.style.display = "none";
+                          }}
+                        />
+                      )}
                       <span className="absolute bottom-1.5 right-2 rounded bg-black/25 px-1.5 py-0.5 text-[9px] text-slate-300">
                         {product.categoryName}
                       </span>

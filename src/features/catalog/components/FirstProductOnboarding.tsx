@@ -276,6 +276,7 @@ function ProductStep({ companyId, branchId, categoryId, categoryLabel, onDone }:
         description: null,
         categoryId,
         sortOrder: 0,
+        imageUrl: null,
       });
       onDone(created.productId, created.name);
     } catch (error) {

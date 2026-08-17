@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="Dessert">
+  <rect width="200" height="200" rx="24" fill="#241608"/>
+  <path d="M58 96h84l-10 62a10 10 0 0 1-10 8H78a10 10 0 0 1-10-8L58 96z" fill="#6B3A22"/>
+  <path d="M58 96h84l-4 22H62l-4-22z" fill="#8A4F2C"/>
+  <path d="M52 96c0-14 22-24 48-24s48 10 48 24H52z" fill="#F4E3C4"/>
+  <circle cx="100" cy="60" r="10" fill="#E4536B"/>
+  <rect x="96" y="38" width="8" height="18" rx="4" fill="#4C9A3F"/>
+  <circle cx="76" cy="112" r="5" fill="#F4E3C4"/>
+  <circle cx="124" cy="118" r="5" fill="#F4E3C4"/>
+  <circle cx="100" cy="130" r="5" fill="#F4E3C4"/>
+</svg>
