@@ -7,10 +7,8 @@ import { PaymentMethodOnboarding } from "../../../payments/components/PaymentMet
 import { ROUTES } from "../../../../utils/routes";
 import { SCOPE_PRIORITY, SHORTCUT_SCOPES } from "../../../shortcuts/registry";
 import { useShortcutScope } from "../../../shortcuts/useShortcuts";
-import { useGridArrowNav } from "../../../shortcuts/rovingFocus";
+import { ROVING_ITEM_SELECTOR, useAutoFocusFirstItem, useGridArrowNav } from "../../../shortcuts/rovingFocus";
 import { ShortcutHint } from "../../../shortcuts/components/ShortcutHint";
-
-const PAYMENT_METHOD_GRID_ITEM_SELECTOR = "[data-roving-item]";
 
 export function PaymentModal({
   draftOrder,
@@ -47,10 +45,16 @@ export function PaymentModal({
   navigate,
 }) {
   const paymentMethodGridRef = useRef(null);
-  const handlePaymentMethodGridKeyDown = useGridArrowNav(
-    paymentMethodGridRef,
-    PAYMENT_METHOD_GRID_ITEM_SELECTOR,
-  );
+  const handlePaymentMethodGridKeyDown = useGridArrowNav(paymentMethodGridRef, ROVING_ITEM_SELECTOR);
+  // Nothing else focuses the grid when the modal opens, so arrow keys would
+  // do nothing until the cashier first clicked/Tabbed into it — auto-focus
+  // the first method as soon as the grid is actually on screen.
+  const showPaymentMethodGrid =
+    !isFullyPaid &&
+    paymentsReceivePermissionQuery.hasPermission &&
+    !paymentMethodsQuery.isLoading &&
+    paymentMethods.length > 0;
+  useAutoFocusFirstItem(paymentMethodGridRef, ROVING_ITEM_SELECTOR, showPaymentMethodGrid);
 
   const modalBindings = useMemo(
     () => [
@@ -195,7 +199,7 @@ export function PaymentModal({
                         key={method.paymentMethodId}
                         data-roving-item=""
                         onClick={() => setSelectedPaymentMethodId(method.paymentMethodId)}
-                        className={`rounded-xl border px-3 py-3 text-center transition ${
+                        className={`rounded-xl border px-3 py-3 text-center transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400 ${
                           selectedPaymentMethod?.paymentMethodId === method.paymentMethodId
                             ? "border-blue-400 bg-blue-500/15"
                             : "border-white/10 bg-white/[0.025] hover:bg-white/10"

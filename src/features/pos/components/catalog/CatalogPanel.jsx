@@ -1,4 +1,3 @@
-import { useRef } from "react";
 import { Barcode, Gift, Package, X } from "lucide-react";
 import { ROUTES } from "../../../../utils/routes";
 import { EmptyState, ErrorState, LoadingState } from "../../../../shared/components/ui";
@@ -8,9 +7,8 @@ import { FirstProductOnboarding } from "../../../catalog/components/FirstProduct
 import { TaxSettingsOnboarding } from "../../../tax/components/TaxSettingsOnboarding";
 import { IconButton } from "../PosPrimitives";
 import { CategoryRail } from "./CategoryRail";
-import { useGridArrowNav } from "../../../shortcuts/rovingFocus";
-
-const PRODUCT_GRID_ITEM_SELECTOR = "[data-roving-item]";
+import { ROVING_ITEM_SELECTOR, useGridArrowNav } from "../../../shortcuts/rovingFocus";
+import { ShortcutHint } from "../../../shortcuts/components/ShortcutHint";
 
 export const ALL_CATEGORY_ID = "__all__";
 export const UNCATEGORIZED_CATEGORY_ID = "__uncategorized__";
@@ -36,9 +34,9 @@ export function CatalogPanel({
   addItem,
   onOpenPromotions,
   query,
+  productGridRef,
 }) {
-  const productGridRef = useRef(null);
-  const handleProductGridKeyDown = useGridArrowNav(productGridRef, PRODUCT_GRID_ITEM_SELECTOR);
+  const handleProductGridKeyDown = useGridArrowNav(productGridRef, ROVING_ITEM_SELECTOR);
 
   return (
     <section className="flex min-w-0 flex-col gap-4 xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)]">
@@ -46,9 +44,10 @@ export function CatalogPanel({
 
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/8 bg-white/[0.02] px-3 py-2.5">
         <div>
-          <h1 className="text-base font-black text-white">
+          <h1 className="flex flex-wrap items-center gap-2 text-base font-black text-white">
             المنتجات القابلة للبيع{" "}
             <span className="text-slate-500">({filteredProducts.length})</span>
+            <ShortcutHint action="pos.browseProducts" />
           </h1>
           <p className="mt-0.5 text-[10px] text-slate-500">
             {sellableCatalogQuery.data

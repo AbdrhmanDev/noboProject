@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { X } from "lucide-react";
 import { SCOPE_PRIORITY, SHORTCUT_SCOPES } from "../../shortcuts/registry";
 import { useShortcutScope } from "../../shortcuts/useShortcuts";
@@ -16,6 +16,36 @@ export function PosModal({ title, children, onClose, size = "md" }) {
     [onClose],
   );
   useShortcutScope({ id: "pos-modal", priority: SCOPE_PRIORITY[SHORTCUT_SCOPES.MODAL], bindings });
+
+  // Restore focus to whatever triggered this dialog (the button that was
+  // clicked, or wherever focus happened to be for a keyboard-opened one)
+  // once it closes, instead of leaving focus on <body> after the dialog's
+  // DOM unmounts.
+  //
+  // Deferred and guarded rather than restoring unconditionally: when this
+  // dialog is being *replaced* by another one in the same update (Variant
+  // selection opening Modifiers is exactly this — two separate PosModal
+  // instances, so it's a real unmount+mount, not an update), the new
+  // dialog's own auto-focus-first-item is a layout effect and always runs
+  // before this cleanup (a passive effect) does. By deferring the actual
+  // restore to a macrotask and only acting if focus is still sitting on
+  // <body> at that point, a genuine close (nothing else claimed focus)
+  // still restores correctly, while a dialog-to-dialog transition (the new
+  // dialog already focused its first item) correctly leaves it alone.
+  useEffect(() => {
+    const previouslyFocused = document.activeElement;
+    return () => {
+      window.setTimeout(() => {
+        if (
+          document.activeElement === document.body &&
+          previouslyFocused instanceof HTMLElement &&
+          document.body.contains(previouslyFocused)
+        ) {
+          previouslyFocused.focus();
+        }
+      }, 0);
+    };
+  }, []);
 
   return (
     <div className="fixed inset-0 z-[100] grid place-items-center bg-[#030713]/75 p-4 backdrop-blur-sm">

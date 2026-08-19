@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   AlertTriangle,
@@ -63,6 +63,7 @@ import { getOrderPrimaryAction } from "../../features/pos/components/order/getOr
 import { SCOPE_PRIORITY, SHORTCUT_SCOPES } from "../../features/shortcuts/registry";
 import { useShortcutScope } from "../../features/shortcuts/useShortcuts";
 import { ShortcutHint } from "../../features/shortcuts/components/ShortcutHint";
+import { getFocusableGridItems, ROVING_ITEM_SELECTOR } from "../../features/shortcuts/rovingFocus";
 
 const SALES_ORDERS_CREATE_PERMISSION = "SalesOrders.Create";
 const SALES_ORDERS_APPLY_DISCOUNT_PERMISSION = "SalesOrders.ApplyDiscount";
@@ -276,6 +277,7 @@ export default function POSPage() {
   const [aiDismissed, setAiDismissed] = useState([]);
   const [selectedLineId, setSelectedLineId] = useState(null);
   const searchInputRef = useRef(null);
+  const productGridRef = useRef(null);
   const draftOrder = draftDetailsQuery.data || null;
   const draftLines = draftOrder?.lines ?? [];
   const isConfirmedOrder = draftOrder?.status === "Confirmed";
@@ -1103,6 +1105,19 @@ export default function POSPage() {
     }
 
     await replaceDraftLines(requestLines);
+
+    // Every add-to-draft path (immediate add, variant-only, variant+
+    // modifiers) funnels through here. When a Variant/Modifier dialog was
+    // involved, its focused option is now gone and focus is left sitting on
+    // <body> with no obvious way back in without the mouse — recover into
+    // the Product Grid. When nothing was involved (single variant, no
+    // modifiers: the product card itself never lost focus), leave it alone
+    // rather than yanking focus to the first card regardless of which one
+    // was actually clicked.
+    const items = getFocusableGridItems(productGridRef.current, ROVING_ITEM_SELECTOR);
+    if (!items.includes(document.activeElement)) {
+      items[0]?.focus();
+    }
   };
   const selectVariantForDraft = (variant) => {
     if (!canEditDraft) return;
@@ -1187,105 +1202,41 @@ export default function POSPage() {
       return count >= group.minSelections && count <= group.maxSelections;
     });
 
-  const selectAdjacentLine = useCallback(
-    (delta) => {
-      if (!displayDraftLines.length) return;
+  const selectAdjacentLine = (delta) => {
+    if (!displayDraftLines.length) return;
 
-      const currentIndex = displayDraftLines.findIndex(
-        (line) => line.salesOrderLineId === effectiveSelectedLineId,
-      );
-      const nextIndex =
-        currentIndex < 0
-          ? delta > 0
-            ? 0
-            : displayDraftLines.length - 1
-          : Math.max(0, Math.min(displayDraftLines.length - 1, currentIndex + delta));
+    const currentIndex = displayDraftLines.findIndex(
+      (line) => line.salesOrderLineId === effectiveSelectedLineId,
+    );
+    const nextIndex =
+      currentIndex < 0
+        ? delta > 0
+          ? 0
+          : displayDraftLines.length - 1
+        : Math.max(0, Math.min(displayDraftLines.length - 1, currentIndex + delta));
 
-      setSelectedLineId(displayDraftLines[nextIndex].salesOrderLineId);
-    },
-    [displayDraftLines, effectiveSelectedLineId],
-  );
+    setSelectedLineId(displayDraftLines[nextIndex].salesOrderLineId);
+  };
 
-  // POS Page scope — a normal cashier flow keyboard-first. Suppressed
-  // entirely whenever a Modal scope is active (PosModal registers its own
-  // Escape binding; PaymentModal/modifier dialog register their own extra
-  // bindings on top of that), so none of these can fire out from under an
-  // open dialog. See ShortcutProvider's dispatcher for the scope-priority
-  // mechanics.
-  const posPageBindings = useMemo(
-    () => [
-      { binding: { code: "F2" }, onTrigger: () => startNewOrder() },
-      {
-        binding: { code: "F3" },
-        onTrigger: () => {
-          searchInputRef.current?.focus();
-          searchInputRef.current?.select();
-        },
-      },
-      { binding: { code: "F4" }, onTrigger: () => handleOrderTypeChange("Takeaway") },
-      { binding: { code: "F4", shiftKey: true }, onTrigger: () => handleOrderTypeChange("DineIn") },
-      {
-        binding: { code: "F8" },
-        onTrigger: () => {
-          const primaryAction = getOrderPrimaryAction({
-            isClosedOrder,
-            isCancelledOrder,
-            isConfirmedOrder,
-            isFullyPaid,
-            kitchenReady,
-            canCloseOrder,
-            canConfirmOrder,
-            hasOpenShift,
-            startNewOrder,
-            onOpenPayment: () => setModal("payment"),
-            onOpenCloseOrder: () => setModal("closeOrder"),
-            confirmCurrentOrder,
-          });
-          if (!primaryAction.disabled) primaryAction.run();
-        },
-      },
-      {
-        binding: { code: "F9" },
-        onTrigger: () => {
-          if (isConfirmedOrder && !isFullyPaid) setModal("payment");
-        },
-      },
-      {
-        binding: { code: "Equal", shiftKey: true },
-        onTrigger: () => {
-          if (effectiveSelectedLineId && canEditDraft) changeQty(effectiveSelectedLineId, 1);
-        },
-      },
-      {
-        binding: { code: "NumpadAdd" },
-        onTrigger: () => {
-          if (effectiveSelectedLineId && canEditDraft) changeQty(effectiveSelectedLineId, 1);
-        },
-      },
-      {
-        binding: { code: "Minus" },
-        onTrigger: () => {
-          if (effectiveSelectedLineId && canEditDraft) changeQty(effectiveSelectedLineId, -1);
-        },
-      },
-      {
-        binding: { code: "NumpadSubtract" },
-        onTrigger: () => {
-          if (effectiveSelectedLineId && canEditDraft) changeQty(effectiveSelectedLineId, -1);
-        },
-      },
-      {
-        binding: { code: "Delete" },
-        onTrigger: () => {
-          if (effectiveSelectedLineId && canEditDraft) removeDraftLine(effectiveSelectedLineId);
-        },
-      },
-      { binding: { code: "ArrowUp" }, onTrigger: () => selectAdjacentLine(-1) },
-      { binding: { code: "ArrowDown" }, onTrigger: () => selectAdjacentLine(1) },
-    ],
-    [
+  // Keeps every shortcut closure pointing at the latest render's values
+  // without the bindings array itself needing to change identity (and the
+  // scope re-registering) on every render. Written from a layout effect
+  // (fires before paint, so it's populated before any keypress is possible)
+  // rather than during render, since React (and this repo's stricter refs
+  // lint rule) treats writing a ref's .current mid-render as unsafe even
+  // though it doesn't trigger reactivity. `setModal` is only stored here for
+  // later use inside onTrigger closures, never called from the effect body
+  // itself, so this can't cascade into a render loop.
+  const pageShortcutStateRef = useRef(null);
+  useLayoutEffect(() => {
+    pageShortcutStateRef.current = {
       startNewOrder,
       handleOrderTypeChange,
+      confirmCurrentOrder,
+      changeQty,
+      removeDraftLine,
+      selectAdjacentLine,
+      setModal,
       isClosedOrder,
       isCancelledOrder,
       isConfirmedOrder,
@@ -1294,13 +1245,137 @@ export default function POSPage() {
       canCloseOrder,
       canConfirmOrder,
       hasOpenShift,
-      confirmCurrentOrder,
       effectiveSelectedLineId,
       canEditDraft,
-      changeQty,
-      removeDraftLine,
-      selectAdjacentLine,
+    };
+  });
+
+  // POS Page scope — a normal cashier flow keyboard-first. Registered once
+  // (stable empty deps): every onTrigger reads pageShortcutStateRef.current
+  // for its live values instead of closing over them directly, so nothing
+  // reactive is referenced in this useMemo body at all and it never has a
+  // stale-dependency warning to produce. Suppressed entirely whenever a
+  // Modal scope is active (PosModal registers its own Escape binding;
+  // PaymentModal/modifier dialog register their own extra bindings on top
+  // of that), so none of these can fire out from under an open dialog. See
+  // ShortcutProvider's dispatcher for the scope-priority mechanics.
+  const posPageBindings = useMemo(
+    () => [
+      { binding: { code: "F2" }, onTrigger: () => pageShortcutStateRef.current.startNewOrder() },
+      {
+        binding: { code: "F3" },
+        onTrigger: () => {
+          searchInputRef.current?.focus();
+          searchInputRef.current?.select();
+        },
+      },
+      {
+        binding: { code: "F1" },
+        onTrigger: () => {
+          const items = getFocusableGridItems(productGridRef.current, ROVING_ITEM_SELECTOR);
+          if (!items.length) return;
+          // Land back on whatever's already focused if it's still a valid
+          // visible product (e.g. cashier tabbed away and came back);
+          // otherwise start at the first one.
+          const current = items.includes(document.activeElement) ? document.activeElement : items[0];
+          current.focus();
+        },
+      },
+      {
+        binding: { code: "F4" },
+        onTrigger: () => pageShortcutStateRef.current.handleOrderTypeChange("Takeaway"),
+      },
+      {
+        binding: { code: "F4", shiftKey: true },
+        onTrigger: () => pageShortcutStateRef.current.handleOrderTypeChange("DineIn"),
+      },
+      {
+        binding: { code: "F6" },
+        onTrigger: () => pageShortcutStateRef.current.setModal("retrieve"),
+      },
+      {
+        binding: { code: "F8" },
+        onTrigger: () => {
+          const state = pageShortcutStateRef.current;
+          const primaryAction = getOrderPrimaryAction({
+            isClosedOrder: state.isClosedOrder,
+            isCancelledOrder: state.isCancelledOrder,
+            isConfirmedOrder: state.isConfirmedOrder,
+            isFullyPaid: state.isFullyPaid,
+            kitchenReady: state.kitchenReady,
+            canCloseOrder: state.canCloseOrder,
+            canConfirmOrder: state.canConfirmOrder,
+            hasOpenShift: state.hasOpenShift,
+            startNewOrder: state.startNewOrder,
+            onOpenPayment: () => state.setModal("payment"),
+            onOpenCloseOrder: () => state.setModal("closeOrder"),
+            confirmCurrentOrder: state.confirmCurrentOrder,
+          });
+          if (!primaryAction.disabled) primaryAction.run();
+        },
+      },
+      {
+        binding: { code: "F9" },
+        onTrigger: () => {
+          const state = pageShortcutStateRef.current;
+          if (state.isConfirmedOrder && !state.isFullyPaid) state.setModal("payment");
+        },
+      },
+      {
+        binding: { code: "Equal", shiftKey: true },
+        onTrigger: () => {
+          const state = pageShortcutStateRef.current;
+          if (state.effectiveSelectedLineId && state.canEditDraft) {
+            state.changeQty(state.effectiveSelectedLineId, 1);
+          }
+        },
+      },
+      {
+        binding: { code: "NumpadAdd" },
+        onTrigger: () => {
+          const state = pageShortcutStateRef.current;
+          if (state.effectiveSelectedLineId && state.canEditDraft) {
+            state.changeQty(state.effectiveSelectedLineId, 1);
+          }
+        },
+      },
+      {
+        binding: { code: "Minus" },
+        onTrigger: () => {
+          const state = pageShortcutStateRef.current;
+          if (state.effectiveSelectedLineId && state.canEditDraft) {
+            state.changeQty(state.effectiveSelectedLineId, -1);
+          }
+        },
+      },
+      {
+        binding: { code: "NumpadSubtract" },
+        onTrigger: () => {
+          const state = pageShortcutStateRef.current;
+          if (state.effectiveSelectedLineId && state.canEditDraft) {
+            state.changeQty(state.effectiveSelectedLineId, -1);
+          }
+        },
+      },
+      {
+        binding: { code: "Delete" },
+        onTrigger: () => {
+          const state = pageShortcutStateRef.current;
+          if (state.effectiveSelectedLineId && state.canEditDraft) {
+            state.removeDraftLine(state.effectiveSelectedLineId);
+          }
+        },
+      },
+      {
+        binding: { code: "ArrowUp" },
+        onTrigger: () => pageShortcutStateRef.current.selectAdjacentLine(-1),
+      },
+      {
+        binding: { code: "ArrowDown" },
+        onTrigger: () => pageShortcutStateRef.current.selectAdjacentLine(1),
+      },
     ],
+    [],
   );
   useShortcutScope({
     id: "pos-page",
@@ -1388,13 +1463,28 @@ export default function POSPage() {
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   onKeyDown={(event) => {
-                    if (event.code !== "Escape") return;
-                    event.preventDefault();
-                    if (query) {
-                      setQuery("");
-                    } else {
-                      event.currentTarget.blur();
+                    if (event.code === "Escape") {
+                      event.preventDefault();
+                      if (query) {
+                        setQuery("");
+                      } else {
+                        event.currentTarget.blur();
+                      }
+                      return;
                     }
+
+                    // The only arrow that leaves the input: ArrowDown hands
+                    // focus to the first visible product result. ArrowLeft/
+                    // ArrowRight (and ArrowUp, which has nothing useful to
+                    // do in a single-line input) are left completely alone
+                    // so normal caret/text editing keeps working.
+                    if (event.code !== "ArrowDown") return;
+
+                    const items = getFocusableGridItems(productGridRef.current, ROVING_ITEM_SELECTOR);
+                    if (!items.length) return;
+
+                    event.preventDefault();
+                    items[0].focus();
                   }}
                   className="min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:text-slate-500"
                   placeholder="ابحث بالباركود أو الاسم أو SKU..."
@@ -1429,6 +1519,7 @@ export default function POSPage() {
               addItem={addItem}
               onOpenPromotions={() => setModal("promotions")}
               query={query}
+              productGridRef={productGridRef}
             />
 
             <OrderSidebar

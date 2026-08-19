@@ -174,11 +174,45 @@ export const SHORTCUT_REGISTRY = [
     action: { type: "scopeBound" },
   },
   {
+    id: "pos.selectOrder",
+    category: "pos",
+    scope: SHORTCUT_SCOPES.PAGE,
+    labelKey: "shortcuts.pos.selectOrder",
+    // Not in RESERVED_BINDINGS: unlike every entry there, bare F6 isn't
+    // destructive — in Chrome/Firefox/Edge it just cycles focus to the
+    // address bar, which our keydown handler's preventDefault() suppresses
+    // before the browser's default action runs. Checked against the
+    // registry (no conflicts) and the reserved list (not present) per spec.
+    defaultBinding: binding("F6"),
+    permission: "Pos.View",
+    enabledByDefault: true,
+    editable: true,
+    reserved: false,
+    action: { type: "scopeBound" },
+  },
+  {
     id: "pos.focusProductSearch",
     category: "pos",
     scope: SHORTCUT_SCOPES.PAGE,
     labelKey: "shortcuts.pos.focusProductSearch",
     defaultBinding: binding("F3"),
+    permission: "Pos.View",
+    enabledByDefault: true,
+    editable: true,
+    reserved: false,
+    action: { type: "scopeBound" },
+  },
+  {
+    id: "pos.browseProducts",
+    category: "pos",
+    scope: SHORTCUT_SCOPES.PAGE,
+    labelKey: "shortcuts.pos.browseProducts",
+    // F5/F6/F7/F10/F11/F12 all carry real browser/OS chrome behavior
+    // (reload, address-bar focus, Firefox's caret-browsing prompt, the
+    // Windows/Firefox menu-bar activation key, fullscreen, devtools) — F1
+    // has no such interception in Chrome/Firefox/Edge at the page level, and
+    // isn't used anywhere else in this registry.
+    defaultBinding: binding("F1"),
     permission: "Pos.View",
     enabledByDefault: true,
     editable: true,

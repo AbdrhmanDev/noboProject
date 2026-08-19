@@ -5,9 +5,11 @@ import { PosModal } from "../PosModal";
 import { Metric } from "../PosPrimitives";
 import { SCOPE_PRIORITY, SHORTCUT_SCOPES } from "../../../shortcuts/registry";
 import { useShortcutScope } from "../../../shortcuts/useShortcuts";
-import { useGridArrowNav } from "../../../shortcuts/rovingFocus";
-
-const ROVING_ITEM_SELECTOR = "[data-roving-item]";
+import {
+  ROVING_ITEM_SELECTOR,
+  useAutoFocusFirstItem,
+  useGridArrowNav,
+} from "../../../shortcuts/rovingFocus";
 
 export function OrderDialogs({
   modal,
@@ -62,9 +64,13 @@ export function OrderDialogs({
 }) {
   const variantListRef = useRef(null);
   const handleVariantListKeyDown = useGridArrowNav(variantListRef, ROVING_ITEM_SELECTOR);
+  // Nothing else focuses these lists when their dialog opens, so arrow keys
+  // would do nothing until the cashier first clicked/Tabbed in.
+  useAutoFocusFirstItem(variantListRef, ROVING_ITEM_SELECTOR, modal === "variant");
 
   const modifierOptionsRef = useRef(null);
   const handleModifierOptionsKeyDown = useGridArrowNav(modifierOptionsRef, ROVING_ITEM_SELECTOR);
+  useAutoFocusFirstItem(modifierOptionsRef, ROVING_ITEM_SELECTOR, modal === "modifiers");
 
   const modifierModalBindings = useMemo(
     () => [

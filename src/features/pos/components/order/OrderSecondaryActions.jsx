@@ -13,6 +13,7 @@ import {
 import { formatMoney } from "../../../../shared/utils/formatters";
 import { formatPaymentDate } from "../../utils/posFormatters";
 import { IconButton } from "../PosPrimitives";
+import { ShortcutHint } from "../../../shortcuts/components/ShortcutHint";
 
 export function OrderSecondaryActions({
   isClosedOrder,
@@ -129,7 +130,12 @@ export function OrderSecondaryActions({
           {showQuickActions && (
             <div className="grid grid-cols-3 gap-2">
               <IconButton icon={PauseCircle} label="حفظ مؤقت" onClick={holdOrder} />
-              <IconButton icon={RotateCcw} label="استرجاع" onClick={onOpenRetrieve} />
+              <IconButton
+                icon={RotateCcw}
+                label="استرجاع"
+                onClick={onOpenRetrieve}
+                hint={<ShortcutHint action="pos.selectOrder" />}
+              />
               <IconButton
                 icon={CircleDollarSign}
                 label="حركة نقدية"

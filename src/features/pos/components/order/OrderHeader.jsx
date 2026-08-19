@@ -3,14 +3,13 @@ import { Crown, ShoppingCart, X } from "lucide-react";
 import { ROUTES } from "../../../../utils/routes";
 import { RestaurantSeatingOnboarding } from "../../../restaurant/components/RestaurantSeatingOnboarding";
 import { ShortcutHint } from "../../../shortcuts/components/ShortcutHint";
-import { useGridArrowNav } from "../../../shortcuts/rovingFocus";
+import { ROVING_ITEM_SELECTOR, useGridArrowNav } from "../../../shortcuts/rovingFocus";
 
 const ORDER_TYPES = ["Takeaway", "DineIn", "Delivery"];
 const ORDER_TYPE_SHORTCUT_ACTION = {
   Takeaway: "pos.orderType.takeaway",
   DineIn: "pos.orderType.dineIn",
 };
-const TABLE_GRID_ITEM_SELECTOR = "[data-roving-item]";
 
 export function OrderHeader({
   navigate,
@@ -36,7 +35,7 @@ export function OrderHeader({
   invalidateRestaurantSeating,
 }) {
   const tableGridRef = useRef(null);
-  const handleTableGridKeyDown = useGridArrowNav(tableGridRef, TABLE_GRID_ITEM_SELECTOR);
+  const handleTableGridKeyDown = useGridArrowNav(tableGridRef, ROVING_ITEM_SELECTOR);
 
   return (
     <>

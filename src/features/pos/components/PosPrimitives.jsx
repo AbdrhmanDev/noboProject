@@ -1,4 +1,4 @@
-export function IconButton({ icon: Icon, label, onClick, tone = "default", disabled = false }) {
+export function IconButton({ icon: Icon, label, onClick, tone = "default", disabled = false, hint = null }) {
   const tones = {
     default:
       "border-white/10 bg-white/[0.035] hover:border-blue-400/45 hover:bg-blue-500/10",
@@ -15,6 +15,7 @@ export function IconButton({ icon: Icon, label, onClick, tone = "default", disab
     >
       <Icon size={15} />
       {label}
+      {hint}
     </button>
   );
 }
