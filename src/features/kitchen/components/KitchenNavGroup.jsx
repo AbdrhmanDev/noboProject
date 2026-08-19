@@ -58,6 +58,7 @@ export function KitchenNavGroup({ activePath, navigate, variant = "desktop" }) {
       activePath={activePath}
       navigate={navigate}
       items={items}
+      shortcutAction="navigation.kitchen"
     />
   );
 }

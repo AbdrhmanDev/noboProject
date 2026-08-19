@@ -1,5 +1,7 @@
 import { Ban, Check, CircleCheckBig, Plus, WalletCards } from "lucide-react";
 import { formatMoney } from "../../../../shared/utils/formatters";
+import { ShortcutHint } from "../../../shortcuts/components/ShortcutHint";
+import { getOrderPrimaryAction } from "./getOrderPrimaryAction";
 
 export function OrderPrimaryAction({
   isClosedOrder,
@@ -25,11 +27,29 @@ export function OrderPrimaryAction({
   total,
   catalogCurrencyCode,
 }) {
+  // `getOrderPrimaryAction` decides eligibility (`disabled`) — the branches
+  // below only pick a label/icon for the SAME `kind` it returned, they never
+  // re-derive whether the action is allowed.
+  const primaryAction = getOrderPrimaryAction({
+    isClosedOrder,
+    isCancelledOrder,
+    isConfirmedOrder,
+    isFullyPaid,
+    kitchenReady,
+    canCloseOrder,
+    canConfirmOrder,
+    hasOpenShift,
+    startNewOrder,
+    onOpenPayment,
+    onOpenCloseOrder,
+    confirmCurrentOrder,
+  });
+
   if (isClosedOrder || isCancelledOrder) {
     return (
       <button
         type="button"
-        onClick={startNewOrder}
+        onClick={primaryAction.run}
         className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-slate-700 text-sm font-black transition hover:bg-slate-600"
       >
         {isClosedOrder ? <CircleCheckBig size={18} /> : <Ban size={18} />}
@@ -40,6 +60,7 @@ export function OrderPrimaryAction({
             : "Cancelled -"}
         <Plus size={16} />
         New Order
+        <ShortcutHint action="pos.confirm" className="mr-1" />
       </button>
     );
   }
@@ -48,11 +69,12 @@ export function OrderPrimaryAction({
     return (
       <button
         type="button"
-        onClick={onOpenPayment}
+        onClick={primaryAction.run}
         className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 text-sm font-black shadow-lg shadow-emerald-950/30 transition hover:brightness-110"
       >
         <WalletCards size={19} />
         Pay · {formatMoney(remainingAmount, settlementCurrencyCode, settlementMinorUnitDigits)}
+        <ShortcutHint action="pos.confirm" className="mr-1" />
       </button>
     );
   }
@@ -68,11 +90,12 @@ export function OrderPrimaryAction({
         </div>
         <button
           type="button"
-          onClick={startNewOrder}
+          onClick={primaryAction.run}
           className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 text-sm font-black shadow-lg shadow-blue-950/30 transition hover:brightness-110"
         >
           <Plus size={18} />
           New Order
+          <ShortcutHint action="pos.confirm" className="mr-1" />
         </button>
       </div>
     );
@@ -88,12 +111,13 @@ export function OrderPrimaryAction({
         )}
         <button
           type="button"
-          disabled={!canCloseOrder}
-          onClick={onOpenCloseOrder}
+          disabled={primaryAction.disabled}
+          onClick={primaryAction.run}
           className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 text-sm font-black shadow-lg shadow-emerald-950/30 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <CircleCheckBig size={19} />
           Close Order
+          <ShortcutHint action="pos.confirm" className="mr-1" />
         </button>
       </div>
     );
@@ -102,14 +126,14 @@ export function OrderPrimaryAction({
   return (
     <button
       type="button"
-      disabled={!hasOpenShift || !canConfirmOrder}
-      onClick={confirmCurrentOrder}
+      disabled={primaryAction.disabled}
+      onClick={primaryAction.run}
       className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-l from-blue-600 to-[#0A84FF] text-sm font-black shadow-lg shadow-blue-950/40 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
     >
       <Check size={19} />
       {orderType === "DineIn" ? "Confirm Order" : "Confirm & Pay"} ·{" "}
       {formatMoney(total, catalogCurrencyCode, 2)}
-      <kbd className="mr-2 rounded bg-white/10 px-1.5 py-0.5 text-[10px]">F1</kbd>
+      <ShortcutHint action="pos.confirm" className="mr-1" />
     </button>
   );
 }

@@ -1,7 +1,13 @@
+import { useMemo, useRef } from "react";
 import { AlertTriangle, Ban, CircleCheckBig, RotateCcw } from "lucide-react";
 import { formatMoney } from "../../../../shared/utils/formatters";
 import { PosModal } from "../PosModal";
 import { Metric } from "../PosPrimitives";
+import { SCOPE_PRIORITY, SHORTCUT_SCOPES } from "../../../shortcuts/registry";
+import { useShortcutScope } from "../../../shortcuts/useShortcuts";
+import { useGridArrowNav } from "../../../shortcuts/rovingFocus";
+
+const ROVING_ITEM_SELECTOR = "[data-roving-item]";
 
 export function OrderDialogs({
   modal,
@@ -54,6 +60,41 @@ export function OrderDialogs({
   canRequestCancel,
   runLifecycleAction,
 }) {
+  const variantListRef = useRef(null);
+  const handleVariantListKeyDown = useGridArrowNav(variantListRef, ROVING_ITEM_SELECTOR);
+
+  const modifierOptionsRef = useRef(null);
+  const handleModifierOptionsKeyDown = useGridArrowNav(modifierOptionsRef, ROVING_ITEM_SELECTOR);
+
+  const modifierModalBindings = useMemo(
+    () => [
+      {
+        binding: { code: "Enter", ctrlKey: true },
+        onTrigger: () => {
+          if (canEditDraft && modifierSelectionIsValid && !isDraftMutationPending) {
+            addSellableVariant(selectedModifierVariant, selectedModifierOptionIds);
+            setModal(null);
+          }
+        },
+      },
+    ],
+    [
+      canEditDraft,
+      modifierSelectionIsValid,
+      isDraftMutationPending,
+      addSellableVariant,
+      selectedModifierVariant,
+      selectedModifierOptionIds,
+      setModal,
+    ],
+  );
+  useShortcutScope({
+    id: "pos-modifier-modal",
+    priority: SCOPE_PRIORITY[SHORTCUT_SCOPES.MODAL],
+    bindings: modifierModalBindings,
+    active: modal === "modifiers",
+  });
+
   return (
     <>
       {modal === "variant" && selectedVariantProduct && (
@@ -64,11 +105,12 @@ export function OrderDialogs({
             setModal(null);
           }}
         >
-          <div className="space-y-2">
+          <div ref={variantListRef} onKeyDown={handleVariantListKeyDown} className="space-y-2">
             {selectedVariantProduct.variants.map((variant) => (
               <button
                 key={variant.productVariantId}
                 type="button"
+                data-roving-item=""
                 onClick={() => {
                   selectVariantForDraft(variant);
                 }}
@@ -103,7 +145,7 @@ export function OrderDialogs({
             setModal(null);
           }}
         >
-          <div className="space-y-3">
+          <div ref={modifierOptionsRef} onKeyDown={handleModifierOptionsKeyDown} className="space-y-3">
             {selectedModifierVariant.modifierGroups.map((group) => (
               <div
                 key={group.modifierGroupId}
@@ -125,8 +167,9 @@ export function OrderDialogs({
                       <button
                         key={option.modifierOptionId}
                         type="button"
+                        data-roving-item=""
                         onClick={() => toggleModifierOption(group, option.modifierOptionId)}
-                        className={`flex items-center justify-between rounded-lg border px-3 py-2 text-xs transition ${
+                        className={`flex items-center justify-between rounded-lg border px-3 py-2 text-xs transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400 ${
                           checked
                             ? "border-blue-400/60 bg-blue-500/15 text-blue-100"
                             : "border-white/10 bg-black/10 text-slate-300 hover:border-white/20"

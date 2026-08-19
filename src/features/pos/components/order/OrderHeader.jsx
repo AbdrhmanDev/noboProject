@@ -1,8 +1,16 @@
+import { useRef } from "react";
 import { Crown, ShoppingCart, X } from "lucide-react";
 import { ROUTES } from "../../../../utils/routes";
 import { RestaurantSeatingOnboarding } from "../../../restaurant/components/RestaurantSeatingOnboarding";
+import { ShortcutHint } from "../../../shortcuts/components/ShortcutHint";
+import { useGridArrowNav } from "../../../shortcuts/rovingFocus";
 
 const ORDER_TYPES = ["Takeaway", "DineIn", "Delivery"];
+const ORDER_TYPE_SHORTCUT_ACTION = {
+  Takeaway: "pos.orderType.takeaway",
+  DineIn: "pos.orderType.dineIn",
+};
+const TABLE_GRID_ITEM_SELECTOR = "[data-roving-item]";
 
 export function OrderHeader({
   navigate,
@@ -27,6 +35,9 @@ export function OrderHeader({
   currentBranchId,
   invalidateRestaurantSeating,
 }) {
+  const tableGridRef = useRef(null);
+  const handleTableGridKeyDown = useGridArrowNav(tableGridRef, TABLE_GRID_ITEM_SELECTOR);
+
   return (
     <>
       <div className="mb-3 flex items-center justify-between">
@@ -82,13 +93,16 @@ export function OrderHeader({
               type="button"
               disabled={!canEditDraft || isDraftMutationPending}
               onClick={() => handleOrderTypeChange(type)}
-              className={`rounded-lg border px-2 py-1.5 text-[10px] font-bold transition disabled:cursor-not-allowed disabled:opacity-50 ${
+              className={`flex items-center justify-center gap-1 rounded-lg border px-2 py-1.5 text-[10px] font-bold transition disabled:cursor-not-allowed disabled:opacity-50 ${
                 orderType === type
                   ? "border-blue-400 bg-blue-500/15 text-blue-100"
                   : "border-white/10 bg-black/10 text-slate-400 hover:bg-white/10"
               }`}
             >
               {type}
+              {ORDER_TYPE_SHORTCUT_ACTION[type] && (
+                <ShortcutHint action={ORDER_TYPE_SHORTCUT_ACTION[type]} />
+              )}
             </button>
           ))}
         </div>
@@ -141,33 +155,36 @@ export function OrderHeader({
                   </button>
                 </>
               )}
-            {seatingQuery.data?.map((floor) => (
-              <div key={floor.restaurantFloorId}>
-                <div className="mb-1 text-[10px] font-bold text-slate-400">{floor.name}</div>
-                <div className="grid grid-cols-3 gap-1">
-                  {floor.tables.map((table) => (
-                    <button
-                      key={table.restaurantTableId}
-                      type="button"
-                      disabled={!canEditDraft || isDraftMutationPending || table.isOccupied}
-                      onClick={() => handleTableSelect(table)}
-                      className={`rounded-lg border px-2 py-1.5 text-[10px] transition disabled:cursor-not-allowed disabled:opacity-45 ${
-                        effectiveRestaurantTableId === table.restaurantTableId
-                          ? "border-emerald-400 bg-emerald-500/15 text-emerald-100"
-                          : "border-white/10 bg-black/10 text-slate-300 hover:bg-white/10"
-                      }`}
-                    >
-                      <span className="block truncate font-bold">{table.code}</span>
-                      <span className="block truncate text-[9px] text-slate-500">
-                        {table.isOccupied
-                          ? `${table.openSalesOrderCount} open`
-                          : table.name || "Available"}
-                      </span>
-                    </button>
-                  ))}
+            <div ref={tableGridRef} onKeyDown={handleTableGridKeyDown}>
+              {seatingQuery.data?.map((floor) => (
+                <div key={floor.restaurantFloorId}>
+                  <div className="mb-1 text-[10px] font-bold text-slate-400">{floor.name}</div>
+                  <div className="grid grid-cols-3 gap-1">
+                    {floor.tables.map((table) => (
+                      <button
+                        key={table.restaurantTableId}
+                        type="button"
+                        data-roving-item=""
+                        disabled={!canEditDraft || isDraftMutationPending || table.isOccupied}
+                        onClick={() => handleTableSelect(table)}
+                        className={`rounded-lg border px-2 py-1.5 text-[10px] transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400 disabled:cursor-not-allowed disabled:opacity-45 ${
+                          effectiveRestaurantTableId === table.restaurantTableId
+                            ? "border-emerald-400 bg-emerald-500/15 text-emerald-100"
+                            : "border-white/10 bg-black/10 text-slate-300 hover:bg-white/10"
+                        }`}
+                      >
+                        <span className="block truncate font-bold">{table.code}</span>
+                        <span className="block truncate text-[9px] text-slate-500">
+                          {table.isOccupied
+                            ? `${table.openSalesOrderCount} open`
+                            : table.name || "Available"}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
       </div>

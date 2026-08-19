@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { Barcode, Gift, Package, X } from "lucide-react";
 import { ROUTES } from "../../../../utils/routes";
 import { EmptyState, ErrorState, LoadingState } from "../../../../shared/components/ui";
@@ -7,6 +8,9 @@ import { FirstProductOnboarding } from "../../../catalog/components/FirstProduct
 import { TaxSettingsOnboarding } from "../../../tax/components/TaxSettingsOnboarding";
 import { IconButton } from "../PosPrimitives";
 import { CategoryRail } from "./CategoryRail";
+import { useGridArrowNav } from "../../../shortcuts/rovingFocus";
+
+const PRODUCT_GRID_ITEM_SELECTOR = "[data-roving-item]";
 
 export const ALL_CATEGORY_ID = "__all__";
 export const UNCATEGORIZED_CATEGORY_ID = "__uncategorized__";
@@ -33,6 +37,9 @@ export function CatalogPanel({
   onOpenPromotions,
   query,
 }) {
+  const productGridRef = useRef(null);
+  const handleProductGridKeyDown = useGridArrowNav(productGridRef, PRODUCT_GRID_ITEM_SELECTOR);
+
   return (
     <section className="flex min-w-0 flex-col gap-4 xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)]">
       <CategoryRail categories={catalogCategories} activeCategoryId={category} onSelect={setCategory} />
@@ -146,7 +153,11 @@ export function CatalogPanel({
           filteredProducts.length > 0 &&
           !taxSettingsQuery.isLoading &&
           !taxSetupRequired && (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+            <div
+              ref={productGridRef}
+              onKeyDown={handleProductGridKeyDown}
+              className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
+            >
               {filteredProducts.map((product) => {
                 const hasModifiers = product.variants.some(
                   (variant) => variant.modifierGroups?.length,
@@ -156,6 +167,7 @@ export function CatalogPanel({
                   <button
                     type="button"
                     key={product.productId}
+                    data-roving-item=""
                     onClick={() => addItem(product)}
                     disabled={!canEditDraft || isDraftMutationPending}
                     className="group overflow-hidden rounded-xl border border-white/10 bg-[#0d1728] p-2.5 text-right transition hover:-translate-y-0.5 hover:border-blue-400/60 hover:bg-[#111f36] hover:shadow-lg hover:shadow-blue-950/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400 disabled:cursor-not-allowed disabled:opacity-50"

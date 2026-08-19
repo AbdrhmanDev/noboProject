@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useI18n } from "../i18n/I18nContext";
+import { ShortcutHint } from "../features/shortcuts/components/ShortcutHint";
 
-export function NavGroup({ icon: Icon, labelKey, activePath, navigate, items }) {
+export function NavGroup({ icon: Icon, labelKey, activePath, navigate, items, shortcutAction }) {
   const { t } = useI18n();
   const [manualExpanded, setManualExpanded] = useState(false);
 
@@ -30,6 +31,7 @@ export function NavGroup({ icon: Icon, labelKey, activePath, navigate, items }) 
         <span className={`flex-1 font-semibold tracking-wide ${isGroupActive ? "text-white" : ""}`}>
           {t(labelKey)}
         </span>
+        {shortcutAction && <ShortcutHint action={shortcutAction} />}
         {expanded ? (
           <ChevronUp size={16} className="shrink-0 text-gray-500" />
         ) : (

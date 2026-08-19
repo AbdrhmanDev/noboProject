@@ -1,6 +1,7 @@
 import { useI18n } from "../i18n/I18nContext";
 import { useCompany } from "../features/companies/context/CompanyContext";
 import { useHasPermission } from "../features/companies/hooks/useCompanies";
+import { ShortcutHint } from "../features/shortcuts/components/ShortcutHint";
 
 export function PermissionNavItem({
   icon: Icon,
@@ -10,6 +11,7 @@ export function PermissionNavItem({
   activePath,
   navigate,
   variant = "desktop",
+  shortcutAction,
 }) {
   const { t } = useI18n();
   const { currentCompanyId } = useCompany();
@@ -49,7 +51,8 @@ export function PermissionNavItem({
         color={isActive ? "#2b8cff" : "#60a5fa"}
         className="shrink-0 transition group-hover:scale-110"
       />
-      <span className={`font-semibold tracking-wide ${isActive ? "text-white" : ""}`}>{t(labelKey)}</span>
+      <span className={`flex-1 font-semibold tracking-wide ${isActive ? "text-white" : ""}`}>{t(labelKey)}</span>
+      {shortcutAction && <ShortcutHint action={shortcutAction} />}
     </div>
   );
 }

@@ -32,6 +32,8 @@ export function OrderSidebar({
   changeQty,
   removeDraftLine,
   isLinePending,
+  selectedLineId,
+  onSelectLine,
   // OrderSummary
   onOpenDiscount,
   subtotal,
@@ -106,6 +108,8 @@ export function OrderSidebar({
         isLinePending={isLinePending}
         changeQty={changeQty}
         removeDraftLine={removeDraftLine}
+        selectedLineId={selectedLineId}
+        onSelectLine={onSelectLine}
       />
 
       <OrderSummary

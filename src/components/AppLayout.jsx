@@ -134,6 +134,7 @@ export default function AppLayout({ children, onLogout }) {
                   permission={item.permission}
                   activePath={activePath}
                   navigate={navigate}
+                  shortcutAction={item.shortcutAction}
                 />
               );
             }

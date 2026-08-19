@@ -1,9 +1,16 @@
+import { useMemo, useRef } from "react";
 import { CircleCheckBig, CircleDollarSign, Plus, ReceiptText } from "lucide-react";
 import { formatMoney } from "../../../../shared/utils/formatters";
 import { formatPaymentDate, getPaymentMethodColor, getPaymentMethodIcon } from "../../utils/posFormatters";
 import { PosModal } from "../PosModal";
 import { PaymentMethodOnboarding } from "../../../payments/components/PaymentMethodOnboarding";
 import { ROUTES } from "../../../../utils/routes";
+import { SCOPE_PRIORITY, SHORTCUT_SCOPES } from "../../../shortcuts/registry";
+import { useShortcutScope } from "../../../shortcuts/useShortcuts";
+import { useGridArrowNav } from "../../../shortcuts/rovingFocus";
+import { ShortcutHint } from "../../../shortcuts/components/ShortcutHint";
+
+const PAYMENT_METHOD_GRID_ITEM_SELECTOR = "[data-roving-item]";
 
 export function PaymentModal({
   draftOrder,
@@ -39,6 +46,36 @@ export function PaymentModal({
   openRefundModal,
   navigate,
 }) {
+  const paymentMethodGridRef = useRef(null);
+  const handlePaymentMethodGridKeyDown = useGridArrowNav(
+    paymentMethodGridRef,
+    PAYMENT_METHOD_GRID_ITEM_SELECTOR,
+  );
+
+  const modalBindings = useMemo(
+    () => [
+      {
+        binding: { code: "Enter", ctrlKey: true },
+        onTrigger: () => {
+          if (canReceivePayment) receiveCurrentPayment();
+        },
+        // A genuine submit combo — fires even while the amount input still
+        // has focus, since that's the normal moment a cashier presses it.
+        allowInEditable: true,
+      },
+      {
+        binding: { code: "KeyE" },
+        onTrigger: () => setPaymentAmountInput(String(remainingAmount)),
+      },
+    ],
+    [canReceivePayment, receiveCurrentPayment, remainingAmount, setPaymentAmountInput],
+  );
+  useShortcutScope({
+    id: "pos-payment-modal",
+    priority: SCOPE_PRIORITY[SHORTCUT_SCOPES.MODAL],
+    bindings: modalBindings,
+  });
+
   if (!draftOrder) return null;
 
   return (
@@ -144,7 +181,11 @@ export function PaymentModal({
               ))}
             {!paymentMethodsQuery.isLoading && paymentMethods.length > 0 && (
               <>
-                <div className="grid grid-cols-2 gap-2">
+                <div
+                  ref={paymentMethodGridRef}
+                  onKeyDown={handlePaymentMethodGridKeyDown}
+                  className="grid grid-cols-2 gap-2"
+                >
                   {paymentMethods.map((method) => {
                     const Icon = getPaymentMethodIcon(method.kind);
 
@@ -152,6 +193,7 @@ export function PaymentModal({
                       <button
                         type="button"
                         key={method.paymentMethodId}
+                        data-roving-item=""
                         onClick={() => setSelectedPaymentMethodId(method.paymentMethodId)}
                         className={`rounded-xl border px-3 py-3 text-center transition ${
                           selectedPaymentMethod?.paymentMethodId === method.paymentMethodId
@@ -183,9 +225,10 @@ export function PaymentModal({
                     <button
                       type="button"
                       onClick={() => setPaymentAmountInput(String(remainingAmount))}
-                      className="shrink-0 rounded-lg border border-white/10 px-2 py-1.5 text-[10px] font-bold text-slate-300 hover:bg-white/10"
+                      className="flex shrink-0 items-center gap-1.5 rounded-lg border border-white/10 px-2 py-1.5 text-[10px] font-bold text-slate-300 hover:bg-white/10"
                     >
                       Exact Amount
+                      <ShortcutHint action="pos.exactAmount" />
                     </button>
                   </div>
                   {paymentAmountInput &&
@@ -211,6 +254,7 @@ export function PaymentModal({
                               )}`
                             : ""
                         }`}
+                    <ShortcutHint action="pos.receivePayment" />
                   </button>
                 </div>
               </>

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   AlertTriangle,
@@ -59,6 +59,10 @@ import {
   parseMoneyInput,
   parseNonNegativeMoneyInput,
 } from "../../features/pos/utils/posFormatters";
+import { getOrderPrimaryAction } from "../../features/pos/components/order/getOrderPrimaryAction";
+import { SCOPE_PRIORITY, SHORTCUT_SCOPES } from "../../features/shortcuts/registry";
+import { useShortcutScope } from "../../features/shortcuts/useShortcuts";
+import { ShortcutHint } from "../../features/shortcuts/components/ShortcutHint";
 
 const SALES_ORDERS_CREATE_PERMISSION = "SalesOrders.Create";
 const SALES_ORDERS_APPLY_DISCOUNT_PERMISSION = "SalesOrders.ApplyDiscount";
@@ -270,6 +274,8 @@ export default function POSPage() {
   const [closingNoteInput, setClosingNoteInput] = useState("");
   const [lastClosedShift, setLastClosedShift] = useState(null);
   const [aiDismissed, setAiDismissed] = useState([]);
+  const [selectedLineId, setSelectedLineId] = useState(null);
+  const searchInputRef = useRef(null);
   const draftOrder = draftDetailsQuery.data || null;
   const draftLines = draftOrder?.lines ?? [];
   const isConfirmedOrder = draftOrder?.status === "Confirmed";
@@ -650,6 +656,16 @@ export default function POSPage() {
     onCommitError: handleDraftError,
   });
   const displayDraftLines = lineEditor.getDisplayLines();
+  // Selected-line is pure UI state for keyboard cart navigation — never the
+  // backend order state. Rather than reconciling stale ids via an effect,
+  // it's derived fresh every render: if the line it points at is gone
+  // (removed, order changed, new order started), it simply reads as
+  // unselected until the cashier picks a line again.
+  const effectiveSelectedLineId = displayDraftLines.some(
+    (line) => line.salesOrderLineId === selectedLineId,
+  )
+    ? selectedLineId
+    : null;
   const updateDraftContext = async (nextOrderType, nextRestaurantTableId) => {
     if (!draftOrder || !draftLines.length || !canEditDraft) return;
 
@@ -1058,6 +1074,7 @@ export default function POSPage() {
     setSelectedModifierVariant(null);
     setModifierSelections({});
     setModal(null);
+    setSelectedLineId(null);
   };
 
   const addSellableVariant = async (variant, modifierOptionIds = []) => {
@@ -1169,6 +1186,128 @@ export default function POSPage() {
       const count = (modifierSelections[group.modifierGroupId] || []).length;
       return count >= group.minSelections && count <= group.maxSelections;
     });
+
+  const selectAdjacentLine = useCallback(
+    (delta) => {
+      if (!displayDraftLines.length) return;
+
+      const currentIndex = displayDraftLines.findIndex(
+        (line) => line.salesOrderLineId === effectiveSelectedLineId,
+      );
+      const nextIndex =
+        currentIndex < 0
+          ? delta > 0
+            ? 0
+            : displayDraftLines.length - 1
+          : Math.max(0, Math.min(displayDraftLines.length - 1, currentIndex + delta));
+
+      setSelectedLineId(displayDraftLines[nextIndex].salesOrderLineId);
+    },
+    [displayDraftLines, effectiveSelectedLineId],
+  );
+
+  // POS Page scope — a normal cashier flow keyboard-first. Suppressed
+  // entirely whenever a Modal scope is active (PosModal registers its own
+  // Escape binding; PaymentModal/modifier dialog register their own extra
+  // bindings on top of that), so none of these can fire out from under an
+  // open dialog. See ShortcutProvider's dispatcher for the scope-priority
+  // mechanics.
+  const posPageBindings = useMemo(
+    () => [
+      { binding: { code: "F2" }, onTrigger: () => startNewOrder() },
+      {
+        binding: { code: "F3" },
+        onTrigger: () => {
+          searchInputRef.current?.focus();
+          searchInputRef.current?.select();
+        },
+      },
+      { binding: { code: "F4" }, onTrigger: () => handleOrderTypeChange("Takeaway") },
+      { binding: { code: "F4", shiftKey: true }, onTrigger: () => handleOrderTypeChange("DineIn") },
+      {
+        binding: { code: "F8" },
+        onTrigger: () => {
+          const primaryAction = getOrderPrimaryAction({
+            isClosedOrder,
+            isCancelledOrder,
+            isConfirmedOrder,
+            isFullyPaid,
+            kitchenReady,
+            canCloseOrder,
+            canConfirmOrder,
+            hasOpenShift,
+            startNewOrder,
+            onOpenPayment: () => setModal("payment"),
+            onOpenCloseOrder: () => setModal("closeOrder"),
+            confirmCurrentOrder,
+          });
+          if (!primaryAction.disabled) primaryAction.run();
+        },
+      },
+      {
+        binding: { code: "F9" },
+        onTrigger: () => {
+          if (isConfirmedOrder && !isFullyPaid) setModal("payment");
+        },
+      },
+      {
+        binding: { code: "Equal", shiftKey: true },
+        onTrigger: () => {
+          if (effectiveSelectedLineId && canEditDraft) changeQty(effectiveSelectedLineId, 1);
+        },
+      },
+      {
+        binding: { code: "NumpadAdd" },
+        onTrigger: () => {
+          if (effectiveSelectedLineId && canEditDraft) changeQty(effectiveSelectedLineId, 1);
+        },
+      },
+      {
+        binding: { code: "Minus" },
+        onTrigger: () => {
+          if (effectiveSelectedLineId && canEditDraft) changeQty(effectiveSelectedLineId, -1);
+        },
+      },
+      {
+        binding: { code: "NumpadSubtract" },
+        onTrigger: () => {
+          if (effectiveSelectedLineId && canEditDraft) changeQty(effectiveSelectedLineId, -1);
+        },
+      },
+      {
+        binding: { code: "Delete" },
+        onTrigger: () => {
+          if (effectiveSelectedLineId && canEditDraft) removeDraftLine(effectiveSelectedLineId);
+        },
+      },
+      { binding: { code: "ArrowUp" }, onTrigger: () => selectAdjacentLine(-1) },
+      { binding: { code: "ArrowDown" }, onTrigger: () => selectAdjacentLine(1) },
+    ],
+    [
+      startNewOrder,
+      handleOrderTypeChange,
+      isClosedOrder,
+      isCancelledOrder,
+      isConfirmedOrder,
+      isFullyPaid,
+      kitchenReady,
+      canCloseOrder,
+      canConfirmOrder,
+      hasOpenShift,
+      confirmCurrentOrder,
+      effectiveSelectedLineId,
+      canEditDraft,
+      changeQty,
+      removeDraftLine,
+      selectAdjacentLine,
+    ],
+  );
+  useShortcutScope({
+    id: "pos-page",
+    priority: SCOPE_PRIORITY[SHORTCUT_SCOPES.PAGE],
+    bindings: posPageBindings,
+  });
+
   const insights = [
     {
       id: "water",
@@ -1245,14 +1384,22 @@ export default function POSPage() {
               <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-white/10 bg-black/20 px-3 py-2.5 focus-within:border-blue-400/60">
                 <Search size={16} className="shrink-0 text-slate-400" />
                 <input
+                  ref={searchInputRef}
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.code !== "Escape") return;
+                    event.preventDefault();
+                    if (query) {
+                      setQuery("");
+                    } else {
+                      event.currentTarget.blur();
+                    }
+                  }}
                   className="min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:text-slate-500"
                   placeholder="ابحث بالباركود أو الاسم أو SKU..."
                 />
-                <kbd className="rounded border border-white/10 px-1.5 py-0.5 text-[10px] text-slate-500">
-                  F2
-                </kbd>
+                <ShortcutHint action="pos.focusProductSearch" />
               </div>
               <div className="hidden items-center gap-1 rounded-lg border border-emerald-400/15 bg-emerald-500/10 px-2 py-1.5 text-xs text-emerald-300 sm:flex">
                 <Wifi size={15} /> Online
@@ -1310,6 +1457,8 @@ export default function POSPage() {
               changeQty={changeQty}
               removeDraftLine={removeDraftLine}
               isLinePending={lineEditor.isLinePending}
+              selectedLineId={effectiveSelectedLineId}
+              onSelectLine={setSelectedLineId}
               onOpenDiscount={() => setModal("discount")}
               subtotal={subtotal}
               discountValue={discountValue}

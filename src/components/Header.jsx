@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
-import { Bell, Mail, Moon, Sun, CalendarDays, Clock } from "lucide-react";
+import { Bell, Keyboard, Mail, Moon, Sun, CalendarDays, Clock } from "lucide-react";
 import { useI18n } from "../i18n/I18nContext";
+import { useShortcutContext } from "../features/shortcuts/useShortcuts";
 
 function TopWidget({ label, value, sub, color }) {
   return (
@@ -20,6 +21,7 @@ export default function Header({
   onSwitchBranch,
 }) {
   const { t } = useI18n();
+  const { openHelp } = useShortcutContext();
   const [isDark, setIsDark] = useState(() => typeof window !== "undefined" ? localStorage.getItem("nobo-theme") !== "light" : true);
   const [now, setNow] = useState(() => new Date());
 
@@ -107,6 +109,15 @@ export default function Header({
         )}
         <button type="button" onClick={() => setIsDark((prev) => !prev)} className="rounded-2xl border border-white/10 bg-white/5 p-2 text-slate-200 transition hover:border-blue-400/50 hover:bg-blue-500/10">
           {isDark ? <Moon size={18} /> : <Sun size={18} />}
+        </button>
+        <button
+          type="button"
+          onClick={openHelp}
+          aria-label={t("header.shortcuts")}
+          title={t("header.shortcuts")}
+          className="rounded-2xl border border-white/10 bg-white/5 p-2 text-slate-200 transition hover:border-blue-400/50 hover:bg-blue-500/10"
+        >
+          <Keyboard size={18} />
         </button>
         <div className="relative" ref={notifRef}>
           <button type="button" onClick={(e) => { e.stopPropagation(); setShowNotif((s) => !s); setShowMsg(false); }} className="relative rounded-lg p-2 hover:bg-white/5">

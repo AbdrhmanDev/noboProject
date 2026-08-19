@@ -61,6 +61,7 @@ export function InventoryNavGroup({ activePath, navigate, variant = "desktop" })
       activePath={activePath}
       navigate={navigate}
       items={items}
+      shortcutAction="navigation.inventory"
     />
   );
 }

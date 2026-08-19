@@ -32,6 +32,8 @@ import MorePage from "./Pages/MorePage/MorePage";
 import ProfilePage from "./Pages/ProfilePage/ProfilePage";
 import NotFound from "./Pages/NotFound/notFound";
 import { ROUTES } from "./utils/routes";
+import { ShortcutProvider } from "./features/shortcuts/ShortcutProvider";
+import { ShortcutHelpDialog } from "./features/shortcuts/components/ShortcutHelpDialog";
 
 export default function App() {
   const protectedPage = (page) => <ProtectedRoute>{page}</ProtectedRoute>;
@@ -39,39 +41,42 @@ export default function App() {
   return (
     <AppProviders>
       <HashRouter>
-        <div className="nobo-root">
-          <GlobalStyle />
-          <Routes>
-            <Route path={ROUTES.LOGIN} element={<PublicOnlyRoute><LoginPage /></PublicOnlyRoute>} />
-            <Route path={ROUTES.REGISTER} element={<PublicOnlyRoute><RegisterPage /></PublicOnlyRoute>} />
-            <Route path={ROUTES.CONFIRM_EMAIL} element={<PublicOnlyRoute><ConfirmEmailPage /></PublicOnlyRoute>} />
-            <Route path={ROUTES.DASHBOARD} element={protectedPage(<Dashboard />)} />
-            <Route path={ROUTES.POS} element={protectedPage(<POSPage />)} />
-            <Route path={ROUTES.POS_SHIFT_HISTORY} element={protectedPage(<POSShiftHistoryPage />)} />
-            <Route path={ROUTES.POS_TERMINALS_ADMIN} element={protectedPage(<POSTerminalAdminPage />)} />
-            <Route path={ROUTES.CATALOG_ADMIN} element={protectedPage(<CatalogAdminPage />)} />
-            <Route path={ROUTES.PAYMENT_METHODS_ADMIN} element={protectedPage(<PaymentMethodsAdminPage />)} />
-            <Route path={ROUTES.PRICING_ADMIN} element={protectedPage(<PricingAdminPage />)} />
-            <Route path={ROUTES.TAX_ADMIN} element={protectedPage(<TaxAdminPage />)} />
-            <Route path={ROUTES.RESTAURANT_ADMIN} element={protectedPage(<RestaurantAdminPage />)} />
-            <Route path={ROUTES.KITCHEN} element={protectedPage(<KitchenPage />)} />
-            <Route path={ROUTES.KITCHEN_ADMIN} element={protectedPage(<KitchenAdminPage />)} />
-            <Route path={ROUTES.SALES} element={protectedPage(<SalesPage />)} />
-            <Route path={ROUTES.PURCHASES} element={protectedPage(<PurchasesPage />)} />
-            <Route path={ROUTES.INVENTORY} element={protectedPage(<InventoryPage />)} />
-            <Route path={ROUTES.INVENTORY_ADMIN} element={protectedPage(<InventoryAdminPage />)} />
-            <Route path={ROUTES.CUSTOMERS} element={protectedPage(<CustomersPage />)} />
-            <Route path={ROUTES.SUPPLIERS} element={protectedPage(<SuppliersPage />)} />
-            <Route path={ROUTES.ACCOUNTING} element={protectedPage(<AccountingPage />)} />
-            <Route path={ROUTES.REPORTS} element={protectedPage(<ReportsPage />)} />
-            <Route path={ROUTES.PROJECTS} element={protectedPage(<ProjectsPage />)} />
-            <Route path={ROUTES.HR} element={protectedPage(<HRPage />)} />
-            <Route path={ROUTES.SETTINGS} element={protectedPage(<SettingsPage />)} />
-            <Route path={ROUTES.MORE} element={protectedPage(<MorePage />)} />
-            <Route path={ROUTES.PROFILE} element={protectedPage(<ProfilePage />)} />
-            <Route path={ROUTES.NOT_FOUND} element={<NotFound />} />
-          </Routes>
-        </div>
+        <ShortcutProvider>
+          <div className="nobo-root">
+            <GlobalStyle />
+            <Routes>
+              <Route path={ROUTES.LOGIN} element={<PublicOnlyRoute><LoginPage /></PublicOnlyRoute>} />
+              <Route path={ROUTES.REGISTER} element={<PublicOnlyRoute><RegisterPage /></PublicOnlyRoute>} />
+              <Route path={ROUTES.CONFIRM_EMAIL} element={<PublicOnlyRoute><ConfirmEmailPage /></PublicOnlyRoute>} />
+              <Route path={ROUTES.DASHBOARD} element={protectedPage(<Dashboard />)} />
+              <Route path={ROUTES.POS} element={protectedPage(<POSPage />)} />
+              <Route path={ROUTES.POS_SHIFT_HISTORY} element={protectedPage(<POSShiftHistoryPage />)} />
+              <Route path={ROUTES.POS_TERMINALS_ADMIN} element={protectedPage(<POSTerminalAdminPage />)} />
+              <Route path={ROUTES.CATALOG_ADMIN} element={protectedPage(<CatalogAdminPage />)} />
+              <Route path={ROUTES.PAYMENT_METHODS_ADMIN} element={protectedPage(<PaymentMethodsAdminPage />)} />
+              <Route path={ROUTES.PRICING_ADMIN} element={protectedPage(<PricingAdminPage />)} />
+              <Route path={ROUTES.TAX_ADMIN} element={protectedPage(<TaxAdminPage />)} />
+              <Route path={ROUTES.RESTAURANT_ADMIN} element={protectedPage(<RestaurantAdminPage />)} />
+              <Route path={ROUTES.KITCHEN} element={protectedPage(<KitchenPage />)} />
+              <Route path={ROUTES.KITCHEN_ADMIN} element={protectedPage(<KitchenAdminPage />)} />
+              <Route path={ROUTES.SALES} element={protectedPage(<SalesPage />)} />
+              <Route path={ROUTES.PURCHASES} element={protectedPage(<PurchasesPage />)} />
+              <Route path={ROUTES.INVENTORY} element={protectedPage(<InventoryPage />)} />
+              <Route path={ROUTES.INVENTORY_ADMIN} element={protectedPage(<InventoryAdminPage />)} />
+              <Route path={ROUTES.CUSTOMERS} element={protectedPage(<CustomersPage />)} />
+              <Route path={ROUTES.SUPPLIERS} element={protectedPage(<SuppliersPage />)} />
+              <Route path={ROUTES.ACCOUNTING} element={protectedPage(<AccountingPage />)} />
+              <Route path={ROUTES.REPORTS} element={protectedPage(<ReportsPage />)} />
+              <Route path={ROUTES.PROJECTS} element={protectedPage(<ProjectsPage />)} />
+              <Route path={ROUTES.HR} element={protectedPage(<HRPage />)} />
+              <Route path={ROUTES.SETTINGS} element={protectedPage(<SettingsPage />)} />
+              <Route path={ROUTES.MORE} element={protectedPage(<MorePage />)} />
+              <Route path={ROUTES.PROFILE} element={protectedPage(<ProfilePage />)} />
+              <Route path={ROUTES.NOT_FOUND} element={<NotFound />} />
+            </Routes>
+            <ShortcutHelpDialog />
+          </div>
+        </ShortcutProvider>
       </HashRouter>
     </AppProviders>
   );

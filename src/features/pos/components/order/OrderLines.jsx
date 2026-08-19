@@ -9,6 +9,8 @@ export function OrderLines({
   isLinePending,
   changeQty,
   removeDraftLine,
+  selectedLineId,
+  onSelectLine,
 }) {
   return (
     <div className="min-h-36 flex-1 space-y-2 overflow-y-auto pr-1 scrollbar-none">
@@ -21,13 +23,24 @@ export function OrderLines({
           </div>
         </div>
       )}
+      {draftLines.length > 0 && (
+        <p className="px-0.5 text-[9px] text-slate-600" title="Arrow keys select a line · + / - change quantity · Delete removes it">
+          ↑↓ select · + / − qty · Del remove
+        </p>
+      )}
       {draftLines.map((item) => {
         const pending = isLinePending?.(item.salesOrderLineId);
+        const selected = selectedLineId === item.salesOrderLineId;
 
         return (
           <div
             key={item.salesOrderLineId}
-            className="rounded-xl border border-white/7 bg-white/[0.025] p-2.5"
+            onClick={() => onSelectLine?.(item.salesOrderLineId)}
+            className={`cursor-pointer rounded-xl border p-2.5 transition ${
+              selected
+                ? "border-blue-400/60 bg-blue-500/[0.06]"
+                : "border-white/7 bg-white/[0.025] hover:border-white/15"
+            }`}
           >
             <div className="flex gap-2">
               <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white/5 text-sm font-black text-blue-300">

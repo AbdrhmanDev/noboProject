@@ -1,10 +1,21 @@
+import { useMemo } from "react";
 import { X } from "lucide-react";
+import { SCOPE_PRIORITY, SHORTCUT_SCOPES } from "../../shortcuts/registry";
+import { useShortcutScope } from "../../shortcuts/useShortcuts";
 
 export function PosModal({ title, children, onClose, size = "md" }) {
   const sizes = {
     md: "max-w-md",
     lg: "max-w-2xl",
   };
+
+  // Escape-closes-this-dialog for every POS dialog built on PosModal, wired
+  // once here instead of duplicated in each dialog's own content component.
+  const bindings = useMemo(
+    () => [{ binding: { code: "Escape" }, onTrigger: onClose }],
+    [onClose],
+  );
+  useShortcutScope({ id: "pos-modal", priority: SCOPE_PRIORITY[SHORTCUT_SCOPES.MODAL], bindings });
 
   return (
     <div className="fixed inset-0 z-[100] grid place-items-center bg-[#030713]/75 p-4 backdrop-blur-sm">
