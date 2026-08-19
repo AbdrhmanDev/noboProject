@@ -26,7 +26,9 @@ import { useOpenPosShift } from "../../features/pos/hooks/useOpenPosShift";
 import { useClosePosShift } from "../../features/pos/hooks/useClosePosShift";
 import { useManualCashMovement } from "../../features/pos/hooks/useManualCashMovement";
 import { useSellableCatalog } from "../../features/pos/hooks/useSellableCatalog";
+import { useQueryClient } from "@tanstack/react-query";
 import {
+  draftSalesOrderQueryKeys,
   useConfirmSalesOrder,
   useCreateDraftSalesOrder,
   useCloseSalesOrder,
@@ -35,6 +37,7 @@ import {
   useVoidPreparedSalesOrder,
   useUpdateDraftSalesOrder,
 } from "../../features/sales-orders/hooks/useDraftSalesOrder";
+import { getSalesOrderDetails } from "../../features/sales-orders/api/draftSalesOrdersApi";
 import { useDraftLineEditor } from "../../features/pos/hooks/useDraftLineEditor";
 import {
   useActivePaymentMethods,
@@ -49,6 +52,7 @@ import {
 import { ALL_CATEGORY_ID, CatalogPanel, UNCATEGORIZED_CATEGORY_ID } from "../../features/pos/components/catalog/CatalogPanel";
 import { OrderSidebar } from "../../features/pos/components/order/OrderSidebar";
 import { OrderDialogs } from "../../features/pos/components/order/OrderDialogs";
+import { OrderRetrievalModal } from "../../features/pos/components/order/OrderRetrievalModal";
 import { PaymentModal } from "../../features/pos/components/payment/PaymentModal";
 import { ShiftDialogs } from "../../features/pos/components/shift/ShiftDialogs";
 import { PosSecondaryPanels } from "../../features/pos/components/PosSecondaryPanels";
@@ -83,6 +87,7 @@ const DEFAULT_FULFILLMENT_TYPE = "Takeaway";
 
 export default function POSPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { status } = useAuth();
   const { currentCompanyId } = useCompany();
   const { currentBranchId } = useBranch();
@@ -267,6 +272,7 @@ export default function POSPage() {
     reason: "",
   });
   const [modal, setModal] = useState(null);
+  const [retrievingOrderId, setRetrievingOrderId] = useState(null);
   const [toast, setToast] = useState("");
   const [selectedVariantProduct, setSelectedVariantProduct] = useState(null);
   const [selectedModifierVariant, setSelectedModifierVariant] = useState(null);
@@ -1079,6 +1085,75 @@ export default function POSPage() {
     setSelectedLineId(null);
   };
 
+  // Retrieval only ever switches which order the POS session is pointed at —
+  // it never mutates, clones, or reopens the order being left behind. If the
+  // cashier is mid-way through building a real (non-empty) Draft, confirm
+  // first so it's never silently abandoned; anything else (nothing active
+  // yet, or a Confirmed order that already persisted its own state) is safe
+  // to switch away from without asking.
+  const retrieveOrder = async (selectedOrderId) => {
+    if (retrievingOrderId || !currentCompanyId || !currentBranchId) return;
+
+    const hasMeaningfulDraft =
+      draftOrder && draftOrder.status === "Draft" && draftLines.length > 0;
+
+    if (hasMeaningfulDraft) {
+      const confirmed = window.confirm(
+        "Open another order? Your current draft will remain saved and can be retrieved again.",
+      );
+      if (!confirmed) return;
+    }
+
+    setRetrievingOrderId(selectedOrderId);
+
+    try {
+      const details = await getSalesOrderDetails(
+        currentCompanyId,
+        currentBranchId,
+        selectedOrderId,
+      );
+
+      queryClient.setQueryData(
+        draftSalesOrderQueryKeys.details(currentCompanyId, currentBranchId, selectedOrderId),
+        details,
+      );
+
+      setDraftSession({ scope: draftScope, salesOrderId: selectedOrderId });
+      setOrderType(details.fulfillmentType || DEFAULT_FULFILLMENT_TYPE);
+      setSelectedRestaurantTableId(details.restaurantTableId || null);
+      setDiscountInput("");
+      setPaymentAmountInput("");
+      setSelectedPaymentMethodId("");
+      setRefundDraft(null);
+      setLifecycleDraft(null);
+      setCustomer(null);
+      setSelectedVariantProduct(null);
+      setSelectedModifierVariant(null);
+      setModifierSelections({});
+      setSelectedLineId(null);
+      setModal(null);
+      notify(`Order opened — ${details.status}.`);
+
+      // Product Grid is the natural workspace for a Draft. A Confirmed order
+      // has no editable grid items to land on (every card is disabled), so
+      // fall back to the search field — always present and interactive —
+      // rather than leaving focus on <body> or fighting PosModal's own
+      // restore-to-opener behavior by doing nothing.
+      window.requestAnimationFrame(() => {
+        const gridItems = getFocusableGridItems(productGridRef.current, ROVING_ITEM_SELECTOR);
+        if (gridItems.length) {
+          gridItems[0].focus();
+        } else {
+          searchInputRef.current?.focus();
+        }
+      });
+    } catch (error) {
+      notify(error?.message || "Unable to open order.");
+    } finally {
+      setRetrievingOrderId(null);
+    }
+  };
+
   const addSellableVariant = async (variant, modifierOptionIds = []) => {
     if (!canEditDraft) return;
 
@@ -1696,6 +1771,16 @@ export default function POSPage() {
             canRefundPayments={canRefundPayments}
             openRefundModal={openRefundModal}
             navigate={navigate}
+          />
+        )}
+
+        {modal === "retrieve" && (
+          <OrderRetrievalModal
+            currentCompanyId={currentCompanyId}
+            currentBranchId={currentBranchId}
+            onClose={() => setModal(null)}
+            onSelectOrder={retrieveOrder}
+            activatingOrderId={retrievingOrderId}
           />
         )}
 

@@ -1,4 +1,5 @@
 import { Banknote, CreditCard, WalletCards } from "lucide-react";
+import { formatDistanceToNowStrict } from "date-fns";
 
 export function getPaymentMethodIcon(kind) {
   if (kind === "Cash") return Banknote;
@@ -77,6 +78,18 @@ export function formatPaymentDate(value) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);
+}
+
+export function formatRelativeTime(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+
+  return `${formatDistanceToNowStrict(date, { addSuffix: true })}`;
+}
+
+export function shortOrderReference(salesOrderId) {
+  if (!salesOrderId || typeof salesOrderId !== "string") return "";
+  return `…${salesOrderId.slice(-6)}`;
 }
 
 export function getCashMovementLabel(type) {

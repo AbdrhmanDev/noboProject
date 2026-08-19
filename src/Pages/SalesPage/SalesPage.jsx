@@ -1,103 +1,362 @@
-import { Plus, Filter, Download } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { RefreshCw, ShoppingBag } from "lucide-react";
 import AppLayout from "../../components/AppLayout";
+import { EmptyState, ErrorState, LoadingState } from "../../shared/components/ui";
+import { formatDateTime, formatMoney } from "../../shared/utils/formatters";
 import { useI18n } from "../../i18n/I18nContext";
-import { ROUTES } from "../../utils/routes";
+import { useCompany } from "../../features/companies/context/CompanyContext";
+import { useBranch } from "../../features/branches/context/BranchContext";
+import { useHasPermission } from "../../features/companies/hooks/useCompanies";
+import { useSalesOrders } from "../../features/sales/hooks/useSalesOrders";
+import { SalesOrderStatusBadge } from "../../features/sales/components/SalesOrderStatusBadge";
+import { SalesOrderPaymentBadge } from "../../features/sales/components/SalesOrderPaymentBadge";
+import { fulfillmentLabelKey, shortOrderReference } from "../../features/sales/utils/salesOrderFormatters";
+import { ROUTES, salesOrderDetailsPath } from "../../utils/routes";
 
-const stats = [
-  { labelKey: "sales.invoicesCount", value: "320", color: "#2b8cff" },
-  { labelKey: "sales.totalSales", value: "125,430 ر.س", color: "#f5b800" },
-  { labelKey: "sales.returns", value: "12", color: "#ff3d6b" },
-  { labelKey: "sales.avgInvoice", value: "392 ر.س", color: "#17d9c4" },
-];
+const SALES_ORDERS_VIEW_PERMISSION = "SalesOrders.View";
+const PAGE_SIZE = 25;
+const STATUS_OPTIONS = ["Draft", "Confirmed", "Closed", "Cancelled"];
+const FULFILLMENT_OPTIONS = ["DineIn", "Takeaway", "Delivery"];
 
-// initial invoices moved into component state
+function toUtcStart(value) {
+  return value ? `${value}T00:00:00.000Z` : undefined;
+}
 
-export default function SalesPage({ onLogout }) {
-  const { t } = useI18n();
-  const [invoices, setInvoices] = useState([
-    { no: "INV-2025-1054", date: "25 مايو 2025", customer: "مؤسسة السليم", amount: "4,850", status: "مدفوعة" },
-    { no: "INV-2025-1053", date: "25 مايو 2025", customer: "شركة النور", amount: "2,300", status: "مدفوعة" },
-    { no: "INV-2025-1052", date: "24 مايو 2025", customer: "محلات الشرق", amount: "1,540", status: "معلقة" },
-    { no: "INV-2025-1051", date: "24 مايو 2025", customer: "مكتبة الفلاح", amount: "890", status: "مدفوعة" },
-    { no: "INV-2025-1050", date: "23 مايو 2025", customer: "شركة الأمل", amount: "3,120", status: "ملغاة" },
-  ]);
-  const [showAddInvoice, setShowAddInvoice] = useState(false);
-  const [newInvoice, setNewInvoice] = useState({ customer: "", amount: "" });
+function toUtcEnd(value) {
+  return value ? `${value}T23:59:59.999Z` : undefined;
+}
+
+function OrderTotalCell({ order }) {
+  if (order.payableAmount === undefined || !order.currencyCode) return <span>—</span>;
+  return <span>{formatMoney(order.payableAmount, order.currencyCode, order.currencyMinorUnitDigits ?? 2)}</span>;
+}
+
+function FulfillmentLabel({ order, t }) {
+  const key = fulfillmentLabelKey(order.fulfillmentType);
+  const typeLabel = key ? t(key) : order.fulfillmentType || "—";
+  const tableLabel =
+    order.fulfillmentType === "DineIn" && order.restaurantTableCode
+      ? ` · ${order.restaurantTableCode}`
+      : "";
+
   return (
-    <AppLayout onLogout={onLogout} activePath={ROUTES.SALES}>
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <h1 className="text-xl font-black brand-text">{t("sales.title")}</h1>
-        <div className="flex flex-wrap gap-2">
-          <button className="panel rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><Filter size={13} /> {t("sales.filter")}</button>
-          <button className="panel rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><Download size={13} /> {t("sales.export")}</button>
-          <button onClick={() => setShowAddInvoice(true)} className="primary-btn rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><Plus size={13} /> {t("sales.saleInvoice")}</button>
-        </div>
-      </div>
+    <span>
+      {typeLabel}
+      {tableLabel}
+    </span>
+  );
+}
 
-      {/* stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        {stats.map((s, i) => (
-          <div key={i} className="stat-card rounded-2xl p-4">
-            <div className="text-lg font-black" style={{ color: s.color }}>{s.value}</div>
-            <div className="text-[11px] text-gray-400 mt-1">{t(s.labelKey)}</div>
-          </div>
-        ))}
-      </div>
+export default function SalesPage() {
+  const { t } = useI18n();
+  const navigate = useNavigate();
+  const { currentCompanyId } = useCompany();
+  const { currentBranchId } = useBranch();
 
-      {/* invoices table */}
-      <div className="panel rounded-2xl p-4">
-        <h3 className="font-bold text-sm mb-3">{t("sales.saleInvoices")}</h3>
-        <table className="w-full text-xs">
-          <thead>
-            <tr className="text-gray-500 text-right">
-              <th className="font-medium pb-2">{t("sales.number")}</th>
-              <th className="font-medium pb-2">{t("sales.date")}</th>
-              <th className="font-medium pb-2">{t("sales.customer")}</th>
-              <th className="font-medium pb-2">{t("sales.amount")}</th>
-              <th className="font-medium pb-2">{t("sales.status")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {invoices.map((inv, i) => (
-              <tr key={i} className="border-t border-white/5">
-                <td className="py-2.5 text-blue-400">{inv.no}</td>
-                <td className="py-2.5 text-gray-300">{inv.date}</td>
-                <td className="py-2.5 text-gray-200">{inv.customer}</td>
-                <td className="py-2.5 text-gray-300">{inv.amount}</td>
-                <td className="py-2.5">
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                    inv.status === "مدفوعة" ? "bg-green-500/15 text-green-400" :
-                    inv.status === "معلقة" ? "bg-yellow-500/15 text-yellow-400" :
-                    "bg-red-500/15 text-red-400"
-                  }`}>{inv.status}</span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      {showAddInvoice && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="w-full max-w-md bg-gray-900 rounded-2xl p-4">
-            <h3 className="font-bold mb-3">{t("sales.createInvoice")}</h3>
-            <div className="space-y-2">
-              <input value={newInvoice.customer} onChange={(e) => setNewInvoice({ ...newInvoice, customer: e.target.value })} placeholder={t("sales.customer")} className="w-full input-dark p-2 rounded" />
-              <input value={newInvoice.amount} onChange={(e) => setNewInvoice({ ...newInvoice, amount: e.target.value })} placeholder={t("sales.amount")} className="w-full input-dark p-2 rounded" />
-              <div className="flex gap-2 justify-end mt-3">
-                <button onClick={() => setShowAddInvoice(false)} className="panel px-3 py-2 rounded">{t("common.cancel")}</button>
-                <button onClick={() => {
-                  const id = `INV-${Date.now()}`;
-                  const today = new Date().toLocaleDateString("ar-SA");
-                  setInvoices([{ no: id, date: today, customer: newInvoice.customer || "-", amount: newInvoice.amount || "0", status: "معلقة" }, ...invoices]);
-                  setNewInvoice({ customer: "", amount: "" });
-                  setShowAddInvoice(false);
-                }} className="primary-btn px-3 py-2 rounded">{t("common.save")}</button>
+  const [status, setStatus] = useState("");
+  const [fulfillmentType, setFulfillmentType] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [pageNumber, setPageNumber] = useState(1);
+
+  const permissionQuery = useHasPermission(currentCompanyId, SALES_ORDERS_VIEW_PERMISSION);
+  const canQuery =
+    Boolean(currentCompanyId) &&
+    Boolean(currentBranchId) &&
+    !permissionQuery.isLoading &&
+    permissionQuery.hasPermission;
+
+  const filters = useMemo(
+    () => ({
+      pageNumber,
+      pageSize: PAGE_SIZE,
+      status,
+      fulfillmentType,
+      createdFromUtc: toUtcStart(dateFrom),
+      createdToUtc: toUtcEnd(dateTo),
+    }),
+    [pageNumber, status, fulfillmentType, dateFrom, dateTo],
+  );
+
+  const ordersQuery = useSalesOrders(currentCompanyId, currentBranchId, filters, canQuery);
+  const orders = ordersQuery.data?.items || [];
+
+  const resetFilters = () => {
+    setStatus("");
+    setFulfillmentType("");
+    setDateFrom("");
+    setDateTo("");
+    setPageNumber(1);
+  };
+
+  const openOrder = (salesOrderId) => navigate(salesOrderDetailsPath(salesOrderId));
+
+  return (
+    <AppLayout activePath={ROUTES.SALES}>
+      <main className="space-y-4" dir="rtl">
+        <header className="rounded-2xl border border-white/10 bg-[#0c1424]/85 p-4 shadow-xl shadow-black/20">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2 text-xs text-slate-400">
+                <ShoppingBag size={16} className="text-blue-300" />
+                {t("nav.sales")}
               </div>
+              <h1 className="mt-1 text-2xl font-black text-white">{t("salesOrders.title")}</h1>
+              <p className="mt-0.5 text-[11px] text-slate-500">{t("salesOrders.subtitle")}</p>
             </div>
+            <button
+              type="button"
+              onClick={() => ordersQuery.refetch()}
+              className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold text-slate-100"
+            >
+              <RefreshCw size={14} />
+              {t("salesOrders.refresh")}
+            </button>
           </div>
-        </div>
-      )}
+        </header>
+
+        {!currentCompanyId || !currentBranchId ? (
+          <EmptyState
+            title={t("salesOrders.companyBranchRequired.title")}
+            message={t("salesOrders.companyBranchRequired.message")}
+          />
+        ) : permissionQuery.isLoading ? (
+          <LoadingState label={t("salesOrders.loading")} />
+        ) : !permissionQuery.hasPermission ? (
+          <ErrorState
+            title={t("salesOrders.permissionRequired.title")}
+            message={t("salesOrders.permissionRequired.message")}
+          />
+        ) : (
+          <>
+            <section className="grid gap-2 rounded-2xl border border-white/10 bg-[#0c1424] p-3 md:grid-cols-5">
+              <label className="text-[11px] font-semibold text-slate-400">
+                {t("salesOrders.filters.status")}
+                <select
+                  value={status}
+                  onChange={(event) => {
+                    setStatus(event.target.value);
+                    setPageNumber(1);
+                  }}
+                  className="mt-1 h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none"
+                >
+                  <option value="">{t("salesOrders.filters.statusAll")}</option>
+                  {STATUS_OPTIONS.map((value) => (
+                    <option key={value} value={value}>
+                      {t(`salesOrders.status.${value.charAt(0).toLowerCase()}${value.slice(1)}`)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="text-[11px] font-semibold text-slate-400">
+                {t("salesOrders.filters.fulfillment")}
+                <select
+                  value={fulfillmentType}
+                  onChange={(event) => {
+                    setFulfillmentType(event.target.value);
+                    setPageNumber(1);
+                  }}
+                  className="mt-1 h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none"
+                >
+                  <option value="">{t("salesOrders.filters.fulfillmentAll")}</option>
+                  {FULFILLMENT_OPTIONS.map((value) => (
+                    <option key={value} value={value}>
+                      {t(fulfillmentLabelKey(value))}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="text-[11px] font-semibold text-slate-400">
+                {t("salesOrders.filters.dateFrom")}
+                <input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(event) => {
+                    setDateFrom(event.target.value);
+                    setPageNumber(1);
+                  }}
+                  className="mt-1 h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none"
+                />
+              </label>
+              <label className="text-[11px] font-semibold text-slate-400">
+                {t("salesOrders.filters.dateTo")}
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={(event) => {
+                    setDateTo(event.target.value);
+                    setPageNumber(1);
+                  }}
+                  className="mt-1 h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none"
+                />
+              </label>
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="mt-auto h-10 rounded-xl border border-white/10 bg-white/[0.035] px-3 text-xs font-bold text-slate-200"
+              >
+                {t("salesOrders.filters.reset")}
+              </button>
+            </section>
+
+            <section className="rounded-2xl border border-white/10 bg-[#0c1424] p-3">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="text-sm font-black text-white">{t("salesOrders.title")}</div>
+                <div className="text-[11px] text-slate-500">
+                  {t("salesOrders.totalCount", { count: ordersQuery.data?.totalCount ?? 0 })}
+                </div>
+              </div>
+
+              {ordersQuery.isLoading && <LoadingState label={t("salesOrders.loading")} />}
+              {ordersQuery.isError && (
+                <>
+                  <ErrorState
+                    title={t("salesOrders.error.title")}
+                    message={ordersQuery.error?.message || t("salesOrders.error.message")}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => ordersQuery.refetch()}
+                    className="mt-3 w-full rounded-xl border border-white/10 bg-white/[0.035] py-2 text-xs font-bold text-slate-100 hover:bg-white/10"
+                  >
+                    {t("salesOrders.retry")}
+                  </button>
+                </>
+              )}
+              {!ordersQuery.isLoading && !ordersQuery.isError && orders.length === 0 && (
+                <EmptyState title={t("salesOrders.empty.title")} message={t("salesOrders.empty.message")} />
+              )}
+
+              {!ordersQuery.isLoading && !ordersQuery.isError && orders.length > 0 && (
+                <>
+                  {/* Desktop: real table */}
+                  <div className="hidden overflow-x-auto lg:block">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="text-start text-slate-500">
+                          <th className="pb-2 text-start font-medium">{t("salesOrders.table.updated")}</th>
+                          <th className="pb-2 text-start font-medium">{t("salesOrders.table.status")}</th>
+                          <th className="pb-2 text-start font-medium">{t("salesOrders.table.type")}</th>
+                          <th className="pb-2 text-start font-medium">{t("salesOrders.table.total")}</th>
+                          <th className="pb-2 text-start font-medium">{t("salesOrders.table.payment")}</th>
+                          <th className="pb-2 text-end font-medium">{t("salesOrders.table.action")}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {orders.map((order) => (
+                          <tr
+                            key={order.salesOrderId}
+                            onClick={() => openOrder(order.salesOrderId)}
+                            className="cursor-pointer border-t border-white/5 hover:bg-white/[0.03]"
+                          >
+                            <td className="py-2.5 text-slate-300">
+                              <div>{order.updatedAtUtc ? formatDateTime(order.updatedAtUtc) : "—"}</div>
+                              <div className="text-[10px] text-slate-600">
+                                {shortOrderReference(order.salesOrderId)}
+                              </div>
+                            </td>
+                            <td className="py-2.5">
+                              <SalesOrderStatusBadge status={order.status} />
+                            </td>
+                            <td className="py-2.5 text-slate-300">
+                              <FulfillmentLabel order={order} t={t} />
+                            </td>
+                            <td className="py-2.5 font-bold text-white">
+                              <OrderTotalCell order={order} />
+                            </td>
+                            <td className="py-2.5">
+                              <SalesOrderPaymentBadge
+                                isFullyPaid={order.isFullyPaid}
+                                netPaidAmount={order.netPaidAmount}
+                                remainingAmount={order.remainingAmount}
+                                currencyCode={order.currencyCode}
+                                currencyMinorUnitDigits={order.currencyMinorUnitDigits}
+                              />
+                            </td>
+                            <td className="py-2.5 text-end">
+                              <button
+                                type="button"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  openOrder(order.salesOrderId);
+                                }}
+                                className="rounded-lg border border-white/10 px-2.5 py-1 text-[11px] font-bold text-blue-300 hover:bg-blue-500/10"
+                              >
+                                {t("salesOrders.view")}
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Tablet/mobile: compact cards */}
+                  <div className="space-y-2 lg:hidden">
+                    {orders.map((order) => (
+                      <button
+                        key={order.salesOrderId}
+                        type="button"
+                        onClick={() => openOrder(order.salesOrderId)}
+                        className="flex w-full flex-col gap-2 rounded-xl border border-white/10 bg-[#0d1728] p-3 text-start transition hover:border-blue-400/40 hover:bg-blue-500/10"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <SalesOrderStatusBadge status={order.status} />
+                          <span className="text-sm font-black text-white">
+                            <OrderTotalCell order={order} />
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
+                          <FulfillmentLabel order={order} t={t} />
+                          <SalesOrderPaymentBadge
+                            isFullyPaid={order.isFullyPaid}
+                            netPaidAmount={order.netPaidAmount}
+                            remainingAmount={order.remainingAmount}
+                            currencyCode={order.currencyCode}
+                            currencyMinorUnitDigits={order.currencyMinorUnitDigits}
+                          />
+                        </div>
+                        <div className="flex items-center justify-between text-[10px] text-slate-500">
+                          <span>{order.updatedAtUtc ? formatDateTime(order.updatedAtUtc) : "—"}</span>
+                          <span>{shortOrderReference(order.salesOrderId)}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {ordersQuery.data && ordersQuery.data.totalPages > 1 && (
+                <div className="mt-3 flex items-center justify-between gap-2 border-t border-white/10 pt-3">
+                  <button
+                    type="button"
+                    disabled={pageNumber <= 1}
+                    onClick={() => setPageNumber((page) => Math.max(1, page - 1))}
+                    className="rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    {t("salesOrders.pagination.previous")}
+                  </button>
+                  <span className="text-xs text-slate-400">
+                    {t("salesOrders.pagination.page", {
+                      current: ordersQuery.data.pageNumber,
+                      total: ordersQuery.data.totalPages,
+                    })}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={pageNumber >= ordersQuery.data.totalPages}
+                    onClick={() => setPageNumber((page) => page + 1)}
+                    className="rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    {t("salesOrders.pagination.next")}
+                  </button>
+                </div>
+              )}
+            </section>
+          </>
+        )}
+      </main>
     </AppLayout>
   );
 }

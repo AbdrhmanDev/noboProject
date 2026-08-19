@@ -6,10 +6,20 @@ import type {
   ConfirmSalesOrderResponse,
   CreateDraftSalesOrderRequest,
   DraftSalesOrder,
+  RetrievableSalesOrdersFilters,
+  RetrievableSalesOrdersResponse,
   UpdateDraftSalesOrderRequest,
   VoidPreparedSalesOrderRequest,
   VoidPreparedSalesOrderResponse,
 } from "../types/draftSalesOrder.types";
+
+function compactParams(filters: object) {
+  return Object.fromEntries(
+    Object.entries(filters).filter(
+      ([, value]) => value !== undefined && value !== null && value !== "",
+    ),
+  );
+}
 
 function salesOrdersBaseUrl(companyId: string, branchId: string) {
   return `/api/companies/${companyId}/branches/${branchId}/sales-orders`;
@@ -50,6 +60,19 @@ export async function updateDraftSalesOrder(
   const response = await httpClient.put<DraftSalesOrder>(
     `${salesOrdersBaseUrl(companyId, branchId)}/${salesOrderId}/draft`,
     payload,
+  );
+
+  return response.data;
+}
+
+export async function getRetrievableSalesOrders(
+  companyId: string,
+  branchId: string,
+  filters: RetrievableSalesOrdersFilters = {},
+) {
+  const response = await httpClient.get<RetrievableSalesOrdersResponse>(
+    `${salesOrdersBaseUrl(companyId, branchId)}/retrievable`,
+    { params: compactParams(filters) },
   );
 
   return response.data;

@@ -218,3 +218,38 @@ export type VoidPreparedSalesOrderResponse = {
   wasAlreadyVoided: boolean;
   kitchenTickets: VoidPreparedSalesOrderKitchenTicket[];
 };
+
+export type RetrievableSalesOrderStatus = "Draft" | "Confirmed";
+
+export type RetrievableSalesOrdersFilters = {
+  pageNumber?: number;
+  pageSize?: number;
+  status?: RetrievableSalesOrderStatus | "";
+  fulfillmentType?: SalesOrderFulfillmentType | "";
+  restaurantTableId?: string;
+  search?: string;
+};
+
+export type RetrievableSalesOrder = {
+  salesOrderId: string;
+  status: RetrievableSalesOrderStatus;
+  fulfillmentType: SalesOrderFulfillmentType | null;
+  restaurantTableId: string | null;
+  restaurantTableCode: string | null;
+  draftVersion: number;
+  currencyCode: string;
+  payableAmount: number;
+  netPaidAmount: number;
+  remainingAmount: number;
+  isFullyPaid: boolean;
+  createdAtUtc: string;
+  updatedAtUtc: string;
+};
+
+export type RetrievableSalesOrdersResponse = {
+  pageNumber: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+  items: RetrievableSalesOrder[];
+};

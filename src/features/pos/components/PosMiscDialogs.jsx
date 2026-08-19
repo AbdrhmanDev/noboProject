@@ -39,14 +39,6 @@ export function PosMiscDialogs({ modal, setModal, setCustomer, notify }) {
         </PosModal>
       )}
 
-      {modal === "retrieve" && (
-        <PosModal title="Held Drafts" onClose={() => setModal(null)}>
-          <p className="rounded-xl border border-dashed border-white/10 p-6 text-center text-xs text-slate-500">
-            Draft retrieval is not integrated yet.
-          </p>
-        </PosModal>
-      )}
-
       {modal === "promotions" && (
         <PosModal title="Promotions Engine" onClose={() => setModal(null)}>
           <div className="space-y-2 text-xs">

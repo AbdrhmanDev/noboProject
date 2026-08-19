@@ -18,6 +18,7 @@ import RestaurantAdminPage from "./Pages/RestaurantAdminPage/RestaurantAdminPage
 import KitchenPage from "./Pages/KitchenPage/KitchenPage";
 import KitchenAdminPage from "./Pages/KitchenAdminPage/KitchenAdminPage";
 import SalesPage from "./Pages/SalesPage/SalesPage";
+import SalesOrderDetailsPage from "./Pages/SalesOrderDetailsPage/SalesOrderDetailsPage";
 import PurchasesPage from "./Pages/PurchasesPage/PurchasesPage";
 import InventoryPage from "./Pages/InventoryPage/InventoryPage";
 import InventoryAdminPage from "./Pages/InventoryAdminPage/InventoryAdminPage";
@@ -60,6 +61,7 @@ export default function App() {
               <Route path={ROUTES.KITCHEN} element={protectedPage(<KitchenPage />)} />
               <Route path={ROUTES.KITCHEN_ADMIN} element={protectedPage(<KitchenAdminPage />)} />
               <Route path={ROUTES.SALES} element={protectedPage(<SalesPage />)} />
+              <Route path={ROUTES.SALES_ORDER_DETAILS} element={protectedPage(<SalesOrderDetailsPage />)} />
               <Route path={ROUTES.PURCHASES} element={protectedPage(<PurchasesPage />)} />
               <Route path={ROUTES.INVENTORY} element={protectedPage(<InventoryPage />)} />
               <Route path={ROUTES.INVENTORY_ADMIN} element={protectedPage(<InventoryAdminPage />)} />

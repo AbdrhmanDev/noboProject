@@ -15,7 +15,7 @@ export const NAV_ITEMS = [
   { icon: WalletCards, labelKey: "nav.payments", to: ROUTES.PAYMENT_METHODS_ADMIN, permission: "Payments.Configure", shortcutAction: "navigation.payments" },
   { icon: Armchair, labelKey: "nav.restaurant", to: ROUTES.RESTAURANT_ADMIN, permission: "Restaurant.View", shortcutAction: "navigation.restaurant" },
   { icon: Boxes, labelKey: "nav.inventory", kind: "group", module: "inventory" },
-  { icon: ShoppingBag, labelKey: "nav.sales", to: ROUTES.SALES, comingSoon: true },
+  { icon: ShoppingBag, labelKey: "nav.sales", to: ROUTES.SALES, permission: "SalesOrders.View" },
   { icon: ShoppingCart, labelKey: "nav.purchases", to: ROUTES.PURCHASES, comingSoon: true },
   { icon: Contact, labelKey: "nav.customers", to: ROUTES.CUSTOMERS, comingSoon: true },
   { icon: Truck, labelKey: "nav.suppliers", to: ROUTES.SUPPLIERS, comingSoon: true },

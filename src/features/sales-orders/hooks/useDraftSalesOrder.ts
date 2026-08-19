@@ -1,9 +1,10 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   cancelSalesOrder,
   closeSalesOrder,
   confirmSalesOrder,
   createDraftSalesOrder,
+  getRetrievableSalesOrders,
   getSalesOrderDetails,
   updateDraftSalesOrder,
   voidPreparedSalesOrder,
@@ -11,6 +12,7 @@ import {
 import type {
   CancelSalesOrderRequest,
   CreateDraftSalesOrderRequest,
+  RetrievableSalesOrdersFilters,
   UpdateDraftSalesOrderRequest,
   VoidPreparedSalesOrderRequest,
 } from "../types/draftSalesOrder.types";
@@ -19,7 +21,32 @@ export const draftSalesOrderQueryKeys = {
   all: ["sales-orders"] as const,
   details: (companyId: string, branchId: string, salesOrderId: string) =>
     ["sales-orders", companyId, branchId, salesOrderId] as const,
+  retrievable: (
+    companyId: string,
+    branchId: string,
+    filters: RetrievableSalesOrdersFilters = {},
+  ) => ["sales-orders", companyId, branchId, "retrievable", filters] as const,
 };
+
+export function useRetrievableSalesOrders(
+  companyId: string | null | undefined,
+  branchId: string | null | undefined,
+  filters: Omit<RetrievableSalesOrdersFilters, "pageNumber"> = {},
+  enabled = true,
+) {
+  return useInfiniteQuery({
+    queryKey: draftSalesOrderQueryKeys.retrievable(companyId || "", branchId || "", filters),
+    queryFn: ({ pageParam }: { pageParam: number }) =>
+      getRetrievableSalesOrders(companyId as string, branchId as string, {
+        ...filters,
+        pageNumber: pageParam,
+      }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) =>
+      lastPage.pageNumber < lastPage.totalPages ? lastPage.pageNumber + 1 : undefined,
+    enabled: Boolean(companyId) && Boolean(branchId) && enabled,
+  });
+}
 
 export function useDraftSalesOrderDetails(
   companyId: string | null | undefined,
