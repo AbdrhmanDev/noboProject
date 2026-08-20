@@ -151,6 +151,8 @@ function normalizeDraftDetails(data: Record<string, any>): DraftSalesOrder {
 
   return {
     salesOrderId: data.salesOrderId,
+    orderNumber: data.orderNumber,
+    orderNumberFormatted: data.orderNumberFormatted,
     companyId: data.companyId,
     branchId: data.branchId,
     priceListId: "",
@@ -158,6 +160,15 @@ function normalizeDraftDetails(data: Record<string, any>): DraftSalesOrder {
     currencyCode: data.currencyCode,
     fulfillmentType: data.fulfillmentType,
     restaurantTableId: data.restaurantTable?.restaurantTableId || null,
+    restaurantTable: data.restaurantTable
+      ? {
+          restaurantTableId: data.restaurantTable.restaurantTableId,
+          code: data.restaurantTable.code,
+          name: data.restaurantTable.name ?? null,
+          restaurantFloorId: data.restaurantTable.restaurantFloorId,
+          restaurantFloorName: data.restaurantTable.restaurantFloorName,
+        }
+      : null,
     status: data.status,
     draftVersion: data.draftVersion,
     confirmedAtUtc: data.confirmedAtUtc || null,

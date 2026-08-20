@@ -73,16 +73,23 @@ export function OrderHeader({
       <div className="mb-3 space-y-2 rounded-xl border border-white/10 bg-white/[0.025] p-2">
         <div className="flex items-center justify-between gap-2 text-[10px] text-slate-400">
           <span>Order status</span>
-          <span
-            className={`rounded-full px-2 py-0.5 font-bold ${
-              isCancelledOrder
-                ? "bg-rose-500/15 text-rose-300"
-                : isConfirmedOrder || isClosedOrder
-                  ? "bg-emerald-500/15 text-emerald-300"
-                  : "bg-blue-500/15 text-blue-300"
-            }`}
-          >
-            {draftOrder?.status || "New"}
+          <span className="flex items-center gap-1.5">
+            {draftOrder?.orderNumberFormatted && (
+              <span className="rounded-full bg-white/10 px-2 py-0.5 font-bold text-slate-300">
+                {draftOrder.orderNumberFormatted}
+              </span>
+            )}
+            <span
+              className={`rounded-full px-2 py-0.5 font-bold ${
+                isCancelledOrder
+                  ? "bg-rose-500/15 text-rose-300"
+                  : isConfirmedOrder || isClosedOrder
+                    ? "bg-emerald-500/15 text-emerald-300"
+                    : "bg-blue-500/15 text-blue-300"
+              }`}
+            >
+              {draftOrder?.status || "New"}
+            </span>
           </span>
         </div>
         <div className="grid grid-cols-3 gap-1">

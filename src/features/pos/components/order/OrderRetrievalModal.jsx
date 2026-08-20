@@ -1,9 +1,9 @@
-import { useRef, useState } from "react";
-import { AlertTriangle, ClipboardList, Search } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ClipboardList, Search } from "lucide-react";
 import { PosModal } from "../PosModal";
 import { EmptyState, ErrorState, LoadingState } from "../../../../shared/components/ui";
 import { formatMoney } from "../../../../shared/utils/formatters";
-import { formatRelativeTime, shortOrderReference } from "../../utils/posFormatters";
+import { formatRelativeTime } from "../../utils/posFormatters";
 import { useRetrievableSalesOrders } from "../../../sales-orders/hooks/useDraftSalesOrder";
 import { ROVING_ITEM_SELECTOR, useAutoFocusFirstItem, useGridArrowNav } from "../../../shortcuts/rovingFocus";
 
@@ -58,7 +58,7 @@ function OrderRow({ order, onSelect, disabled }) {
             ))}
         </div>
         <div className="mt-1 text-[10px] text-slate-500">
-          Updated {formatRelativeTime(order.updatedAtUtc)} · {shortOrderReference(order.salesOrderId)}
+          Updated {formatRelativeTime(order.updatedAtUtc)} · {order.orderNumberFormatted}
         </div>
       </div>
       <div className="shrink-0 text-sm font-black text-white">
@@ -77,13 +77,17 @@ export function OrderRetrievalModal({
 }) {
   const [statusFilter, setStatusFilter] = useState("");
   const [searchInput, setSearchInput] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const listRef = useRef(null);
   const handleListKeyDown = useGridArrowNav(listRef, ROVING_ITEM_SELECTOR);
 
-  const searchTerm = searchInput.trim();
-  const isGuidSearch = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-    searchTerm,
-  );
+  // Debounced so typing an order number doesn't fire a request per keystroke.
+  // Backend accepts a bare number ("100245"), "ORD-100245", or (legacy
+  // fallback) an exact GUID — all forwarded as-is, never filtered client-side.
+  useEffect(() => {
+    const handle = setTimeout(() => setSearchTerm(searchInput.trim()), 300);
+    return () => clearTimeout(handle);
+  }, [searchInput]);
 
   // Filters/search live in the query key, so switching them naturally starts
   // a fresh, separately-cached page sequence — no manual page/items reset.
@@ -93,7 +97,7 @@ export function OrderRetrievalModal({
     {
       pageSize: PAGE_SIZE,
       status: statusFilter,
-      search: isGuidSearch ? searchTerm : "",
+      search: searchTerm,
     },
     true,
   );
@@ -131,16 +135,10 @@ export function OrderRetrievalModal({
           <input
             value={searchInput}
             onChange={(event) => setSearchInput(event.target.value)}
-            placeholder="Advanced: exact order reference (ID)"
+            placeholder="Search order number (e.g. 100245 or ORD-100245)"
             className="w-full bg-transparent text-[11px] text-slate-200 outline-none placeholder:text-slate-600"
           />
         </label>
-        {searchTerm && !isGuidSearch && (
-          <div className="flex items-center gap-1.5 text-[10px] text-amber-300">
-            <AlertTriangle size={12} />
-            No matching order reference.
-          </div>
-        )}
 
         {isInitialLoading && <LoadingState label="Loading orders..." />}
 

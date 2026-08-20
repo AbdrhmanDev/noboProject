@@ -11,7 +11,7 @@ import { useDraftSalesOrderDetails } from "../../features/sales-orders/hooks/use
 import { useSalesOrderPayments } from "../../features/payments/hooks/usePayments";
 import { SalesOrderStatusBadge } from "../../features/sales/components/SalesOrderStatusBadge";
 import { SalesOrderPaymentBadge } from "../../features/sales/components/SalesOrderPaymentBadge";
-import { fulfillmentLabelKey, shortOrderReference } from "../../features/sales/utils/salesOrderFormatters";
+import { fulfillmentLabelKey, orderNumberDisplay, shortOrderReference } from "../../features/sales/utils/salesOrderFormatters";
 import { ROUTES } from "../../utils/routes";
 
 const SALES_ORDERS_VIEW_PERMISSION = "SalesOrders.View";
@@ -56,7 +56,7 @@ export default function SalesOrderDetailsPage() {
   const backButton = (
     <button
       type="button"
-      onClick={() => navigate(ROUTES.SALES)}
+      onClick={() => navigate(`${ROUTES.SALES}?tab=orders`)}
       className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold text-slate-100 hover:bg-white/10"
     >
       <ArrowRight size={14} />
@@ -76,13 +76,26 @@ export default function SalesOrderDetailsPage() {
               </div>
               <div className="mt-1 flex flex-wrap items-center gap-2">
                 <h1 className="text-xl font-black text-white">
-                  {order ? shortOrderReference(order.salesOrderId) : shortOrderReference(orderId)}
+                  {order
+                    ? orderNumberDisplay(order.orderNumber, order.orderNumberFormatted) ||
+                      shortOrderReference(order.salesOrderId)
+                    : shortOrderReference(orderId)}
                 </h1>
                 {order && <SalesOrderStatusBadge status={order.status} />}
                 <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-bold text-slate-300">
                   {t("salesOrders.details.readOnlyBadge")}
                 </span>
               </div>
+              {order?.fulfillmentType === "DineIn" && order.restaurantTable && (
+                <p className="mt-1 text-[11px] text-slate-500">
+                  {fulfillmentLabelKey(order.fulfillmentType) ? t(fulfillmentLabelKey(order.fulfillmentType)) : order.fulfillmentType}
+                  {" · "}
+                  {order.restaurantTable.code}
+                  {order.restaurantTable.name ? ` (${order.restaurantTable.name})` : ""}
+                  {" · "}
+                  {order.restaurantTable.restaurantFloorName}
+                </p>
+              )}
             </div>
             {backButton}
           </div>
@@ -136,8 +149,10 @@ export default function SalesOrderDetailsPage() {
                 <Field
                   label={t("salesOrders.details.table")}
                   value={
-                    order.fulfillmentType === "DineIn" && order.restaurantTableId
-                      ? shortOrderReference(order.restaurantTableId)
+                    order.fulfillmentType === "DineIn" && order.restaurantTable
+                      ? `${order.restaurantTable.code}${
+                          order.restaurantTable.name ? ` · ${order.restaurantTable.name}` : ""
+                        }`
                       : "—"
                   }
                 />

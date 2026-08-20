@@ -1,5 +1,10 @@
 import { httpClient } from "../../../shared/api/httpClient";
-import type { SalesOrdersListFilters, SalesOrdersListResponse } from "../types/salesOrder.types";
+import type {
+  SalesOverview,
+  SalesOverviewFilters,
+  SalesOrdersListFilters,
+  SalesOrdersListResponse,
+} from "../types/salesOrder.types";
 
 // Deliberately not imported from features/sales-orders/api/draftSalesOrdersApi
 // — that file is owned by POS/draft-order work happening in parallel, and
@@ -18,10 +23,15 @@ function salesOrdersBaseUrl(companyId: string, branchId: string) {
   return `/api/companies/${companyId}/branches/${branchId}/sales-orders`;
 }
 
+// /sales/overview lives under a distinct /sales base path, not /sales-orders.
+function salesOverviewUrl(companyId: string, branchId: string) {
+  return `/api/companies/${companyId}/branches/${branchId}/sales/overview`;
+}
+
 // GET /sales-orders — the general list endpoint (confirmed distinct from
 // POS's /sales-orders/retrievable: it accepts the full status range and a
 // createdFromUtc/createdToUtc date range, where /retrievable only accepts
-// Draft/Confirmed and a GUID search term).
+// Draft/Confirmed and an order search term).
 export async function getSalesOrders(
   companyId: string,
   branchId: string,
@@ -29,6 +39,21 @@ export async function getSalesOrders(
 ) {
   const response = await httpClient.get<SalesOrdersListResponse>(
     salesOrdersBaseUrl(companyId, branchId),
+    { params: compactParams(filters) },
+  );
+
+  return response.data;
+}
+
+// GET /sales/overview — fromUtc/toUtc form a half-open [fromUtc, toUtc)
+// range; omitting both returns the backend's own default range.
+export async function getSalesOverview(
+  companyId: string,
+  branchId: string,
+  filters: SalesOverviewFilters = {},
+) {
+  const response = await httpClient.get<SalesOverview>(
+    salesOverviewUrl(companyId, branchId),
     { params: compactParams(filters) },
   );
 

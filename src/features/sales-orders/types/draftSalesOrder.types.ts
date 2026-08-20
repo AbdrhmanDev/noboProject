@@ -87,8 +87,20 @@ export type DraftSalesOrderKitchenTicket = {
   status: "New" | "Preparing" | "Ready" | "Cancelled" | string;
 };
 
+// Real Dine-In table info from SalesOrderDetailsResult.restaurantTable —
+// replaces the old shortened-GUID table display wherever available.
+export type DraftSalesOrderRestaurantTable = {
+  restaurantTableId: string;
+  code: string;
+  name: string | null;
+  restaurantFloorId: string;
+  restaurantFloorName: string;
+};
+
 export type DraftSalesOrder = {
   salesOrderId: string;
+  orderNumber?: number;
+  orderNumberFormatted?: string;
   companyId: string;
   branchId: string;
   priceListId: string;
@@ -96,6 +108,7 @@ export type DraftSalesOrder = {
   currencyCode: string;
   fulfillmentType: SalesOrderFulfillmentType;
   restaurantTableId: string | null;
+  restaurantTable?: DraftSalesOrderRestaurantTable | null;
   status: "Draft" | "Confirmed" | "Cancelled" | "Closed";
   cancellationKind?: "Standard" | "PreparedVoid" | string | null;
   draftVersion: number;
@@ -232,6 +245,8 @@ export type RetrievableSalesOrdersFilters = {
 
 export type RetrievableSalesOrder = {
   salesOrderId: string;
+  orderNumber: number;
+  orderNumberFormatted: string;
   status: RetrievableSalesOrderStatus;
   fulfillmentType: SalesOrderFulfillmentType | null;
   restaurantTableId: string | null;
