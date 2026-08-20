@@ -1,4 +1,4 @@
-import { Armchair, LayoutGrid, Settings } from "lucide-react";
+import { Armchair, CalendarClock, LayoutGrid, Settings } from "lucide-react";
 import { useI18n } from "../../../i18n/I18nContext";
 import { useCompany } from "../../companies/context/CompanyContext";
 import { useHasPermission } from "../../companies/hooks/useCompanies";
@@ -26,6 +26,12 @@ export function RestaurantNavGroup({ activePath, navigate, variant = "desktop" }
       to: ROUTES.RESTAURANT_FLOOR,
       labelKey: "nav.restaurantFloor",
       icon: LayoutGrid,
+      visible: canViewOperations,
+    },
+    {
+      to: ROUTES.RESTAURANT_RESERVATIONS,
+      labelKey: "nav.restaurantReservations",
+      icon: CalendarClock,
       visible: canViewOperations,
     },
     {

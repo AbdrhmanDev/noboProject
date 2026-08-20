@@ -16,6 +16,7 @@ import PricingAdminPage from "./Pages/PricingAdminPage/PricingAdminPage";
 import TaxAdminPage from "./Pages/TaxAdminPage/TaxAdminPage";
 import RestaurantAdminPage from "./Pages/RestaurantAdminPage/RestaurantAdminPage";
 import RestaurantFloorPage from "./Pages/RestaurantFloorPage/RestaurantFloorPage";
+import RestaurantReservationsPage from "./Pages/RestaurantReservationsPage/RestaurantReservationsPage";
 import KitchenPage from "./Pages/KitchenPage/KitchenPage";
 import KitchenAdminPage from "./Pages/KitchenAdminPage/KitchenAdminPage";
 import SalesPage from "./Pages/SalesPage/SalesPage";
@@ -60,6 +61,7 @@ export default function App() {
               <Route path={ROUTES.TAX_ADMIN} element={protectedPage(<TaxAdminPage />)} />
               <Route path={ROUTES.RESTAURANT_ADMIN} element={protectedPage(<RestaurantAdminPage />)} />
               <Route path={ROUTES.RESTAURANT_FLOOR} element={protectedPage(<RestaurantFloorPage />)} />
+              <Route path={ROUTES.RESTAURANT_RESERVATIONS} element={protectedPage(<RestaurantReservationsPage />)} />
               <Route path={ROUTES.KITCHEN} element={protectedPage(<KitchenPage />)} />
               <Route path={ROUTES.KITCHEN_ADMIN} element={protectedPage(<KitchenAdminPage />)} />
               <Route path={ROUTES.SALES} element={protectedPage(<SalesPage />)} />

@@ -13,6 +13,7 @@ export const ROUTES = {
   TAX_ADMIN: "/tax/admin",
   RESTAURANT_ADMIN: "/restaurant/admin",
   RESTAURANT_FLOOR: "/restaurant/floor",
+  RESTAURANT_RESERVATIONS: "/restaurant/reservations",
   KITCHEN: "/kitchen",
   KITCHEN_ADMIN: "/kitchen/admin",
   SALES: "/sales",
