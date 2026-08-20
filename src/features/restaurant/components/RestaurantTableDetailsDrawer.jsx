@@ -1,22 +1,30 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Crown, ExternalLink, StickyNote, X } from "lucide-react";
+import { AlertTriangle, Crown, ExternalLink, Flag, StickyNote, X } from "lucide-react";
 import { toast } from "sonner";
 import { useI18n } from "../../../i18n/I18nContext";
 import { StatusBadge } from "../../../shared/components/ui";
 import { formatDateTime, formatMoney } from "../../../shared/utils/formatters";
 import { ROUTES } from "../../../utils/routes";
 import {
+  ATTENTION_STATUS_LABEL_KEYS,
+  ATTENTION_TYPE_LABEL_KEYS,
   OPERATIONAL_STATE_BADGE_CLASSES,
   OPERATIONAL_STATE_LABEL_KEYS,
   formatElapsedMinutes,
   orderNumberDisplay,
 } from "../utils/floorOperationalState";
-import { useReleaseTableSession } from "../hooks/useFloorState";
+import {
+  useAcknowledgeTableAttention,
+  useReleaseTableSession,
+  useResolveTableAttention,
+} from "../hooks/useFloorState";
 import { useSeatRestaurantReservation } from "../hooks/useRestaurantReservations";
 import { SeatGuestsDialog } from "./SeatGuestsDialog";
 import { EditGuestSessionDialog } from "./EditGuestSessionDialog";
 import { ConfirmActionDialog } from "./ConfirmActionDialog";
+import { FlagAttentionDialog } from "./FlagAttentionDialog";
+import { AttentionIndicator } from "./AttentionIndicator";
 
 function Field({ label, value }) {
   return (
@@ -31,6 +39,12 @@ function ORDER_STATUS_TONE(status) {
   if (status === "Confirmed") return "success";
   if (status === "Draft") return "info";
   if (status === "Cancelled") return "danger";
+  return "neutral";
+}
+
+function ATTENTION_STATUS_TONE(status) {
+  if (status === "Open") return "danger";
+  if (status === "Acknowledged") return "warning";
   return "neutral";
 }
 
@@ -86,6 +100,51 @@ function ActiveOrderCard({ order, canViewOrders, onOpenInPos, t }) {
   );
 }
 
+function AttentionCard({ attention, canManage, onAcknowledge, onResolve, isPending, t }) {
+  return (
+    <div className="rounded-xl border border-rose-400/20 bg-rose-500/[0.04] p-3">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-xs font-bold text-slate-100">{t(ATTENTION_TYPE_LABEL_KEYS[attention.type])}</span>
+        <StatusBadge tone={ATTENTION_STATUS_TONE(attention.status)}>
+          {t(ATTENTION_STATUS_LABEL_KEYS[attention.status])}
+        </StatusBadge>
+      </div>
+      <p className="mt-1.5 text-xs leading-5 text-slate-300">{attention.note}</p>
+      <div className="mt-1.5 text-[10px] text-slate-500">
+        {t("restaurantFloor.details.created")}: {formatDateTime(attention.createdAtUtc)}
+        {attention.acknowledgedAtUtc && (
+          <>
+            {" · "}
+            {t("restaurantFloor.attention.acknowledgedAt")}: {formatDateTime(attention.acknowledgedAtUtc)}
+          </>
+        )}
+      </div>
+      {canManage && attention.status !== "Resolved" && (
+        <div className="mt-2 flex gap-1.5">
+          {attention.status === "Open" && (
+            <button
+              type="button"
+              onClick={() => onAcknowledge(attention.restaurantTableAttentionId)}
+              disabled={isPending}
+              className="flex-1 rounded-lg border border-amber-400/30 bg-amber-500/10 py-1.5 text-[11px] font-bold text-amber-200 hover:bg-amber-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {t("restaurantFloor.attention.acknowledge")}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => onResolve(attention.restaurantTableAttentionId)}
+            disabled={isPending}
+            className="flex-1 rounded-lg border border-emerald-400/30 bg-emerald-500/10 py-1.5 text-[11px] font-bold text-emerald-200 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {t("restaurantFloor.attention.resolve")}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function RestaurantTableDetailsDrawer({
   table,
   companyId,
@@ -100,15 +159,27 @@ export function RestaurantTableDetailsDrawer({
 
   const releaseMutation = useReleaseTableSession(companyId, branchId);
   const seatReservationMutation = useSeatRestaurantReservation(companyId, branchId);
+  const acknowledgeMutation = useAcknowledgeTableAttention(companyId, branchId);
+  const resolveMutation = useResolveTableAttention(companyId, branchId);
 
   if (!table) return null;
 
   const state = table.operationalState;
   const session = table.currentSession;
   const nextReservation = table.nextReservation;
+  const activeAttentions = table.activeAttentions || [];
+
+  // WAITING_PAYMENT is exactly the backend's own "a Confirmed order still
+  // has RemainingAmount > 0" derivation — reusing it here (rather than
+  // re-deriving it from activeOrders) is what keeps this single source of
+  // truth instead of a second, potentially-divergent client calculation.
+  const hasOutstandingBalance = state === "WAITING_PAYMENT";
+  const draftOrders = table.activeOrders.filter((order) => order.status === "Draft");
+
   const canSeatGuests = canManage && state === "AVAILABLE";
-  const canEditSession = canManage && session && state !== "UNAVAILABLE";
-  const canRelease = canManage && session;
+  const canEditSession = canManage && Boolean(session) && state !== "UNAVAILABLE";
+  const canRelease = canManage && Boolean(session) && !hasOutstandingBalance;
+  const canFlagAttention = canManage && Boolean(session);
 
   const openInPos = (order) => {
     toast.info(
@@ -143,6 +214,38 @@ export function RestaurantTableDetailsDrawer({
     }
   };
 
+  const acknowledgeAttention = async (attentionId) => {
+    try {
+      await acknowledgeMutation.mutateAsync(attentionId);
+      toast.success(t("restaurantFloor.toast.attentionAcknowledged"));
+    } catch (error) {
+      toast.error(error?.message || t("restaurantFloor.error.message"));
+    }
+  };
+
+  const resolveAttention = async (attentionId) => {
+    try {
+      await resolveMutation.mutateAsync(attentionId);
+      toast.success(t("restaurantFloor.toast.attentionResolved"));
+    } catch (error) {
+      toast.error(error?.message || t("restaurantFloor.error.message"));
+    }
+  };
+
+  // Advisory only — never blocks the confirm action itself, since the
+  // backend stays authoritative on whether release is actually allowed
+  // (it already blocks on outstanding Confirmed balances on its own; it
+  // does not block on Draft orders or unresolved attention).
+  const releaseWarnings = [];
+  if (draftOrders.length > 0) {
+    releaseWarnings.push(t("restaurantFloor.confirm.draftOrderWarning", { count: draftOrders.length }));
+  }
+  if (activeAttentions.length > 0) {
+    releaseWarnings.push(
+      t("restaurantFloor.confirm.unresolvedAttentionWarning", { count: activeAttentions.length }),
+    );
+  }
+
   return (
     <>
       <aside className="w-full shrink-0 rounded-2xl border border-white/10 bg-[#0c1424] p-4 xl:w-[380px]">
@@ -162,11 +265,19 @@ export function RestaurantTableDetailsDrawer({
           </button>
         </div>
 
-        <span
-          className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold ${OPERATIONAL_STATE_BADGE_CLASSES[state]}`}
-        >
-          {t(OPERATIONAL_STATE_LABEL_KEYS[state])}
-        </span>
+        <div className="flex items-center gap-2">
+          <span
+            className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold ${OPERATIONAL_STATE_BADGE_CLASSES[state]}`}
+          >
+            {t(OPERATIONAL_STATE_LABEL_KEYS[state])}
+          </span>
+          {table.hasAttention && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-500/15 px-2 py-0.5 text-[10px] font-bold text-rose-300">
+              <AttentionIndicator activeAttentions={activeAttentions} />
+              {t("restaurantFloor.attention.needsAttention")}
+            </span>
+          )}
+        </div>
 
         {/* CURRENT SESSION */}
         {session && (
@@ -195,15 +306,22 @@ export function RestaurantTableDetailsDrawer({
                 value={t("restaurantFloor.card.elapsedMinutes", { minutes: formatElapsedMinutes(session.openedAtUtc) })}
               />
             </div>
+
+            {/* SESSION NOTE — informational, kept visually distinct from ATTENTION below */}
             {session.note && (
-              <div className="mt-2 flex items-start gap-2 rounded-xl border border-white/10 bg-white/[0.025] p-2.5 text-xs text-slate-300">
-                <StickyNote size={14} className="mt-0.5 shrink-0 text-slate-500" />
-                <p className="leading-5">{session.note}</p>
+              <div className="mt-2">
+                <div className="mb-1 text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                  {t("restaurantFloor.details.sessionNote")}
+                </div>
+                <div className="flex items-start gap-2 rounded-xl border border-white/10 bg-white/[0.025] p-2.5 text-xs text-slate-300">
+                  <StickyNote size={14} className="mt-0.5 shrink-0 text-slate-500" />
+                  <p className="leading-5">{session.note}</p>
+                </div>
               </div>
             )}
 
-            {(canEditSession || canRelease) && (
-              <div className="mt-3 flex gap-2">
+            {(canEditSession || canRelease || canFlagAttention) && (
+              <div className="mt-3 flex flex-wrap gap-2">
                 {canEditSession && (
                   <button
                     type="button"
@@ -211,6 +329,16 @@ export function RestaurantTableDetailsDrawer({
                     className="flex h-10 flex-1 items-center justify-center rounded-xl border border-white/10 bg-white/[0.035] text-xs font-bold text-slate-100 hover:bg-white/10"
                   >
                     {t("restaurantFloor.actions.editGuestDetails")}
+                  </button>
+                )}
+                {canFlagAttention && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveDialog("flagAttention")}
+                    className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl border border-rose-400/25 bg-rose-500/[0.06] text-xs font-bold text-rose-200 hover:bg-rose-500/15"
+                  >
+                    <Flag size={13} />
+                    {t("restaurantFloor.actions.flagAttention")}
                   </button>
                 )}
                 {canRelease && (
@@ -224,6 +352,42 @@ export function RestaurantTableDetailsDrawer({
                 )}
               </div>
             )}
+          </section>
+        )}
+
+        {/* SETTLE BILL — shown instead of a misleading normal Release action
+            whenever a Confirmed order still has a remaining balance. Payment
+            itself always happens through POS's own real payment flow
+            (Active Orders below); this section never collects money. */}
+        {session && hasOutstandingBalance && (
+          <section className="mt-4">
+            <h3 className="mb-2 flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wide text-amber-300">
+              <AlertTriangle size={13} />
+              {t("restaurantFloor.settleBill.title")}
+            </h3>
+            <p className="text-xs leading-5 text-slate-400">{t("restaurantFloor.settleBill.message")}</p>
+          </section>
+        )}
+
+        {/* ATTENTION */}
+        {session && activeAttentions.length > 0 && (
+          <section className="mt-4">
+            <h3 className="mb-2 text-[11px] font-black uppercase tracking-wide text-slate-500">
+              {t("restaurantFloor.attention.title")}
+            </h3>
+            <div className="space-y-2">
+              {activeAttentions.map((attention) => (
+                <AttentionCard
+                  key={attention.restaurantTableAttentionId}
+                  attention={attention}
+                  canManage={canManage}
+                  onAcknowledge={acknowledgeAttention}
+                  onResolve={resolveAttention}
+                  isPending={acknowledgeMutation.isPending || resolveMutation.isPending}
+                  t={t}
+                />
+              ))}
+            </div>
           </section>
         )}
 
@@ -324,6 +488,17 @@ export function RestaurantTableDetailsDrawer({
         />
       )}
 
+      {activeDialog === "flagAttention" && session && (
+        <FlagAttentionDialog
+          companyId={companyId}
+          branchId={branchId}
+          table={table}
+          session={session}
+          onClose={() => setActiveDialog(null)}
+          onSuccess={() => setActiveDialog(null)}
+        />
+      )}
+
       {activeDialog === "release" && session && (
         <ConfirmActionDialog
           title={t("restaurantFloor.actions.releaseTable")}
@@ -332,6 +507,7 @@ export function RestaurantTableDetailsDrawer({
           isPending={releaseMutation.isPending}
           onConfirm={confirmRelease}
           onClose={() => setActiveDialog(null)}
+          extraWarnings={releaseWarnings}
         />
       )}
     </>

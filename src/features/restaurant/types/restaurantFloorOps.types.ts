@@ -63,7 +63,42 @@ export type RestaurantNextReservation = {
   note: string | null;
 };
 
+// ---- Table Attention ----
+// RestaurantTableAttention = an operational issue requiring manager
+// follow-up, distinct from a session note (informational only). Request
+// contract confirmed via OpenAPI (CreateRestaurantTableAttentionRequest:
+// `type` + `note`, both required). Response fields for the attention
+// records themselves aren't documented (same undocumented-response pattern
+// as the rest of this controller) — modeled from the task's explicit field
+// list (Type/Note/Status/Created At/Acknowledged At) plus an id for the
+// acknowledge/resolve calls.
+export type RestaurantTableAttentionType =
+  | "GuestIssue"
+  | "ServiceIssue"
+  | "Complaint"
+  | "SpecialRequest"
+  | "Other";
+
+export type RestaurantTableAttentionStatus = "Open" | "Acknowledged" | "Resolved";
+
+export type RestaurantTableAttention = {
+  restaurantTableAttentionId: string;
+  type: RestaurantTableAttentionType;
+  note: string;
+  status: RestaurantTableAttentionStatus;
+  createdAtUtc: string;
+  acknowledgedAtUtc: string | null;
+  resolvedAtUtc: string | null;
+};
+
+export type CreateRestaurantTableAttentionRequest = {
+  type: RestaurantTableAttentionType;
+  note: string;
+};
+
 // Exact wire shape of one table entry inside a floor's `tables` array.
+// hasAttention/activeAttentions field names are given verbatim by the task
+// spec's "BACKEND ATTENTION CONTRACT" section.
 export type RestaurantFloorStateApiTable = {
   restaurantTableId: string;
   code: string;
@@ -74,6 +109,8 @@ export type RestaurantFloorStateApiTable = {
   currentSession: RestaurantTableSession | null;
   activeOrders: RestaurantActiveOrder[];
   nextReservation: RestaurantNextReservation | null;
+  hasAttention: boolean;
+  activeAttentions: RestaurantTableAttention[];
 };
 
 // Exact wire shape of the response root: floors, each carrying its own

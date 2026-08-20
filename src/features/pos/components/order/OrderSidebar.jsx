@@ -176,6 +176,7 @@ export function OrderSidebar({
           orderType={orderType}
           total={total}
           catalogCurrencyCode={catalogCurrencyCode}
+          onOpenRetrieve={onOpenRetrieve}
         />
       </div>
     </aside>

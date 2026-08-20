@@ -1,12 +1,16 @@
 import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  acknowledgeRestaurantTableAttention,
+  createRestaurantTableAttention,
   getRestaurantFloorState,
   openRestaurantTableSession,
   releaseRestaurantTableSession,
+  resolveRestaurantTableAttention,
   updateRestaurantTableSession,
 } from "../api/restaurantFloorOpsApi";
 import type {
+  CreateRestaurantTableAttentionRequest,
   OpenRestaurantTableSessionRequest,
   RestaurantFloorStateFilters,
   RestaurantFloorStateFloor,
@@ -126,6 +130,50 @@ export function useReleaseTableSession(
   return useMutation({
     mutationFn: (sessionId: string) =>
       releaseRestaurantTableSession(companyId as string, branchId as string, sessionId),
+    onSuccess: () => invalidateFloorState(queryClient, companyId, branchId),
+  });
+}
+
+export function useCreateTableAttention(
+  companyId: string | null | undefined,
+  branchId: string | null | undefined,
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      sessionId,
+      payload,
+    }: {
+      sessionId: string;
+      payload: CreateRestaurantTableAttentionRequest;
+    }) => createRestaurantTableAttention(companyId as string, branchId as string, sessionId, payload),
+    onSuccess: () => invalidateFloorState(queryClient, companyId, branchId),
+  });
+}
+
+export function useAcknowledgeTableAttention(
+  companyId: string | null | undefined,
+  branchId: string | null | undefined,
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (attentionId: string) =>
+      acknowledgeRestaurantTableAttention(companyId as string, branchId as string, attentionId),
+    onSuccess: () => invalidateFloorState(queryClient, companyId, branchId),
+  });
+}
+
+export function useResolveTableAttention(
+  companyId: string | null | undefined,
+  branchId: string | null | undefined,
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (attentionId: string) =>
+      resolveRestaurantTableAttention(companyId as string, branchId as string, attentionId),
     onSuccess: () => invalidateFloorState(queryClient, companyId, branchId),
   });
 }

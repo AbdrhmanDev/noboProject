@@ -13,6 +13,11 @@ export function ConfirmActionDialog({
   isPending,
   onConfirm,
   onClose,
+  // Extra advisory notices (e.g. "1 draft order remains" / "unresolved
+  // attention items") — informational only, never a reason to disable
+  // confirm: the backend stays authoritative on whether the action is
+  // actually allowed.
+  extraWarnings = [],
 }) {
   const { t } = useI18n();
   const confirmClasses =
@@ -27,6 +32,15 @@ export function ConfirmActionDialog({
           <AlertTriangle size={18} className="mt-0.5 shrink-0 text-amber-300" />
           <p className="text-xs leading-5 text-amber-100">{message}</p>
         </div>
+        {extraWarnings.map((warning, index) => (
+          <div
+            key={index}
+            className="flex items-start gap-3 rounded-xl border border-rose-400/25 bg-rose-500/10 p-3"
+          >
+            <AlertTriangle size={16} className="mt-0.5 shrink-0 text-rose-300" />
+            <p className="text-xs leading-5 text-rose-100">{warning}</p>
+          </div>
+        ))}
         <div className="flex gap-2">
           <button
             type="button"

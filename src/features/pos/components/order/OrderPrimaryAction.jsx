@@ -26,6 +26,7 @@ export function OrderPrimaryAction({
   orderType,
   total,
   catalogCurrencyCode,
+  onOpenRetrieve,
 }) {
   // `getOrderPrimaryAction` decides eligibility (`disabled`) — the branches
   // below only pick a label/icon for the SAME `kind` it returned, they never
@@ -66,16 +67,33 @@ export function OrderPrimaryAction({
   }
 
   if (isConfirmedOrder && !isFullyPaid) {
+    // Payment timing is flexible for Dine-In — the order is already
+    // confirmed and unpaid at this point (nothing forced payment to open),
+    // so this is genuinely just "Pay Now" vs "keep serving and pay later",
+    // never a paymentTiming/payLater flag. "Later" makes that explicit
+    // instead of leaving it implicit, and reuses the existing Retrieve
+    // Order flow (F6) rather than any new modal/state.
     return (
-      <button
-        type="button"
-        onClick={primaryAction.run}
-        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 text-sm font-black shadow-lg shadow-emerald-950/30 transition hover:brightness-110"
-      >
-        <WalletCards size={19} />
-        Pay · {formatMoney(remainingAmount, settlementCurrencyCode, settlementMinorUnitDigits)}
-        <ShortcutHint action="pos.confirm" className="mr-1" />
-      </button>
+      <div className="space-y-1.5">
+        <button
+          type="button"
+          onClick={primaryAction.run}
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 text-sm font-black shadow-lg shadow-emerald-950/30 transition hover:brightness-110"
+        >
+          <WalletCards size={19} />
+          Pay Now · {formatMoney(remainingAmount, settlementCurrencyCode, settlementMinorUnitDigits)}
+          <ShortcutHint action="pos.confirm" className="mr-1" />
+        </button>
+        {orderType === "DineIn" && onOpenRetrieve && (
+          <button
+            type="button"
+            onClick={onOpenRetrieve}
+            className="flex h-9 w-full items-center justify-center gap-1.5 rounded-lg text-xs font-bold text-slate-400 transition hover:text-slate-200"
+          >
+            Pay Later — continue service
+          </button>
+        )}
+      </div>
     );
   }
 

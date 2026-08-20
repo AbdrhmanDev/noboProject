@@ -1,12 +1,14 @@
 import { httpClient } from "../../../shared/api/httpClient";
 import type {
   CreateRestaurantReservationRequest,
+  CreateRestaurantTableAttentionRequest,
   OpenRestaurantTableSessionRequest,
   RestaurantFloorStateFilters,
   RestaurantFloorStateResponse,
   RestaurantReservationListItem,
   RestaurantReservationsListFilters,
   RestaurantReservationsListResponse,
+  RestaurantTableAttention,
   RestaurantTableSession,
   SeatRestaurantReservationRequest,
   UpdateRestaurantReservationRequest,
@@ -167,6 +169,58 @@ export async function seatRestaurantReservation(
   const response = await httpClient.post<RestaurantTableSession>(
     `${restaurantBaseUrl(companyId, branchId)}/reservations/${reservationId}/seat`,
     payload,
+  );
+
+  return response.data;
+}
+
+// ---- Table Attention ----
+
+export async function createRestaurantTableAttention(
+  companyId: string,
+  branchId: string,
+  sessionId: string,
+  payload: CreateRestaurantTableAttentionRequest,
+) {
+  const response = await httpClient.post<RestaurantTableAttention>(
+    `${restaurantBaseUrl(companyId, branchId)}/sessions/${sessionId}/attentions`,
+    payload,
+  );
+
+  return response.data;
+}
+
+export async function getRestaurantTableAttentions(
+  companyId: string,
+  branchId: string,
+  sessionId: string,
+) {
+  const response = await httpClient.get<RestaurantTableAttention[]>(
+    `${restaurantBaseUrl(companyId, branchId)}/sessions/${sessionId}/attentions`,
+  );
+
+  return response.data;
+}
+
+export async function acknowledgeRestaurantTableAttention(
+  companyId: string,
+  branchId: string,
+  attentionId: string,
+) {
+  const response = await httpClient.post<RestaurantTableAttention>(
+    `${restaurantBaseUrl(companyId, branchId)}/attentions/${attentionId}/acknowledge`,
+  );
+
+  return response.data;
+}
+
+export async function resolveRestaurantTableAttention(
+  companyId: string,
+  branchId: string,
+  attentionId: string,
+) {
+  const response = await httpClient.post<RestaurantTableAttention>(
+    `${restaurantBaseUrl(companyId, branchId)}/attentions/${attentionId}/resolve`,
   );
 
   return response.data;

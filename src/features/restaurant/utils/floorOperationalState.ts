@@ -1,6 +1,9 @@
 import { Armchair, Ban, CalendarClock, CircleCheck, Clock, ReceiptText } from "lucide-react";
 import { differenceInMinutes } from "date-fns";
-import type { RestaurantOperationalState } from "../types/restaurantFloorOps.types";
+import type {
+  RestaurantOperationalState,
+  RestaurantTableAttentionType,
+} from "../types/restaurantFloorOps.types";
 
 // Backend-authoritative states, rendered verbatim — never invented or
 // reinterpreted client-side (floor-state is now the single source of truth
@@ -73,4 +76,26 @@ export function orderNumberDisplay(
   if (orderNumberFormatted) return orderNumberFormatted;
   if (orderNumber !== undefined && orderNumber !== null) return `ORD-${orderNumber}`;
   return "";
+}
+
+// Attention is NOT a 7th operational state — it's a separate red overlay on
+// top of whatever the real operational state already is.
+export const ATTENTION_TYPE_LABEL_KEYS: Record<RestaurantTableAttentionType, string> = {
+  GuestIssue: "restaurantFloor.attention.type.guestIssue",
+  ServiceIssue: "restaurantFloor.attention.type.serviceIssue",
+  Complaint: "restaurantFloor.attention.type.complaint",
+  SpecialRequest: "restaurantFloor.attention.type.specialRequest",
+  Other: "restaurantFloor.attention.type.other",
+};
+
+export const ATTENTION_STATUS_LABEL_KEYS = {
+  Open: "restaurantFloor.attention.status.open",
+  Acknowledged: "restaurantFloor.attention.status.acknowledged",
+  Resolved: "restaurantFloor.attention.status.resolved",
+} as const;
+
+// Open attentions pulse (nobody has taken ownership yet); once every active
+// attention has been acknowledged, the indicator stays visible but calm.
+export function hasOpenAttention(activeAttentions: { status: string }[]) {
+  return activeAttentions.some((attention) => attention.status === "Open");
 }

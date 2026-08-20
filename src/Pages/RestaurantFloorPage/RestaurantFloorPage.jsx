@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { LayoutGrid, RefreshCw } from "lucide-react";
+import { LayoutGrid, RefreshCw, TriangleAlert } from "lucide-react";
 import AppLayout from "../../components/AppLayout";
 import { EmptyState, ErrorState, LoadingState } from "../../shared/components/ui";
 import { useI18n } from "../../i18n/I18nContext";
@@ -23,6 +23,10 @@ const STATE_FILTERS = [
   "PAID_STILL_SEATED",
   "UNAVAILABLE",
 ];
+// Attention is a cross-state filter, not a 7th operational state — kept as
+// a distinct sentinel value so it's never confused with (or mapped into)
+// operationalState.
+const NEEDS_ATTENTION_FILTER = "NEEDS_ATTENTION";
 
 export default function RestaurantFloorPage() {
   const { t } = useI18n();
@@ -60,16 +64,21 @@ export default function RestaurantFloorPage() {
       WAITING_PAYMENT: 0,
       PAID_STILL_SEATED: 0,
       UNAVAILABLE: 0,
+      needsAttention: 0,
     };
     tables.forEach((table) => {
       counts[table.operationalState] += 1;
+      // Counts tables, not individual attention records — a table with 3
+      // open issues still counts once toward "Needs Attention".
+      if (table.hasAttention) counts.needsAttention += 1;
     });
     return counts;
   }, [tables]);
 
   const filteredTables = tables.filter((table) => {
-    if (stateFilter && table.operationalState !== stateFilter) return false;
     if (floorFilter && table.restaurantFloorId !== floorFilter) return false;
+    if (stateFilter === NEEDS_ATTENTION_FILTER) return table.hasAttention;
+    if (stateFilter && table.operationalState !== stateFilter) return false;
     return true;
   });
 
@@ -113,7 +122,7 @@ export default function RestaurantFloorPage() {
           />
         ) : (
           <>
-            <section className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-7">
+            <section className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-8">
               <div className="rounded-xl border border-white/10 bg-[#0c1424] p-3">
                 <div className="text-[10px] text-slate-500">{t("restaurantFloor.summary.total")}</div>
                 <div className="mt-1 text-xl font-black text-white">{summary.total}</div>
@@ -124,6 +133,10 @@ export default function RestaurantFloorPage() {
                   <div className="mt-1 text-xl font-black text-white">{summary[state]}</div>
                 </div>
               ))}
+              <div className="rounded-xl border border-rose-400/20 bg-rose-500/[0.05] p-3">
+                <div className="truncate text-[10px] text-rose-300/80">{t("restaurantFloor.attention.needsAttention")}</div>
+                <div className="mt-1 text-xl font-black text-rose-300">{summary.needsAttention}</div>
+              </div>
             </section>
 
             <section className="flex flex-wrap items-center gap-2 rounded-2xl border border-white/10 bg-[#0c1424] p-3">
@@ -152,6 +165,18 @@ export default function RestaurantFloorPage() {
                   {t(OPERATIONAL_STATE_LABEL_KEYS[state])}
                 </button>
               ))}
+              <button
+                type="button"
+                onClick={() => setStateFilter(NEEDS_ATTENTION_FILTER)}
+                className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] font-bold transition ${
+                  stateFilter === NEEDS_ATTENTION_FILTER
+                    ? "border-rose-400/70 bg-rose-500/15 text-rose-100"
+                    : "border-white/10 bg-black/10 text-slate-400 hover:bg-white/10"
+                }`}
+              >
+                <TriangleAlert size={12} />
+                {t("restaurantFloor.attention.needsAttention")}
+              </button>
 
               {floors.length > 1 && (
                 <select

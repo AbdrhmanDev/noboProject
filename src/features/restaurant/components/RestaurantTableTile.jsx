@@ -9,6 +9,7 @@ import {
   formatElapsedMinutes,
   orderNumberDisplay,
 } from "../utils/floorOperationalState";
+import { AttentionIndicator } from "./AttentionIndicator";
 
 function formatTime(value) {
   return new Date(value).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
@@ -27,6 +28,7 @@ export function RestaurantTableTile({ table, canManage, selected, onSelect }) {
   const extraOrderCount = table.activeOrders.length > 1 ? table.activeOrders.length - 1 : 0;
   const isVip = (session && session.isVip) || (table.nextReservation && table.nextReservation.isVip);
   const hasNote = Boolean(session?.note);
+  const hasAttention = table.hasAttention;
 
   return (
     <button
@@ -35,7 +37,7 @@ export function RestaurantTableTile({ table, canManage, selected, onSelect }) {
       disabled={state === "UNAVAILABLE" && !canManage}
       className={`flex min-h-[124px] w-full flex-col justify-between gap-2 rounded-2xl border p-3 text-start transition disabled:cursor-not-allowed ${
         OPERATIONAL_STATE_TILE_CLASSES[state]
-      } ${selected ? "ring-2 ring-blue-400/70" : ""}`}
+      } ${selected ? "ring-2 ring-blue-400/70" : ""} ${hasAttention ? "ring-1 ring-rose-500/60" : ""}`}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
@@ -47,6 +49,7 @@ export function RestaurantTableTile({ table, canManage, selected, onSelect }) {
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
           {hasNote && <StickyNote size={13} className="text-slate-500" />}
+          {hasAttention && <AttentionIndicator activeAttentions={table.activeAttentions} />}
           <Icon size={16} className={OPERATIONAL_STATE_ICON_CLASSES[state]} />
         </div>
       </div>
@@ -55,6 +58,13 @@ export function RestaurantTableTile({ table, canManage, selected, onSelect }) {
         <div className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
           {t(OPERATIONAL_STATE_LABEL_KEYS[state])}
         </div>
+
+        {hasAttention && (
+          <div className="mt-1 flex items-center gap-1.5 text-[10px] font-bold text-rose-300">
+            <AttentionIndicator activeAttentions={table.activeAttentions} />
+            {t("restaurantFloor.attention.needsAttention")}
+          </div>
+        )}
 
         {state === "AVAILABLE" && table.nextReservation && (
           <div className="mt-1 text-[10px] text-slate-500">
