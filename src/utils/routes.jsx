@@ -12,6 +12,7 @@ export const ROUTES = {
   PRICING_ADMIN: "/pricing/admin",
   TAX_ADMIN: "/tax/admin",
   RESTAURANT_ADMIN: "/restaurant/admin",
+  RESTAURANT_FLOOR: "/restaurant/floor",
   KITCHEN: "/kitchen",
   KITCHEN_ADMIN: "/kitchen/admin",
   SALES: "/sales",

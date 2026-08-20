@@ -18,12 +18,14 @@ import { ROUTES } from "../utils/routes";
 import { NAV_ITEMS } from "../utils/navItems";
 import { InventoryNavGroup } from "../features/inventory/components/InventoryNavGroup";
 import { KitchenNavGroup } from "../features/kitchen/components/KitchenNavGroup";
+import { RestaurantNavGroup } from "../features/restaurant/components/RestaurantNavGroup";
 import { PermissionNavItem } from "./PermissionNavItem";
 import { ComingSoonNavItem } from "./ComingSoonNavItem";
 
 const NAV_GROUPS = {
   inventory: InventoryNavGroup,
   kitchen: KitchenNavGroup,
+  restaurant: RestaurantNavGroup,
 };
 
 export default function AppLayout({ children, onLogout }) {
