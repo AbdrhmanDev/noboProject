@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle, Crown, ExternalLink, Flag, StickyNote, X } from "lucide-react";
+import { AlertTriangle, ChefHat, Crown, ExternalLink, Flag, StickyNote, X } from "lucide-react";
 import { toast } from "sonner";
 import { useI18n } from "../../../i18n/I18nContext";
 import { StatusBadge } from "../../../shared/components/ui";
@@ -12,6 +12,7 @@ import {
   OPERATIONAL_STATE_BADGE_CLASSES,
   OPERATIONAL_STATE_LABEL_KEYS,
   formatElapsedMinutes,
+  getReleaseErrorMessageKey,
   orderNumberDisplay,
 } from "../utils/floorOperationalState";
 import {
@@ -100,6 +101,30 @@ function ActiveOrderCard({ order, canViewOrders, onOpenInPos, t }) {
   );
 }
 
+// Compact — deliberately not the full ActiveOrderCard: the point here isn't
+// this draft's financials, it's "handle or cancel it before the visit can
+// finish", so the ORD number + a direct path to POS is all that matters.
+function DraftOrderRow({ order, onOpenInPos, t }) {
+  return (
+    <div className="flex items-center justify-between gap-2 rounded-xl border border-amber-400/20 bg-amber-500/[0.05] px-3 py-2.5">
+      <div className="flex items-center gap-2">
+        <span className="text-xs font-bold text-slate-100">
+          {orderNumberDisplay(order.orderNumber, order.orderNumberFormatted)}
+        </span>
+        <StatusBadge tone="info">{order.status}</StatusBadge>
+      </div>
+      <button
+        type="button"
+        onClick={() => onOpenInPos(order)}
+        className="flex items-center gap-1.5 rounded-lg border border-blue-400/30 bg-blue-500/10 px-2.5 py-1 text-[11px] font-bold text-blue-200 hover:bg-blue-500/20"
+      >
+        <ExternalLink size={12} />
+        {t("restaurantFloor.details.openInPos")}
+      </button>
+    </div>
+  );
+}
+
 function AttentionCard({ attention, canManage, onAcknowledge, onResolve, isPending, t }) {
   return (
     <div className="rounded-xl border border-rose-400/20 bg-rose-500/[0.04] p-3">
@@ -156,6 +181,19 @@ export function RestaurantTableDetailsDrawer({
   const { t } = useI18n();
   const navigate = useNavigate();
   const [activeDialog, setActiveDialog] = useState(null);
+  // Release rejections are shown as a persistent banner (not just a toast)
+  // since KitchenIncomplete in particular pairs with a "Go to Kitchen"
+  // action that needs somewhere stable to live. Cleared whenever the
+  // selected table changes, so it never bleeds into a different table —
+  // done as a render-time reset (React's documented pattern for resetting
+  // state when a prop changes) rather than an effect, since setState
+  // synchronously inside an effect body causes an extra cascading render.
+  const [releaseError, setReleaseError] = useState(null);
+  const [releaseErrorTableId, setReleaseErrorTableId] = useState(table?.restaurantTableId);
+  if (table?.restaurantTableId !== releaseErrorTableId) {
+    setReleaseErrorTableId(table?.restaurantTableId);
+    setReleaseError(null);
+  }
 
   const releaseMutation = useReleaseTableSession(companyId, branchId);
   const seatReservationMutation = useSeatRestaurantReservation(companyId, branchId);
@@ -174,11 +212,17 @@ export function RestaurantTableDetailsDrawer({
   // re-deriving it from activeOrders) is what keeps this single source of
   // truth instead of a second, potentially-divergent client calculation.
   const hasOutstandingBalance = state === "WAITING_PAYMENT";
+  // Draft orders now BLOCK release outright (backend rejects with
+  // RestaurantTableSession.DraftOrderPending) — this is inspected directly
+  // from activeOrders rather than relied on via operationalState, since a
+  // session can carry a Draft order while still showing OCCUPIED (or even
+  // alongside a fully-paid Confirmed order) per the finalized lifecycle.
   const draftOrders = table.activeOrders.filter((order) => order.status === "Draft");
+  const hasBlockingDraftOrder = draftOrders.length > 0;
 
   const canSeatGuests = canManage && state === "AVAILABLE";
   const canEditSession = canManage && Boolean(session) && state !== "UNAVAILABLE";
-  const canRelease = canManage && Boolean(session) && !hasOutstandingBalance;
+  const canRelease = canManage && Boolean(session) && !hasOutstandingBalance && !hasBlockingDraftOrder;
   const canFlagAttention = canManage && Boolean(session);
 
   const openInPos = (order) => {
@@ -190,14 +234,26 @@ export function RestaurantTableDetailsDrawer({
     navigate(ROUTES.POS);
   };
 
+  const goToKitchen = () => navigate(ROUTES.KITCHEN);
+
   const confirmRelease = async () => {
     if (!session) return;
+    setReleaseError(null);
     try {
       await releaseMutation.mutateAsync(session.restaurantTableSessionId);
       toast.success(t("restaurantFloor.toast.released", { code: table.code }));
       setActiveDialog(null);
     } catch (error) {
-      toast.error(error?.message || t("restaurantFloor.error.message"));
+      // Backend stays authoritative: even if local data looked releasable
+      // (a genuine race — e.g. a draft was opened, a payment posted, or
+      // kitchen state changed after this table was loaded), its rejection
+      // is trusted over whatever this drawer assumed. useReleaseTableSession
+      // already refetches floor-state on settle (success or rejection), so
+      // this view will correct itself once that lands.
+      setActiveDialog(null);
+      setReleaseError(error);
+      const messageKey = getReleaseErrorMessageKey(error);
+      toast.error(messageKey ? t(messageKey) : error?.message || t("restaurantFloor.error.message"));
     }
   };
 
@@ -232,14 +288,12 @@ export function RestaurantTableDetailsDrawer({
     }
   };
 
-  // Advisory only — never blocks the confirm action itself, since the
-  // backend stays authoritative on whether release is actually allowed
-  // (it already blocks on outstanding Confirmed balances on its own; it
-  // does not block on Draft orders or unresolved attention).
+  // Attention is unchanged: still advisory-only, never a lifecycle blocker.
+  // Draft orders are no longer listed here — they now block the Release
+  // button from rendering at all (see hasBlockingDraftOrder / the Draft
+  // Order Pending section), so by the time this dialog can even open there
+  // are none left to warn about.
   const releaseWarnings = [];
-  if (draftOrders.length > 0) {
-    releaseWarnings.push(t("restaurantFloor.confirm.draftOrderWarning", { count: draftOrders.length }));
-  }
   if (activeAttentions.length > 0) {
     releaseWarnings.push(
       t("restaurantFloor.confirm.unresolvedAttentionWarning", { count: activeAttentions.length }),
@@ -278,6 +332,55 @@ export function RestaurantTableDetailsDrawer({
             </span>
           )}
         </div>
+
+        {/* RELEASE REJECTION — persistent (not just a toast) so
+            KitchenIncomplete's "Go to Kitchen" action has somewhere stable
+            to live. Backend stays authoritative: this only ever appears
+            after a real rejection, never a client-side guess. */}
+        {releaseError && (
+          <div className="mt-3 rounded-xl border border-rose-400/25 bg-rose-500/10 p-3">
+            <div className="flex items-start gap-2">
+              <AlertTriangle size={16} className="mt-0.5 shrink-0 text-rose-300" />
+              <p className="text-xs leading-5 text-rose-100">
+                {(() => {
+                  const messageKey = getReleaseErrorMessageKey(releaseError);
+                  return messageKey ? t(messageKey) : releaseError.message || t("restaurantFloor.error.message");
+                })()}
+              </p>
+            </div>
+            {releaseError.code === "SalesOrder.KitchenIncomplete" && (
+              <button
+                type="button"
+                onClick={goToKitchen}
+                className="mt-2 flex h-9 w-full items-center justify-center gap-1.5 rounded-lg border border-rose-400/25 bg-rose-500/10 text-xs font-bold text-rose-100 hover:bg-rose-500/20"
+              >
+                <ChefHat size={13} />
+                {t("restaurantFloor.releaseError.goToKitchen")}
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* DRAFT ORDER PENDING — blocking, not advisory: the backend now
+            rejects Release outright while any Draft order remains linked to
+            the session (RestaurantTableSession.DraftOrderPending). Checked
+            directly against activeOrders, independent of operationalState,
+            since a Draft can coexist with an OCCUPIED or even fully-paid
+            Confirmed order. */}
+        {session && hasBlockingDraftOrder && (
+          <section className="mt-4">
+            <h3 className="mb-2 flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wide text-amber-300">
+              <AlertTriangle size={13} />
+              {t("restaurantFloor.draftPending.title")}
+            </h3>
+            <p className="mb-2 text-xs leading-5 text-slate-400">{t("restaurantFloor.draftPending.message")}</p>
+            <div className="space-y-2">
+              {draftOrders.map((order) => (
+                <DraftOrderRow key={order.salesOrderId} order={order} onOpenInPos={openInPos} t={t} />
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* CURRENT SESSION */}
         {session && (

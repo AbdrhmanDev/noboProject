@@ -1,5 +1,6 @@
 import { Armchair, Ban, CalendarClock, CircleCheck, Clock, ReceiptText } from "lucide-react";
 import { differenceInMinutes } from "date-fns";
+import type { ApiError } from "../../../shared/api/apiError";
 import type {
   RestaurantOperationalState,
   RestaurantTableAttentionType,
@@ -98,4 +99,19 @@ export const ATTENTION_STATUS_LABEL_KEYS = {
 // attention has been acknowledged, the indicator stays visible but calm.
 export function hasOpenAttention(activeAttentions: { status: string }[]) {
   return activeAttentions.some((attention) => attention.status === "Open");
+}
+
+// Release is now a transactional end-of-visit action with real business
+// rejection reasons. These three codes are the ones the backend's finalized
+// release lifecycle can return; everything else falls back to the generic
+// error message. Raw codes are never shown to the user.
+export const RELEASE_ERROR_MESSAGE_KEYS: Record<string, string> = {
+  "RestaurantTableSession.DraftOrderPending": "restaurantFloor.releaseError.draftOrderPending",
+  "SalesOrder.PaymentIncomplete": "restaurantFloor.releaseError.paymentIncomplete",
+  "SalesOrder.KitchenIncomplete": "restaurantFloor.releaseError.kitchenIncomplete",
+};
+
+export function getReleaseErrorMessageKey(error: ApiError | null | undefined) {
+  if (!error?.code) return null;
+  return RELEASE_ERROR_MESSAGE_KEYS[error.code] || null;
 }

@@ -130,7 +130,12 @@ export function useReleaseTableSession(
   return useMutation({
     mutationFn: (sessionId: string) =>
       releaseRestaurantTableSession(companyId as string, branchId as string, sessionId),
-    onSuccess: () => invalidateFloorState(queryClient, companyId, branchId),
+    // onSettled (not onSuccess): the backend's release rules now depend on
+    // live state (Draft orders, remaining balances, kitchen readiness) that
+    // can change between when this table was loaded and when Release was
+    // attempted — a rejection is exactly the case where local data is
+    // stale, so it needs the same refetch a success gets.
+    onSettled: () => invalidateFloorState(queryClient, companyId, branchId),
   });
 }
 
