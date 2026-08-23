@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   activateSupplier,
   createSupplier,
+  getAllSuppliers,
   getSupplierDetails,
   getSuppliers,
   suspendSupplier,
@@ -19,6 +20,8 @@ export const supplierQueryKeys = {
     ["procurement", "suppliers", companyId, filters] as const,
   details: (companyId: string, supplierId: string) =>
     ["procurement", "suppliers", companyId, "detail", supplierId] as const,
+  allForPicker: (companyId: string, filters: Omit<SuppliersListFilters, "pageNumber" | "pageSize"> = {}) =>
+    ["procurement", "suppliers", companyId, "all", filters] as const,
 };
 
 function invalidateSuppliers(
@@ -45,6 +48,21 @@ export function useSuppliers(
   return useQuery({
     queryKey: supplierQueryKeys.list(companyId || "", filters),
     queryFn: () => getSuppliers(companyId as string, filters),
+    enabled: Boolean(companyId) && enabled,
+  });
+}
+
+// For pickers/filters that need the complete active (or all) supplier set
+// as a single flat array — never used by the main Suppliers management
+// list, which stays a normal server-paginated useSuppliers() at ~25/page.
+export function useAllSuppliers(
+  companyId: string | null | undefined,
+  filters: Omit<SuppliersListFilters, "pageNumber" | "pageSize"> = {},
+  enabled = true,
+) {
+  return useQuery({
+    queryKey: supplierQueryKeys.allForPicker(companyId || "", filters),
+    queryFn: () => getAllSuppliers(companyId as string, filters),
     enabled: Boolean(companyId) && enabled,
   });
 }

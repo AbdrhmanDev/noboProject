@@ -18,6 +18,17 @@ export function grnNumberDisplay(grnNumber?: number | null, grnNumberFormatted?:
   return "";
 }
 
+// This backend's Procurement DTOs (confirmed against a real captured
+// response) expose no currency field anywhere — unlike Sales/POS, where
+// currencyCode travels on every order. Rather than append the JavaScript
+// value `undefined` (the literal bug this fixes) or fabricate a currency
+// that was never part of the contract, Procurement renders a plain
+// formatted number. If the backend contract adds a currency field later,
+// this is the one place to start passing it through.
+export function formatPurchaseAmount(amount: number) {
+  return amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 export const PURCHASE_ORDER_STATUS_LABEL_KEYS: Record<PurchaseOrderStatus, string> = {
   Draft: "procurement.po.status.draft",
   Submitted: "procurement.po.status.submitted",

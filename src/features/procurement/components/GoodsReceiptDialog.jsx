@@ -29,7 +29,7 @@ export function GoodsReceiptDialog({ companyId, branchId, purchaseOrder, onClose
   const [formError, setFormError] = useState("");
 
   const locations = locationsQuery.data || [];
-  const receivableLines = purchaseOrder.lines.filter((line) => line.orderedQuantity - line.receivedQuantity > 0);
+  const receivableLines = purchaseOrder.lines.filter((line) => line.remainingQuantity > 0);
 
   const setLineQuantity = (purchaseOrderLineId, value) => {
     setQuantities((current) => ({ ...current, [purchaseOrderLineId]: value }));
@@ -50,13 +50,12 @@ export function GoodsReceiptDialog({ companyId, branchId, purchaseOrder, onClose
       const raw = quantities[line.purchaseOrderLineId];
       if (raw === undefined || raw === "" || Number(raw) === 0) continue;
 
-      const remaining = line.orderedQuantity - line.receivedQuantity;
       const receivedQuantity = Number(raw);
       if (!Number.isFinite(receivedQuantity) || receivedQuantity <= 0) {
         setFormError(t("procurement.receipt.form.quantityInvalid"));
         return;
       }
-      if (receivedQuantity > remaining) {
+      if (receivedQuantity > line.remainingQuantity) {
         setFormError(t("procurement.receipt.form.exceedsRemaining", { item: line.inventoryItemName }));
         return;
       }
@@ -150,31 +149,28 @@ export function GoodsReceiptDialog({ companyId, branchId, purchaseOrder, onClose
             <span>{t("procurement.receipt.remaining")}</span>
             <span>{t("procurement.receipt.receiveNow")}</span>
           </div>
-          {receivableLines.map((line) => {
-            const remaining = line.orderedQuantity - line.receivedQuantity;
-            return (
-              <div
-                key={line.purchaseOrderLineId}
-                className="grid grid-cols-2 gap-2 rounded-xl border border-white/10 bg-white/[0.025] p-2.5 lg:grid-cols-[2fr_1fr_1fr_1fr_1fr] lg:items-center"
-              >
-                <div className="col-span-2 text-xs font-bold text-slate-100 lg:col-span-1">
-                  {line.inventoryItemName}
-                  <span className="ms-1 text-slate-500">({line.baseUnitOfMeasure.symbol})</span>
-                </div>
-                <div className="text-xs text-slate-300">{line.orderedQuantity}</div>
-                <div className="text-xs text-slate-300">{line.receivedQuantity}</div>
-                <div className="text-xs font-bold text-amber-300">{remaining}</div>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={quantities[line.purchaseOrderLineId] ?? ""}
-                  onChange={(event) => setLineQuantity(line.purchaseOrderLineId, event.target.value)}
-                  placeholder="0"
-                  className="h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm font-bold text-white outline-none focus:border-emerald-400/60"
-                />
+          {receivableLines.map((line) => (
+            <div
+              key={line.purchaseOrderLineId}
+              className="grid grid-cols-2 gap-2 rounded-xl border border-white/10 bg-white/[0.025] p-2.5 lg:grid-cols-[2fr_1fr_1fr_1fr_1fr] lg:items-center"
+            >
+              <div className="col-span-2 text-xs font-bold text-slate-100 lg:col-span-1">
+                {line.inventoryItemName}
+                <span className="ms-1 text-[10px] text-slate-500">({line.inventoryItemCode})</span>
               </div>
-            );
-          })}
+              <div className="text-xs text-slate-300">{line.orderedQuantity}</div>
+              <div className="text-xs text-slate-300">{line.receivedQuantity}</div>
+              <div className="text-xs font-bold text-amber-300">{line.remainingQuantity}</div>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={quantities[line.purchaseOrderLineId] ?? ""}
+                onChange={(event) => setLineQuantity(line.purchaseOrderLineId, event.target.value)}
+                placeholder="0"
+                className="h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm font-bold text-white outline-none focus:border-emerald-400/60"
+              />
+            </div>
+          ))}
         </div>
 
         <button

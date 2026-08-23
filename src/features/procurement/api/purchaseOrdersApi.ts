@@ -4,6 +4,7 @@ import type {
   PostPurchaseGoodsReceiptRequest,
   PurchaseGoodsReceipt,
   PurchaseOrderDetails,
+  PurchaseOrderDetailsResponse,
   PurchaseOrdersListFilters,
   PurchaseOrdersListResponse,
   UpdatePurchaseOrderRequest,
@@ -34,12 +35,14 @@ export async function getPurchaseOrders(
   return response.data;
 }
 
+// Real response root is { order, receipts } — the order's own fields are
+// NOT at the root. Confirmed against a captured authenticated response.
 export async function getPurchaseOrderDetails(
   companyId: string,
   branchId: string,
   purchaseOrderId: string,
 ) {
-  const response = await httpClient.get<PurchaseOrderDetails>(
+  const response = await httpClient.get<PurchaseOrderDetailsResponse>(
     `${purchaseOrdersBaseUrl(companyId, branchId)}/${purchaseOrderId}`,
   );
 

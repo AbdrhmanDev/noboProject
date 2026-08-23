@@ -1,23 +1,22 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowRight, FileText } from "lucide-react";
 import { toast } from "sonner";
 import AppLayout from "../../components/AppLayout";
 import { EmptyState, ErrorState, LoadingState } from "../../shared/components/ui";
-import { formatMoney } from "../../shared/utils/formatters";
 import { useI18n } from "../../i18n/I18nContext";
 import { useCompany } from "../../features/companies/context/CompanyContext";
 import { useBranch } from "../../features/branches/context/BranchContext";
 import { useHasPermission } from "../../features/companies/hooks/useCompanies";
 import { useActiveInventoryItems } from "../../features/inventory/hooks/useInventory";
-import { useSuppliers } from "../../features/procurement/hooks/useSuppliers";
+import { useAllSuppliers } from "../../features/procurement/hooks/useSuppliers";
 import {
   useCreatePurchaseOrder,
   usePurchaseOrderDetails,
   useUpdatePurchaseOrder,
 } from "../../features/procurement/hooks/usePurchaseOrders";
 import { PurchaseOrderLineEditor } from "../../features/procurement/components/PurchaseOrderLineEditor";
-import { purchaseOrderNumberDisplay } from "../../features/procurement/utils/procurementFormatters";
+import { formatPurchaseAmount, purchaseOrderNumberDisplay } from "../../features/procurement/utils/procurementFormatters";
 import { ROUTES, purchaseOrderDetailsPath } from "../../utils/routes";
 
 const PURCHASES_VIEW_PERMISSION = "Purchases.View";
@@ -58,7 +57,10 @@ export default function PurchaseOrderEditorPage() {
   // New POs default to only Active suppliers (a suspended supplier can
   // still be seen historically on already-created orders, but shouldn't be
   // picked for a new one) — backend still validates Submit regardless.
-  const suppliersQuery = useSuppliers(currentCompanyId, { status: "Active", pageSize: 200 }, canQuery && canManage);
+  // useAllSuppliers drains every page at the backend's legal page size
+  // instead of requesting one oversized page (pageSize=200 was rejected
+  // with a 400 — this endpoint's real page-size ceiling is smaller).
+  const suppliersQuery = useAllSuppliers(currentCompanyId, { status: "Active" }, canQuery && canManage);
   const activeItemsQuery = useActiveInventoryItems(currentCompanyId, canQuery && canManage);
 
   const createMutation = useCreatePurchaseOrder(currentCompanyId, currentBranchId);
@@ -71,10 +73,15 @@ export default function PurchaseOrderEditorPage() {
   const [formError, setFormError] = useState("");
   const [hydrated, setHydrated] = useState(!isEdit);
 
-  const po = poDetailsQuery.data;
+  // Real GET details response root is { order, receipts } — not the order's
+  // own fields directly.
+  const po = poDetailsQuery.data?.order;
 
-  useEffect(() => {
-    if (!isEdit || !po || hydrated) return;
+  // Hydrate the editable fields from the server once, the moment PO details
+  // finish loading — done as a render-time state adjustment (React's
+  // documented pattern for this) rather than an effect, since setState
+  // synchronously inside an effect body causes an extra cascading render.
+  if (isEdit && po && !hydrated) {
     setSupplierId(po.supplierId);
     setExpectedDeliveryDate(toDateInputValue(po.expectedDeliveryDateUtc));
     setNote(po.note || "");
@@ -87,10 +94,10 @@ export default function PurchaseOrderEditorPage() {
       })),
     );
     setHydrated(true);
-  }, [isEdit, po, hydrated]);
+  }
 
   const items = activeItemsQuery.data || [];
-  const suppliers = suppliersQuery.data?.items || [];
+  const suppliers = suppliersQuery.data || [];
 
   const isPending = createMutation.isPending || updateMutation.isPending;
 
@@ -265,12 +272,7 @@ export default function PurchaseOrderEditorPage() {
               {activeItemsQuery.isLoading ? (
                 <LoadingState label={t("procurement.loading")} />
               ) : (
-                <PurchaseOrderLineEditor
-                  lines={lines}
-                  onChange={setLines}
-                  items={items}
-                  currencyCode={po?.currencyCode}
-                />
+                <PurchaseOrderLineEditor lines={lines} onChange={setLines} items={items} />
               )}
             </section>
 
@@ -278,9 +280,7 @@ export default function PurchaseOrderEditorPage() {
               <span className="text-xs font-bold uppercase tracking-wide text-slate-500">
                 {t("procurement.po.total")}
               </span>
-              <span className="text-lg font-black text-white">
-                {po?.currencyCode ? formatMoney(previewTotal, po.currencyCode, 2) : previewTotal.toFixed(2)}
-              </span>
+              <span className="text-lg font-black text-white">{formatPurchaseAmount(previewTotal)}</span>
             </section>
 
             <button

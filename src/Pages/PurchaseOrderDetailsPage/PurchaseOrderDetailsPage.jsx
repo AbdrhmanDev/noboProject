@@ -4,7 +4,7 @@ import { ArrowRight, FileText, PackageCheck } from "lucide-react";
 import { toast } from "sonner";
 import AppLayout from "../../components/AppLayout";
 import { EmptyState, ErrorState, LoadingState } from "../../shared/components/ui";
-import { formatDateTime, formatMoney } from "../../shared/utils/formatters";
+import { formatDateTime } from "../../shared/utils/formatters";
 import { useI18n } from "../../i18n/I18nContext";
 import { useCompany } from "../../features/companies/context/CompanyContext";
 import { useBranch } from "../../features/branches/context/BranchContext";
@@ -12,7 +12,6 @@ import { useHasPermission } from "../../features/companies/hooks/useCompanies";
 import {
   useCancelPurchaseOrder,
   useClosePurchaseOrder,
-  usePurchaseGoodsReceipts,
   usePurchaseOrderDetails,
   useSubmitPurchaseOrder,
 } from "../../features/procurement/hooks/usePurchaseOrders";
@@ -20,6 +19,7 @@ import { PurchaseOrderStatusBadge } from "../../features/procurement/components/
 import { GoodsReceiptDialog } from "../../features/procurement/components/GoodsReceiptDialog";
 import { ConfirmActionDialog } from "../../features/procurement/components/ConfirmActionDialog";
 import {
+  formatPurchaseAmount,
   getProcurementErrorMessageKey,
   grnNumberDisplay,
   purchaseOrderNumberDisplay,
@@ -64,10 +64,13 @@ export default function PurchaseOrderDetailsPage() {
   const canManage = !managePermissionQuery.isLoading && managePermissionQuery.hasPermission;
   const canReceive = !receivePermissionQuery.isLoading && receivePermissionQuery.hasPermission;
 
+  // Real response root is { order, receipts } — the GET details endpoint
+  // already returns the complete receipt history, so that's the one source
+  // used here; the dedicated GET .../receipts endpoint stays available for
+  // other workflows without being called a second time on this page.
   const poQuery = usePurchaseOrderDetails(currentCompanyId, currentBranchId, purchaseOrderId, canQuery);
-  const receiptsQuery = usePurchaseGoodsReceipts(currentCompanyId, currentBranchId, purchaseOrderId, canQuery);
-  const po = poQuery.data;
-  const receipts = receiptsQuery.data || [];
+  const po = poQuery.data?.order;
+  const receipts = poQuery.data?.receipts || [];
 
   const submitMutation = useSubmitPurchaseOrder(currentCompanyId, currentBranchId, purchaseOrderId);
   const cancelMutation = useCancelPurchaseOrder(currentCompanyId, currentBranchId, purchaseOrderId);
@@ -240,19 +243,11 @@ export default function PurchaseOrderDetailsPage() {
                           {line.inventoryItemName}
                           <span className="ms-1 text-[10px] text-slate-500">({line.inventoryItemCode})</span>
                         </td>
-                        <td className="py-2.5 text-slate-300">
-                          {line.orderedQuantity} {line.baseUnitOfMeasure.symbol}
-                        </td>
+                        <td className="py-2.5 text-slate-300">{line.orderedQuantity}</td>
                         <td className="py-2.5 text-slate-300">{line.receivedQuantity}</td>
-                        <td className="py-2.5 font-bold text-amber-300">
-                          {line.orderedQuantity - line.receivedQuantity}
-                        </td>
-                        <td className="py-2.5 text-slate-300">
-                          {formatMoney(line.unitCost, po.currencyCode, po.currencyMinorUnitDigits)}
-                        </td>
-                        <td className="py-2.5 font-bold text-white">
-                          {formatMoney(line.lineTotal, po.currencyCode, po.currencyMinorUnitDigits)}
-                        </td>
+                        <td className="py-2.5 font-bold text-amber-300">{line.remainingQuantity}</td>
+                        <td className="py-2.5 text-slate-300">{formatPurchaseAmount(line.unitCost)}</td>
+                        <td className="py-2.5 font-bold text-white">{formatPurchaseAmount(line.lineTotal)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -262,9 +257,7 @@ export default function PurchaseOrderDetailsPage() {
                 <span className="text-xs font-bold uppercase tracking-wide text-slate-500">
                   {t("procurement.po.total")}
                 </span>
-                <span className="text-base font-black text-white">
-                  {formatMoney(po.totalAmount, po.currencyCode, po.currencyMinorUnitDigits)}
-                </span>
+                <span className="text-base font-black text-white">{formatPurchaseAmount(po.totalAmount)}</span>
               </div>
             </section>
 
@@ -272,9 +265,7 @@ export default function PurchaseOrderDetailsPage() {
               <h2 className="mb-3 text-xs font-black uppercase tracking-wide text-slate-500">
                 {t("procurement.receipt.history")}
               </h2>
-              {receiptsQuery.isLoading ? (
-                <LoadingState label={t("procurement.loading")} />
-              ) : receipts.length === 0 ? (
+              {receipts.length === 0 ? (
                 <EmptyState
                   title={t("procurement.receipt.empty.title")}
                   message={t("procurement.receipt.empty.message")}
@@ -302,9 +293,7 @@ export default function PurchaseOrderDetailsPage() {
                             className="flex items-center justify-between text-[11px] text-slate-300"
                           >
                             <span>{line.inventoryItemName}</span>
-                            <span className="font-bold text-emerald-300">
-                              +{line.receivedQuantity} {line.baseUnitOfMeasure.symbol}
-                            </span>
+                            <span className="font-bold text-emerald-300">+{line.receivedQuantity}</span>
                           </div>
                         ))}
                       </div>

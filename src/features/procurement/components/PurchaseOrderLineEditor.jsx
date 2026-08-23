@@ -1,13 +1,13 @@
 import { Plus, Trash2 } from "lucide-react";
 import { useI18n } from "../../../i18n/I18nContext";
-import { formatMoney } from "../../../shared/utils/formatters";
+import { formatPurchaseAmount } from "../utils/procurementFormatters";
 import { InventoryItemPicker } from "./InventoryItemPicker";
 
 // Draft-only editor: quantity/cost text inputs stay decimal-safe by keeping
 // the raw string in state and only parsing to a number at save time (the
 // parent already does that) — this avoids the classic "0.10" -> "0.1"
 // re-render fight controlled numeric inputs cause.
-export function PurchaseOrderLineEditor({ lines, onChange, items, currencyCode, disabled }) {
+export function PurchaseOrderLineEditor({ lines, onChange, items, disabled }) {
   const { t } = useI18n();
 
   const addLine = () => {
@@ -35,7 +35,6 @@ export function PurchaseOrderLineEditor({ lines, onChange, items, currencyCode, 
       </div>
 
       {lines.map((line) => {
-        const item = items.find((candidate) => candidate.inventoryItemId === line.inventoryItemId);
         const quantity = Number(line.orderedQuantity);
         const unitCost = Number(line.unitCost);
         const lineTotal = Number.isFinite(quantity) && Number.isFinite(unitCost) ? quantity * unitCost : 0;
@@ -72,9 +71,7 @@ export function PurchaseOrderLineEditor({ lines, onChange, items, currencyCode, 
               disabled={disabled}
               className="h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
             />
-            <div className="text-xs font-bold text-slate-200">
-              {item && currencyCode ? formatMoney(lineTotal, currencyCode, 2) : lineTotal.toFixed(2)}
-            </div>
+            <div className="text-xs font-bold text-slate-200">{formatPurchaseAmount(lineTotal)}</div>
             {!disabled && (
               <button
                 type="button"

@@ -3,15 +3,15 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Plus, Search, Truck } from "lucide-react";
 import AppLayout from "../../components/AppLayout";
 import { EmptyState, ErrorState, LoadingState } from "../../shared/components/ui";
-import { formatDateTime, formatMoney } from "../../shared/utils/formatters";
+import { formatDateTime } from "../../shared/utils/formatters";
 import { useI18n } from "../../i18n/I18nContext";
 import { useCompany } from "../../features/companies/context/CompanyContext";
 import { useBranch } from "../../features/branches/context/BranchContext";
 import { useHasPermission } from "../../features/companies/hooks/useCompanies";
-import { useSuppliers } from "../../features/procurement/hooks/useSuppliers";
+import { useAllSuppliers } from "../../features/procurement/hooks/useSuppliers";
 import { usePurchaseOrders } from "../../features/procurement/hooks/usePurchaseOrders";
 import { PurchaseOrderStatusBadge } from "../../features/procurement/components/PurchaseOrderStatusBadge";
-import { purchaseOrderNumberDisplay } from "../../features/procurement/utils/procurementFormatters";
+import { formatPurchaseAmount, purchaseOrderNumberDisplay } from "../../features/procurement/utils/procurementFormatters";
 import { ROUTES, purchaseOrderDetailsPath } from "../../utils/routes";
 
 const PURCHASES_VIEW_PERMISSION = "Purchases.View";
@@ -64,8 +64,10 @@ export default function PurchasesPage() {
     return () => clearTimeout(handle);
   }, [searchInput]);
 
-  const suppliersQuery = useSuppliers(currentCompanyId, { pageSize: 200 }, canQuery);
-  const suppliers = suppliersQuery.data?.items || [];
+  // Filter dropdown needs the complete supplier set (any status, for
+  // historical filtering) — never the paginated management-list query.
+  const suppliersQuery = useAllSuppliers(currentCompanyId, {}, canQuery);
+  const suppliers = suppliersQuery.data || [];
 
   const filters = useMemo(
     () => ({
@@ -275,7 +277,7 @@ export default function PurchasesPage() {
                               <PurchaseOrderStatusBadge status={order.status} />
                             </td>
                             <td className="py-2.5 font-bold text-white">
-                              {formatMoney(order.totalAmount, order.currencyCode, order.currencyMinorUnitDigits)}
+                              {formatPurchaseAmount(order.totalAmount)}
                             </td>
                             <td className="py-2.5 text-slate-300">
                               {order.totalReceivedQuantity} / {order.totalOrderedQuantity}
@@ -316,7 +318,7 @@ export default function PurchasesPage() {
                         <div className="flex items-center justify-between gap-2 text-[11px] text-slate-400">
                           <span>{order.supplierName}</span>
                           <span className="font-bold text-white">
-                            {formatMoney(order.totalAmount, order.currencyCode, order.currencyMinorUnitDigits)}
+                            {formatPurchaseAmount(order.totalAmount)}
                           </span>
                         </div>
                         <div className="flex items-center justify-between text-[10px] text-slate-500">

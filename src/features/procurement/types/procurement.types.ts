@@ -2,15 +2,23 @@
 // This backend's OpenAPI document (confirmed via /openapi/v1.json) fully
 // describes every request body and query parameter below, but — consistent
 // with every other controller observed in this codebase — it does NOT
-// describe response bodies (each GET/action here has only
-// `"200": { "description": "OK" }`, no schema). Request-side fields are
-// exact and reliable. Response shapes are modeled from: (a) symmetric
-// naming with the confirmed request DTOs, (b) the existing
-// InventoryUnitOfMeasure/InventoryItem shape already established in
-// features/inventory, and (c) this backend's consistent "list + Formatted
-// number" conventions already confirmed for Sales (OrderNumberFormatted)
-// and Restaurant. Every field is read defensively in the API layer — never
-// fabricated.
+// describe response bodies. Request-side fields are exact and reliable.
+//
+// The GET purchase-order-details response shape below (PurchaseOrderDetails
+// + PurchaseOrderDetailsResponse) is taken verbatim from a real captured
+// authenticated response, not modeled/guessed:
+//   { order: { ...no currency fields, no baseUnitOfMeasure on lines,
+//               lines carry a server-computed remainingQuantity... },
+//     receipts: [] }
+// Notably: this Procurement DTO family exposes NO currency field anywhere
+// (list or details) and NO per-line unit-of-measure object — unlike Sales,
+// which carries currencyCode directly on every order. Money is rendered as
+// a plain formatted number with no currency suffix (see
+// procurementFormatters.ts's formatPurchaseAmount) until/unless the backend
+// contract adds one; nothing here fabricates a currency value.
+// Everything else (Suppliers, list items, request bodies) is modeled from
+// symmetric naming with the confirmed request DTOs and this backend's
+// established "Formatted number" convention (OrderNumberFormatted etc.).
 
 export type SupplierStatus = "Active" | "Suspended";
 
@@ -68,13 +76,6 @@ export type PurchaseOrderStatus =
   | "Closed"
   | "Cancelled";
 
-export type InventoryUnitOfMeasureRef = {
-  id: string;
-  code: string;
-  name: string;
-  symbol: string;
-};
-
 export type PurchaseOrderListItem = {
   purchaseOrderId: string;
   purchaseOrderNumber: number;
@@ -83,8 +84,6 @@ export type PurchaseOrderListItem = {
   supplierCode: string;
   supplierName: string;
   status: PurchaseOrderStatus;
-  currencyCode: string;
-  currencyMinorUnitDigits: number;
   totalAmount: number;
   lineCount: number;
   totalOrderedQuantity: number;
@@ -127,40 +126,52 @@ export type CreatePurchaseOrderRequest = {
 
 export type UpdatePurchaseOrderRequest = CreatePurchaseOrderRequest;
 
+// Confirmed verbatim from a real response — no baseUnitOfMeasure object,
+// and remainingQuantity is server-computed (used directly, never
+// recomputed client-side as orderedQuantity - receivedQuantity).
 export type PurchaseOrderLine = {
   purchaseOrderLineId: string;
   inventoryItemId: string;
   inventoryItemCode: string;
   inventoryItemName: string;
-  baseUnitOfMeasure: InventoryUnitOfMeasureRef;
   orderedQuantity: number;
-  receivedQuantity: number;
   unitCost: number;
+  receivedQuantity: number;
+  remainingQuantity: number;
   lineTotal: number;
 };
 
+// Confirmed verbatim from a real response — no currency fields, no
+// per-action user-id fields (just one shared updatedAtUtc).
 export type PurchaseOrderDetails = {
   purchaseOrderId: string;
+  companyId: string;
+  branchId: string;
   purchaseOrderNumber: number;
   purchaseOrderNumberFormatted: string;
   supplierId: string;
   supplierCode: string;
   supplierName: string;
   status: PurchaseOrderStatus;
-  currencyCode: string;
-  currencyMinorUnitDigits: number;
   expectedDeliveryDateUtc: string | null;
   note: string | null;
   totalAmount: number;
   createdAtUtc: string;
-  createdByUserId: string;
+  updatedAtUtc: string;
   submittedAtUtc: string | null;
-  submittedByUserId: string | null;
-  cancelledAtUtc: string | null;
-  cancelledByUserId: string | null;
   closedAtUtc: string | null;
-  closedByUserId: string | null;
+  cancelledAtUtc: string | null;
   lines: PurchaseOrderLine[];
+};
+
+// The real GET .../purchase-orders/{id} response root — order and its
+// complete receipt history bundled together, not the order's own fields at
+// the root. This is the ONE source of receipt history for the details page
+// (see usePurchaseOrderDetails); the dedicated GET .../receipts endpoint
+// stays available for other workflows but isn't called a second time here.
+export type PurchaseOrderDetailsResponse = {
+  order: PurchaseOrderDetails;
+  receipts: PurchaseGoodsReceipt[];
 };
 
 // ---- Goods Receipts ----
@@ -177,12 +188,14 @@ export type PostPurchaseGoodsReceiptRequest = {
   idempotencyKey: string;
 };
 
+// No confirmed real sample exists for a non-empty receipts array (the
+// captured response only had receipts: []); modeled consistently with the
+// now-confirmed PurchaseOrderLine shape — no baseUnitOfMeasure, no currency.
 export type PurchaseGoodsReceiptLine = {
   purchaseOrderLineId: string;
   inventoryItemId: string;
   inventoryItemCode: string;
   inventoryItemName: string;
-  baseUnitOfMeasure: InventoryUnitOfMeasureRef;
   receivedQuantity: number;
 };
 
