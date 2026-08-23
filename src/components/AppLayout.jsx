@@ -19,6 +19,7 @@ import { NAV_ITEMS } from "../utils/navItems";
 import { InventoryNavGroup } from "../features/inventory/components/InventoryNavGroup";
 import { KitchenNavGroup } from "../features/kitchen/components/KitchenNavGroup";
 import { RestaurantNavGroup } from "../features/restaurant/components/RestaurantNavGroup";
+import { ProcurementNavGroup } from "../features/procurement/components/ProcurementNavGroup";
 import { PermissionNavItem } from "./PermissionNavItem";
 import { ComingSoonNavItem } from "./ComingSoonNavItem";
 
@@ -26,6 +27,7 @@ const NAV_GROUPS = {
   inventory: InventoryNavGroup,
   kitchen: KitchenNavGroup,
   restaurant: RestaurantNavGroup,
+  procurement: ProcurementNavGroup,
 };
 
 export default function AppLayout({ children, onLogout }) {

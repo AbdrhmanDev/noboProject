@@ -22,6 +22,8 @@ import KitchenAdminPage from "./Pages/KitchenAdminPage/KitchenAdminPage";
 import SalesPage from "./Pages/SalesPage/SalesPage";
 import SalesOrderDetailsPage from "./Pages/SalesOrderDetailsPage/SalesOrderDetailsPage";
 import PurchasesPage from "./Pages/PurchasesPage/PurchasesPage";
+import PurchaseOrderEditorPage from "./Pages/PurchaseOrderEditorPage/PurchaseOrderEditorPage";
+import PurchaseOrderDetailsPage from "./Pages/PurchaseOrderDetailsPage/PurchaseOrderDetailsPage";
 import InventoryPage from "./Pages/InventoryPage/InventoryPage";
 import InventoryAdminPage from "./Pages/InventoryAdminPage/InventoryAdminPage";
 import CustomersPage from "./Pages/CustomersPage/CustomersPage";
@@ -67,6 +69,9 @@ export default function App() {
               <Route path={ROUTES.SALES} element={protectedPage(<SalesPage />)} />
               <Route path={ROUTES.SALES_ORDER_DETAILS} element={protectedPage(<SalesOrderDetailsPage />)} />
               <Route path={ROUTES.PURCHASES} element={protectedPage(<PurchasesPage />)} />
+              <Route path={ROUTES.PURCHASE_ORDER_NEW} element={protectedPage(<PurchaseOrderEditorPage />)} />
+              <Route path={ROUTES.PURCHASE_ORDER_EDIT} element={protectedPage(<PurchaseOrderEditorPage />)} />
+              <Route path={ROUTES.PURCHASE_ORDER_DETAILS} element={protectedPage(<PurchaseOrderDetailsPage />)} />
               <Route path={ROUTES.INVENTORY} element={protectedPage(<InventoryPage />)} />
               <Route path={ROUTES.INVENTORY_ADMIN} element={protectedPage(<InventoryAdminPage />)} />
               <Route path={ROUTES.CUSTOMERS} element={protectedPage(<CustomersPage />)} />

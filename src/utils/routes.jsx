@@ -19,6 +19,9 @@ export const ROUTES = {
   SALES: "/sales",
   SALES_ORDER_DETAILS: "/sales/orders/:orderId",
   PURCHASES: "/purchases",
+  PURCHASE_ORDER_NEW: "/purchases/new",
+  PURCHASE_ORDER_DETAILS: "/purchases/:purchaseOrderId",
+  PURCHASE_ORDER_EDIT: "/purchases/:purchaseOrderId/edit",
   INVENTORY: "/inventory",
   INVENTORY_ADMIN: "/inventory/admin",
   CUSTOMERS: "/customers",
@@ -36,4 +39,12 @@ export const ROUTES = {
 // Builds the concrete, navigable path for a dynamic route constant.
 export function salesOrderDetailsPath(salesOrderId) {
   return `/sales/orders/${salesOrderId}`;
+}
+
+export function purchaseOrderDetailsPath(purchaseOrderId) {
+  return `/purchases/${purchaseOrderId}`;
+}
+
+export function purchaseOrderEditPath(purchaseOrderId) {
+  return `/purchases/${purchaseOrderId}/edit`;
 }

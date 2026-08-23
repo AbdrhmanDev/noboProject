@@ -1,5 +1,5 @@
 import {
-  Home, ScanLine, ChefHat, ShoppingBag, ShoppingCart, Boxes, Contact, Truck,
+  Home, ScanLine, ChefHat, ShoppingBag, ShoppingCart, Boxes, Contact,
   Calculator, BarChart3, Briefcase, UserCog, Settings, MoreHorizontal, Package,
   Coins, ReceiptText, WalletCards, Armchair,
 } from "lucide-react";
@@ -16,9 +16,8 @@ export const NAV_ITEMS = [
   { icon: Armchair, labelKey: "nav.restaurant", kind: "group", module: "restaurant" },
   { icon: Boxes, labelKey: "nav.inventory", kind: "group", module: "inventory" },
   { icon: ShoppingBag, labelKey: "nav.sales", to: ROUTES.SALES, permission: "SalesOrders.View" },
-  { icon: ShoppingCart, labelKey: "nav.purchases", to: ROUTES.PURCHASES, comingSoon: true },
+  { icon: ShoppingCart, labelKey: "nav.purchases", kind: "group", module: "procurement" },
   { icon: Contact, labelKey: "nav.customers", to: ROUTES.CUSTOMERS, comingSoon: true },
-  { icon: Truck, labelKey: "nav.suppliers", to: ROUTES.SUPPLIERS, comingSoon: true },
   { icon: Calculator, labelKey: "nav.accounting", to: ROUTES.ACCOUNTING, comingSoon: true },
   { icon: BarChart3, labelKey: "nav.reports", to: ROUTES.REPORTS, comingSoon: true },
   { icon: Briefcase, labelKey: "nav.projects", to: ROUTES.PROJECTS, comingSoon: true },
