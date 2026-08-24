@@ -6,16 +6,20 @@
 //
 // The GET purchase-order-details response shape below (PurchaseOrderDetails
 // + PurchaseOrderDetailsResponse) is taken verbatim from a real captured
-// authenticated response, not modeled/guessed:
-//   { order: { ...no currency fields, no baseUnitOfMeasure on lines,
-//               lines carry a server-computed remainingQuantity... },
-//     receipts: [] }
-// Notably: this Procurement DTO family exposes NO currency field anywhere
-// (list or details) and NO per-line unit-of-measure object — unlike Sales,
-// which carries currencyCode directly on every order. Money is rendered as
-// a plain formatted number with no currency suffix (see
-// procurementFormatters.ts's formatPurchaseAmount) until/unless the backend
-// contract adds one; nothing here fabricates a currency value.
+// authenticated response:
+//   { order: { ...no baseUnitOfMeasure on lines, lines carry a
+//               server-computed remainingQuantity... }, receipts: [] }
+//
+// Currency contract (finalized): NOBO has one authoritative
+// Company.DefaultCurrency, snapshotted onto the PurchaseOrder at Draft
+// creation (immutable thereafter). Both the list item and details now
+// return currencyCode + currencyMinorUnitDigits directly on the order —
+// confirmed via a real captured response
+// ({ totalAmount: 1600.0000, currencyCode: "SAR", currencyMinorUnitDigits: 2 }).
+// There is no per-line currency and no independent Goods Receipt currency —
+// every line and every receipt on one PO shares that one order-level
+// currency. currencyMinorUnitDigits is explicitly nullable per the
+// confirmed contract; currencyCode is not.
 // Everything else (Suppliers, list items, request bodies) is modeled from
 // symmetric naming with the confirmed request DTOs and this backend's
 // established "Formatted number" convention (OrderNumberFormatted etc.).
@@ -85,6 +89,8 @@ export type PurchaseOrderListItem = {
   supplierName: string;
   status: PurchaseOrderStatus;
   totalAmount: number;
+  currencyCode: string;
+  currencyMinorUnitDigits: number | null;
   lineCount: number;
   totalOrderedQuantity: number;
   totalReceivedQuantity: number;
@@ -141,8 +147,10 @@ export type PurchaseOrderLine = {
   lineTotal: number;
 };
 
-// Confirmed verbatim from a real response — no currency fields, no
-// per-action user-id fields (just one shared updatedAtUtc).
+// Confirmed verbatim from a real response — no per-action user-id fields
+// (just one shared updatedAtUtc). currencyCode/currencyMinorUnitDigits are
+// the order-level snapshot of Company.DefaultCurrency at Draft creation;
+// every line and every receipt on this order shares this one currency.
 export type PurchaseOrderDetails = {
   purchaseOrderId: string;
   companyId: string;
@@ -156,6 +164,8 @@ export type PurchaseOrderDetails = {
   expectedDeliveryDateUtc: string | null;
   note: string | null;
   totalAmount: number;
+  currencyCode: string;
+  currencyMinorUnitDigits: number | null;
   createdAtUtc: string;
   updatedAtUtc: string;
   submittedAtUtc: string | null;

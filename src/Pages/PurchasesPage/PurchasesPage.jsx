@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Plus, Search, Truck } from "lucide-react";
 import AppLayout from "../../components/AppLayout";
 import { EmptyState, ErrorState, LoadingState } from "../../shared/components/ui";
-import { formatDateTime } from "../../shared/utils/formatters";
+import { formatDateTime, formatMoney } from "../../shared/utils/formatters";
 import { useI18n } from "../../i18n/I18nContext";
 import { useCompany } from "../../features/companies/context/CompanyContext";
 import { useBranch } from "../../features/branches/context/BranchContext";
@@ -11,7 +11,7 @@ import { useHasPermission } from "../../features/companies/hooks/useCompanies";
 import { useAllSuppliers } from "../../features/procurement/hooks/useSuppliers";
 import { usePurchaseOrders } from "../../features/procurement/hooks/usePurchaseOrders";
 import { PurchaseOrderStatusBadge } from "../../features/procurement/components/PurchaseOrderStatusBadge";
-import { formatPurchaseAmount, purchaseOrderNumberDisplay } from "../../features/procurement/utils/procurementFormatters";
+import { purchaseOrderNumberDisplay } from "../../features/procurement/utils/procurementFormatters";
 import { ROUTES, purchaseOrderDetailsPath } from "../../utils/routes";
 
 const PURCHASES_VIEW_PERMISSION = "Purchases.View";
@@ -277,7 +277,7 @@ export default function PurchasesPage() {
                               <PurchaseOrderStatusBadge status={order.status} />
                             </td>
                             <td className="py-2.5 font-bold text-white">
-                              {formatPurchaseAmount(order.totalAmount)}
+                              {formatMoney(order.totalAmount, order.currencyCode, order.currencyMinorUnitDigits ?? undefined)}
                             </td>
                             <td className="py-2.5 text-slate-300">
                               {order.totalReceivedQuantity} / {order.totalOrderedQuantity}
@@ -318,7 +318,7 @@ export default function PurchasesPage() {
                         <div className="flex items-center justify-between gap-2 text-[11px] text-slate-400">
                           <span>{order.supplierName}</span>
                           <span className="font-bold text-white">
-                            {formatPurchaseAmount(order.totalAmount)}
+                            {formatMoney(order.totalAmount, order.currencyCode, order.currencyMinorUnitDigits ?? undefined)}
                           </span>
                         </div>
                         <div className="flex items-center justify-between text-[10px] text-slate-500">

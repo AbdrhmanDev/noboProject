@@ -1,5 +1,6 @@
 import { Plus, Trash2 } from "lucide-react";
 import { useI18n } from "../../../i18n/I18nContext";
+import { formatMoney } from "../../../shared/utils/formatters";
 import { formatPurchaseAmount } from "../utils/procurementFormatters";
 import { InventoryItemPicker } from "./InventoryItemPicker";
 
@@ -7,7 +8,11 @@ import { InventoryItemPicker } from "./InventoryItemPicker";
 // the raw string in state and only parsing to a number at save time (the
 // parent already does that) — this avoids the classic "0.10" -> "0.1"
 // re-render fight controlled numeric inputs cause.
-export function PurchaseOrderLineEditor({ lines, onChange, items, disabled }) {
+//
+// currencyCode is the PO's (or, pre-save, the Company's default) currency —
+// null only in the brief window before either is known, in which case line
+// totals fall back to a numeric-only display (see formatPurchaseAmount).
+export function PurchaseOrderLineEditor({ lines, onChange, items, disabled, currencyCode, currencyMinorUnitDigits }) {
   const { t } = useI18n();
 
   const addLine = () => {
@@ -71,7 +76,11 @@ export function PurchaseOrderLineEditor({ lines, onChange, items, disabled }) {
               disabled={disabled}
               className="h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
             />
-            <div className="text-xs font-bold text-slate-200">{formatPurchaseAmount(lineTotal)}</div>
+            <div className="text-xs font-bold text-slate-200">
+              {currencyCode
+                ? formatMoney(lineTotal, currencyCode, currencyMinorUnitDigits ?? undefined)
+                : formatPurchaseAmount(lineTotal)}
+            </div>
             {!disabled && (
               <button
                 type="button"

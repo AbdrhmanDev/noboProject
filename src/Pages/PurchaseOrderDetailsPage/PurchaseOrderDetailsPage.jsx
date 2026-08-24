@@ -4,7 +4,7 @@ import { ArrowRight, FileText, PackageCheck } from "lucide-react";
 import { toast } from "sonner";
 import AppLayout from "../../components/AppLayout";
 import { EmptyState, ErrorState, LoadingState } from "../../shared/components/ui";
-import { formatDateTime } from "../../shared/utils/formatters";
+import { formatDateTime, formatMoney } from "../../shared/utils/formatters";
 import { useI18n } from "../../i18n/I18nContext";
 import { useCompany } from "../../features/companies/context/CompanyContext";
 import { useBranch } from "../../features/branches/context/BranchContext";
@@ -19,7 +19,6 @@ import { PurchaseOrderStatusBadge } from "../../features/procurement/components/
 import { GoodsReceiptDialog } from "../../features/procurement/components/GoodsReceiptDialog";
 import { ConfirmActionDialog } from "../../features/procurement/components/ConfirmActionDialog";
 import {
-  formatPurchaseAmount,
   getProcurementErrorMessageKey,
   grnNumberDisplay,
   purchaseOrderNumberDisplay,
@@ -246,8 +245,12 @@ export default function PurchaseOrderDetailsPage() {
                         <td className="py-2.5 text-slate-300">{line.orderedQuantity}</td>
                         <td className="py-2.5 text-slate-300">{line.receivedQuantity}</td>
                         <td className="py-2.5 font-bold text-amber-300">{line.remainingQuantity}</td>
-                        <td className="py-2.5 text-slate-300">{formatPurchaseAmount(line.unitCost)}</td>
-                        <td className="py-2.5 font-bold text-white">{formatPurchaseAmount(line.lineTotal)}</td>
+                        <td className="py-2.5 text-slate-300">
+                          {formatMoney(line.unitCost, po.currencyCode, po.currencyMinorUnitDigits ?? undefined)}
+                        </td>
+                        <td className="py-2.5 font-bold text-white">
+                          {formatMoney(line.lineTotal, po.currencyCode, po.currencyMinorUnitDigits ?? undefined)}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -257,7 +260,9 @@ export default function PurchaseOrderDetailsPage() {
                 <span className="text-xs font-bold uppercase tracking-wide text-slate-500">
                   {t("procurement.po.total")}
                 </span>
-                <span className="text-base font-black text-white">{formatPurchaseAmount(po.totalAmount)}</span>
+                <span className="text-base font-black text-white">
+                  {formatMoney(po.totalAmount, po.currencyCode, po.currencyMinorUnitDigits ?? undefined)}
+                </span>
               </div>
             </section>
 

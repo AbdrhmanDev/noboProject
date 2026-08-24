@@ -5,9 +5,10 @@ import { toast } from "sonner";
 import AppLayout from "../../components/AppLayout";
 import { EmptyState, ErrorState, LoadingState } from "../../shared/components/ui";
 import { useI18n } from "../../i18n/I18nContext";
+import { formatMoney } from "../../shared/utils/formatters";
 import { useCompany } from "../../features/companies/context/CompanyContext";
 import { useBranch } from "../../features/branches/context/BranchContext";
-import { useHasPermission } from "../../features/companies/hooks/useCompanies";
+import { useHasPermission, useMyCompanies } from "../../features/companies/hooks/useCompanies";
 import { useActiveInventoryItems } from "../../features/inventory/hooks/useInventory";
 import { useAllSuppliers } from "../../features/procurement/hooks/useSuppliers";
 import {
@@ -62,6 +63,7 @@ export default function PurchaseOrderEditorPage() {
   // with a 400 — this endpoint's real page-size ceiling is smaller).
   const suppliersQuery = useAllSuppliers(currentCompanyId, { status: "Active" }, canQuery && canManage);
   const activeItemsQuery = useActiveInventoryItems(currentCompanyId, canQuery && canManage);
+  const myCompaniesQuery = useMyCompanies(canQuery);
 
   const createMutation = useCreatePurchaseOrder(currentCompanyId, currentBranchId);
   const updateMutation = useUpdatePurchaseOrder(currentCompanyId, currentBranchId, purchaseOrderId);
@@ -76,6 +78,18 @@ export default function PurchaseOrderEditorPage() {
   // Real GET details response root is { order, receipts } — not the order's
   // own fields directly.
   const po = poDetailsQuery.data?.order;
+
+  // Pre-save currency preview: a Draft not yet created has no server-side
+  // CurrencyCode yet, but the backend will snapshot Company.DefaultCurrency
+  // onto it at creation — so until then, mirror that same value from the
+  // Company context (same lookup pattern as AppLayout's company display
+  // name) purely for the editor's own preview math. Once an edit-mode PO
+  // has loaded, its own (immutable) currencyCode always wins.
+  const companyDefaultCurrency = (myCompaniesQuery.data || []).find(
+    (company) => company.companyId === currentCompanyId,
+  )?.defaultCurrency;
+  const previewCurrencyCode = po?.currencyCode || companyDefaultCurrency || null;
+  const previewCurrencyMinorUnitDigits = po?.currencyCode ? po.currencyMinorUnitDigits : null;
 
   // Hydrate the editable fields from the server once, the moment PO details
   // finish loading — done as a render-time state adjustment (React's
@@ -272,7 +286,13 @@ export default function PurchaseOrderEditorPage() {
               {activeItemsQuery.isLoading ? (
                 <LoadingState label={t("procurement.loading")} />
               ) : (
-                <PurchaseOrderLineEditor lines={lines} onChange={setLines} items={items} />
+                <PurchaseOrderLineEditor
+                  lines={lines}
+                  onChange={setLines}
+                  items={items}
+                  currencyCode={previewCurrencyCode}
+                  currencyMinorUnitDigits={previewCurrencyMinorUnitDigits}
+                />
               )}
             </section>
 
@@ -280,7 +300,11 @@ export default function PurchaseOrderEditorPage() {
               <span className="text-xs font-bold uppercase tracking-wide text-slate-500">
                 {t("procurement.po.total")}
               </span>
-              <span className="text-lg font-black text-white">{formatPurchaseAmount(previewTotal)}</span>
+              <span className="text-lg font-black text-white">
+                {previewCurrencyCode
+                  ? formatMoney(previewTotal, previewCurrencyCode, previewCurrencyMinorUnitDigits ?? undefined)
+                  : formatPurchaseAmount(previewTotal)}
+              </span>
             </section>
 
             <button

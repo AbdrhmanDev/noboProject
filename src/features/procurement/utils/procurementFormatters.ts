@@ -18,13 +18,14 @@ export function grnNumberDisplay(grnNumber?: number | null, grnNumberFormatted?:
   return "";
 }
 
-// This backend's Procurement DTOs (confirmed against a real captured
-// response) expose no currency field anywhere — unlike Sales/POS, where
-// currencyCode travels on every order. Rather than append the JavaScript
-// value `undefined` (the literal bug this fixes) or fabricate a currency
-// that was never part of the contract, Procurement renders a plain
-// formatted number. If the backend contract adds a currency field later,
-// this is the one place to start passing it through.
+// PurchaseOrder now snapshots Company.DefaultCurrency at Draft creation and
+// returns currencyCode/currencyMinorUnitDigits on both the list item and
+// details — use the shared formatMoney() (see shared/utils/formatters.ts)
+// wherever that data is available. This numeric-only fallback exists solely
+// for the PO editor's pre-save preview in the narrow window before a Draft
+// exists server-side AND the Company default currency hasn't resolved yet
+// (see PurchaseOrderEditorPage) — never use it once a real currencyCode is
+// on hand.
 export function formatPurchaseAmount(amount: number) {
   return amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
