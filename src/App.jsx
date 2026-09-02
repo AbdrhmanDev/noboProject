@@ -24,6 +24,13 @@ import SalesOrderDetailsPage from "./Pages/SalesOrderDetailsPage/SalesOrderDetai
 import PurchasesPage from "./Pages/PurchasesPage/PurchasesPage";
 import PurchaseOrderEditorPage from "./Pages/PurchaseOrderEditorPage/PurchaseOrderEditorPage";
 import PurchaseOrderDetailsPage from "./Pages/PurchaseOrderDetailsPage/PurchaseOrderDetailsPage";
+import DeviceOverviewPage from "./Pages/DeviceOverviewPage/DeviceOverviewPage";
+import DevicesListPage from "./Pages/DevicesListPage/DevicesListPage";
+import DeviceDetailsPage from "./Pages/DeviceDetailsPage/DeviceDetailsPage";
+import EdgeAgentsListPage from "./Pages/EdgeAgentsListPage/EdgeAgentsListPage";
+import EdgeAgentDetailsPage from "./Pages/EdgeAgentDetailsPage/EdgeAgentDetailsPage";
+import DeviceDiscoveryPage from "./Pages/DeviceDiscoveryPage/DeviceDiscoveryPage";
+import DevicePrintingPage from "./Pages/DevicePrintingPage/DevicePrintingPage";
 import InventoryPage from "./Pages/InventoryPage/InventoryPage";
 import InventoryAdminPage from "./Pages/InventoryAdminPage/InventoryAdminPage";
 import CustomersPage from "./Pages/CustomersPage/CustomersPage";
@@ -72,6 +79,13 @@ export default function App() {
               <Route path={ROUTES.PURCHASE_ORDER_NEW} element={protectedPage(<PurchaseOrderEditorPage />)} />
               <Route path={ROUTES.PURCHASE_ORDER_EDIT} element={protectedPage(<PurchaseOrderEditorPage />)} />
               <Route path={ROUTES.PURCHASE_ORDER_DETAILS} element={protectedPage(<PurchaseOrderDetailsPage />)} />
+              <Route path={ROUTES.DEVICES_OVERVIEW} element={protectedPage(<DeviceOverviewPage />)} />
+              <Route path={ROUTES.DEVICES_LIST} element={protectedPage(<DevicesListPage />)} />
+              <Route path={ROUTES.DEVICE_DETAILS} element={protectedPage(<DeviceDetailsPage />)} />
+              <Route path={ROUTES.EDGE_AGENTS} element={protectedPage(<EdgeAgentsListPage />)} />
+              <Route path={ROUTES.EDGE_AGENT_DETAILS} element={protectedPage(<EdgeAgentDetailsPage />)} />
+              <Route path={ROUTES.DEVICE_DISCOVERY} element={protectedPage(<DeviceDiscoveryPage />)} />
+              <Route path={ROUTES.DEVICE_PRINTING} element={protectedPage(<DevicePrintingPage />)} />
               <Route path={ROUTES.INVENTORY} element={protectedPage(<InventoryPage />)} />
               <Route path={ROUTES.INVENTORY_ADMIN} element={protectedPage(<InventoryAdminPage />)} />
               <Route path={ROUTES.CUSTOMERS} element={protectedPage(<CustomersPage />)} />

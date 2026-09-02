@@ -1,7 +1,7 @@
 import {
   Home, ScanLine, ChefHat, ShoppingBag, ShoppingCart, Boxes, Contact,
   Calculator, BarChart3, Briefcase, UserCog, Settings, MoreHorizontal, Package,
-  Coins, ReceiptText, WalletCards, Armchair,
+  Coins, ReceiptText, WalletCards, Armchair, Printer,
 } from "lucide-react";
 import { ROUTES } from "./routes";
 
@@ -13,6 +13,7 @@ export const NAV_ITEMS = [
   { icon: Coins, labelKey: "nav.pricing", to: ROUTES.PRICING_ADMIN, permission: "Pricing.View", shortcutAction: "navigation.pricing" },
   { icon: ReceiptText, labelKey: "nav.tax", to: ROUTES.TAX_ADMIN, permission: "Tax.View", shortcutAction: "navigation.tax" },
   { icon: WalletCards, labelKey: "nav.payments", to: ROUTES.PAYMENT_METHODS_ADMIN, permission: "Payments.Configure", shortcutAction: "navigation.payments" },
+  { icon: Printer, labelKey: "nav.devices", kind: "group", module: "devices" },
   { icon: Armchair, labelKey: "nav.restaurant", kind: "group", module: "restaurant" },
   { icon: Boxes, labelKey: "nav.inventory", kind: "group", module: "inventory" },
   { icon: ShoppingBag, labelKey: "nav.sales", to: ROUTES.SALES, permission: "SalesOrders.View" },

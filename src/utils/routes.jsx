@@ -26,6 +26,13 @@ export const ROUTES = {
   INVENTORY_ADMIN: "/inventory/admin",
   CUSTOMERS: "/customers",
   SUPPLIERS: "/suppliers",
+  DEVICES_OVERVIEW: "/devices",
+  DEVICES_LIST: "/devices/list",
+  DEVICE_DETAILS: "/devices/list/:deviceId",
+  EDGE_AGENTS: "/devices/agents",
+  EDGE_AGENT_DETAILS: "/devices/agents/:edgeAgentId",
+  DEVICE_DISCOVERY: "/devices/discovery",
+  DEVICE_PRINTING: "/devices/printing",
   ACCOUNTING: "/accounting",
   REPORTS: "/reports",
   PROJECTS: "/projects",
@@ -47,4 +54,12 @@ export function purchaseOrderDetailsPath(purchaseOrderId) {
 
 export function purchaseOrderEditPath(purchaseOrderId) {
   return `/purchases/${purchaseOrderId}/edit`;
+}
+
+export function deviceDetailsPath(deviceId) {
+  return `/devices/list/${deviceId}`;
+}
+
+export function edgeAgentDetailsPath(edgeAgentId) {
+  return `/devices/agents/${edgeAgentId}`;
 }

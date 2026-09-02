@@ -20,6 +20,7 @@ import { InventoryNavGroup } from "../features/inventory/components/InventoryNav
 import { KitchenNavGroup } from "../features/kitchen/components/KitchenNavGroup";
 import { RestaurantNavGroup } from "../features/restaurant/components/RestaurantNavGroup";
 import { ProcurementNavGroup } from "../features/procurement/components/ProcurementNavGroup";
+import { DevicesNavGroup } from "../features/devices/components/DevicesNavGroup";
 import { PermissionNavItem } from "./PermissionNavItem";
 import { ComingSoonNavItem } from "./ComingSoonNavItem";
 
@@ -28,6 +29,7 @@ const NAV_GROUPS = {
   kitchen: KitchenNavGroup,
   restaurant: RestaurantNavGroup,
   procurement: ProcurementNavGroup,
+  devices: DevicesNavGroup,
 };
 
 export default function AppLayout({ children, onLogout }) {
