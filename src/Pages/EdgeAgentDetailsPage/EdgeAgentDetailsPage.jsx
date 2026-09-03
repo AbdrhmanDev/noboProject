@@ -76,12 +76,12 @@ export default function EdgeAgentDetailsPage() {
     [devicesQuery.data, edgeAgentId],
   );
 
-  const issueEnrollmentMutation = useIssueEdgeAgentEnrollment(currentCompanyId, currentBranchId, edgeAgentId);
+  const issueEnrollmentMutation = useIssueEdgeAgentEnrollment(currentCompanyId, currentBranchId);
   const updateStatusMutation = useUpdateEdgeAgentStatus(currentCompanyId, currentBranchId, edgeAgentId);
 
   const issueEnrollment = async () => {
     try {
-      const result = await issueEnrollmentMutation.mutateAsync();
+      const result = await issueEnrollmentMutation.mutateAsync(edgeAgentId);
       setEnrollment(result);
     } catch (error) {
       toast.error(error?.message || t("devices.error.generic"));

@@ -213,7 +213,7 @@ export default function DeviceDetailsPage() {
                     <InfoTile
                       label={t("devices.discovery.transportType")}
                       value={t(
-                        `devices.enum.transportType.${lowerFirst(hardwareBindingQuery.data.transportType)}`,
+                        `devices.enum.transportType.${hardwareBindingQuery.data.transportType.toLowerCase()}`,
                       )}
                     />
                     {hardwareBindingQuery.data.networkAddress && (

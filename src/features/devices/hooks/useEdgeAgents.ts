@@ -79,17 +79,23 @@ export function useCreateEdgeAgent(
 
 // Result is a one-time secret — the caller must hold it in React state only
 // (for the EnrollmentCredentialDialog) and never persist it to storage.
+//
+// edgeAgentId is passed to mutateAsync(edgeAgentId) rather than bound at the
+// hook call site: a caller that just created the agent (e.g.
+// EdgeAgentsListPage) only learns the id from the create response and calls
+// mutateAsync in the same handler — binding it via the hook's own render-time
+// argument would close over the pre-update state value (still null/undefined)
+// since the setState that stores it hasn't re-rendered yet.
 export function useIssueEdgeAgentEnrollment(
   companyId: string | null | undefined,
   branchId: string | null | undefined,
-  edgeAgentId: string | null | undefined,
 ) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () =>
-      issueEdgeAgentEnrollment(companyId as string, branchId as string, edgeAgentId as string),
-    onSuccess: () => invalidateEdgeAgents(queryClient, companyId, branchId, edgeAgentId),
+    mutationFn: (edgeAgentId: string) =>
+      issueEdgeAgentEnrollment(companyId as string, branchId as string, edgeAgentId),
+    onSuccess: (_data, edgeAgentId) => invalidateEdgeAgents(queryClient, companyId, branchId, edgeAgentId),
   });
 }
 

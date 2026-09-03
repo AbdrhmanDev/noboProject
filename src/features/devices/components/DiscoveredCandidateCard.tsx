@@ -56,7 +56,7 @@ export function DiscoveredCandidateCard({
         <div>
           <div className="text-slate-500">{t("devices.discovery.transportType")}</div>
           <div className="mt-0.5 font-semibold text-slate-200">
-            {t(`devices.enum.transportType.${candidate.transportType.charAt(0).toLowerCase()}${candidate.transportType.slice(1)}`)}
+            {t(`devices.enum.transportType.${candidate.transportType.toLowerCase()}`)}
           </div>
         </div>
         {candidate.networkAddress && (

@@ -61,7 +61,7 @@ export function DeviceReadinessChecklist({
       labelKey: "devices.readiness.transport",
       tone: hardwareBinding ? "ok" : "unknown",
       detailKey: hardwareBinding
-        ? `devices.enum.transportType.${hardwareBinding.transportType.charAt(0).toLowerCase()}${hardwareBinding.transportType.slice(1)}`
+        ? `devices.enum.transportType.${hardwareBinding.transportType.toLowerCase()}`
         : undefined,
     },
     {

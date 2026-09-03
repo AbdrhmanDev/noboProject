@@ -30,7 +30,6 @@ export default function EdgeAgentsListPage() {
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [enrollment, setEnrollment] = useState(null);
-  const [pendingAgentId, setPendingAgentId] = useState(null);
 
   const viewPermissionQuery = useHasPermission(currentCompanyId, EDGE_AGENTS_VIEW_PERMISSION);
   const managePermissionQuery = useHasPermission(currentCompanyId, EDGE_AGENTS_MANAGE_PERMISSION);
@@ -42,19 +41,14 @@ export default function EdgeAgentsListPage() {
   const canManage = !managePermissionQuery.isLoading && managePermissionQuery.hasPermission;
 
   const agentsQuery = useEdgeAgents(currentCompanyId, currentBranchId, {}, canQuery);
-  const issueEnrollmentMutation = useIssueEdgeAgentEnrollment(
-    currentCompanyId,
-    currentBranchId,
-    pendingAgentId,
-  );
+  const issueEnrollmentMutation = useIssueEdgeAgentEnrollment(currentCompanyId, currentBranchId);
 
   const openAgent = (edgeAgentId) => navigate(edgeAgentDetailsPath(edgeAgentId));
 
   const handleAgentCreated = async (agent) => {
     setShowCreateDialog(false);
-    setPendingAgentId(agent.edgeAgentId);
     try {
-      const result = await issueEnrollmentMutation.mutateAsync();
+      const result = await issueEnrollmentMutation.mutateAsync(agent.edgeAgentId);
       setEnrollment(result);
     } catch (error) {
       toast.error(error?.message || t("devices.error.generic"));
