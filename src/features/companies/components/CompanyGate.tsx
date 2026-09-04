@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { ErrorState, LoadingState } from "../../../shared/components/ui";
 import { useCompany } from "../context/CompanyContext";
-import { useCompanyDetails, useCompanyPermissions, useMyCompanies } from "../hooks/useCompanies";
+import { useCompanyPermissions, useMyCompanies } from "../hooks/useCompanies";
 import { CompanyOnboarding } from "./CompanyOnboarding";
 import { CompanySelector } from "./CompanySelector";
 
@@ -25,7 +25,6 @@ export function CompanyGate({ children }: CompanyGateProps) {
     isLoading: companiesLoading,
     isError: companiesError,
   } = useMyCompanies();
-  const detailsQuery = useCompanyDetails(currentCompanyId);
   const permissionsQuery = useCompanyPermissions(currentCompanyId);
 
   if (companiesLoading || !isCompanyContextReady) {
@@ -63,21 +62,10 @@ export function CompanyGate({ children }: CompanyGateProps) {
     );
   }
 
-  if (detailsQuery.isLoading || permissionsQuery.isLoading) {
+  if (permissionsQuery.isLoading) {
     return (
       <CompanyGateShell>
         <LoadingState label="Loading company profile..." />
-      </CompanyGateShell>
-    );
-  }
-
-  if (detailsQuery.isError) {
-    return (
-      <CompanyGateShell>
-        <ErrorState
-          title="Company profile unavailable"
-          message="Unable to load the selected company."
-        />
       </CompanyGateShell>
     );
   }

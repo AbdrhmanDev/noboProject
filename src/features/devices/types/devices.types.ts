@@ -122,6 +122,9 @@ export type DeviceHardwareBindingResponse = {
   networkPort: number | null;
   comPort: string | null;
   bluetoothIdentifier: string | null;
+  // Set only when transportType represents an installed Windows printer queue -- execution
+  // goes through this spooler queue, not a raw USB VID/PID/instance path.
+  windowsPrinterQueueName: string | null;
   confirmedAtUtc: string;
 };
 
@@ -196,6 +199,9 @@ export type DiscoveredDeviceCandidateResponse = {
   networkAddress: string | null;
   networkPort: number | null;
   bluetoothIdentifier: string | null;
+  windowsPrinterQueueName: string | null;
+  windowsPrinterDriverName: string | null;
+  windowsPrinterPortName: string | null;
   deviceCategoryGuess: DeviceType | null;
   identificationConfidence: MatchConfidence;
   detected: boolean;

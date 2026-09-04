@@ -80,6 +80,24 @@ export function DiscoveredCandidateCard({
             <div className="mt-0.5 font-semibold text-slate-200">{candidate.serialNumber}</div>
           </div>
         )}
+        {candidate.windowsPrinterQueueName && (
+          <div>
+            <div className="text-slate-500">{t("devices.discovery.printerQueue")}</div>
+            <div className="mt-0.5 font-semibold text-slate-200">{candidate.windowsPrinterQueueName}</div>
+          </div>
+        )}
+        {candidate.windowsPrinterDriverName && (
+          <div>
+            <div className="text-slate-500">{t("devices.discovery.printerDriver")}</div>
+            <div className="mt-0.5 font-semibold text-slate-200">{candidate.windowsPrinterDriverName}</div>
+          </div>
+        )}
+        {candidate.windowsPrinterPortName && (
+          <div>
+            <div className="text-slate-500">{t("devices.discovery.printerPort")}</div>
+            <div className="mt-0.5 font-semibold text-slate-200">{candidate.windowsPrinterPortName}</div>
+          </div>
+        )}
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2">
