@@ -1,4 +1,4 @@
-import { Plus, ShieldCheck, UserRound } from "lucide-react";
+import { Clock, Plus, ShieldCheck, UserRound } from "lucide-react";
 import { PosModal } from "./PosModal";
 
 export function PosMiscDialogs({ modal, setModal, setCustomer, notify }) {
@@ -40,24 +40,14 @@ export function PosMiscDialogs({ modal, setModal, setCustomer, notify }) {
       )}
 
       {modal === "promotions" && (
-        <PosModal title="Promotions Engine" onClose={() => setModal(null)}>
-          <div className="space-y-2 text-xs">
-            <div className="rounded-xl border border-pink-400/20 bg-pink-500/10 p-3">
-              <b>خصم 10% عام</b>
-              <p className="mt-1 text-slate-400">نشط · كل المنتجات · ينتهي 31 مايو</p>
-            </div>
-            <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 p-3">
-              <b>اشترِ 2 وخذ 1 مجانًا</b>
-              <p className="mt-1 text-slate-400">المشروبات · أولوية أقل من خصم العميل</p>
-            </div>
+        <PosModal title="العروض والخصومات" onClose={() => setModal(null)}>
+          <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-white/15 bg-white/[0.02] p-6 text-center">
+            <Clock size={22} className="text-slate-500" />
+            <p className="text-xs font-bold text-slate-300">ميزة العروض التلقائية قادمة قريبًا</p>
+            <p className="text-[11px] text-slate-500">
+              يمكنك تطبيق خصم يدوي على الفاتورة الحالية من زر "خصم وعروض" في السلة.
+            </p>
           </div>
-          <button
-            type="button"
-            onClick={() => notify("تم فتح معالج إنشاء عرض جديد.")}
-            className="mt-4 w-full rounded-xl bg-pink-600 py-2.5 text-xs font-bold"
-          >
-            إنشاء عرض جديد
-          </button>
         </PosModal>
       )}
 

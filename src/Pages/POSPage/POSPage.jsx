@@ -59,6 +59,7 @@ import { PaymentModal } from "../../features/pos/components/payment/PaymentModal
 import { ShiftDialogs } from "../../features/pos/components/shift/ShiftDialogs";
 import { PosSecondaryPanels } from "../../features/pos/components/PosSecondaryPanels";
 import { PosMiscDialogs } from "../../features/pos/components/PosMiscDialogs";
+import { NumericKeypad } from "../../features/pos/components/NumericKeypad";
 import {
   formatPaymentDate,
   getCashMovementLabel,
@@ -285,6 +286,7 @@ export default function POSPage() {
   const [lastClosedShift, setLastClosedShift] = useState(null);
   const [aiDismissed, setAiDismissed] = useState([]);
   const [selectedLineId, setSelectedLineId] = useState(null);
+  const [quantityKeypadTarget, setQuantityKeypadTarget] = useState(null);
   const searchInputRef = useRef(null);
   const productGridRef = useRef(null);
   const draftOrder = draftDetailsQuery.data || null;
@@ -1604,7 +1606,6 @@ export default function POSPage() {
           <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_390px]">
             <CatalogPanel
               navigate={navigate}
-              notify={notify}
               catalogCategories={catalogCategories}
               category={category}
               setCategory={setCategory}
@@ -1621,7 +1622,6 @@ export default function POSPage() {
               canEditDraft={canEditDraft}
               isDraftMutationPending={isDraftMutationPending}
               addItem={addItem}
-              onOpenPromotions={() => setModal("promotions")}
               query={query}
               productGridRef={productGridRef}
             />
@@ -1654,6 +1654,10 @@ export default function POSPage() {
               isLinePending={lineEditor.isLinePending}
               selectedLineId={effectiveSelectedLineId}
               onSelectLine={setSelectedLineId}
+              onEditQuantity={(lineId, currentQuantity) => {
+                setQuantityKeypadTarget({ lineId, initialValue: currentQuantity });
+                setModal("editQuantity");
+              }}
               onOpenDiscount={() => setModal("discount")}
               subtotal={subtotal}
               discountValue={discountValue}
@@ -1844,6 +1848,30 @@ export default function POSPage() {
         />
 
         <PosMiscDialogs modal={modal} setModal={setModal} setCustomer={setCustomer} notify={notify} />
+
+        {modal === "editQuantity" && quantityKeypadTarget && (
+          <NumericKeypad
+            title="تعديل الكمية"
+            initialValue={String(quantityKeypadTarget.initialValue)}
+            allowDecimal={false}
+            confirmLabel="تحديث"
+            onCancel={() => {
+              setModal(null);
+              setQuantityKeypadTarget(null);
+            }}
+            onConfirm={(value) => {
+              const nextQuantity = Number(value);
+              if (Number.isFinite(nextQuantity)) {
+                const delta = nextQuantity - Number(quantityKeypadTarget.initialValue);
+                if (delta !== 0) {
+                  changeQty(quantityKeypadTarget.lineId, delta);
+                }
+              }
+              setModal(null);
+              setQuantityKeypadTarget(null);
+            }}
+          />
+        )}
       </main>
     </AppLayout>
   );

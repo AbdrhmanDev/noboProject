@@ -1,11 +1,10 @@
-import { Barcode, Gift, Package, X } from "lucide-react";
+import { Package, X } from "lucide-react";
 import { ROUTES } from "../../../../utils/routes";
 import { EmptyState, ErrorState, LoadingState } from "../../../../shared/components/ui";
 import { formatMoney } from "../../../../shared/utils/formatters";
 import { PriceListOnboarding } from "../../../pricing/components/PriceListOnboarding";
 import { FirstProductOnboarding } from "../../../catalog/components/FirstProductOnboarding";
 import { TaxSettingsOnboarding } from "../../../tax/components/TaxSettingsOnboarding";
-import { IconButton } from "../PosPrimitives";
 import { CategoryRail } from "./CategoryRail";
 import { ROVING_ITEM_SELECTOR, useGridArrowNav } from "../../../shortcuts/rovingFocus";
 import { ShortcutHint } from "../../../shortcuts/components/ShortcutHint";
@@ -15,7 +14,6 @@ export const UNCATEGORIZED_CATEGORY_ID = "__uncategorized__";
 
 export function CatalogPanel({
   navigate,
-  notify,
   catalogCategories,
   category,
   setCategory,
@@ -32,7 +30,6 @@ export function CatalogPanel({
   canEditDraft,
   isDraftMutationPending,
   addItem,
-  onOpenPromotions,
   query,
   productGridRef,
 }) {
@@ -54,14 +51,6 @@ export function CatalogPanel({
               ? `${sellableCatalogQuery.data.priceListName} · ${catalogCurrencyCode}`
               : "تحميل الكتالوج التشغيلي للفرع"}
           </p>
-        </div>
-        <div className="flex gap-2">
-          <IconButton
-            icon={Barcode}
-            label="مسح باركود"
-            onClick={() => notify("وضع المسح جاهز لاستقبال الباركود.")}
-          />
-          <IconButton icon={Gift} label="العروض النشطة" onClick={onOpenPromotions} tone="pink" />
         </div>
       </div>
 

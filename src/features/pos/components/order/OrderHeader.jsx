@@ -99,7 +99,7 @@ export function OrderHeader({
               type="button"
               disabled={!canEditDraft || isDraftMutationPending}
               onClick={() => handleOrderTypeChange(type)}
-              className={`flex items-center justify-center gap-1 rounded-lg border px-2 py-1.5 text-[10px] font-bold transition disabled:cursor-not-allowed disabled:opacity-50 ${
+              className={`flex min-h-11 items-center justify-center gap-1 rounded-lg border px-2 text-xs font-bold transition disabled:cursor-not-allowed disabled:opacity-50 ${
                 orderType === type
                   ? "border-blue-400 bg-blue-500/15 text-blue-100"
                   : "border-white/10 bg-black/10 text-slate-400 hover:bg-white/10"
@@ -173,7 +173,7 @@ export function OrderHeader({
                         data-roving-item=""
                         disabled={!canEditDraft || isDraftMutationPending || table.isOccupied}
                         onClick={() => handleTableSelect(table)}
-                        className={`rounded-lg border px-2 py-1.5 text-[10px] transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400 disabled:cursor-not-allowed disabled:opacity-45 ${
+                        className={`min-h-11 rounded-lg border px-2 py-2 text-[11px] transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400 disabled:cursor-not-allowed disabled:opacity-45 ${
                           effectiveRestaurantTableId === table.restaurantTableId
                             ? "border-emerald-400 bg-emerald-500/15 text-emerald-100"
                             : "border-white/10 bg-black/10 text-slate-300 hover:bg-white/10"

@@ -39,43 +39,85 @@ export function OrderSecondaryActions({
   const [expanded, setExpanded] = useState(false);
 
   const showLifecycle = !isClosedOrder && !isCancelledOrder && draftOrder;
+  // Retrieve is the only genuinely high-frequency, real, per-order action
+  // here — Customer/Discount live elsewhere in the sidebar already. Hold has
+  // no backend yet (still a stub), and Cash Movement is a shift/cash
+  // operation rather than per-order work, so both moved into "More actions"
+  // below instead of sharing the always-visible row.
   const showQuickActions = !isClosedOrder && !isCancelledOrder;
+  const showShiftActions = !isClosedOrder && !isCancelledOrder;
   const paymentsCount = (paymentState?.payments || []).length;
   const showPayments =
     shouldShowPaymentPanel &&
     paymentsViewPermissionQuery.hasPermission &&
     (paymentHistoryQuery.isLoading || paymentsCount > 0);
 
-  if (!showLifecycle && !showQuickActions && !showPayments) {
+  const hasMoreSection = showLifecycle || showShiftActions || showPayments;
+
+  if (!showQuickActions && !hasMoreSection) {
     return null;
   }
 
   return (
-    <div className="mt-3 shrink-0 border-t border-white/10 pt-2">
-      <button
-        type="button"
-        onClick={() => setExpanded((value) => !value)}
-        className="flex w-full items-center justify-between rounded-lg px-1 py-1.5 text-[10px] font-bold text-slate-400 hover:text-slate-200"
-      >
-        <span className="flex items-center gap-1.5">
-          <MoreHorizontal size={14} />
-          More actions
-          {lifecycleBlocker && (
-            <span className="rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[9px] text-amber-200">
-              1
-            </span>
-          )}
-          {!lifecycleBlocker && paymentsCount > 0 && (
-            <span className="rounded-full bg-white/10 px-1.5 py-0.5 text-[9px] text-slate-300">
-              {paymentsCount}
-            </span>
-          )}
-        </span>
-        {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-      </button>
+    <div className="mt-3 shrink-0 border-t border-white/10 pt-2 space-y-2">
+      {showQuickActions && (
+        <div className="grid grid-cols-1">
+          <IconButton
+            icon={RotateCcw}
+            label="استرجاع طلب"
+            onClick={onOpenRetrieve}
+            hint={<ShortcutHint action="pos.selectOrder" />}
+          />
+        </div>
+      )}
 
-      {expanded && (
+      {hasMoreSection && (
+        <button
+          type="button"
+          onClick={() => setExpanded((value) => !value)}
+          className="flex w-full items-center justify-between rounded-lg px-1 py-1.5 text-[10px] font-bold text-slate-400 hover:text-slate-200"
+        >
+          <span className="flex items-center gap-1.5">
+            <MoreHorizontal size={14} />
+            More actions
+            {lifecycleBlocker && (
+              <span className="rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[9px] text-amber-200">
+                1
+              </span>
+            )}
+            {!lifecycleBlocker && paymentsCount > 0 && (
+              <span className="rounded-full bg-white/10 px-1.5 py-0.5 text-[9px] text-slate-300">
+                {paymentsCount}
+              </span>
+            )}
+          </span>
+          {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+        </button>
+      )}
+
+      {expanded && hasMoreSection && (
         <div className="mt-2 max-h-[22vh] min-h-0 space-y-3 overflow-y-auto pr-1 scrollbar-none">
+          {showShiftActions && (
+            <div className="grid grid-cols-2 gap-2">
+              <IconButton
+                icon={PauseCircle}
+                label="حفظ مؤقت"
+                onClick={holdOrder}
+                disabled
+                hint={
+                  <span className="rounded-full bg-white/10 px-1.5 py-0.5 text-[9px] font-bold text-slate-400">
+                    قريبًا
+                  </span>
+                }
+              />
+              <IconButton
+                icon={CircleDollarSign}
+                label="حركة نقدية"
+                onClick={onOpenCashMovement}
+              />
+            </div>
+          )}
+
           {showLifecycle && (
             <div className="rounded-xl border border-white/10 bg-white/[0.025] p-3">
               <div className="flex items-center justify-between gap-3">
@@ -124,23 +166,6 @@ export function OrderSecondaryActions({
                   SalesOrders.VoidPrepared permission is required.
                 </div>
               )}
-            </div>
-          )}
-
-          {showQuickActions && (
-            <div className="grid grid-cols-3 gap-2">
-              <IconButton icon={PauseCircle} label="حفظ مؤقت" onClick={holdOrder} />
-              <IconButton
-                icon={RotateCcw}
-                label="استرجاع"
-                onClick={onOpenRetrieve}
-                hint={<ShortcutHint action="pos.selectOrder" />}
-              />
-              <IconButton
-                icon={CircleDollarSign}
-                label="حركة نقدية"
-                onClick={onOpenCashMovement}
-              />
             </div>
           )}
 

@@ -1,4 +1,4 @@
-import { Barcode, Bot, Box, Database, Gift, Printer, WalletCards } from "lucide-react";
+import { Barcode, Bot, Box, Clock, Database, Gift, Printer, WalletCards } from "lucide-react";
 import { formatMoney } from "../../../shared/utils/formatters";
 import { Metric } from "./PosPrimitives";
 
@@ -72,24 +72,20 @@ export function PosSecondaryPanels({
               <Gift size={16} className="text-pink-300" />
               العروض والخصومات
             </h3>
-            <button
-              type="button"
-              onClick={() => setModal("promotions")}
-              className="text-[10px] text-pink-300"
-            >
-              عرض الكل
-            </button>
+            <span className="rounded-full bg-white/10 px-2 py-0.5 text-[9px] font-bold text-slate-400">
+              قريبًا
+            </span>
           </div>
-          <div className="space-y-2">
-            <div className="rounded-xl border border-pink-400/20 bg-pink-500/10 p-2.5">
-              <div className="text-xs font-bold text-pink-100">خصم عام 10%</div>
-              <div className="mt-1 text-[10px] text-slate-400">حتى 31 مايو · كل المنتجات</div>
-            </div>
-            <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 p-2.5">
-              <div className="text-xs font-bold text-amber-100">اشترِ 2 مشروب وخذ 1 مجانًا</div>
-              <div className="mt-1 text-[10px] text-slate-400">عرض الفئة · نشط الآن</div>
-            </div>
-          </div>
+          <button
+            type="button"
+            onClick={() => setModal("promotions")}
+            className="flex w-full flex-col items-center gap-1.5 rounded-xl border border-dashed border-white/10 bg-white/[0.015] p-3 text-center hover:border-white/20"
+          >
+            <Clock size={18} className="text-slate-500" />
+            <span className="text-[11px] text-slate-400">
+              العروض التلقائية غير مفعّلة بعد — استخدم "خصم وعروض" في السلة يدويًا
+            </span>
+          </button>
         </div>
         <div className="rounded-2xl border border-white/10 bg-[#0c1627] p-4">
           <div className="mb-3 flex items-center justify-between">
@@ -129,13 +125,9 @@ export function PosSecondaryPanels({
               <Printer size={16} className="text-blue-300" />
               مركز الأجهزة
             </h3>
-            <button
-              type="button"
-              onClick={() => notify("تمت مزامنة حالة الأجهزة.")}
-              className="text-[10px] text-blue-300"
-            >
-              مزامنة
-            </button>
+            <span className="rounded-full bg-white/10 px-2 py-0.5 text-[9px] font-bold text-slate-400">
+              قريبًا
+            </span>
           </div>
           <div className="grid grid-cols-2 gap-2">
             {[
@@ -147,7 +139,7 @@ export function PosSecondaryPanels({
               <div key={label} className="rounded-xl border border-white/8 bg-white/[0.025] p-2">
                 <Icon size={16} className="text-slate-300" />
                 <div className="mt-1 text-[10px]">{label}</div>
-                <div className="mt-0.5 text-[9px] text-emerald-300">● متصل</div>
+                <div className="mt-0.5 text-[9px] text-slate-500">لا تتوفر بيانات مباشرة</div>
               </div>
             ))}
           </div>

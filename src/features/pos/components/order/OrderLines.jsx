@@ -11,6 +11,7 @@ export function OrderLines({
   removeDraftLine,
   selectedLineId,
   onSelectLine,
+  onEditQuantity,
 }) {
   return (
     <div className="min-h-36 flex-1 space-y-2 overflow-y-auto pr-1 scrollbar-none">
@@ -75,27 +76,34 @@ export function OrderLines({
               </button>
             </div>
             <div className="mt-2 flex items-center justify-between">
-              <div className="flex items-center rounded-lg border border-white/10">
+              <div
+                className="flex items-center rounded-lg border border-white/10"
+                onClick={(event) => event.stopPropagation()}
+              >
                 <button
                   type="button"
                   onClick={() => changeQty(item.salesOrderLineId, -1)}
                   disabled={!canEditDraft}
-                  className="grid h-7 w-7 place-items-center text-slate-300 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="grid h-11 w-11 place-items-center text-slate-300 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <Minus size={13} />
+                  <Minus size={15} />
                 </button>
-                <span
-                  className={`w-9 text-center text-xs font-bold transition-opacity ${pending ? "opacity-60" : ""}`}
+                <button
+                  type="button"
+                  onClick={() => onEditQuantity?.(item.salesOrderLineId, Number(item.quantity))}
+                  disabled={!canEditDraft || !onEditQuantity}
+                  aria-label="Edit quantity"
+                  className={`min-w-11 px-1 text-center text-xs font-bold transition-opacity ${pending ? "opacity-60" : ""} ${onEditQuantity ? "hover:text-blue-300" : ""}`}
                 >
                   {Number(item.quantity)}
-                </span>
+                </button>
                 <button
                   type="button"
                   onClick={() => changeQty(item.salesOrderLineId, 1)}
                   disabled={!canEditDraft}
-                  className="grid h-7 w-7 place-items-center text-blue-300 hover:bg-blue-500/15 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="grid h-11 w-11 place-items-center text-blue-300 hover:bg-blue-500/15 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <Plus size={13} />
+                  <Plus size={15} />
                 </button>
               </div>
               <span className="text-xs font-bold">

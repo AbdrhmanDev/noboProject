@@ -11,7 +11,7 @@ export function IconButton({ icon: Icon, label, onClick, tone = "default", disab
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className={`flex min-h-10 items-center justify-center gap-2 rounded-xl border px-3 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-40 ${tones[tone]}`}
+      className={`flex min-h-11 items-center justify-center gap-2 rounded-xl border px-3 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-40 ${tones[tone]}`}
     >
       <Icon size={15} />
       {label}

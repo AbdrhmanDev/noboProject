@@ -145,7 +145,7 @@ export function CategoryRail({ categories, activeCategoryId, onSelect }) {
                 }}
                 onClick={() => onSelect(id)}
                 aria-pressed={active}
-                className={`flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 text-[11px] font-semibold transition ${
+                className={`flex h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 text-xs font-semibold transition ${
                   active
                     ? "border-blue-400/70 bg-blue-500/15 text-blue-100 shadow-md shadow-blue-950/30"
                     : "border-white/10 bg-[#0d1728] text-slate-400 hover:border-white/20 hover:bg-white/[0.06] hover:text-slate-200"
