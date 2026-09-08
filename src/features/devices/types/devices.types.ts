@@ -15,7 +15,8 @@ export type DeviceType =
   | "CustomerDisplay"
   | "KdsDevice"
   | "PaymentTerminal"
-  | "Scale";
+  | "Scale"
+  | "LabelPrinter";
 
 export type DeviceStatus = "Active" | "Inactive";
 
@@ -38,7 +39,7 @@ export type MatchConfidence = "Exact" | "Strong" | "Possible" | "Ambiguous" | "N
 
 export type PrintJobStatus = "Queued" | "Claimed" | "Printing" | "Succeeded" | "Failed";
 
-export type PrintJobDocumentType = "TestPrint";
+export type PrintJobDocumentType = "TestPrint" | "CustomerReceipt" | "ProductLabel";
 
 export type DeviceHardwareBindingTransportType =
   | "Usb"
@@ -48,6 +49,88 @@ export type DeviceHardwareBindingTransportType =
   | "SerialCom";
 
 // ---- Devices ----
+
+// Preset is one of the three built-in options below or "Custom" for admin-entered values.
+// Only meaningful for a ReceiptPrinter device -- null for every other DeviceType.
+// IsExplicitlyAssigned = false means the device has no profile configured yet and is falling
+// back to the legacy 58mm/384-dot default; PaperWidthMm..FeedLinesBeforeCut are always the
+// *effective* (ready-to-use) values either way.
+export type PrinterProfilePreset = "Generic58mm" | "Generic80mm" | "Custom";
+
+export type DeviceReceiptPrinterProfileResponse = {
+  preset: PrinterProfilePreset;
+  isExplicitlyAssigned: boolean;
+  paperWidthMm: number;
+  printableWidthDots: number;
+  dpi: number;
+  cutterSupported: boolean;
+  feedLinesBeforeCut: number;
+};
+
+// Preset "Generic58mm"/"Generic80mm" ignore the custom* fields (the preset's own fixed values
+// are used server-side); Preset "Custom" requires all four; omit/empty Preset to clear an
+// explicit assignment and revert to the legacy default.
+export type SetDeviceReceiptPrinterProfileRequest = {
+  preset: PrinterProfilePreset | "";
+  customPaperWidthMm?: number | null;
+  customPrintableWidthDots?: number | null;
+  customDpi?: number | null;
+  customCutterSupported?: boolean | null;
+  customFeedLinesBeforeCut?: number | null;
+};
+
+// ---- Label Printer Profile ----
+// Only meaningful for a LabelPrinter device -- null for every other DeviceType, AND null for a
+// LabelPrinter that has no profile assigned yet (unlike Receipt Printers there is no legacy
+// default: null genuinely means "cannot print yet").
+
+export type LabelPrinterProfilePreset = "Generic2x1Zpl" | "Generic3x2Zpl" | "Custom";
+
+export type LabelPrinterLanguage = "Unknown" | "Zpl" | "Tspl" | "Epl" | "Cpcl" | "WindowsDriver" | "Other";
+
+export type LabelOrientation = "Normal" | "Inverted";
+
+export type DeviceLabelPrinterProfileResponse = {
+  preset: LabelPrinterProfilePreset;
+  printerLanguage: LabelPrinterLanguage;
+  widthMm: number;
+  heightMm: number;
+  dpi: number;
+  gapMm: number | null;
+  orientation: LabelOrientation;
+};
+
+// Preset "Generic2x1Zpl"/"Generic3x2Zpl" ignore the custom* fields; Preset "Custom" requires
+// language/width/height/dpi; omit/empty Preset to clear an explicit assignment.
+export type SetDeviceLabelPrinterProfileRequest = {
+  preset: LabelPrinterProfilePreset | "";
+  customPrinterLanguage?: LabelPrinterLanguage | null;
+  customWidthMm?: number | null;
+  customHeightMm?: number | null;
+  customDpi?: number | null;
+  customGapMm?: number | null;
+  customOrientation?: LabelOrientation | null;
+};
+
+// ---- Product Label printing ----
+// BarcodeId omitted means "use the variant's active Primary barcode" (server-side default).
+
+export type PrintProductVariantLabelRequest = {
+  productVariantId: string;
+  barcodeId?: string | null;
+  copies: number;
+  price?: number | null;
+  currencyCode?: string | null;
+  secondaryText?: string | null;
+};
+
+export type PrintProductVariantLabelResponse = {
+  printJobId: string;
+  status: PrintJobStatus;
+  resolvedBarcodeValue: string;
+  resolvedBarcodeSymbology: string;
+  createdAtUtc: string;
+};
 
 export type DeviceResponse = {
   deviceId: string;
@@ -72,6 +155,8 @@ export type DeviceResponse = {
   certificationStatus: DeviceCertificationStatus;
   createdAtUtc: string;
   updatedAtUtc: string;
+  printerProfile: DeviceReceiptPrinterProfileResponse | null;
+  labelPrinterProfile: DeviceLabelPrinterProfileResponse | null;
 };
 
 export type DevicesListFilters = {

@@ -26,6 +26,8 @@ import { useOpenPosShift } from "../../features/pos/hooks/useOpenPosShift";
 import { useClosePosShift } from "../../features/pos/hooks/useClosePosShift";
 import { useManualCashMovement } from "../../features/pos/hooks/useManualCashMovement";
 import { useSellableCatalog } from "../../features/pos/hooks/useSellableCatalog";
+import { useResolveBarcode } from "../../features/pos/hooks/useResolveBarcode";
+import { useKeyboardWedgeScanner } from "../../features/scanning/hooks/useKeyboardWedgeScanner";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   draftSalesOrderQueryKeys,
@@ -167,6 +169,7 @@ export default function POSPage() {
     currentBranchId,
     canLoadCatalog,
   );
+  const resolveBarcodeMutation = useResolveBarcode(currentCompanyId, currentBranchId);
   const taxSettingsQuery = useCompanyTaxSettings(currentCompanyId, canLoadCatalog);
   const taxSetupRequired = Boolean(
     taxSettingsQuery.data && !taxSettingsQuery.data.isConfigured,
@@ -1194,6 +1197,32 @@ export default function POSPage() {
       items[0]?.focus();
     }
   };
+  const handleBarcodeScan = async (scan) => {
+    if (!canEditDraft || !currentCompanyId || !currentBranchId) return;
+
+    try {
+      const { item } = await resolveBarcodeMutation.mutateAsync(scan.value);
+      // Resolved directly to the same shape the product grid renders -- add one unit straight
+      // to the basket (Section C), skipping the modifier-selection dialog selectVariantForDraft
+      // would open for a manual click: a scan is a single unambiguous action, not the start of a
+      // guided picker flow.
+      await addSellableVariant(item, []);
+    } catch (error) {
+      if (error?.code === "Catalog.ProductVariantNotSellable") {
+        notify(error.message || "This product is not currently available for sale.");
+      } else if (error?.code === "Catalog.BarcodeNotFound") {
+        notify(`No product found for "${scan.value}".`);
+      } else {
+        notify(error?.message || "Unable to resolve scanned barcode.");
+      }
+    }
+  };
+
+  useKeyboardWedgeScanner({
+    enabled: canEditDraft && !modal,
+    onScan: handleBarcodeScan,
+  });
+
   const selectVariantForDraft = (variant) => {
     if (!canEditDraft) return;
 

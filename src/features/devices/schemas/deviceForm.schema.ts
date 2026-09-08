@@ -9,6 +9,7 @@ const DEVICE_TYPES = [
   "KdsDevice",
   "PaymentTerminal",
   "Scale",
+  "LabelPrinter",
 ] as const;
 
 const CONNECTION_TYPES = ["Usb", "NetworkEthernet", "Wifi", "Bluetooth", "SerialCom"] as const;

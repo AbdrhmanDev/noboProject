@@ -23,6 +23,7 @@ import {
   getProductDetails,
   getProductVariantModifierGroups,
   getProducts,
+  getProductVariantBarcodes,
   getProductVariantDetails,
   getProductVariants,
   setBranchProductVariantAvailability,
@@ -67,6 +68,8 @@ export const catalogQueryKeys = {
     ["catalog", companyId, "products", productId, "variants", filters] as const,
   variant: (companyId: string, productId: string, productVariantId: string) =>
     ["catalog", companyId, "products", productId, "variants", productVariantId] as const,
+  variantBarcodes: (companyId: string, productId: string, productVariantId: string) =>
+    ["catalog", companyId, "products", productId, "variants", productVariantId, "barcodes"] as const,
   branchVariantAvailabilities: (
     companyId: string,
     branchId: string,
@@ -263,6 +266,28 @@ export function useProductVariants(
     queryFn: () =>
       getProductVariants(companyId as string, productId as string, filters),
     enabled: Boolean(companyId) && Boolean(productId) && enabled,
+  });
+}
+
+export function useProductVariantBarcodes(
+  companyId: string | null | undefined,
+  productId: string | null | undefined,
+  productVariantId: string | null | undefined,
+  enabled = true,
+) {
+  return useQuery({
+    queryKey: catalogQueryKeys.variantBarcodes(
+      companyId || "",
+      productId || "",
+      productVariantId || "",
+    ),
+    queryFn: () =>
+      getProductVariantBarcodes(
+        companyId as string,
+        productId as string,
+        productVariantId as string,
+      ),
+    enabled: Boolean(companyId) && Boolean(productId) && Boolean(productVariantId) && enabled,
   });
 }
 

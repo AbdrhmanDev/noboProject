@@ -19,6 +19,8 @@ import { DeviceHealthBadge, DeviceStatusBadge, CertificationBadge } from "../../
 import { PrintJobStatusBadge } from "../../features/devices/components/PrintJobStatusBadge";
 import { DeviceReadinessChecklist } from "../../features/devices/components/DeviceReadinessChecklist";
 import { TestPrintPanel } from "../../features/devices/components/TestPrintPanel";
+import { PrinterProfilePanel } from "../../features/devices/components/PrinterProfilePanel";
+import { LabelPrinterProfilePanel } from "../../features/devices/components/LabelPrinterProfilePanel";
 import { DeviceFormDialog } from "../../features/devices/components/DeviceFormDialog";
 import { DeviceConfirmActionDialog } from "../../features/devices/components/DeviceConfirmActionDialog";
 import { ROUTES, edgeAgentDetailsPath } from "../../utils/routes";
@@ -330,6 +332,22 @@ export default function DeviceDetailsPage() {
                 edgeAgent={edgeAgentQuery.data}
                 canManage={canManage}
               />
+              {device.deviceType === "ReceiptPrinter" && (
+                <PrinterProfilePanel
+                  companyId={currentCompanyId}
+                  branchId={currentBranchId}
+                  device={device}
+                  canManage={canManage}
+                />
+              )}
+              {device.deviceType === "LabelPrinter" && (
+                <LabelPrinterProfilePanel
+                  companyId={currentCompanyId}
+                  branchId={currentBranchId}
+                  device={device}
+                  canManage={canManage}
+                />
+              )}
             </div>
           </div>
         ) : null}

@@ -131,6 +131,19 @@ export type ProductVariantAdmin = {
   createdAtUtc: string;
 };
 
+// Only barcodes with isActive=true are usable for scanning/label printing -- inactive rows are
+// shown for history but cannot be selected as a label's barcode source.
+export type ProductVariantBarcode = {
+  id: string;
+  productVariantId: string;
+  value: string;
+  symbology: "Unknown" | "Ean13" | "Ean8" | "Upca" | "Code128" | "Other";
+  isPrimary: boolean;
+  isActive: boolean;
+  createdAtUtc: string;
+  updatedAtUtc: string;
+};
+
 export type BranchProductVariantAvailability = {
   availabilityId: string | null;
   branchId: string;

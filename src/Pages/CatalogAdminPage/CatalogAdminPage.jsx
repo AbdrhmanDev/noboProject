@@ -14,6 +14,7 @@ import {
   Plus,
   Power,
   RefreshCw,
+  Printer,
   Search,
   SlidersHorizontal,
   Tags,
@@ -52,6 +53,7 @@ import {
   useModifierOptionDetails,
   useModifierOptions,
   useProductDetails,
+  useProductVariantBarcodes,
   useProductVariantModifierGroups,
   useProductVariantDetails,
   useProductVariants,
@@ -64,6 +66,7 @@ import {
   useUpdateProduct,
   useUpdateProductVariant,
 } from "../../features/catalog/hooks/useCatalog";
+import { useDevices, usePrintProductVariantLabel } from "../../features/devices/hooks/useDevices";
 
 const CATALOG_VIEW_PERMISSION = "Catalog.View";
 const CATALOG_MANAGE_PERMISSION = "Catalog.Manage";
@@ -553,6 +556,131 @@ function BranchAvailabilityPanel({
           Make unavailable
         </button>
       </div>
+    </div>
+  );
+}
+
+// Minimal Print Label entry point (Section I of the label-printing task): pick a Label Printer
+// device already registered in this branch, pick an active barcode (or leave it to the variant's
+// Primary), a copy count, and print. No price is sent here -- ProductVariantAdmin carries no
+// price (that lives in a separate price list, not this catalog-admin read model), so this entry
+// point simply doesn't offer a "print price" option rather than faking one.
+function PrintLabelPanel({ companyId, branchId, selectedVariant, canManage, showNotice }) {
+  const [deviceId, setDeviceId] = useState("");
+  const [barcodeId, setBarcodeId] = useState("");
+  const [copies, setCopies] = useState("1");
+
+  const devicesQuery = useDevices(
+    companyId,
+    branchId,
+    { deviceType: "LabelPrinter" },
+    Boolean(selectedVariant),
+  );
+  const barcodesQuery = useProductVariantBarcodes(
+    companyId,
+    selectedVariant?.productId,
+    selectedVariant?.productVariantId,
+    Boolean(selectedVariant),
+  );
+  const printMutation = usePrintProductVariantLabel(companyId, branchId, deviceId || null);
+
+  if (!selectedVariant) return null;
+
+  const devices = devicesQuery.data || [];
+  const activeBarcodes = (barcodesQuery.data || []).filter((barcode) => barcode.isActive);
+
+  const print = async () => {
+    if (!deviceId) {
+      showNotice("Select a label printer first.");
+      return;
+    }
+
+    const copiesNumber = Number(copies);
+    if (!Number.isInteger(copiesNumber) || copiesNumber < 1) {
+      showNotice("Copies must be a whole number of at least 1.");
+      return;
+    }
+
+    try {
+      await printMutation.mutateAsync({
+        productVariantId: selectedVariant.productVariantId,
+        barcodeId: barcodeId || null,
+        copies: copiesNumber,
+        price: null,
+        currencyCode: null,
+        secondaryText: null,
+      });
+      showNotice("Label print job sent.");
+    } catch (error) {
+      showNotice(getErrorMessage(error));
+    }
+  };
+
+  const inputClass =
+    "w-full rounded-lg border border-white/10 bg-[#0a1220] px-3 py-2 text-xs text-white outline-none focus:border-blue-400/60";
+
+  return (
+    <div className="space-y-3 rounded-xl border border-white/10 bg-white/[0.025] p-3">
+      <div className="flex items-center gap-2 text-xs text-slate-400">
+        <Printer size={14} className="text-blue-300" />
+        Print Label
+      </div>
+
+      {devices.length === 0 ? (
+        <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+          No label printers found in this branch.
+        </div>
+      ) : (
+        <div className="grid gap-2 md:grid-cols-3">
+          <div>
+            <label className="mb-1 block text-[11px] text-slate-400">Label printer</label>
+            <select className={inputClass} value={deviceId} onChange={(event) => setDeviceId(event.target.value)}>
+              <option value="">Select a device</option>
+              {devices.map((device) => (
+                <option key={device.deviceId} value={device.deviceId}>
+                  {device.name} ({device.code})
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-[11px] text-slate-400">Barcode</label>
+            <select className={inputClass} value={barcodeId} onChange={(event) => setBarcodeId(event.target.value)}>
+              <option value="">Use primary barcode</option>
+              {activeBarcodes.map((barcode) => (
+                <option key={barcode.id} value={barcode.id}>
+                  {barcode.value}
+                  {barcode.isPrimary ? " (primary)" : ""}
+                </option>
+              ))}
+            </select>
+            {!barcodesQuery.isLoading && activeBarcodes.length === 0 && (
+              <p className="mt-1 text-[11px] text-amber-300">No active barcode found for this variant.</p>
+            )}
+          </div>
+          <div>
+            <label className="mb-1 block text-[11px] text-slate-400">Copies</label>
+            <input
+              type="number"
+              min={1}
+              max={50}
+              className={inputClass}
+              value={copies}
+              onChange={(event) => setCopies(event.target.value)}
+            />
+          </div>
+        </div>
+      )}
+
+      <button
+        type="button"
+        disabled={!canManage || devices.length === 0 || printMutation.isPending}
+        onClick={print}
+        className="flex h-10 items-center gap-2 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <Printer size={15} />
+        {printMutation.isPending ? "Sending..." : "Print Label"}
+      </button>
     </div>
   );
 }
@@ -1954,6 +2082,13 @@ export default function CatalogAdminPage() {
                             canManage={canManage}
                             isPending={setBranchAvailabilityMutation.isPending}
                             onSetAvailability={setBranchAvailability}
+                          />
+                          <PrintLabelPanel
+                            companyId={currentCompanyId}
+                            branchId={currentBranchId}
+                            selectedVariant={selectedVariant}
+                            canManage={canManage}
+                            showNotice={showNotice}
                           />
                         </div>
                       )}

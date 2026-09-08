@@ -143,6 +143,21 @@ export const DEVICE_ERROR_MESSAGE_KEYS: Record<string, string> = {
   "DeviceHardwareBinding.ConfirmationModeRequired": "devices.error.confirmationModeRequired",
   "DeviceHardwareBinding.DeviceAlreadyBound": "devices.error.deviceAlreadyBound",
   "DeviceHardwareBinding.Conflict": "devices.error.bindingConflict",
+  "Device.NotReceiptPrinter": "devices.printerProfile.error.notReceiptPrinter",
+  "Device.PrinterProfilePresetInvalid": "devices.printerProfile.error.presetInvalid",
+  "Device.PrinterProfileInvalid": "devices.printerProfile.error.profileInvalid",
+  "Device.NotLabelPrinter": "devices.labelPrinterProfile.error.notLabelPrinter",
+  "Device.LabelPrinterProfilePresetInvalid": "devices.labelPrinterProfile.error.presetInvalid",
+  "Device.LabelPrinterProfileInvalid": "devices.labelPrinterProfile.error.profileInvalid",
+  "PrintJob.DeviceNotLabelPrinter": "devices.printLabel.error.deviceNotLabelPrinter",
+  "LabelPrinter.ProfileNotConfigured": "devices.printLabel.error.profileNotConfigured",
+  "LabelPrinter.LanguageNotSupported": "devices.printLabel.error.languageNotSupported",
+  "ProductVariant.NotAvailable": "devices.printLabel.error.variantNotAvailable",
+  "Barcode.NotAvailable": "devices.printLabel.error.barcodeNotAvailable",
+  "Barcode.Inactive": "devices.printLabel.error.barcodeInactive",
+  "ProductLabel.NoBarcodeAvailable": "devices.printLabel.error.noBarcodeAvailable",
+  "ProductLabel.InvalidCopies": "devices.printLabel.error.invalidCopies",
+  "ProductLabel.PriceCurrencyMismatch": "devices.printLabel.error.priceCurrencyMismatch",
 };
 
 export function getDeviceErrorMessageKey(error: ApiError | null | undefined) {

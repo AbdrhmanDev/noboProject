@@ -4,6 +4,9 @@ import {
   getDeviceDetails,
   getDeviceHardwareBinding,
   getDevices,
+  printProductVariantLabel,
+  setDeviceLabelPrinterProfile,
+  setDeviceReceiptPrinterProfile,
   testPrintDevice,
   updateDevice,
   updateDeviceStatus,
@@ -11,6 +14,9 @@ import {
 import type {
   CreateDeviceRequest,
   DevicesListFilters,
+  PrintProductVariantLabelRequest,
+  SetDeviceLabelPrinterProfileRequest,
+  SetDeviceReceiptPrinterProfileRequest,
   UpdateDeviceRequest,
   UpdateDeviceStatusRequest,
 } from "../types/devices.types";
@@ -123,6 +129,55 @@ export function useUpdateDeviceStatus(
     mutationFn: (payload: UpdateDeviceStatusRequest) =>
       updateDeviceStatus(companyId as string, branchId as string, deviceId as string, payload),
     onSuccess: () => invalidateDevices(queryClient, companyId, branchId, deviceId),
+  });
+}
+
+export function useSetDeviceReceiptPrinterProfile(
+  companyId: string | null | undefined,
+  branchId: string | null | undefined,
+  deviceId: string | null | undefined,
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: SetDeviceReceiptPrinterProfileRequest) =>
+      setDeviceReceiptPrinterProfile(
+        companyId as string,
+        branchId as string,
+        deviceId as string,
+        payload,
+      ),
+    onSuccess: () => invalidateDevices(queryClient, companyId, branchId, deviceId),
+  });
+}
+
+export function useSetDeviceLabelPrinterProfile(
+  companyId: string | null | undefined,
+  branchId: string | null | undefined,
+  deviceId: string | null | undefined,
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: SetDeviceLabelPrinterProfileRequest) =>
+      setDeviceLabelPrinterProfile(
+        companyId as string,
+        branchId as string,
+        deviceId as string,
+        payload,
+      ),
+    onSuccess: () => invalidateDevices(queryClient, companyId, branchId, deviceId),
+  });
+}
+
+export function usePrintProductVariantLabel(
+  companyId: string | null | undefined,
+  branchId: string | null | undefined,
+  deviceId: string | null | undefined,
+) {
+  return useMutation({
+    mutationFn: (payload: PrintProductVariantLabelRequest) =>
+      printProductVariantLabel(companyId as string, branchId as string, deviceId as string, payload),
   });
 }
 

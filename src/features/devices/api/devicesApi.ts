@@ -4,6 +4,10 @@ import type {
   DeviceHardwareBindingResponse,
   DeviceResponse,
   DevicesListFilters,
+  PrintProductVariantLabelRequest,
+  PrintProductVariantLabelResponse,
+  SetDeviceLabelPrinterProfileRequest,
+  SetDeviceReceiptPrinterProfileRequest,
   TestPrintResponse,
   UpdateDeviceRequest,
   UpdateDeviceStatusRequest,
@@ -76,6 +80,48 @@ export async function updateDeviceStatus(
 ) {
   const response = await httpClient.put<DeviceResponse>(
     `${devicesBaseUrl(companyId, branchId)}/${deviceId}/status`,
+    payload,
+  );
+
+  return response.data;
+}
+
+export async function setDeviceReceiptPrinterProfile(
+  companyId: string,
+  branchId: string,
+  deviceId: string,
+  payload: SetDeviceReceiptPrinterProfileRequest,
+) {
+  const response = await httpClient.put<DeviceResponse>(
+    `${devicesBaseUrl(companyId, branchId)}/${deviceId}/printer-profile`,
+    payload,
+  );
+
+  return response.data;
+}
+
+export async function setDeviceLabelPrinterProfile(
+  companyId: string,
+  branchId: string,
+  deviceId: string,
+  payload: SetDeviceLabelPrinterProfileRequest,
+) {
+  const response = await httpClient.put<DeviceResponse>(
+    `${devicesBaseUrl(companyId, branchId)}/${deviceId}/label-printer-profile`,
+    payload,
+  );
+
+  return response.data;
+}
+
+export async function printProductVariantLabel(
+  companyId: string,
+  branchId: string,
+  deviceId: string,
+  payload: PrintProductVariantLabelRequest,
+) {
+  const response = await httpClient.post<PrintProductVariantLabelResponse>(
+    `${devicesBaseUrl(companyId, branchId)}/${deviceId}/print-label`,
     payload,
   );
 

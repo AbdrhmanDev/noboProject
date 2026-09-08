@@ -26,6 +26,7 @@ import type {
   ProductVariantModifierGroupListResponse,
   ProductListResponse,
   ProductVariantAdmin,
+  ProductVariantBarcode,
   SetBranchProductVariantAvailabilityRequest,
   SetBranchProductVariantAvailabilityResponse,
   SetProductVariantModifierGroupRequest,
@@ -190,6 +191,18 @@ export async function getProductVariantDetails(
 ) {
   const response = await httpClient.get<ProductVariantAdmin>(
     `${catalogUrl(companyId)}/products/${productId}/variants/${productVariantId}`,
+  );
+
+  return response.data;
+}
+
+export async function getProductVariantBarcodes(
+  companyId: string,
+  productId: string,
+  productVariantId: string,
+) {
+  const response = await httpClient.get<ProductVariantBarcode[]>(
+    `${catalogUrl(companyId)}/products/${productId}/variants/${productVariantId}/barcodes`,
   );
 
   return response.data;
