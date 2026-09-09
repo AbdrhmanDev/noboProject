@@ -8,7 +8,7 @@ import { NavGroup } from "../../../components/NavGroup";
 const INVENTORY_VIEW_PERMISSION = "Inventory.View";
 const INVENTORY_CONFIGURE_PERMISSION = "Inventory.Configure";
 
-export function InventoryNavGroup({ activePath, navigate, variant = "desktop" }) {
+export function InventoryNavGroup({ activePath, navigate, variant = "desktop", collapsed = false }) {
   const { t } = useI18n();
   const { currentCompanyId } = useCompany();
   const viewPermissionQuery = useHasPermission(currentCompanyId, INVENTORY_VIEW_PERMISSION);
@@ -62,6 +62,7 @@ export function InventoryNavGroup({ activePath, navigate, variant = "desktop" })
       navigate={navigate}
       items={items}
       shortcutAction="navigation.inventory"
+      collapsed={collapsed}
     />
   );
 }

@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   AlertTriangle,
@@ -7,6 +7,7 @@ import {
   Layers3,
   Monitor,
   Package,
+  RotateCcw,
   Search,
   Truck,
   UserRound,
@@ -45,7 +46,6 @@ import {
   useActivePaymentMethods,
   useReceiveSalesOrderPayment,
   useRefundSalesOrderPayment,
-  useSalesOrderPayments,
 } from "../../features/payments/hooks/usePayments";
 import {
   useInvalidateRestaurantSeating,
@@ -55,11 +55,13 @@ import { ALL_CATEGORY_ID, CatalogPanel, UNCATEGORIZED_CATEGORY_ID } from "../../
 import { OrderSidebar } from "../../features/pos/components/order/OrderSidebar";
 import { OrderDialogs } from "../../features/pos/components/order/OrderDialogs";
 import { OrderRetrievalModal } from "../../features/pos/components/order/OrderRetrievalModal";
-import { PaymentModal } from "../../features/pos/components/payment/PaymentModal";
+import { PaymentStep } from "../../features/pos/components/payment/PaymentStep";
+import { CompleteStep } from "../../features/pos/components/payment/CompleteStep";
+import { PosPhaseIndicator } from "../../features/pos/components/PosPhaseIndicator";
 import { ShiftDialogs } from "../../features/pos/components/shift/ShiftDialogs";
 import { PosSecondaryPanels } from "../../features/pos/components/PosSecondaryPanels";
 import { PosMiscDialogs } from "../../features/pos/components/PosMiscDialogs";
-import { NumericKeypad } from "../../features/pos/components/NumericKeypad";
+import { NumericKeypadModal } from "../../features/pos/components/keypad/NumericKeypadModal";
 import {
   formatPaymentDate,
   getCashMovementLabel,
@@ -237,14 +239,6 @@ export default function POSPage() {
       !paymentsReceivePermissionQuery.isLoading &&
       paymentsReceivePermissionQuery.hasPermission,
   );
-  const paymentHistoryQuery = useSalesOrderPayments(
-    currentCompanyId,
-    currentBranchId,
-    draftSalesOrderId,
-    Boolean(draftSalesOrderId) &&
-      !paymentsViewPermissionQuery.isLoading &&
-      paymentsViewPermissionQuery.hasPermission,
-  );
   const receivePaymentMutation = useReceiveSalesOrderPayment(
     currentCompanyId,
     currentBranchId,
@@ -276,6 +270,10 @@ export default function POSPage() {
     reason: "",
   });
   const [modal, setModal] = useState(null);
+  // Persistent 3-phase workspace — never a route change, POSPage/AppLayout
+  // never unmount. "payment" replaces the old PaymentModal as a non-modal
+  // step; "complete" is the calm success state entered once payment finishes.
+  const [phase, setPhase] = useState("order");
   const [retrievingOrderId, setRetrievingOrderId] = useState(null);
   const [toast, setToast] = useState("");
   const [selectedVariantProduct, setSelectedVariantProduct] = useState(null);
@@ -427,32 +425,52 @@ export default function POSPage() {
     ) ||
     paymentMethods[0] ||
     null;
-  const paymentState = paymentHistoryQuery.data;
-  const settlementCurrencyCode =
-    paymentState?.currencyCode || draftOrder?.currencyCode || catalogCurrencyCode;
-  const settlementMinorUnitDigits =
-    paymentState?.currencyMinorUnitDigits ||
-    draftOrder?.currencyMinorUnitDigits ||
-    2;
-  const remainingAmount =
-    paymentState?.remainingAmount ?? draftOrder?.remainingAmount ?? total;
-  const netPaidAmount = paymentState?.netPaidAmount ?? draftOrder?.netPaidAmount ?? 0;
-  const isFullyPaid = Boolean(paymentState?.isFullyPaid ?? draftOrder?.isFullyPaid);
+  // draftOrder (GET .../sales-orders/{id}) is the single authoritative
+  // source for every payment aggregate — it already carries remainingAmount/
+  // netPaidAmount/refundedAmount/isFullyPaid/payments and is kept fresh on
+  // every draft mutation via setQueryData. A separate GET .../payments call
+  // used to be read here too, but it only fetched once (the moment a draft
+  // first existed) and was never refetched as the basket changed, so it went
+  // stale the instant a second item was added — that shadowed-by-`??`
+  // staleness was the root cause of "Exact Amount" using an old total.
+  const settlementCurrencyCode = draftOrder?.currencyCode || catalogCurrencyCode;
+  const settlementMinorUnitDigits = draftOrder?.currencyMinorUnitDigits || 2;
+  const remainingAmount = draftOrder?.remainingAmount ?? total;
+  const netPaidAmount = draftOrder?.netPaidAmount ?? 0;
+  const isFullyPaid = Boolean(draftOrder?.isFullyPaid);
   const paymentAmount = parseMoneyInput(
     paymentAmountInput,
     settlementMinorUnitDigits,
   );
+  // Cash is the only method allowed to exceed the remaining balance on
+  // screen — the excess is tendered/change, a display-only concept the
+  // backend has no notion of. Card/manual methods keep the exact original
+  // hard block: they may never be submitted above what's owed.
+  const isCashSelected = selectedPaymentMethod?.kind === "Cash";
+  const changeDueAmount =
+    isCashSelected && paymentAmount.amount !== null && paymentAmount.amount > remainingAmount
+      ? paymentAmount.amount - remainingAmount
+      : 0;
+  const amountToRecord =
+    paymentAmount.amount !== null ? Math.min(paymentAmount.amount, remainingAmount) : null;
+  // The Payment step can now be entered while the order is still Draft (see
+  // goToPayment) — Confirm happens just-in-time inside receiveCurrentPayment
+  // itself, so this can't require isConfirmedOrder outright or the Receive
+  // action would be permanently disabled for that path. `canConfirmOrder`
+  // already carries every readiness check Confirm itself needs (has lines,
+  // not mid-edit, Confirm permission, DineIn table satisfied).
   const canReceivePayment =
-    isConfirmedOrder &&
+    (isConfirmedOrder || (draftOrder?.status === "Draft" && canConfirmOrder)) &&
     !isFullyPaid &&
     remainingAmount > 0 &&
     Boolean(selectedPaymentMethod) &&
     paymentsReceivePermissionQuery.hasPermission &&
     !paymentMethodsQuery.isLoading &&
     !receivePaymentMutation.isPending &&
+    !confirmSalesOrderMutation.isPending &&
     !paymentAmount.error &&
     paymentAmount.amount !== null &&
-    paymentAmount.amount <= remainingAmount;
+    (isCashSelected || paymentAmount.amount <= remainingAmount);
   const shouldShowPaymentPanel = isConfirmedOrder || isClosedOrder || isCancelledOrder;
   const canRefundPayments = isConfirmedOrder && paymentsRefundPermissionQuery.hasPermission;
   const closeBlockers = [];
@@ -631,9 +649,6 @@ export default function POSPage() {
       handleDraftError(error, lines);
     }
   };
-  const notifyDraftRequiresLine = () => {
-    notify("This is the last item. Cancel the order instead of removing it.");
-  };
   const commitDraftLines = async (requestLines, baseDraft) => {
     if (!currentCompanyId || !currentBranchId) return null;
 
@@ -642,7 +657,15 @@ export default function POSPage() {
       return null;
     }
 
-    const payload = buildDraftPayload(requestLines, getDraftDiscountInput());
+    // A discount can never apply to a $0 order — the backend correctly
+    // rejects that (`SalesOrder.DiscountNotApplicable`). Committing to zero
+    // lines is now a normal, allowed state (see useDraftLineEditor), so
+    // drop any carried-forward discount for that specific case rather than
+    // let a stale discount block the empty-basket commit itself.
+    const payload = buildDraftPayload(
+      requestLines,
+      requestLines.length ? getDraftDiscountInput() : null,
+    );
 
     if (!baseDraft) {
       const created = await createDraftMutation.mutateAsync(payload);
@@ -665,7 +688,6 @@ export default function POSPage() {
     mapDraftLinesToRequest,
     commitDraftLines,
     refetchDraft: refetchDraftForLineEditor,
-    onRequiresAtLeastOneLine: notifyDraftRequiresLine,
     onCommitError: handleDraftError,
   });
   const displayDraftLines = lineEditor.getDisplayLines();
@@ -744,7 +766,6 @@ export default function POSPage() {
       setSelectedVariantProduct(null);
       setSelectedModifierVariant(null);
       setModifierSelections({});
-      setModal(orderType === "DineIn" ? null : "payment");
       await draftDetailsQuery.refetch();
       invalidateRestaurantSeating(currentCompanyId, currentBranchId);
       notify("Sales order confirmed.");
@@ -761,8 +782,24 @@ export default function POSPage() {
       handleDraftError(error);
     }
   };
+  // Draft + non-DineIn: the primary action moves straight to the Payment
+  // step without confirming anything yet — a pure local phase change, no
+  // request. Draft + DineIn keeps using confirmCurrentOrder directly instead
+  // (see OrderPrimaryAction/getOrderPrimaryAction): that flow deliberately
+  // confirms now and pays later ("Pay Later — continue service" is a real,
+  // separate action), so it must not be folded into this deferred-confirm
+  // path. Confirm itself happens just-in-time inside receiveCurrentPayment.
+  const goToPayment = () => {
+    if (!canConfirmOrder) return;
+
+    if (lineEditor.hasPendingEdits()) {
+      notify("Finish updating the cart before proceeding to payment.");
+      return;
+    }
+
+    setPhase("payment");
+  };
   const refreshPaymentState = () => {
-    paymentHistoryQuery.refetch();
     draftDetailsQuery.refetch();
     openShiftQuery.refetch();
   };
@@ -836,7 +873,6 @@ export default function POSPage() {
       await closeSalesOrderMutation.mutateAsync();
       setModal(null);
       await draftDetailsQuery.refetch();
-      await paymentHistoryQuery.refetch();
       await openShiftQuery.refetch();
       invalidateRestaurantSeating(currentCompanyId, currentBranchId);
       notify("Sales order closed.");
@@ -869,7 +905,6 @@ export default function POSPage() {
       setLifecycleDraft(null);
       setModal(null);
       await draftDetailsQuery.refetch();
-      await paymentHistoryQuery.refetch();
       invalidateRestaurantSeating(currentCompanyId, currentBranchId);
     } catch (error) {
       handleLifecycleError(error);
@@ -984,7 +1019,7 @@ export default function POSPage() {
     }
   };
   const receiveCurrentPayment = async () => {
-    if (!selectedPaymentMethod || !draftSalesOrderId) return;
+    if (!selectedPaymentMethod || !draftSalesOrderId || !draftOrder) return;
 
     if (!paymentsReceivePermissionQuery.hasPermission) {
       notify("Payments.Receive permission is required.");
@@ -996,20 +1031,60 @@ export default function POSPage() {
       return;
     }
 
-    if (paymentAmount.amount > remainingAmount) {
+    if (!isCashSelected && paymentAmount.amount > remainingAmount) {
       notify("Payment amount exceeds the remaining balance.");
       return;
     }
 
+    // Entering the Payment step no longer confirms the order (see
+    // goToPayment) — this is the just-in-time Confirm, fired only when the
+    // cashier actually completes payment. Idempotent server-side
+    // (ConfirmSalesOrderHandler no-ops on an already-Confirmed order), so a
+    // retry of this whole action can't double-confirm; the payment call
+    // right after keeps its own existing idempotency-key protection.
+    // Pricing/tax/discount are unaffected by Confirm, so the total/remaining
+    // already computed for this render stay correct — no re-derivation
+    // needed after this resolves.
+    if (draftOrder.status === "Draft") {
+      if (lineEditor.hasPendingEdits()) {
+        notify("Finish updating the cart before completing payment.");
+        return;
+      }
+
+      try {
+        await confirmSalesOrderMutation.mutateAsync();
+        await draftDetailsQuery.refetch();
+        invalidateRestaurantSeating(currentCompanyId, currentBranchId);
+      } catch (error) {
+        if (
+          error?.code === "SalesOrder.DraftVersionConflict" ||
+          error?.code === "SalesOrder.NotReadyForConfirmation"
+        ) {
+          draftDetailsQuery.refetch();
+          notify("Order changed. Review the latest server state before completing payment.");
+          return;
+        }
+
+        handleDraftError(error);
+        return;
+      }
+    }
+
     try {
-      await receivePaymentMutation.mutateAsync({
+      const result = await receivePaymentMutation.mutateAsync({
         paymentMethodId: selectedPaymentMethod.paymentMethodId,
-        amount: paymentAmount.amount,
+        amount: amountToRecord,
         posShiftId: openShiftId,
       });
       setPaymentAmountInput("");
       notify("Payment received.");
       refreshPaymentState();
+      // Mirrors the old PaymentModal's isFullyPaid branch, just promoted to
+      // a real phase — driven by the mutation's own authoritative response
+      // rather than a reactive effect on derived state.
+      if (result.isFullyPaid) {
+        setPhase("complete");
+      }
     } catch (error) {
       handlePaymentError(error);
     }
@@ -1088,6 +1163,7 @@ export default function POSPage() {
     setModifierSelections({});
     setModal(null);
     setSelectedLineId(null);
+    setPhase("order");
   };
 
   // Retrieval only ever switches which order the POS session is pointed at —
@@ -1137,6 +1213,7 @@ export default function POSPage() {
       setModifierSelections({});
       setSelectedLineId(null);
       setModal(null);
+      setPhase("order");
       notify(`Order opened — ${details.status}.`);
 
       // Product Grid is the natural workspace for a Draft. A Confirmed order
@@ -1166,25 +1243,35 @@ export default function POSPage() {
     setSelectedModifierVariant(null);
     setModifierSelections({});
     setModal(null);
-    const requestLines = mapDraftLinesToRequest();
     const modifierKey = modifierOptionIds.slice().sort().join("|");
-    const existing = requestLines.find(
-      (line) =>
-        line.productVariantId === variant.productVariantId &&
-        line.modifierOptionIds.slice().sort().join("|") === modifierKey,
-    );
 
-    if (existing) {
-      existing.quantity = Number(existing.quantity) + 1;
-    } else {
-      requestLines.push({
-        productVariantId: variant.productVariantId,
-        quantity: 1,
-        modifierOptionIds,
-      });
-    }
+    // Routed through lineEditor's own serialized queue (shared with
+    // quantity/remove commits) instead of firing straight away: with the
+    // product grid no longer disabled while a mutation is in flight, two
+    // rapid taps could otherwise both build their request from the same
+    // stale draft version and race — the second one always losing its line
+    // to a version conflict. The queue guarantees each add is built from
+    // whatever the previous commit actually resolved to.
+    await lineEditor.enqueue((latestDraft) => {
+      const requestLines = mapDraftLinesToRequest(latestDraft?.lines ?? []);
+      const existing = requestLines.find(
+        (line) =>
+          line.productVariantId === variant.productVariantId &&
+          line.modifierOptionIds.slice().sort().join("|") === modifierKey,
+      );
 
-    await replaceDraftLines(requestLines);
+      if (existing) {
+        existing.quantity = Number(existing.quantity) + 1;
+      } else {
+        requestLines.push({
+          productVariantId: variant.productVariantId,
+          quantity: 1,
+          modifierOptionIds,
+        });
+      }
+
+      return requestLines;
+    });
 
     // Every add-to-draft path (immediate add, variant-only, variant+
     // modifiers) funnels through here. When a Variant/Modifier dialog was
@@ -1338,11 +1425,12 @@ export default function POSPage() {
     pageShortcutStateRef.current = {
       startNewOrder,
       handleOrderTypeChange,
-      confirmCurrentOrder,
+      goToPayment,
       changeQty,
       removeDraftLine,
       selectAdjacentLine,
       setModal,
+      setPhase,
       isClosedOrder,
       isCancelledOrder,
       isConfirmedOrder,
@@ -1413,9 +1501,9 @@ export default function POSPage() {
             canConfirmOrder: state.canConfirmOrder,
             hasOpenShift: state.hasOpenShift,
             startNewOrder: state.startNewOrder,
-            onOpenPayment: () => state.setModal("payment"),
+            onOpenPayment: () => state.setPhase("payment"),
             onOpenCloseOrder: () => state.setModal("closeOrder"),
-            confirmCurrentOrder: state.confirmCurrentOrder,
+            goToPayment: state.goToPayment,
           });
           if (!primaryAction.disabled) primaryAction.run();
         },
@@ -1424,7 +1512,7 @@ export default function POSPage() {
         binding: { code: "F9" },
         onTrigger: () => {
           const state = pageShortcutStateRef.current;
-          if (state.isConfirmedOrder && !state.isFullyPaid) state.setModal("payment");
+          if (state.isConfirmedOrder && !state.isFullyPaid) state.setPhase("payment");
         },
       },
       {
@@ -1517,8 +1605,8 @@ export default function POSPage() {
     <AppLayout activePath={ROUTES.POS}>
       <main className="min-w-0 flex-1 p-3 sm:p-4 xl:p-5">
         <PosOperationalGate>
-          <div className="mx-auto max-w-[1680px] space-y-4" dir="rtl">
-          <header className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-[#0c1424]/85 p-3 shadow-lg shadow-black/15 lg:flex-row lg:items-center lg:justify-between">
+          <div className="mx-auto max-w-[1680px] space-y-2.5" dir="rtl">
+          <header className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-[#0c1424]/85 p-2.5 shadow-lg shadow-black/15 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <div className="rounded-xl border border-blue-400/25 bg-blue-500/10 px-3 py-2">
                 <div className="text-[10px] text-slate-400">
@@ -1559,6 +1647,19 @@ export default function POSPage() {
               >
                 <Monitor size={14} />
                 Terminals
+              </button>
+              {/* Retrieve Order lives here (not in the basket) — it's a
+                  low-frequency, session-level action, not per-order work,
+                  and the basket's vertical space is worth far more to the
+                  line list. Same F6 shortcut, same setModal("retrieve"). */}
+              <button
+                type="button"
+                onClick={() => setModal("retrieve")}
+                className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold text-slate-200 hover:border-blue-400/40 hover:bg-blue-500/10"
+              >
+                <RotateCcw size={14} />
+                استرجاع طلب
+                <ShortcutHint action="pos.selectOrder" />
               </button>
             </div>
             <div className="flex flex-1 items-center gap-2 lg:max-w-xl">
@@ -1603,6 +1704,10 @@ export default function POSPage() {
             </div>
           </header>
 
+          <PosPhaseIndicator phase={phase} />
+
+          {phase === "order" && (
+          <Fragment>
           <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_390px]">
             <CatalogPanel
               navigate={navigate}
@@ -1620,7 +1725,6 @@ export default function POSPage() {
               taxSettingsQuery={taxSettingsQuery}
               taxSetupRequired={taxSetupRequired}
               canEditDraft={canEditDraft}
-              isDraftMutationPending={isDraftMutationPending}
               addItem={addItem}
               query={query}
               productGridRef={productGridRef}
@@ -1664,7 +1768,7 @@ export default function POSPage() {
               vat={vat}
               total={total}
               shouldShowPaymentPanel={shouldShowPaymentPanel}
-              paymentState={paymentState}
+              netPaidAmount={netPaidAmount}
               settlementCurrencyCode={settlementCurrencyCode}
               settlementMinorUnitDigits={settlementMinorUnitDigits}
               remainingAmount={remainingAmount}
@@ -1680,12 +1784,11 @@ export default function POSPage() {
               onOpenRetrieve={() => setModal("retrieve")}
               onOpenCashMovement={() => setModal("cashMovement")}
               paymentsViewPermissionQuery={paymentsViewPermissionQuery}
-              paymentHistoryQuery={paymentHistoryQuery}
               canRefundPayments={canRefundPayments}
               openRefundModal={openRefundModal}
               kitchenReady={kitchenReady}
               startNewOrder={startNewOrder}
-              onOpenPayment={() => setModal("payment")}
+              onOpenPayment={() => setPhase("payment")}
               readyKitchenTicketCount={readyKitchenTicketCount}
               kitchenTickets={kitchenTickets}
               closeBlockers={closeBlockers}
@@ -1694,6 +1797,7 @@ export default function POSPage() {
               hasOpenShift={hasOpenShift}
               canConfirmOrder={canConfirmOrder}
               confirmCurrentOrder={confirmCurrentOrder}
+              goToPayment={goToPayment}
             />
           </div>
 
@@ -1710,6 +1814,67 @@ export default function POSPage() {
             aiDismissed={aiDismissed}
             setAiDismissed={setAiDismissed}
           />
+          </Fragment>
+          )}
+
+          {phase === "payment" && draftOrder && (
+            <PaymentStep
+              draftOrder={draftOrder}
+              draftLines={displayDraftLines}
+              catalogCurrencyCode={catalogCurrencyCode}
+              customer={customer}
+              subtotal={subtotal}
+              discountValue={discountValue}
+              vat={vat}
+              total={total}
+              netPaidAmount={netPaidAmount}
+              settlementCurrencyCode={settlementCurrencyCode}
+              settlementMinorUnitDigits={settlementMinorUnitDigits}
+              remainingAmount={remainingAmount}
+              isCashSelected={isCashSelected}
+              changeDueAmount={changeDueAmount}
+              paymentsReceivePermissionQuery={paymentsReceivePermissionQuery}
+              paymentMethodsQuery={paymentMethodsQuery}
+              paymentMethods={paymentMethods}
+              showAddPaymentMethod={showAddPaymentMethod}
+              setShowAddPaymentMethod={setShowAddPaymentMethod}
+              selectedPaymentMethod={selectedPaymentMethod}
+              setSelectedPaymentMethodId={setSelectedPaymentMethodId}
+              paymentAmountInput={paymentAmountInput}
+              setPaymentAmountInput={setPaymentAmountInput}
+              paymentAmount={paymentAmount}
+              canReceivePayment={canReceivePayment}
+              receiveCurrentPayment={receiveCurrentPayment}
+              receivePaymentMutation={receivePaymentMutation}
+              paymentsViewPermissionQuery={paymentsViewPermissionQuery}
+              canRefundPayments={canRefundPayments}
+              openRefundModal={openRefundModal}
+              isLinePending={lineEditor.isLinePending}
+              navigate={navigate}
+              onBack={() => {
+                setPhase("order");
+                setShowAddPaymentMethod(false);
+                setPaymentAmountInput("");
+                setSelectedPaymentMethodId("");
+              }}
+            />
+          )}
+
+          {phase === "complete" && draftOrder && (
+            <CompleteStep
+              draftOrder={draftOrder}
+              total={total}
+              settlementCurrencyCode={settlementCurrencyCode}
+              settlementMinorUnitDigits={settlementMinorUnitDigits}
+              kitchenTickets={kitchenTickets}
+              readyKitchenTicketCount={readyKitchenTicketCount}
+              kitchenReady={kitchenReady}
+              closePermissionQuery={closePermissionQuery}
+              onOpenCloseOrder={() => setModal("closeOrder")}
+              startNewOrder={startNewOrder}
+              onBack={() => setPhase("order")}
+            />
+          )}
           </div>
         </PosOperationalGate>
 
@@ -1749,7 +1914,6 @@ export default function POSPage() {
           total={total}
           settlementCurrencyCode={settlementCurrencyCode}
           settlementMinorUnitDigits={settlementMinorUnitDigits}
-          paymentState={paymentState}
           effectiveOrderType={effectiveOrderType}
           selectedRestaurantTable={selectedRestaurantTable}
           kitchenTickets={kitchenTickets}
@@ -1764,48 +1928,6 @@ export default function POSPage() {
           canRequestCancel={canRequestCancel}
           runLifecycleAction={runLifecycleAction}
         />
-
-        {modal === "payment" && draftOrder && (
-          <PaymentModal
-            draftOrder={draftOrder}
-            total={total}
-            netPaidAmount={netPaidAmount}
-            settlementCurrencyCode={settlementCurrencyCode}
-            settlementMinorUnitDigits={settlementMinorUnitDigits}
-            remainingAmount={remainingAmount}
-            isFullyPaid={isFullyPaid}
-            kitchenTickets={kitchenTickets}
-            readyKitchenTicketCount={readyKitchenTicketCount}
-            kitchenReady={kitchenReady}
-            closePermissionQuery={closePermissionQuery}
-            onClose={() => {
-              setModal(null);
-              setShowAddPaymentMethod(false);
-              setPaymentAmountInput("");
-              setSelectedPaymentMethodId("");
-            }}
-            onOpenCloseOrder={() => setModal("closeOrder")}
-            startNewOrder={startNewOrder}
-            paymentsReceivePermissionQuery={paymentsReceivePermissionQuery}
-            paymentMethodsQuery={paymentMethodsQuery}
-            paymentMethods={paymentMethods}
-            showAddPaymentMethod={showAddPaymentMethod}
-            setShowAddPaymentMethod={setShowAddPaymentMethod}
-            selectedPaymentMethod={selectedPaymentMethod}
-            setSelectedPaymentMethodId={setSelectedPaymentMethodId}
-            paymentAmountInput={paymentAmountInput}
-            setPaymentAmountInput={setPaymentAmountInput}
-            paymentAmount={paymentAmount}
-            canReceivePayment={canReceivePayment}
-            receiveCurrentPayment={receiveCurrentPayment}
-            receivePaymentMutation={receivePaymentMutation}
-            paymentsViewPermissionQuery={paymentsViewPermissionQuery}
-            paymentState={paymentState}
-            canRefundPayments={canRefundPayments}
-            openRefundModal={openRefundModal}
-            navigate={navigate}
-          />
-        )}
 
         {modal === "retrieve" && (
           <OrderRetrievalModal
@@ -1850,7 +1972,7 @@ export default function POSPage() {
         <PosMiscDialogs modal={modal} setModal={setModal} setCustomer={setCustomer} notify={notify} />
 
         {modal === "editQuantity" && quantityKeypadTarget && (
-          <NumericKeypad
+          <NumericKeypadModal
             title="تعديل الكمية"
             initialValue={String(quantityKeypadTarget.initialValue)}
             allowDecimal={false}

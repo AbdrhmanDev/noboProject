@@ -7,7 +7,7 @@ import { NavGroup } from "../../../components/NavGroup";
 
 const PURCHASES_VIEW_PERMISSION = "Purchases.View";
 
-export function ProcurementNavGroup({ activePath, navigate, variant = "desktop" }) {
+export function ProcurementNavGroup({ activePath, navigate, variant = "desktop", collapsed = false }) {
   const { t } = useI18n();
   const { currentCompanyId } = useCompany();
   const viewPermissionQuery = useHasPermission(currentCompanyId, PURCHASES_VIEW_PERMISSION);
@@ -48,6 +48,13 @@ export function ProcurementNavGroup({ activePath, navigate, variant = "desktop" 
   }
 
   return (
-    <NavGroup icon={TruckIcon} labelKey="nav.purchases" activePath={activePath} navigate={navigate} items={items} />
+    <NavGroup
+      icon={TruckIcon}
+      labelKey="nav.purchases"
+      activePath={activePath}
+      navigate={navigate}
+      items={items}
+      collapsed={collapsed}
+    />
   );
 }

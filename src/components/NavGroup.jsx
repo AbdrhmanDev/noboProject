@@ -3,7 +3,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { useI18n } from "../i18n/I18nContext";
 import { ShortcutHint } from "../features/shortcuts/components/ShortcutHint";
 
-export function NavGroup({ icon: Icon, labelKey, activePath, navigate, items, shortcutAction }) {
+export function NavGroup({ icon: Icon, labelKey, activePath, navigate, items, shortcutAction, collapsed = false }) {
   const { t } = useI18n();
   const [manualExpanded, setManualExpanded] = useState(false);
 
@@ -14,6 +14,23 @@ export function NavGroup({ icon: Icon, labelKey, activePath, navigate, items, sh
 
   const isGroupActive = visibleItems.some((item) => item.to === activePath);
   const expanded = manualExpanded || isGroupActive;
+
+  if (collapsed) {
+    const target = visibleItems.find((item) => item.to === activePath) || visibleItems[0];
+    return (
+      <button
+        type="button"
+        onClick={() => navigate(target.to)}
+        title={t(labelKey)}
+        aria-label={t(labelKey)}
+        className={`mx-auto flex h-11 w-11 items-center justify-center rounded-2xl transition-all duration-300 hover:bg-blue-500/10 ${
+          isGroupActive ? "border border-blue-500/40 bg-blue-500/15" : ""
+        }`}
+      >
+        <Icon size={20} color={isGroupActive ? "#2b8cff" : "#60a5fa"} />
+      </button>
+    );
+  }
 
   return (
     <div>

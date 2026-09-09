@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { Crown, ShoppingCart, X } from "lucide-react";
+import { Crown, Loader2, ShoppingCart, X } from "lucide-react";
 import { ROUTES } from "../../../../utils/routes";
 import { RestaurantSeatingOnboarding } from "../../../restaurant/components/RestaurantSeatingOnboarding";
 import { ShortcutHint } from "../../../shortcuts/components/ShortcutHint";
@@ -39,28 +39,41 @@ export function OrderHeader({
 
   return (
     <>
-      <div className="mb-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="grid h-8 w-8 place-items-center rounded-lg bg-blue-500/15 text-blue-300">
-            <ShoppingCart size={16} />
-          </div>
-          <div>
-            <h2 className="text-sm font-bold">سلة المشتريات</h2>
-            <span className="text-[10px] text-slate-500">
-              {draftLines.reduce((sum, item) => sum + Number(item.quantity), 0)} صنف في الفاتورة
+      <div className="mb-1.5 flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-1.5">
+          <ShoppingCart size={13} className="shrink-0 text-blue-300" />
+          <h2 className="shrink-0 text-xs font-bold">سلة المشتريات</h2>
+          <span
+            className={`shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-bold ${
+              isCancelledOrder
+                ? "bg-rose-500/15 text-rose-300"
+                : isConfirmedOrder || isClosedOrder
+                  ? "bg-emerald-500/15 text-emerald-300"
+                  : "bg-blue-500/15 text-blue-300"
+            }`}
+          >
+            {draftOrder?.status || "New"}
+          </span>
+          {isDraftMutationPending && (
+            <span className="flex items-center text-blue-300/80" title="جارٍ الحفظ">
+              <Loader2 size={11} className="animate-spin" />
             </span>
-          </div>
+          )}
+          <span className="truncate text-[10px] text-slate-500">
+            · {draftLines.reduce((sum, item) => sum + Number(item.quantity), 0)} صنف
+            {draftOrder?.orderNumberFormatted && ` · ${draftOrder.orderNumberFormatted}`}
+          </span>
         </div>
         <button
           type="button"
           onClick={onOpenCustomer}
-          className="rounded-lg border border-white/10 px-2 py-1 text-[10px] text-blue-300 hover:bg-blue-500/10"
+          className="shrink-0 rounded-lg border border-white/10 px-2 py-1 text-[10px] text-blue-300 hover:bg-blue-500/10"
         >
           {customer ? customer.name : "اختيار عميل"}
         </button>
       </div>
       {customer && (
-        <div className="mb-2 flex items-center justify-between rounded-xl bg-blue-500/10 px-3 py-2 text-xs text-blue-100">
+        <div className="mb-1.5 flex items-center justify-between rounded-xl bg-blue-500/10 px-3 py-2 text-xs text-blue-100">
           <span className="flex items-center gap-1">
             <Crown size={13} className="text-amber-300" />
             {customer.name} · سعر VIP
@@ -70,28 +83,7 @@ export function OrderHeader({
           </button>
         </div>
       )}
-      <div className="mb-3 space-y-2 rounded-xl border border-white/10 bg-white/[0.025] p-2">
-        <div className="flex items-center justify-between gap-2 text-[10px] text-slate-400">
-          <span>Order status</span>
-          <span className="flex items-center gap-1.5">
-            {draftOrder?.orderNumberFormatted && (
-              <span className="rounded-full bg-white/10 px-2 py-0.5 font-bold text-slate-300">
-                {draftOrder.orderNumberFormatted}
-              </span>
-            )}
-            <span
-              className={`rounded-full px-2 py-0.5 font-bold ${
-                isCancelledOrder
-                  ? "bg-rose-500/15 text-rose-300"
-                  : isConfirmedOrder || isClosedOrder
-                    ? "bg-emerald-500/15 text-emerald-300"
-                    : "bg-blue-500/15 text-blue-300"
-              }`}
-            >
-              {draftOrder?.status || "New"}
-            </span>
-          </span>
-        </div>
+      <div className="mb-1.5 space-y-1.5">
         <div className="grid grid-cols-3 gap-1">
           {ORDER_TYPES.map((type) => (
             <button
@@ -99,7 +91,7 @@ export function OrderHeader({
               type="button"
               disabled={!canEditDraft || isDraftMutationPending}
               onClick={() => handleOrderTypeChange(type)}
-              className={`flex min-h-11 items-center justify-center gap-1 rounded-lg border px-2 text-xs font-bold transition disabled:cursor-not-allowed disabled:opacity-50 ${
+              className={`flex min-h-9 items-center justify-center gap-1 rounded-lg border px-2 text-xs font-bold transition disabled:cursor-not-allowed disabled:opacity-50 ${
                 orderType === type
                   ? "border-blue-400 bg-blue-500/15 text-blue-100"
                   : "border-white/10 bg-black/10 text-slate-400 hover:bg-white/10"

@@ -1,5 +1,6 @@
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import Header from "./Header";
 import Footer from "./Footer";
 import { useI18n } from "../i18n/I18nContext";
@@ -32,10 +33,32 @@ const NAV_GROUPS = {
   devices: DevicesNavGroup,
 };
 
+const SIDEBAR_COLLAPSE_STORAGE_KEY = "nobo-sidebar-collapsed";
+
 export default function AppLayout({ children, onLogout }) {
   const navigate = useNavigate();
   const location = useLocation();
   const activePath = (location?.hash && location.hash.replace("#", "")) || location?.pathname || ROUTES.DASHBOARD;
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      const stored = localStorage.getItem(SIDEBAR_COLLAPSE_STORAGE_KEY);
+      if (stored !== null) return stored === "true";
+    } catch {
+      // localStorage unavailable — fall through to the route-based default
+    }
+    return activePath === ROUTES.POS;
+  });
+  const toggleCollapsed = () => {
+    setCollapsed((current) => {
+      const next = !current;
+      try {
+        localStorage.setItem(SIDEBAR_COLLAPSE_STORAGE_KEY, String(next));
+      } catch {
+        // localStorage unavailable — preference just won't persist
+      }
+      return next;
+    });
+  };
   const { t, dir } = useI18n();
   const { user } = useUser();
   const { logout } = useAuth();
@@ -53,27 +76,30 @@ export default function AppLayout({ children, onLogout }) {
     <div dir={dir} className="bg-space min-h-screen w-full text-white flex flex-col lg:flex-row">
       {/* sidebar (RTL: sits on the right) */}
       <aside
-        className="
+        className={`
           hidden
           lg:flex
           flex-col
-          w-[285px]
+          ${collapsed ? "w-[68px]" : "w-[240px]"}
           shrink-0
           bg-black
           border-l
           border-white/10
-          px-5
+          ${collapsed ? "px-2" : "px-5"}
           py-6
           relative
           overflow-hidden
-        "
+          transition-[width,padding]
+          duration-200
+        `}
       >
         <div className="bg-stars absolute inset-0 pointer-events-none opacity-40" />
-        <div className="flex items-center gap-3 mb-10">
+        <div className={`flex items-center mb-8 ${collapsed ? "justify-center" : "gap-3 mb-10"}`}>
           <div
             className="
               w-12
               h-12
+              shrink-0
               rounded-2xl
               bg-gradient-to-br
               from-cyan-400
@@ -88,17 +114,19 @@ export default function AppLayout({ children, onLogout }) {
           >
             N
           </div>
-          <div>
-            <div className="text-2xl font-black brand-text">NOBO</div>
-            <div className="text-xs text-gray-500">ERP III</div>
-          </div>
+          {!collapsed && (
+            <div>
+              <div className="text-2xl font-black brand-text">NOBO</div>
+              <div className="text-xs text-gray-500">ERP III</div>
+            </div>
+          )}
         </div>
         <button
           onClick={() => navigate(ROUTES.DASHBOARD)}
-          className="
-            w-full
+          title={collapsed ? t("layout.home") : undefined}
+          aria-label={t("layout.home")}
+          className={`
             rounded-2xl
-            py-4
             font-bold
             text-white
             mb-4
@@ -107,12 +135,13 @@ export default function AppLayout({ children, onLogout }) {
             hover:scale-[1.02]
             shadow-[0_0_30px_rgba(43,140,255,.35)]
             text-sm
-          "
+            ${collapsed ? "mx-auto h-11 w-11 shrink-0" : "w-full py-4"}
+          `}
           style={{ background: "linear-gradient(90deg,#2b8cff,#4f6bff)" }}
         >
-          {t("layout.home")}
+          {collapsed ? "N" : t("layout.home")}
         </button>
-        <nav className="space-y-1 overflow-y-auto scrollbar-none">
+        <nav className="flex-1 space-y-1 overflow-y-auto overflow-x-hidden scrollbar-none">
           {NAV_ITEMS.slice(1).map((item, i, arr) => {
             const showDivider = item.comingSoon && !arr[i - 1]?.comingSoon;
 
@@ -120,14 +149,21 @@ export default function AppLayout({ children, onLogout }) {
               return (
                 <Fragment key={i}>
                   {showDivider && <div className="my-2 border-t border-white/10" />}
-                  <ComingSoonNavItem icon={item.icon} labelKey={item.labelKey} />
+                  <ComingSoonNavItem icon={item.icon} labelKey={item.labelKey} collapsed={collapsed} />
                 </Fragment>
               );
             }
 
             if (item.kind === "group") {
               const GroupComponent = NAV_GROUPS[item.module];
-              return <GroupComponent key={i} activePath={activePath} navigate={navigate} />;
+              return (
+                <GroupComponent
+                  key={i}
+                  activePath={activePath}
+                  navigate={navigate}
+                  collapsed={collapsed}
+                />
+              );
             }
 
             if (item.permission) {
@@ -141,11 +177,30 @@ export default function AppLayout({ children, onLogout }) {
                   activePath={activePath}
                   navigate={navigate}
                   shortcutAction={item.shortcutAction}
+                  collapsed={collapsed}
                 />
               );
             }
 
             const isActive = activePath === item.to;
+
+            if (collapsed) {
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => navigate(item.to)}
+                  title={t(item.labelKey)}
+                  aria-label={t(item.labelKey)}
+                  className={`mx-auto flex h-11 w-11 items-center justify-center rounded-2xl transition-all duration-300 hover:bg-blue-500/10 ${
+                    isActive ? "border border-blue-500/40 bg-blue-500/15" : ""
+                  }`}
+                >
+                  <item.icon size={20} color={isActive ? "#2b8cff" : "#60a5fa"} />
+                </button>
+              );
+            }
+
             return (
               <div
                 key={i}
@@ -173,58 +228,82 @@ export default function AppLayout({ children, onLogout }) {
             );
           })}
         </nav>
-<button
+
+        <button
+          type="button"
+          onClick={toggleCollapsed}
+          title={collapsed ? t("layout.expandSidebar") : t("layout.collapseSidebar")}
+          aria-label={collapsed ? t("layout.expandSidebar") : t("layout.collapseSidebar")}
+          className={`mt-3 flex h-10 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] text-gray-400 transition hover:border-blue-500/40 hover:bg-blue-500/10 hover:text-white ${
+            collapsed ? "mx-auto w-11" : "w-full"
+          }`}
+        >
+          {dir === "rtl" ? (
+            collapsed ? <PanelLeftOpen size={18} className="rotate-180" /> : <PanelLeftClose size={18} className="rotate-180" />
+          ) : collapsed ? (
+            <PanelLeftOpen size={18} />
+          ) : (
+            <PanelLeftClose size={18} />
+          )}
+          {!collapsed && <span className="text-xs font-semibold">{t("layout.collapseSidebar")}</span>}
+        </button>
+
+        <button
           onClick={() => navigate(ROUTES.PROFILE)}
-          className="
-            mt-auto
+          title={collapsed ? user.name : undefined}
+          aria-label={user.name}
+          className={`
             rounded-3xl
             border
             border-white/10
             bg-white/5
             backdrop-blur-xl
-            p-4
             flex
             items-center
-            gap-3
             text-left
             cursor-pointer
             transition
             hover:border-blue-500/40
             hover:bg-blue-500/10
-          "
+            ${collapsed ? "mx-auto mt-4 h-11 w-11 justify-center p-0" : "mt-4 gap-3 p-4"}
+          `}
         >
           <img
             src={user.avatarFile || user.avatar}
             alt=""
-            className="w-14 h-14 rounded-full bg-gray-700 object-cover"
+            className={`rounded-full bg-gray-700 object-cover ${collapsed ? "h-9 w-9" : "h-14 w-14"}`}
             style={{ boxShadow: "0 0 25px rgba(43,140,255,.3)" }}
           />
-          <div>
-            <div className="text-sm font-bold">{user.name}</div>
-            <div className="text-[11px] text-gray-400">
-              {user.role === "systemAdmin" ? t("layout.systemAdmin") : t(`profile.role${user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : "SystemAdmin"}`)}
+          {!collapsed && (
+            <div>
+              <div className="text-sm font-bold">{user.name}</div>
+              <div className="text-[11px] text-gray-400">
+                {user.role === "systemAdmin" ? t("layout.systemAdmin") : t(`profile.role${user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : "SystemAdmin"}`)}
+              </div>
             </div>
-          </div>
+          )}
         </button>
-        <div
-          className="
-            mt-4
-            rounded-2xl
-            bg-green-500/10
-            border
-            border-green-400/30
-            p-3
-            flex
-            items-center
-            justify-between
-          "
-        >
-          <div>
-            <div className="text-xs text-green-400">{t("layout.systemStatus")}</div>
-            <div className="text-[11px] text-gray-400">{t("layout.allServices")}</div>
+        {!collapsed && (
+          <div
+            className="
+              mt-4
+              rounded-2xl
+              bg-green-500/10
+              border
+              border-green-400/30
+              p-3
+              flex
+              items-center
+              justify-between
+            "
+          >
+            <div>
+              <div className="text-xs text-green-400">{t("layout.systemStatus")}</div>
+              <div className="text-[11px] text-gray-400">{t("layout.allServices")}</div>
+            </div>
+            <div className="w-3 h-3 rounded-full bg-green-400 animate-pulse" />
           </div>
-          <div className="w-3 h-3 rounded-full bg-green-400 animate-pulse" />
-        </div>
+        )}
       </aside>
 
       {/* main */}

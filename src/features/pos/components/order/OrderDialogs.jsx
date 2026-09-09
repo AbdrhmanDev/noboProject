@@ -46,7 +46,6 @@ export function OrderDialogs({
   total,
   settlementCurrencyCode,
   settlementMinorUnitDigits,
-  paymentState,
   effectiveOrderType,
   selectedRestaurantTable,
   kitchenTickets,
@@ -359,7 +358,7 @@ export function OrderDialogs({
               <Metric
                 label="Net paid"
                 value={formatMoney(
-                  paymentState?.netPaidAmount ?? draftOrder.netPaidAmount ?? 0,
+                  draftOrder.netPaidAmount ?? 0,
                   settlementCurrencyCode,
                   settlementMinorUnitDigits,
                 )}

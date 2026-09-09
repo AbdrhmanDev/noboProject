@@ -23,6 +23,7 @@ export function OrderPrimaryAction({
   hasOpenShift,
   canConfirmOrder,
   confirmCurrentOrder,
+  goToPayment,
   orderType,
   total,
   catalogCurrencyCode,
@@ -43,7 +44,7 @@ export function OrderPrimaryAction({
     startNewOrder,
     onOpenPayment,
     onOpenCloseOrder,
-    confirmCurrentOrder,
+    goToPayment,
   });
 
   if (isClosedOrder || isCancelledOrder) {
@@ -141,17 +142,37 @@ export function OrderPrimaryAction({
     );
   }
 
+  // Draft, every order type: primary action always moves straight to
+  // Payment (goToPayment, a local phase change — nothing is confirmed yet),
+  // so Order → Payment → Edit Order → Payment works before any real payment
+  // is recorded, DineIn included. DineIn's genuine "confirm now, pay later"
+  // need — send the order to the kitchen without going through Payment at
+  // all right now — stays available as its own explicit, clearly-separate
+  // action underneath, exactly like the existing post-confirm "Pay Later"
+  // affordance below.
   return (
-    <button
-      type="button"
-      disabled={primaryAction.disabled}
-      onClick={primaryAction.run}
-      className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-l from-blue-600 to-[#0A84FF] text-sm font-black shadow-lg shadow-blue-950/40 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
-    >
-      <Check size={19} />
-      {orderType === "DineIn" ? "Confirm Order" : "Confirm & Pay"} ·{" "}
-      {formatMoney(total, catalogCurrencyCode, 2)}
-      <ShortcutHint action="pos.confirm" className="mr-1" />
-    </button>
+    <div className="space-y-1.5">
+      <button
+        type="button"
+        disabled={primaryAction.disabled}
+        onClick={primaryAction.run}
+        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-l from-blue-600 to-[#0A84FF] text-sm font-black shadow-lg shadow-blue-950/40 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <WalletCards size={19} />
+        Payment · {formatMoney(total, catalogCurrencyCode, 2)}
+        <ShortcutHint action="pos.confirm" className="mr-1" />
+      </button>
+      {orderType === "DineIn" && (
+        <button
+          type="button"
+          disabled={primaryAction.disabled}
+          onClick={confirmCurrentOrder}
+          className="flex h-9 w-full items-center justify-center gap-1.5 rounded-lg text-xs font-bold text-slate-400 transition hover:text-slate-200 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          <Check size={13} />
+          Confirm — Pay Later
+        </button>
+      )}
+    </div>
   );
 }

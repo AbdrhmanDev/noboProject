@@ -17,7 +17,7 @@ export function getOrderPrimaryAction({
   startNewOrder,
   onOpenPayment,
   onOpenCloseOrder,
-  confirmCurrentOrder,
+  goToPayment,
 }) {
   if (isClosedOrder || isCancelledOrder) {
     return { kind: "newOrder", disabled: false, run: startNewOrder };
@@ -35,5 +35,12 @@ export function getOrderPrimaryAction({
     return { kind: "closeOrder", disabled: !canCloseOrder, run: onOpenCloseOrder };
   }
 
-  return { kind: "confirm", disabled: !hasOpenShift || !canConfirmOrder, run: confirmCurrentOrder };
+  // Draft, every order type including DineIn: the primary action moves
+  // straight to the Payment step — a local phase change, nothing confirmed
+  // yet — so Order → Payment → Edit Order → Payment works before any real
+  // payment is recorded, DineIn included. `confirmCurrentOrder` is no
+  // longer this button's job; DineIn's genuine "confirm now, pay later"
+  // need is its own explicit secondary action (see OrderPrimaryAction.jsx),
+  // still driven by the same confirmCurrentOrder function.
+  return { kind: "goToPayment", disabled: !hasOpenShift || !canConfirmOrder, run: goToPayment };
 }

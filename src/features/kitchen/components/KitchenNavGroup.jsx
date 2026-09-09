@@ -8,7 +8,7 @@ import { NavGroup } from "../../../components/NavGroup";
 const KITCHEN_VIEW_PERMISSION = "Kitchen.View";
 const KITCHEN_MANAGE_PERMISSION = "Kitchen.Manage";
 
-export function KitchenNavGroup({ activePath, navigate, variant = "desktop" }) {
+export function KitchenNavGroup({ activePath, navigate, variant = "desktop", collapsed = false }) {
   const { t } = useI18n();
   const { currentCompanyId } = useCompany();
   const viewPermissionQuery = useHasPermission(currentCompanyId, KITCHEN_VIEW_PERMISSION);
@@ -59,6 +59,7 @@ export function KitchenNavGroup({ activePath, navigate, variant = "desktop" }) {
       navigate={navigate}
       items={items}
       shortcutAction="navigation.kitchen"
+      collapsed={collapsed}
     />
   );
 }

@@ -5,15 +5,14 @@ import {
   ChevronDown,
   ChevronUp,
   CircleDollarSign,
+  Gift,
   MoreHorizontal,
   PauseCircle,
   ReceiptText,
-  RotateCcw,
 } from "lucide-react";
 import { formatMoney } from "../../../../shared/utils/formatters";
 import { formatPaymentDate } from "../../utils/posFormatters";
 import { IconButton } from "../PosPrimitives";
-import { ShortcutHint } from "../../../shortcuts/components/ShortcutHint";
 
 export function OrderSecondaryActions({
   isClosedOrder,
@@ -27,78 +26,76 @@ export function OrderSecondaryActions({
   cancelPermissionQuery,
   voidPreparedPermissionQuery,
   holdOrder,
-  onOpenRetrieve,
   onOpenCashMovement,
   shouldShowPaymentPanel,
   paymentsViewPermissionQuery,
-  paymentHistoryQuery,
-  paymentState,
   canRefundPayments,
   openRefundModal,
+  onOpenDiscount,
+  canEditDraft,
+  isDraftMutationPending,
 }) {
   const [expanded, setExpanded] = useState(false);
 
+  // Retrieve Order used to live here too, but it's a low-frequency,
+  // session-level action (not per-order work) — it now lives in the POS
+  // page's own toolbar next to Shift History/Terminals, freeing a full row
+  // in the vertical stack for the line list, which needs it far more.
   const showLifecycle = !isClosedOrder && !isCancelledOrder && draftOrder;
-  // Retrieve is the only genuinely high-frequency, real, per-order action
-  // here — Customer/Discount live elsewhere in the sidebar already. Hold has
-  // no backend yet (still a stub), and Cash Movement is a shift/cash
-  // operation rather than per-order work, so both moved into "More actions"
-  // below instead of sharing the always-visible row.
-  const showQuickActions = !isClosedOrder && !isCancelledOrder;
   const showShiftActions = !isClosedOrder && !isCancelledOrder;
-  const paymentsCount = (paymentState?.payments || []).length;
+  const paymentsCount = (draftOrder?.payments || []).length;
   const showPayments =
     shouldShowPaymentPanel &&
     paymentsViewPermissionQuery.hasPermission &&
-    (paymentHistoryQuery.isLoading || paymentsCount > 0);
+    paymentsCount > 0;
 
   const hasMoreSection = showLifecycle || showShiftActions || showPayments;
 
-  if (!showQuickActions && !hasMoreSection) {
+  if (!hasMoreSection) {
     return null;
   }
 
   return (
-    <div className="mt-3 shrink-0 border-t border-white/10 pt-2 space-y-2">
-      {showQuickActions && (
-        <div className="grid grid-cols-1">
-          <IconButton
-            icon={RotateCcw}
-            label="استرجاع طلب"
-            onClick={onOpenRetrieve}
-            hint={<ShortcutHint action="pos.selectOrder" />}
-          />
-        </div>
-      )}
-
-      {hasMoreSection && (
-        <button
-          type="button"
-          onClick={() => setExpanded((value) => !value)}
-          className="flex w-full items-center justify-between rounded-lg px-1 py-1.5 text-[10px] font-bold text-slate-400 hover:text-slate-200"
-        >
-          <span className="flex items-center gap-1.5">
-            <MoreHorizontal size={14} />
-            More actions
-            {lifecycleBlocker && (
-              <span className="rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[9px] text-amber-200">
-                1
-              </span>
-            )}
-            {!lifecycleBlocker && paymentsCount > 0 && (
-              <span className="rounded-full bg-white/10 px-1.5 py-0.5 text-[9px] text-slate-300">
-                {paymentsCount}
-              </span>
-            )}
+    <div className="mt-1 shrink-0 space-y-1">
+      <button
+        type="button"
+        onClick={() => setExpanded((value) => !value)}
+        className="flex h-8 w-full items-center justify-center gap-1.5 rounded-lg border border-white/10 text-[10px] font-bold text-slate-400 transition hover:border-blue-400/30 hover:text-slate-200"
+      >
+        <MoreHorizontal size={14} />
+        More actions
+        {draftOrder?.discount && (
+          <Gift size={12} className="text-pink-300" />
+        )}
+        {lifecycleBlocker && (
+          <span className="rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[9px] text-amber-200">
+            1
           </span>
-          {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-        </button>
-      )}
+        )}
+        {!lifecycleBlocker && paymentsCount > 0 && (
+          <span className="rounded-full bg-white/10 px-1.5 py-0.5 text-[9px] text-slate-300">
+            {paymentsCount}
+          </span>
+        )}
+        {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+      </button>
 
       {expanded && hasMoreSection && (
         <div className="mt-2 max-h-[22vh] min-h-0 space-y-3 overflow-y-auto pr-1 scrollbar-none">
           {showShiftActions && (
             <div className="grid grid-cols-2 gap-2">
+              <IconButton
+                icon={Gift}
+                label={draftOrder?.discount ? "تعديل الخصم" : "خصم وعروض"}
+                tone="pink"
+                onClick={onOpenDiscount}
+                disabled={!canEditDraft || isDraftMutationPending}
+              />
+              <IconButton
+                icon={CircleDollarSign}
+                label="حركة نقدية"
+                onClick={onOpenCashMovement}
+              />
               <IconButton
                 icon={PauseCircle}
                 label="حفظ مؤقت"
@@ -109,11 +106,6 @@ export function OrderSecondaryActions({
                     قريبًا
                   </span>
                 }
-              />
-              <IconButton
-                icon={CircleDollarSign}
-                label="حركة نقدية"
-                onClick={onOpenCashMovement}
               />
             </div>
           )}
@@ -175,12 +167,7 @@ export function OrderSecondaryActions({
                 <ReceiptText size={13} />
                 Payments
               </div>
-              {paymentHistoryQuery.isLoading && (
-                <div className="rounded-lg bg-white/[0.025] px-3 py-2 text-xs text-slate-400">
-                  Loading payment history...
-                </div>
-              )}
-              {(paymentState?.payments || []).map((payment) => (
+              {(draftOrder?.payments || []).map((payment) => (
                 <div
                   key={payment.salesOrderPaymentId}
                   className="rounded-lg border border-white/10 bg-white/[0.025] p-2"

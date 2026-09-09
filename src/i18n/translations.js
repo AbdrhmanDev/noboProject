@@ -129,6 +129,8 @@ export const translations = {
     "layout.systemAdmin": "مدير النظام",
     "layout.systemStatus": "حالة النظام",
     "layout.allServices": "جميع الخدمات تعمل",
+    "layout.collapseSidebar": "طي القائمة الجانبية",
+    "layout.expandSidebar": "توسيع القائمة الجانبية",
 
     // ---- Nav items ----
     "nav.dashboard": "الرئيسية",
@@ -1305,6 +1307,8 @@ export const translations = {
     "layout.systemAdmin": "System Admin",
     "layout.systemStatus": "System Status",
     "layout.allServices": "All Services Online",
+    "layout.collapseSidebar": "Collapse sidebar",
+    "layout.expandSidebar": "Expand sidebar",
 
     "nav.dashboard": "Dashboard",
     "nav.pos": "Point of Sale POS",
@@ -2456,6 +2460,8 @@ export const translations = {
     "layout.systemAdmin": "Administrador del sistema",
     "layout.systemStatus": "Estado del sistema",
     "layout.allServices": "Todos los servicios en línea",
+    "layout.collapseSidebar": "Contraer barra lateral",
+    "layout.expandSidebar": "Expandir barra lateral",
 
     "nav.dashboard": "Panel",
     "nav.pos": "Punto de venta POS",
@@ -3587,6 +3593,8 @@ export const translations = {
     "layout.systemAdmin": "Systemadministrator",
     "layout.systemStatus": "Systemstatus",
     "layout.allServices": "Alle Dienste online",
+    "layout.collapseSidebar": "Seitenleiste einklappen",
+    "layout.expandSidebar": "Seitenleiste ausklappen",
 
     "nav.dashboard": "Dashboard",
     "nav.pos": "Kassensystem POS",

@@ -28,7 +28,6 @@ export function CatalogPanel({
   taxSettingsQuery,
   taxSetupRequired,
   canEditDraft,
-  isDraftMutationPending,
   addItem,
   query,
   productGridRef,
@@ -157,8 +156,8 @@ export function CatalogPanel({
                     key={product.productId}
                     data-roving-item=""
                     onClick={() => addItem(product)}
-                    disabled={!canEditDraft || isDraftMutationPending}
-                    className="group overflow-hidden rounded-xl border border-white/10 bg-[#0d1728] p-2.5 text-right transition hover:-translate-y-0.5 hover:border-blue-400/60 hover:bg-[#111f36] hover:shadow-lg hover:shadow-blue-950/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400 disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={!canEditDraft}
+                    className="group overflow-hidden rounded-xl border border-white/10 bg-[#0d1728] p-2.5 text-right transition hover:-translate-y-0.5 hover:border-blue-400/60 hover:bg-[#111f36] hover:shadow-lg hover:shadow-blue-950/25 active:scale-[0.97] focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <div className="relative mb-2 grid aspect-[1.3] place-items-center overflow-hidden rounded-lg border border-white/8 bg-white/[0.025]">
                       <Package size={28} className="text-blue-300/80" />

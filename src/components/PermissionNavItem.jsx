@@ -12,6 +12,7 @@ export function PermissionNavItem({
   navigate,
   variant = "desktop",
   shortcutAction,
+  collapsed = false,
 }) {
   const { t } = useI18n();
   const { currentCompanyId } = useCompany();
@@ -23,6 +24,22 @@ export function PermissionNavItem({
   }
 
   const isActive = activePath === to;
+
+  if (collapsed) {
+    return (
+      <button
+        type="button"
+        onClick={() => navigate(to)}
+        title={t(labelKey)}
+        aria-label={t(labelKey)}
+        className={`mx-auto flex h-11 w-11 items-center justify-center rounded-2xl transition-all duration-300 hover:bg-blue-500/10 ${
+          isActive ? "border border-blue-500/40 bg-blue-500/15" : ""
+        }`}
+      >
+        <Icon size={20} color={isActive ? "#2b8cff" : "#60a5fa"} />
+      </button>
+    );
+  }
 
   if (variant === "mobile") {
     return (

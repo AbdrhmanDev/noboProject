@@ -12,7 +12,7 @@ const RESTAURANT_MANAGE_PERMISSION = "Restaurant.Manage";
 // (this task's Floor/Tables view) and a Configuration surface (the existing
 // RestaurantAdminPage), gated on the same View/Manage permissions the admin
 // page itself already uses.
-export function RestaurantNavGroup({ activePath, navigate, variant = "desktop" }) {
+export function RestaurantNavGroup({ activePath, navigate, variant = "desktop", collapsed = false }) {
   const { t } = useI18n();
   const { currentCompanyId } = useCompany();
   const viewPermissionQuery = useHasPermission(currentCompanyId, RESTAURANT_VIEW_PERMISSION);
@@ -68,6 +68,7 @@ export function RestaurantNavGroup({ activePath, navigate, variant = "desktop" }
       activePath={activePath}
       navigate={navigate}
       items={items}
+      collapsed={collapsed}
     />
   );
 }

@@ -25,7 +25,6 @@ export function useDraftLineEditor({
   mapDraftLinesToRequest,
   commitDraftLines,
   refetchDraft,
-  onRequiresAtLeastOneLine,
   onCommitError,
 }) {
   const [, setRenderTick] = useState(0);
@@ -93,10 +92,16 @@ export function useDraftLineEditor({
     [],
   );
 
+  // `buildRequestLines` receives the latest known draft (post-previous-
+  // commit, or post-refetch on retry) so a caller outside this hook — the
+  // product-add path in POSPage.jsx — can share this same queue instead of
+  // firing its own request straight from a stale closure. Internal callers
+  // (quantity/remove below) already close over draftRef directly and simply
+  // ignore the argument.
   const enqueue = useCallback(
     (buildRequestLines, rollback) => {
       const run = async () => {
-        const requestLines = buildRequestLines();
+        const requestLines = buildRequestLines(draftRef.current);
         if (!requestLines) return;
 
         try {
@@ -108,7 +113,7 @@ export function useDraftLineEditor({
               const refreshed = await refetchDraft?.();
               if (refreshed) draftRef.current = refreshed;
 
-              const retryLines = buildRequestLines();
+              const retryLines = buildRequestLines(draftRef.current);
               if (!retryLines) return;
 
               const fresh = await commitDraftLines(retryLines, draftRef.current);
@@ -143,18 +148,19 @@ export function useDraftLineEditor({
         desiredQuantitiesRef.current[salesOrderLineId] ?? Number(baseLines[index].quantity);
 
       if (desiredQuantity <= 0) {
+        // A Draft may hold zero lines (see UpdateDraftSalesOrderHandler) —
+        // dropping the last line's quantity to zero commits an empty
+        // `lines: []` update exactly like removing it does below. The
+        // draft itself is untouched (same id, still Draft), it's just
+        // visibly empty and stays freely editable.
         requestLines.splice(index, 1);
-        if (!requestLines.length) {
-          onRequiresAtLeastOneLine?.();
-          return null;
-        }
         return requestLines;
       }
 
       requestLines[index] = { ...requestLines[index], quantity: desiredQuantity };
       return requestLines;
     },
-    [mapDraftLinesToRequest, onRequiresAtLeastOneLine],
+    [mapDraftLinesToRequest],
   );
 
   const changeQuantity = useCallback(
@@ -212,14 +218,8 @@ export function useDraftLineEditor({
 
           const requestLines = mapDraftLinesToRequest(baseLines);
           requestLines.splice(index, 1);
-
-          if (!requestLines.length) {
-            removedLineIdsRef.current.delete(salesOrderLineId);
-            rerender();
-            onRequiresAtLeastOneLine?.();
-            return null;
-          }
-
+          // May be empty — a Draft may hold zero lines. Same commit path as
+          // any other edit; the basket just ends up visibly empty.
           return requestLines;
         },
         () => {
@@ -228,8 +228,8 @@ export function useDraftLineEditor({
         },
       );
     },
-    [canEditDraft, enqueue, mapDraftLinesToRequest, onRequiresAtLeastOneLine, rerender],
+    [canEditDraft, enqueue, mapDraftLinesToRequest, rerender],
   );
 
-  return { getDisplayLines, changeQuantity, removeLine, isLinePending, hasPendingEdits };
+  return { getDisplayLines, changeQuantity, removeLine, isLinePending, hasPendingEdits, enqueue };
 }

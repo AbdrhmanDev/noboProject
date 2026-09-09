@@ -139,7 +139,7 @@ export function PosOperationalGate({ children }: PosOperationalGateProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <OpenShiftSummary shift={openShiftQuery.data} />
       {children}
     </div>

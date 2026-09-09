@@ -1,3 +1,5 @@
+import type { SalesOrderPaymentHistoryItem } from "../../payments/types/payment.types";
+
 export type SalesOrderFulfillmentType = "DineIn" | "Takeaway" | "Delivery";
 
 export type DraftSalesOrderLineInput = {
@@ -139,7 +141,7 @@ export type DraftSalesOrder = {
   discount: DraftSalesOrderDiscount | null;
   taxSummaries: DraftSalesOrderTaxSummary[];
   lines: DraftSalesOrderLine[];
-  payments?: unknown[];
+  payments?: SalesOrderPaymentHistoryItem[];
   kitchenTickets?: DraftSalesOrderKitchenTicket[];
 };
 

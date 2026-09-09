@@ -8,7 +8,7 @@ import { NavGroup } from "../../../components/NavGroup";
 const DEVICES_VIEW_PERMISSION = "Devices.View";
 const EDGE_AGENTS_VIEW_PERMISSION = "EdgeAgents.View";
 
-export function DevicesNavGroup({ activePath, navigate, variant = "desktop" }) {
+export function DevicesNavGroup({ activePath, navigate, variant = "desktop", collapsed = false }) {
   const { t } = useI18n();
   const { currentCompanyId } = useCompany();
   const devicesViewQuery = useHasPermission(currentCompanyId, DEVICES_VIEW_PERMISSION);
@@ -69,6 +69,13 @@ export function DevicesNavGroup({ activePath, navigate, variant = "desktop" }) {
   }
 
   return (
-    <NavGroup icon={Printer} labelKey="nav.devices" activePath={activePath} navigate={navigate} items={items} />
+    <NavGroup
+      icon={Printer}
+      labelKey="nav.devices"
+      activePath={activePath}
+      navigate={navigate}
+      items={items}
+      collapsed={collapsed}
+    />
   );
 }
