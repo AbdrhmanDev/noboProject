@@ -229,6 +229,12 @@ export default function DeviceDetailsPage() {
                     {hardwareBindingQuery.data.comPort && (
                       <InfoTile label={t("devices.discovery.comPort")} value={hardwareBindingQuery.data.comPort} />
                     )}
+                    {hardwareBindingQuery.data.windowsPrinterQueueName && (
+                      <InfoTile
+                        label={t("devices.discovery.printerQueue")}
+                        value={hardwareBindingQuery.data.windowsPrinterQueueName}
+                      />
+                    )}
                     {hardwareBindingQuery.data.usbSerialNumber && (
                       <InfoTile
                         label={t("devices.discovery.serialNumber")}
@@ -303,7 +309,7 @@ export default function DeviceDetailsPage() {
                           <tr key={job.printJobId} className="border-t border-white/5">
                             <td className="py-2 text-slate-200">{job.documentType}</td>
                             <td className="py-2">
-                              <PrintJobStatusBadge status={job.status} />
+                              <PrintJobStatusBadge status={job.status} transport={job.transport} />
                             </td>
                             <td className="py-2 text-slate-300">{formatDateTime(job.createdAtUtc)}</td>
                           </tr>

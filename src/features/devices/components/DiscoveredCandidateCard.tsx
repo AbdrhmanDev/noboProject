@@ -1,8 +1,52 @@
-import { Check, Link2, PlusCircle, X } from "lucide-react";
+import { Check, CircleHelp, Link2, PlusCircle, WifiOff, X } from "lucide-react";
 import { useI18n } from "../../../i18n/I18nContext";
-import type { DiscoveredDeviceCandidateResponse } from "../types/devices.types";
+import type {
+  DiscoveredDeviceCandidateResponse,
+  WindowsPrinterConnectionCategory,
+  WindowsPrinterCurrentStatus,
+} from "../types/devices.types";
 import { CertificationBadge } from "./DeviceStatusBadge";
 import { MatchProposalPanel } from "./MatchProposalPanel";
+
+const CONNECTION_CATEGORY_KEYS: Record<WindowsPrinterConnectionCategory, string> = {
+  Usb: "devices.discovery.connectionCategory.usb",
+  NetworkWsd: "devices.discovery.connectionCategory.networkWsd",
+  NetworkTcpIp: "devices.discovery.connectionCategory.networkTcpIp",
+  Serial: "devices.discovery.connectionCategory.serial",
+  UnknownVendor: "devices.discovery.connectionCategory.unknownVendor",
+};
+
+// Icon + text together, never color alone (Section 7 of the closure task: discovery UI must
+// visually distinguish "available now" / "offline / installed" / "unknown" without relying only
+// on color).
+function CurrentStatusPill({ status }: { status: WindowsPrinterCurrentStatus }) {
+  const { t } = useI18n();
+
+  if (status === "Online") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
+        <Check size={11} />
+        {t("devices.discovery.currentStatus.online")}
+      </span>
+    );
+  }
+
+  if (status === "Offline") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-rose-500/15 px-2 py-0.5 text-[10px] font-bold text-rose-300">
+        <WifiOff size={11} />
+        {t("devices.discovery.currentStatus.offline")}
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-bold text-slate-400">
+      <CircleHelp size={11} />
+      {t("devices.discovery.currentStatus.unknown")}
+    </span>
+  );
+}
 
 type DiscoveredCandidateCardProps = {
   candidate: DiscoveredDeviceCandidateResponse;
@@ -98,7 +142,22 @@ export function DiscoveredCandidateCard({
             <div className="mt-0.5 font-semibold text-slate-200">{candidate.windowsPrinterPortName}</div>
           </div>
         )}
+        {candidate.windowsPrinterConnectionCategory && (
+          <div>
+            <div className="text-slate-500">{t("devices.discovery.connection")}</div>
+            <div className="mt-0.5 font-semibold text-slate-200">
+              {t(CONNECTION_CATEGORY_KEYS[candidate.windowsPrinterConnectionCategory])}
+            </div>
+          </div>
+        )}
       </div>
+
+      {candidate.windowsPrinterCurrentStatus && (
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
+          <span className="text-slate-500">{t("devices.discovery.currentStatus.label")}</span>
+          <CurrentStatusPill status={candidate.windowsPrinterCurrentStatus} />
+        </div>
+      )}
 
       <div className="mt-3 flex flex-wrap gap-2">
         <BooleanFlag label={t("devices.discovery.detected")} value={candidate.detected} />

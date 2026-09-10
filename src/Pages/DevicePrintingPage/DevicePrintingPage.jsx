@@ -35,7 +35,7 @@ function PrintJobDetailsDialog({ printJob, onClose, t }) {
           </div>
           <div className="rounded-xl border border-white/10 bg-white/[0.025] p-3">
             <div className="text-slate-500">{t("printing.job.status")}</div>
-            <div className="mt-1"><PrintJobStatusBadge status={printJob.status} /></div>
+            <div className="mt-1"><PrintJobStatusBadge status={printJob.status} transport={printJob.transport} /></div>
           </div>
           <div className="rounded-xl border border-white/10 bg-white/[0.025] p-3">
             <div className="text-slate-500">{t("printing.job.attemptCount")}</div>
@@ -209,7 +209,7 @@ export default function DevicePrintingPage() {
                           <td className="py-2.5 font-bold text-white">{job.deviceCode}</td>
                           <td className="py-2.5 text-slate-300">{job.documentType}</td>
                           <td className="py-2.5">
-                            <PrintJobStatusBadge status={job.status} />
+                            <PrintJobStatusBadge status={job.status} transport={job.transport} />
                           </td>
                           <td className="py-2.5 text-slate-300">{formatDateTime(job.createdAtUtc)}</td>
                         </tr>

@@ -107,13 +107,38 @@ export const MATCH_CONFIDENCE_BADGE_CLASSES: Record<MatchConfidence, string> = {
 
 // ---- Print job status ----
 
+// Generic fallback labels. Succeeded's generic entry is only used when the transport is missing
+// or not one NOBO currently recognizes -- see getPrintJobStatusLabelKey below for the
+// transport-aware wording that is used everywhere the transport is known, which is every real
+// print job (the field is always populated server-side; see PrintJobResponse.transport).
 export const PRINT_JOB_STATUS_LABEL_KEYS: Record<PrintJobStatus, string> = {
   Queued: "printing.enum.status.queued",
   Claimed: "printing.enum.status.claimed",
   Printing: "printing.enum.status.printing",
-  Succeeded: "printing.enum.status.succeeded",
+  Succeeded: "printing.enum.status.succeeded.generic",
   Failed: "printing.enum.status.failed",
 };
+
+// "Succeeded" means only "the transport accepted the bytes for delivery" (see
+// PrintJob.MarkSucceeded's own remarks on the backend) -- never confirmed physical output. That
+// is true for every transport, but the transport-specific noun differs (a Windows print queue vs
+// a raw TCP printer), so the wording is picked per transport rather than one generic phrase.
+// Every other status is transport-independent and uses the generic map unchanged.
+export function getPrintJobStatusLabelKey(
+  status: PrintJobStatus,
+  transport: string | null | undefined,
+): string {
+  if (status !== "Succeeded") return PRINT_JOB_STATUS_LABEL_KEYS[status];
+
+  switch (transport) {
+    case "WindowsPrinterQueue":
+      return "printing.enum.status.succeeded.windowsPrinterQueue";
+    case "Network":
+      return "printing.enum.status.succeeded.network";
+    default:
+      return "printing.enum.status.succeeded.generic";
+  }
+}
 
 export const PRINT_JOB_STATUS_BADGE_CLASSES: Record<PrintJobStatus, string> = {
   Queued: "bg-white/10 text-slate-300",

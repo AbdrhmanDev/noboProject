@@ -11,6 +11,7 @@ import type {
   DeviceResponse,
   EdgeAgentResponse,
 } from "../types/devices.types";
+import { DeviceHealthBadge } from "./DeviceStatusBadge";
 import { PrintJobErrorMessage } from "./PrintJobErrorMessage";
 import { PrintJobStatusBadge } from "./PrintJobStatusBadge";
 
@@ -122,8 +123,20 @@ export function TestPrintPanel({
             <span className="text-[11px] font-semibold text-slate-400">
               {t("devices.testPrint.jobStatus")}
             </span>
-            {printJob && <PrintJobStatusBadge status={printJob.status} />}
+            {printJob && <PrintJobStatusBadge status={printJob.status} transport={printJob.transport} />}
           </div>
+
+          {/* "Submitted to Windows print queue" is not proof of physical output -- always shown
+              alongside the device's own live health so the operator never reads a submitted job
+              as a confirmed print (Section 9/11 of the Device Platform closure task). */}
+          {printJob?.status === "Succeeded" && (
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[11px] font-semibold text-slate-400">
+                {t("devices.filters.health")}
+              </span>
+              <DeviceHealthBadge health={device.healthStatus} />
+            </div>
+          )}
 
           <div className="flex items-center gap-1">
             {TIMELINE_STEPS.map((step, index) => {

@@ -46,7 +46,30 @@ export type DeviceHardwareBindingTransportType =
   | "NetworkEthernet"
   | "Wifi"
   | "Bluetooth"
-  | "SerialCom";
+  | "SerialCom"
+  // The raw discovery TransportType for an installed Windows printer queue (see
+  // WindowsPrinterQueueDiscoveryProvider on the Edge Agent) -- distinct from
+  // DeviceConnectionType above, which is the classified USB/NetworkEthernet/SerialCom business
+  // connection derived from the queue's actual port (see WindowsPrinterConnectionCategory).
+  | "WindowsPrinterQueue";
+
+// "Usb" | "NetworkWsd" | "NetworkTcpIp" | "Serial" | "UnknownVendor" -- only ever set when
+// transportType is "WindowsPrinterQueue". Deliberately not folded into DeviceConnectionType:
+// WSD and TCP/IP are both persisted as DeviceConnectionType "NetworkEthernet" (that enum has no
+// WSD-specific value), so this is the only place the WSD-vs-TCP/IP distinction survives for
+// display purposes.
+export type WindowsPrinterConnectionCategory =
+  | "Usb"
+  | "NetworkWsd"
+  | "NetworkTcpIp"
+  | "Serial"
+  | "UnknownVendor";
+
+// "Online" | "Offline" | "Unknown" -- Windows' own live evidence for an installed printer queue,
+// independent of whether the queue is merely installed/detected. Unknown is the conservative
+// default whenever Windows has not reported anything definitive either way; it must never be
+// treated as "Ready" by the UI.
+export type WindowsPrinterCurrentStatus = "Online" | "Offline" | "Unknown";
 
 // ---- Devices ----
 
@@ -297,6 +320,8 @@ export type DiscoveredDeviceCandidateResponse = {
   connectionTestResult: string | null;
   notes: string | null;
   matchedDeviceId: string | null;
+  windowsPrinterConnectionCategory: WindowsPrinterConnectionCategory | null;
+  windowsPrinterCurrentStatus: WindowsPrinterCurrentStatus | null;
   proposal: DiscoveredDeviceMatchProposalResponse | null;
 };
 
@@ -362,6 +387,12 @@ export type PrintJobResponse = {
   attemptCount: number;
   lastErrorCode: string | null;
   lastErrorMessage: string | null;
+  // Snapshotted from the device's hardware binding at job creation ("WindowsPrinterQueue",
+  // "Network", ...). Lets the UI word a Succeeded status per transport instead of one generic
+  // phrase -- a Succeeded WindowsPrinterQueue job and a Succeeded raw-TCP job both only mean
+  // "the transport accepted the bytes", never confirmed physical output, but the wording that
+  // says so differs (see getPrintJobStatusLabelKey).
+  transport: DeviceHardwareBindingTransportType | string;
 };
 
 export type PrintJobsListFilters = {
