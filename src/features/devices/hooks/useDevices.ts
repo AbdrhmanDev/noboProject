@@ -5,9 +5,11 @@ import {
   getDeviceHardwareBinding,
   getDevices,
   printProductVariantLabel,
+  rebindDeviceHardware,
   setDeviceLabelPrinterProfile,
   setDeviceReceiptPrinterProfile,
   testPrintDevice,
+  unbindDeviceHardware,
   updateDevice,
   updateDeviceStatus,
 } from "../api/devicesApi";
@@ -15,6 +17,7 @@ import type {
   CreateDeviceRequest,
   DevicesListFilters,
   PrintProductVariantLabelRequest,
+  RebindDeviceHardwareRequest,
   SetDeviceLabelPrinterProfileRequest,
   SetDeviceReceiptPrinterProfileRequest,
   UpdateDeviceRequest,
@@ -178,6 +181,42 @@ export function usePrintProductVariantLabel(
   return useMutation({
     mutationFn: (payload: PrintProductVariantLabelRequest) =>
       printProductVariantLabel(companyId as string, branchId as string, deviceId as string, payload),
+  });
+}
+
+// Part C: only invalidates the hardware-binding/detail queries -- the device list/other detail
+// fields are unaffected, matching the backend's "logical Device untouched" guarantee.
+export function useUnbindDeviceHardware(
+  companyId: string | null | undefined,
+  branchId: string | null | undefined,
+  deviceId: string | null | undefined,
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => unbindDeviceHardware(companyId as string, branchId as string, deviceId as string),
+    onSuccess: () => invalidateDevices(queryClient, companyId, branchId, deviceId),
+  });
+}
+
+// Part D: also invalidates the discovery queries -- the replaced/old hardware's matchedDeviceId
+// on the current discovery snapshot is now stale until refetched.
+export function useRebindDeviceHardware(
+  companyId: string | null | undefined,
+  branchId: string | null | undefined,
+  deviceId: string | null | undefined,
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: RebindDeviceHardwareRequest) =>
+      rebindDeviceHardware(companyId as string, branchId as string, deviceId as string, payload),
+    onSuccess: () => {
+      invalidateDevices(queryClient, companyId, branchId, deviceId);
+      if (companyId && branchId) {
+        queryClient.invalidateQueries({ queryKey: ["devices", "discovery"] });
+      }
+    },
   });
 }
 

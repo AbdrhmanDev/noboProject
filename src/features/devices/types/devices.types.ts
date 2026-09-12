@@ -341,6 +341,32 @@ export type DiscoveredDevicesFilters = {
   take?: number;
 };
 
+export type RequestDiscoveryRefreshResponse = {
+  edgeAgentId: string;
+  requestedAtUtc: string;
+};
+
+export type UnbindDeviceHardwareResponse = {
+  deviceId: string;
+};
+
+export type RebindDeviceHardwareRequest = {
+  edgeAgentId: string;
+  discoveryId: string;
+  // The DeviceHardwareBindingId the UI last observed for this device -- lets the backend reject
+  // the request if another admin already changed the binding in the meantime, instead of silently
+  // overwriting it (Part D concurrency rule).
+  expectedCurrentBindingId?: string | null;
+};
+
+export type RebindDeviceHardwareResponse = {
+  deviceId: string;
+  deviceHardwareBindingId: string;
+  transportType: DeviceHardwareBindingTransportType;
+  connectionType: DeviceConnectionType | null;
+  confirmedAtUtc: string;
+};
+
 export type ConfirmDiscoveredDeviceCreateRequest = {
   code: string;
   name: string;

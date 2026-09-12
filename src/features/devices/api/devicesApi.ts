@@ -6,9 +6,12 @@ import type {
   DevicesListFilters,
   PrintProductVariantLabelRequest,
   PrintProductVariantLabelResponse,
+  RebindDeviceHardwareRequest,
+  RebindDeviceHardwareResponse,
   SetDeviceLabelPrinterProfileRequest,
   SetDeviceReceiptPrinterProfileRequest,
   TestPrintResponse,
+  UnbindDeviceHardwareResponse,
   UpdateDeviceRequest,
   UpdateDeviceStatusRequest,
 } from "../types/devices.types";
@@ -145,6 +148,32 @@ export async function getDeviceHardwareBinding(
 ) {
   const response = await httpClient.get<DeviceHardwareBindingResponse | null>(
     `${devicesBaseUrl(companyId, branchId)}/${deviceId}/hardware-binding`,
+  );
+
+  return response.data;
+}
+
+// Part C: removes the hardware relationship only -- the logical Device itself is untouched
+// server-side (see UnbindDeviceHardwareHandler's remarks).
+export async function unbindDeviceHardware(companyId: string, branchId: string, deviceId: string) {
+  const response = await httpClient.post<UnbindDeviceHardwareResponse>(
+    `${devicesBaseUrl(companyId, branchId)}/${deviceId}/hardware-binding/unbind`,
+  );
+
+  return response.data;
+}
+
+// Part D: one atomic backend operation that replaces the current binding with a fresh discovered
+// candidate, preserving deviceId/assignments/history (see RebindDeviceHardwareHandler's remarks).
+export async function rebindDeviceHardware(
+  companyId: string,
+  branchId: string,
+  deviceId: string,
+  payload: RebindDeviceHardwareRequest,
+) {
+  const response = await httpClient.post<RebindDeviceHardwareResponse>(
+    `${devicesBaseUrl(companyId, branchId)}/${deviceId}/hardware-binding/rebind`,
+    payload,
   );
 
   return response.data;

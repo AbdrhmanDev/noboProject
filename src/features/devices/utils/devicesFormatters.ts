@@ -167,7 +167,19 @@ export const DEVICE_ERROR_MESSAGE_KEYS: Record<string, string> = {
   "DeviceHardwareBinding.ConfirmationModeInvalid": "devices.error.confirmationModeInvalid",
   "DeviceHardwareBinding.ConfirmationModeRequired": "devices.error.confirmationModeRequired",
   "DeviceHardwareBinding.DeviceAlreadyBound": "devices.error.deviceAlreadyBound",
-  "DeviceHardwareBinding.Conflict": "devices.error.bindingConflict",
+  // DeviceHardwareBinding.Conflict is deliberately NOT mapped here: the backend now names the
+  // actual conflicting device in its message (Part E of the bind/unbind/rebind task -- "This
+  // hardware is already bound to: Front Counter Printer"), which cannot be pre-translated as a
+  // generic static string. getDeviceErrorMessageKey's caller falls back to the raw
+  // apiError.message for any unmapped code, which is exactly what should happen here.
+  "DeviceHardwareBinding.NotAvailable": "devices.error.hardwareBindingNotAvailable",
+  "DeviceHardwareBinding.UnsafeInFlightPrintJobs": "devices.error.unsafeInFlightPrintJobs",
+  "DeviceHardwareBinding.ConcurrencyConflict": "devices.error.bindingConcurrencyConflict",
+  "DeviceHardwareBinding.StableIdentityRequired": "devices.error.stableIdentityRequired",
+  "DeviceDiscovery.CandidateNotAvailable": "devices.error.candidateNotAvailable",
+  "DeviceDiscovery.TransportUnsupported": "devices.error.transportUnsupported",
+  "EdgeAgent.NotAvailable": "devices.error.edgeAgentUnavailable",
+  "EdgeAgent.NotActive": "devices.error.edgeAgentNotActive",
   "Device.NotReceiptPrinter": "devices.printerProfile.error.notReceiptPrinter",
   "Device.PrinterProfilePresetInvalid": "devices.printerProfile.error.presetInvalid",
   "Device.PrinterProfileInvalid": "devices.printerProfile.error.profileInvalid",
