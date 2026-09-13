@@ -22,6 +22,7 @@ import { KitchenNavGroup } from "../features/kitchen/components/KitchenNavGroup"
 import { RestaurantNavGroup } from "../features/restaurant/components/RestaurantNavGroup";
 import { ProcurementNavGroup } from "../features/procurement/components/ProcurementNavGroup";
 import { DevicesNavGroup } from "../features/devices/components/DevicesNavGroup";
+import { PlatformNavGroup } from "../features/platform/components/PlatformNavGroup";
 import { PermissionNavItem } from "./PermissionNavItem";
 import { ComingSoonNavItem } from "./ComingSoonNavItem";
 
@@ -31,6 +32,7 @@ const NAV_GROUPS = {
   restaurant: RestaurantNavGroup,
   procurement: ProcurementNavGroup,
   devices: DevicesNavGroup,
+  platform: PlatformNavGroup,
 };
 
 const SIDEBAR_COLLAPSE_STORAGE_KEY = "nobo-sidebar-collapsed";
@@ -174,6 +176,7 @@ export default function AppLayout({ children, onLogout }) {
                   labelKey={item.labelKey}
                   to={item.to}
                   permission={item.permission}
+                  entitlement={item.entitlement}
                   activePath={activePath}
                   navigate={navigate}
                   shortcutAction={item.shortcutAction}
@@ -337,6 +340,7 @@ export default function AppLayout({ children, onLogout }) {
                   labelKey={item.labelKey}
                   to={item.to}
                   permission={item.permission}
+                  entitlement={item.entitlement}
                   activePath={activePath}
                   navigate={navigate}
                   variant="mobile"

@@ -1,6 +1,7 @@
 import { httpClient } from "../../../shared/api/httpClient";
 import type {
   CompanyDetails,
+  CompanyEntitlements,
   CompanyPermissions,
   CreateCompanyRequest,
   CreateCompanyResponse,
@@ -25,6 +26,13 @@ export async function getCompanyDetails(companyId: string) {
 export async function getCompanyPermissions(companyId: string) {
   const response = await httpClient.get<CompanyPermissions>(
     `/api/companies/${companyId}/me/permissions`,
+  );
+  return response.data;
+}
+
+export async function getCompanyEntitlements(companyId: string) {
+  const response = await httpClient.get<CompanyEntitlements>(
+    `/api/companies/${companyId}/me/entitlements`,
   );
   return response.data;
 }

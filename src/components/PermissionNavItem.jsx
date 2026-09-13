@@ -1,6 +1,6 @@
 import { useI18n } from "../i18n/I18nContext";
 import { useCompany } from "../features/companies/context/CompanyContext";
-import { useHasPermission } from "../features/companies/hooks/useCompanies";
+import { useHasEntitlement, useHasPermission } from "../features/companies/hooks/useCompanies";
 import { ShortcutHint } from "../features/shortcuts/components/ShortcutHint";
 
 export function PermissionNavItem({
@@ -8,6 +8,11 @@ export function PermissionNavItem({
   labelKey,
   to,
   permission,
+  // Optional: a Commercial App/Capability code (see entitlementCodes.ts). Platform-foundation nav
+  // items (Catalog, Pricing, Tax, Devices, Branches, ...) must never pass this -- only genuinely
+  // commercial apps are gated by it. When present, visibility is Company-has-App AND User-has-
+  // permission (section 14); omitting it leaves existing permission-only items unchanged.
+  entitlement,
   activePath,
   navigate,
   variant = "desktop",
@@ -17,7 +22,9 @@ export function PermissionNavItem({
   const { t } = useI18n();
   const { currentCompanyId } = useCompany();
   const permissionQuery = useHasPermission(currentCompanyId, permission);
-  const visible = Boolean(currentCompanyId) && permissionQuery.hasPermission;
+  const entitlementQuery = useHasEntitlement(currentCompanyId, entitlement ?? "");
+  const hasEntitlement = !entitlement || entitlementQuery.hasEntitlement;
+  const visible = Boolean(currentCompanyId) && permissionQuery.hasPermission && hasEntitlement;
 
   if (!visible) {
     return null;

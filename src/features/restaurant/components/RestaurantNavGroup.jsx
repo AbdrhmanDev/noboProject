@@ -1,7 +1,8 @@
 import { Armchair, CalendarClock, LayoutGrid, Settings } from "lucide-react";
 import { useI18n } from "../../../i18n/I18nContext";
 import { useCompany } from "../../companies/context/CompanyContext";
-import { useHasPermission } from "../../companies/hooks/useCompanies";
+import { useEntitlements, useHasPermission } from "../../companies/hooks/useCompanies";
+import { ENTITLEMENT_RESTAURANT } from "../../companies/constants/entitlementCodes";
 import { ROUTES } from "../../../utils/routes";
 import { NavGroup } from "../../../components/NavGroup";
 
@@ -17,9 +18,13 @@ export function RestaurantNavGroup({ activePath, navigate, variant = "desktop", 
   const { currentCompanyId } = useCompany();
   const viewPermissionQuery = useHasPermission(currentCompanyId, RESTAURANT_VIEW_PERMISSION);
   const managePermissionQuery = useHasPermission(currentCompanyId, RESTAURANT_MANAGE_PERMISSION);
+  const { hasApp } = useEntitlements(currentCompanyId);
+  const companyOwnsRestaurant = hasApp(ENTITLEMENT_RESTAURANT);
 
-  const canViewOperations = Boolean(currentCompanyId) && viewPermissionQuery.hasPermission;
-  const canViewConfiguration = Boolean(currentCompanyId) && managePermissionQuery.hasPermission;
+  const canViewOperations =
+    Boolean(currentCompanyId) && companyOwnsRestaurant && viewPermissionQuery.hasPermission;
+  const canViewConfiguration =
+    Boolean(currentCompanyId) && companyOwnsRestaurant && managePermissionQuery.hasPermission;
 
   const items = [
     {

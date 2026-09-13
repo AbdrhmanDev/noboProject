@@ -1,7 +1,8 @@
 import { FileText, Truck as TruckIcon } from "lucide-react";
 import { useI18n } from "../../../i18n/I18nContext";
 import { useCompany } from "../../companies/context/CompanyContext";
-import { useHasPermission } from "../../companies/hooks/useCompanies";
+import { useEntitlements, useHasPermission } from "../../companies/hooks/useCompanies";
+import { ENTITLEMENT_PROCUREMENT } from "../../companies/constants/entitlementCodes";
 import { ROUTES } from "../../../utils/routes";
 import { NavGroup } from "../../../components/NavGroup";
 
@@ -11,7 +12,9 @@ export function ProcurementNavGroup({ activePath, navigate, variant = "desktop",
   const { t } = useI18n();
   const { currentCompanyId } = useCompany();
   const viewPermissionQuery = useHasPermission(currentCompanyId, PURCHASES_VIEW_PERMISSION);
-  const canView = Boolean(currentCompanyId) && viewPermissionQuery.hasPermission;
+  const { hasApp } = useEntitlements(currentCompanyId);
+  const canView =
+    Boolean(currentCompanyId) && hasApp(ENTITLEMENT_PROCUREMENT) && viewPermissionQuery.hasPermission;
 
   const items = [
     {

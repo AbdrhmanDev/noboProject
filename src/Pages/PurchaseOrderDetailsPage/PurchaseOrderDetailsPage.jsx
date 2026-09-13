@@ -289,7 +289,9 @@ export default function PurchaseOrderDetailsPage() {
                         <span className="text-[11px] text-slate-500">{formatDateTime(receipt.receivedAtUtc)}</span>
                       </div>
                       <div className="mt-1 text-[11px] text-slate-400">
-                        {receipt.inventoryLocationCode} — {receipt.inventoryLocationName}
+                        {receipt.inventoryLocationId
+                          ? `${receipt.inventoryLocationCode} — ${receipt.inventoryLocationName}`
+                          : t("procurement.receipt.notInventoryTracked")}
                       </div>
                       <div className="mt-2 space-y-1">
                         {receipt.lines.map((line) => (

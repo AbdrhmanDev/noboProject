@@ -1,7 +1,8 @@
 import { Boxes, Layers3, Wrench } from "lucide-react";
 import { useI18n } from "../../../i18n/I18nContext";
 import { useCompany } from "../../companies/context/CompanyContext";
-import { useHasPermission } from "../../companies/hooks/useCompanies";
+import { useEntitlements, useHasPermission } from "../../companies/hooks/useCompanies";
+import { ENTITLEMENT_INVENTORY } from "../../companies/constants/entitlementCodes";
 import { ROUTES } from "../../../utils/routes";
 import { NavGroup } from "../../../components/NavGroup";
 
@@ -16,9 +17,13 @@ export function InventoryNavGroup({ activePath, navigate, variant = "desktop", c
     currentCompanyId,
     INVENTORY_CONFIGURE_PERMISSION,
   );
+  const { hasApp } = useEntitlements(currentCompanyId);
+  const companyOwnsInventory = hasApp(ENTITLEMENT_INVENTORY);
 
-  const canViewOperations = Boolean(currentCompanyId) && viewPermissionQuery.hasPermission;
-  const canViewConfiguration = Boolean(currentCompanyId) && configurePermissionQuery.hasPermission;
+  const canViewOperations =
+    Boolean(currentCompanyId) && companyOwnsInventory && viewPermissionQuery.hasPermission;
+  const canViewConfiguration =
+    Boolean(currentCompanyId) && companyOwnsInventory && configurePermissionQuery.hasPermission;
 
   const items = [
     {

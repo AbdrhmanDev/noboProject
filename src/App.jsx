@@ -3,6 +3,14 @@ import GlobalStyle from "./styles/GlobalStyle";
 import { AppProviders } from "./app/providers/AppProviders";
 import { ProtectedRoute } from "./features/auth/components/ProtectedRoute";
 import { PublicOnlyRoute } from "./features/auth/components/PublicOnlyRoute";
+import { EntitlementGate } from "./features/companies/components/EntitlementGate";
+import {
+  ENTITLEMENT_INVENTORY,
+  ENTITLEMENT_POS,
+  ENTITLEMENT_PROCUREMENT,
+  ENTITLEMENT_RESTAURANT,
+  ENTITLEMENT_RESTAURANT_KITCHEN,
+} from "./features/companies/constants/entitlementCodes";
 import LoginPage from "./Pages/loginPage/Login";
 import RegisterPage from "./Pages/registerPage/Register";
 import ConfirmEmailPage from "./Pages/confirmEmailPage/ConfirmEmail";
@@ -31,6 +39,8 @@ import EdgeAgentsListPage from "./Pages/EdgeAgentsListPage/EdgeAgentsListPage";
 import EdgeAgentDetailsPage from "./Pages/EdgeAgentDetailsPage/EdgeAgentDetailsPage";
 import DeviceDiscoveryPage from "./Pages/DeviceDiscoveryPage/DeviceDiscoveryPage";
 import DevicePrintingPage from "./Pages/DevicePrintingPage/DevicePrintingPage";
+import PlatformCompaniesPage from "./Pages/PlatformCompaniesPage/PlatformCompaniesPage";
+import PlatformCompanyEntitlementsPage from "./Pages/PlatformCompanyEntitlementsPage/PlatformCompanyEntitlementsPage";
 import InventoryPage from "./Pages/InventoryPage/InventoryPage";
 import InventoryAdminPage from "./Pages/InventoryAdminPage/InventoryAdminPage";
 import CustomersPage from "./Pages/CustomersPage/CustomersPage";
@@ -49,6 +59,10 @@ import { ShortcutHelpDialog } from "./features/shortcuts/components/ShortcutHelp
 
 export default function App() {
   const protectedPage = (page) => <ProtectedRoute>{page}</ProtectedRoute>;
+  // Direct-URL safety net for the Commercial Apps touched by this task (section 15) -- backend
+  // remains the real security boundary regardless of this gate.
+  const entitlementGatedPage = (page, code) =>
+    protectedPage(<EntitlementGate code={code}>{page}</EntitlementGate>);
 
   return (
     <AppProviders>
@@ -61,24 +75,24 @@ export default function App() {
               <Route path={ROUTES.REGISTER} element={<PublicOnlyRoute><RegisterPage /></PublicOnlyRoute>} />
               <Route path={ROUTES.CONFIRM_EMAIL} element={<PublicOnlyRoute><ConfirmEmailPage /></PublicOnlyRoute>} />
               <Route path={ROUTES.DASHBOARD} element={protectedPage(<Dashboard />)} />
-              <Route path={ROUTES.POS} element={protectedPage(<POSPage />)} />
-              <Route path={ROUTES.POS_SHIFT_HISTORY} element={protectedPage(<POSShiftHistoryPage />)} />
-              <Route path={ROUTES.POS_TERMINALS_ADMIN} element={protectedPage(<POSTerminalAdminPage />)} />
+              <Route path={ROUTES.POS} element={entitlementGatedPage(<POSPage />, ENTITLEMENT_POS)} />
+              <Route path={ROUTES.POS_SHIFT_HISTORY} element={entitlementGatedPage(<POSShiftHistoryPage />, ENTITLEMENT_POS)} />
+              <Route path={ROUTES.POS_TERMINALS_ADMIN} element={entitlementGatedPage(<POSTerminalAdminPage />, ENTITLEMENT_POS)} />
               <Route path={ROUTES.CATALOG_ADMIN} element={protectedPage(<CatalogAdminPage />)} />
               <Route path={ROUTES.PAYMENT_METHODS_ADMIN} element={protectedPage(<PaymentMethodsAdminPage />)} />
               <Route path={ROUTES.PRICING_ADMIN} element={protectedPage(<PricingAdminPage />)} />
               <Route path={ROUTES.TAX_ADMIN} element={protectedPage(<TaxAdminPage />)} />
-              <Route path={ROUTES.RESTAURANT_ADMIN} element={protectedPage(<RestaurantAdminPage />)} />
-              <Route path={ROUTES.RESTAURANT_FLOOR} element={protectedPage(<RestaurantFloorPage />)} />
-              <Route path={ROUTES.RESTAURANT_RESERVATIONS} element={protectedPage(<RestaurantReservationsPage />)} />
-              <Route path={ROUTES.KITCHEN} element={protectedPage(<KitchenPage />)} />
-              <Route path={ROUTES.KITCHEN_ADMIN} element={protectedPage(<KitchenAdminPage />)} />
+              <Route path={ROUTES.RESTAURANT_ADMIN} element={entitlementGatedPage(<RestaurantAdminPage />, ENTITLEMENT_RESTAURANT)} />
+              <Route path={ROUTES.RESTAURANT_FLOOR} element={entitlementGatedPage(<RestaurantFloorPage />, ENTITLEMENT_RESTAURANT)} />
+              <Route path={ROUTES.RESTAURANT_RESERVATIONS} element={entitlementGatedPage(<RestaurantReservationsPage />, ENTITLEMENT_RESTAURANT)} />
+              <Route path={ROUTES.KITCHEN} element={entitlementGatedPage(<KitchenPage />, ENTITLEMENT_RESTAURANT_KITCHEN)} />
+              <Route path={ROUTES.KITCHEN_ADMIN} element={entitlementGatedPage(<KitchenAdminPage />, ENTITLEMENT_RESTAURANT_KITCHEN)} />
               <Route path={ROUTES.SALES} element={protectedPage(<SalesPage />)} />
               <Route path={ROUTES.SALES_ORDER_DETAILS} element={protectedPage(<SalesOrderDetailsPage />)} />
-              <Route path={ROUTES.PURCHASES} element={protectedPage(<PurchasesPage />)} />
-              <Route path={ROUTES.PURCHASE_ORDER_NEW} element={protectedPage(<PurchaseOrderEditorPage />)} />
-              <Route path={ROUTES.PURCHASE_ORDER_EDIT} element={protectedPage(<PurchaseOrderEditorPage />)} />
-              <Route path={ROUTES.PURCHASE_ORDER_DETAILS} element={protectedPage(<PurchaseOrderDetailsPage />)} />
+              <Route path={ROUTES.PURCHASES} element={entitlementGatedPage(<PurchasesPage />, ENTITLEMENT_PROCUREMENT)} />
+              <Route path={ROUTES.PURCHASE_ORDER_NEW} element={entitlementGatedPage(<PurchaseOrderEditorPage />, ENTITLEMENT_PROCUREMENT)} />
+              <Route path={ROUTES.PURCHASE_ORDER_EDIT} element={entitlementGatedPage(<PurchaseOrderEditorPage />, ENTITLEMENT_PROCUREMENT)} />
+              <Route path={ROUTES.PURCHASE_ORDER_DETAILS} element={entitlementGatedPage(<PurchaseOrderDetailsPage />, ENTITLEMENT_PROCUREMENT)} />
               <Route path={ROUTES.DEVICES_OVERVIEW} element={protectedPage(<DeviceOverviewPage />)} />
               <Route path={ROUTES.DEVICES_LIST} element={protectedPage(<DevicesListPage />)} />
               <Route path={ROUTES.DEVICE_DETAILS} element={protectedPage(<DeviceDetailsPage />)} />
@@ -86,10 +100,14 @@ export default function App() {
               <Route path={ROUTES.EDGE_AGENT_DETAILS} element={protectedPage(<EdgeAgentDetailsPage />)} />
               <Route path={ROUTES.DEVICE_DISCOVERY} element={protectedPage(<DeviceDiscoveryPage />)} />
               <Route path={ROUTES.DEVICE_PRINTING} element={protectedPage(<DevicePrintingPage />)} />
-              <Route path={ROUTES.INVENTORY} element={protectedPage(<InventoryPage />)} />
-              <Route path={ROUTES.INVENTORY_ADMIN} element={protectedPage(<InventoryAdminPage />)} />
+              {/* NOBO Control Plane -- auth-only at the router level; PlatformAccessGate inside
+                  each page independently checks platform staff status (section 14). */}
+              <Route path={ROUTES.PLATFORM_COMPANIES} element={protectedPage(<PlatformCompaniesPage />)} />
+              <Route path={ROUTES.PLATFORM_COMPANY_ENTITLEMENTS} element={protectedPage(<PlatformCompanyEntitlementsPage />)} />
+              <Route path={ROUTES.INVENTORY} element={entitlementGatedPage(<InventoryPage />, ENTITLEMENT_INVENTORY)} />
+              <Route path={ROUTES.INVENTORY_ADMIN} element={entitlementGatedPage(<InventoryAdminPage />, ENTITLEMENT_INVENTORY)} />
               <Route path={ROUTES.CUSTOMERS} element={protectedPage(<CustomersPage />)} />
-              <Route path={ROUTES.SUPPLIERS} element={protectedPage(<SuppliersPage />)} />
+              <Route path={ROUTES.SUPPLIERS} element={entitlementGatedPage(<SuppliersPage />, ENTITLEMENT_PROCUREMENT)} />
               <Route path={ROUTES.ACCOUNTING} element={protectedPage(<AccountingPage />)} />
               <Route path={ROUTES.REPORTS} element={protectedPage(<ReportsPage />)} />
               <Route path={ROUTES.PROJECTS} element={protectedPage(<ProjectsPage />)} />

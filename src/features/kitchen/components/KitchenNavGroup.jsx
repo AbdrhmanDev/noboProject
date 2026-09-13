@@ -1,21 +1,29 @@
 import { ChefHat, Flame, Settings } from "lucide-react";
 import { useI18n } from "../../../i18n/I18nContext";
 import { useCompany } from "../../companies/context/CompanyContext";
-import { useHasPermission } from "../../companies/hooks/useCompanies";
+import { useEntitlements, useHasPermission } from "../../companies/hooks/useCompanies";
+import { ENTITLEMENT_RESTAURANT_KITCHEN } from "../../companies/constants/entitlementCodes";
 import { ROUTES } from "../../../utils/routes";
 import { NavGroup } from "../../../components/NavGroup";
 
 const KITCHEN_VIEW_PERMISSION = "Kitchen.View";
 const KITCHEN_MANAGE_PERMISSION = "Kitchen.Manage";
 
+// Kitchen now has its own standalone backend boundary (RESTAURANT.KITCHEN -- see
+// CreateKitchenStationHandler and friends), not just indirect protection via the RESTAURANT root,
+// so nav visibility checks the capability directly rather than the root app.
 export function KitchenNavGroup({ activePath, navigate, variant = "desktop", collapsed = false }) {
   const { t } = useI18n();
   const { currentCompanyId } = useCompany();
   const viewPermissionQuery = useHasPermission(currentCompanyId, KITCHEN_VIEW_PERMISSION);
   const managePermissionQuery = useHasPermission(currentCompanyId, KITCHEN_MANAGE_PERMISSION);
+  const { hasCapability } = useEntitlements(currentCompanyId);
+  const companyOwnsKitchen = hasCapability(ENTITLEMENT_RESTAURANT_KITCHEN);
 
-  const canViewOperations = Boolean(currentCompanyId) && viewPermissionQuery.hasPermission;
-  const canViewConfiguration = Boolean(currentCompanyId) && managePermissionQuery.hasPermission;
+  const canViewOperations =
+    Boolean(currentCompanyId) && companyOwnsKitchen && viewPermissionQuery.hasPermission;
+  const canViewConfiguration =
+    Boolean(currentCompanyId) && companyOwnsKitchen && managePermissionQuery.hasPermission;
 
   const items = [
     {

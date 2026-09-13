@@ -2,6 +2,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useI18n } from "../../../i18n/I18nContext";
 import { useOperationalInventoryLocations } from "../../inventory/hooks/useInventory";
+import { useEntitlements } from "../../companies/hooks/useCompanies";
+import { ENTITLEMENT_INVENTORY } from "../../companies/constants/entitlementCodes";
 import { ProcurementModal } from "./ProcurementModal";
 import { usePostPurchaseGoodsReceipt } from "../hooks/usePurchaseOrders";
 import { getProcurementErrorMessageKey, grnNumberDisplay, purchaseOrderNumberDisplay } from "../utils/procurementFormatters";
@@ -20,7 +22,14 @@ export function GoodsReceiptDialog({ companyId, branchId, purchaseOrder, onClose
   // (i.e. closing this dialog and opening a new receiving session).
   const [idempotencyKey] = useState(() => crypto.randomUUID());
 
-  const locationsQuery = useOperationalInventoryLocations(companyId, branchId);
+  // Procurement is standalone from Inventory (see PostPurchaseGoodsReceiptHandler): the backend
+  // ignores any location entirely when the company does not have INVENTORY enabled, so the
+  // location selector must not even appear -- it would just be dead UI asking for something the
+  // backend will never use, and receiving must remain fully usable without it.
+  const { hasApp } = useEntitlements(companyId);
+  const companyOwnsInventory = hasApp(ENTITLEMENT_INVENTORY);
+
+  const locationsQuery = useOperationalInventoryLocations(companyId, branchId, companyOwnsInventory);
   const receiptMutation = usePostPurchaseGoodsReceipt(companyId, branchId, purchaseOrder.purchaseOrderId);
 
   const [inventoryLocationId, setInventoryLocationId] = useState("");
@@ -40,7 +49,7 @@ export function GoodsReceiptDialog({ companyId, branchId, purchaseOrder, onClose
     event.preventDefault();
     setFormError("");
 
-    if (!inventoryLocationId) {
+    if (companyOwnsInventory && !inventoryLocationId) {
       setFormError(t("procurement.receipt.form.locationRequired"));
       return;
     }
@@ -69,7 +78,7 @@ export function GoodsReceiptDialog({ companyId, branchId, purchaseOrder, onClose
 
     try {
       const receipt = await receiptMutation.mutateAsync({
-        inventoryLocationId,
+        inventoryLocationId: companyOwnsInventory ? inventoryLocationId : null,
         note: note.trim() || null,
         lines,
         idempotencyKey,
@@ -112,23 +121,25 @@ export function GoodsReceiptDialog({ companyId, branchId, purchaseOrder, onClose
           </div>
         )}
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="block text-xs font-semibold text-slate-400">
-            {t("procurement.receipt.destinationLocation")}
-            <select
-              value={inventoryLocationId}
-              onChange={(event) => setInventoryLocationId(event.target.value)}
-              disabled={locationsQuery.isLoading}
-              className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
-            >
-              <option value="">{t("procurement.receipt.locationSelectPlaceholder")}</option>
-              {locations.map((location) => (
-                <option key={location.inventoryLocationId} value={location.inventoryLocationId}>
-                  {location.code} — {location.name}
-                </option>
-              ))}
-            </select>
-          </label>
+        <div className={`grid gap-3 ${companyOwnsInventory ? "sm:grid-cols-2" : ""}`}>
+          {companyOwnsInventory && (
+            <label className="block text-xs font-semibold text-slate-400">
+              {t("procurement.receipt.destinationLocation")}
+              <select
+                value={inventoryLocationId}
+                onChange={(event) => setInventoryLocationId(event.target.value)}
+                disabled={locationsQuery.isLoading}
+                className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+              >
+                <option value="">{t("procurement.receipt.locationSelectPlaceholder")}</option>
+                {locations.map((location) => (
+                  <option key={location.inventoryLocationId} value={location.inventoryLocationId}>
+                    {location.code} — {location.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <label className="block text-xs font-semibold text-slate-400">
             {t("procurement.po.form.note")}
             <input
@@ -175,7 +186,7 @@ export function GoodsReceiptDialog({ companyId, branchId, purchaseOrder, onClose
 
         <button
           type="submit"
-          disabled={receiptMutation.isPending || !inventoryLocationId}
+          disabled={receiptMutation.isPending || (companyOwnsInventory && !inventoryLocationId)}
           className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 text-sm font-black text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {receiptMutation.isPending ? t("procurement.actions.saving") : t("procurement.actions.receiveGoods")}

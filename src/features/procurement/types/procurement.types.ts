@@ -191,8 +191,10 @@ export type PostPurchaseGoodsReceiptLineRequest = {
   receivedQuantity: number;
 };
 
+// inventoryLocationId only applies when the company has INVENTORY enabled; the backend ignores it
+// entirely when Inventory is disabled (see PostPurchaseGoodsReceiptHandler) -- send null/omit it.
 export type PostPurchaseGoodsReceiptRequest = {
-  inventoryLocationId: string;
+  inventoryLocationId?: string | null;
   note?: string | null;
   lines: PostPurchaseGoodsReceiptLineRequest[];
   idempotencyKey: string;
@@ -209,14 +211,16 @@ export type PurchaseGoodsReceiptLine = {
   receivedQuantity: number;
 };
 
+// inventoryLocationId/Code/Name are all null when this receipt was recorded while the company did
+// not have INVENTORY enabled -- Procurement is a standalone Commercial App, not a lookup miss.
 export type PurchaseGoodsReceipt = {
   purchaseGoodsReceiptId: string;
   grnNumber: number;
   grnNumberFormatted: string;
   purchaseOrderId: string;
-  inventoryLocationId: string;
-  inventoryLocationCode: string;
-  inventoryLocationName: string;
+  inventoryLocationId: string | null;
+  inventoryLocationCode: string | null;
+  inventoryLocationName: string | null;
   note: string | null;
   receivedByUserId: string;
   receivedAtUtc: string;
