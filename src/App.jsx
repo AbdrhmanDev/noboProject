@@ -41,6 +41,7 @@ import DeviceDiscoveryPage from "./Pages/DeviceDiscoveryPage/DeviceDiscoveryPage
 import DevicePrintingPage from "./Pages/DevicePrintingPage/DevicePrintingPage";
 import PlatformCompaniesPage from "./Pages/PlatformCompaniesPage/PlatformCompaniesPage";
 import PlatformCompanyEntitlementsPage from "./Pages/PlatformCompanyEntitlementsPage/PlatformCompanyEntitlementsPage";
+import PlatformStaffPage from "./Pages/PlatformStaffPage/PlatformStaffPage";
 import InventoryPage from "./Pages/InventoryPage/InventoryPage";
 import InventoryAdminPage from "./Pages/InventoryAdminPage/InventoryAdminPage";
 import CustomersPage from "./Pages/CustomersPage/CustomersPage";
@@ -104,6 +105,7 @@ export default function App() {
                   each page independently checks platform staff status (section 14). */}
               <Route path={ROUTES.PLATFORM_COMPANIES} element={protectedPage(<PlatformCompaniesPage />)} />
               <Route path={ROUTES.PLATFORM_COMPANY_ENTITLEMENTS} element={protectedPage(<PlatformCompanyEntitlementsPage />)} />
+              <Route path={ROUTES.PLATFORM_STAFF} element={protectedPage(<PlatformStaffPage />)} />
               <Route path={ROUTES.INVENTORY} element={entitlementGatedPage(<InventoryPage />, ENTITLEMENT_INVENTORY)} />
               <Route path={ROUTES.INVENTORY_ADMIN} element={entitlementGatedPage(<InventoryAdminPage />, ENTITLEMENT_INVENTORY)} />
               <Route path={ROUTES.CUSTOMERS} element={protectedPage(<CustomersPage />)} />

@@ -68,3 +68,25 @@ export type PlatformCompanyEntitlementsResponse = {
 export type SetPlatformCompanyEntitlementRequest = {
   enabled: boolean;
 };
+
+// ---- Platform Staff ----
+
+export type PlatformStaffRole = {
+  roleId: string;
+  code: string;
+  name: string;
+};
+
+export type PlatformStaffMember = {
+  userId: string;
+  displayName: string;
+  email: string;
+  emailConfirmed: boolean;
+  roles: PlatformStaffRole[];
+  permissions: string[];
+};
+
+export type AssignPlatformStaffRoleRequest = {
+  email: string;
+  roleCode: string;
+};

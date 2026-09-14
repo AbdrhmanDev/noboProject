@@ -6,8 +6,9 @@ import { useCurrentPlatformAccess } from "../hooks/usePlatform";
 // -- a normal Company user (including a Company Owner) who navigates straight to /platform/* must
 // see an honest "not available" state, not a half-rendered page. This is UX only; every platform
 // backend endpoint independently re-checks the specific Platform.* permission it needs regardless
-// of what this gate does.
-export function PlatformAccessGate({ children }) {
+// of what this gate does. Pass `requiredPermission` for pages that need more than bare platform
+// staff status (e.g. the Platform Staff page requires Platform.Staff.View specifically).
+export function PlatformAccessGate({ children, requiredPermission }) {
   const { t } = useI18n();
   const accessQuery = useCurrentPlatformAccess();
 
@@ -24,7 +25,11 @@ export function PlatformAccessGate({ children }) {
     );
   }
 
-  if (!accessQuery.data?.isPlatformStaff) {
+  const hasAccess = requiredPermission
+    ? (accessQuery.data?.permissions || []).includes(requiredPermission)
+    : Boolean(accessQuery.data?.isPlatformStaff);
+
+  if (!hasAccess) {
     return (
       <EmptyState
         title={t("platform.notStaffTitle")}

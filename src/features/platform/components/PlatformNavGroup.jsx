@@ -1,17 +1,19 @@
-import { Building2, ShieldCheck } from "lucide-react";
+import { Building2, ShieldCheck, Users } from "lucide-react";
 import { useI18n } from "../../../i18n/I18nContext";
 import { useCurrentPlatformAccess } from "../hooks/usePlatform";
+import { PLATFORM_STAFF_VIEW } from "../constants/platformPermissions";
 import { ROUTES } from "../../../utils/routes";
 import { NavGroup } from "../../../components/NavGroup";
 
 // NOT tenant navigation -- unlike every other NavGroup in this app, this one does NOT depend on
 // currentCompanyId at all (a NOBO staff member does not need any company selected, or even any
 // CompanyMembership, to use the Control Plane). Visibility is gated purely on platform staff
-// status; a normal Company user (including a Company Owner) never sees this at all.
+// status/permissions; a normal Company user (including a Company Owner) never sees any of this.
 export function PlatformNavGroup({ activePath, navigate, variant = "desktop", collapsed = false }) {
   const { t } = useI18n();
   const accessQuery = useCurrentPlatformAccess();
   const isPlatformStaff = Boolean(accessQuery.data?.isPlatformStaff);
+  const canViewStaff = (accessQuery.data?.permissions || []).includes(PLATFORM_STAFF_VIEW);
 
   const items = [
     {
@@ -19,6 +21,12 @@ export function PlatformNavGroup({ activePath, navigate, variant = "desktop", co
       labelKey: "nav.platformCompanies",
       icon: Building2,
       visible: isPlatformStaff,
+    },
+    {
+      to: ROUTES.PLATFORM_STAFF,
+      labelKey: "nav.platformStaff",
+      icon: Users,
+      visible: canViewStaff,
     },
   ];
 

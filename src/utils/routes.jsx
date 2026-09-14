@@ -35,6 +35,7 @@ export const ROUTES = {
   DEVICE_PRINTING: "/devices/printing",
   PLATFORM_COMPANIES: "/platform/companies",
   PLATFORM_COMPANY_ENTITLEMENTS: "/platform/companies/:companyId/entitlements",
+  PLATFORM_STAFF: "/platform/staff",
   ACCOUNTING: "/accounting",
   REPORTS: "/reports",
   PROJECTS: "/projects",
