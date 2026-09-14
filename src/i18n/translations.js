@@ -286,6 +286,7 @@ export const translations = {
     "nav.projects": "المشاريع",
     "nav.hr": "الموارد البشرية",
     "nav.settings": "الإعدادات",
+    "nav.usersAccess": "المستخدمون والصلاحيات",
     "nav.more": "المزيد",
     "nav.comingSoon": "قريبًا",
 
@@ -1586,6 +1587,7 @@ export const translations = {
     "nav.projects": "Projects",
     "nav.hr": "Human Resources",
     "nav.settings": "Settings",
+    "nav.usersAccess": "Users & Access",
     "nav.more": "More",
     "nav.comingSoon": "Coming Soon",
 
@@ -2862,6 +2864,7 @@ export const translations = {
     "nav.projects": "Proyectos",
     "nav.hr": "Recursos humanos",
     "nav.settings": "Ajustes",
+    "nav.usersAccess": "Usuarios y acceso",
     "nav.more": "Más",
     "nav.comingSoon": "Próximamente",
 
@@ -4118,6 +4121,7 @@ export const translations = {
     "nav.projects": "Projekte",
     "nav.hr": "Personal",
     "nav.settings": "Einstellungen",
+    "nav.usersAccess": "Benutzer & Zugriff",
     "nav.more": "Mehr",
     "nav.comingSoon": "Demnächst",
 

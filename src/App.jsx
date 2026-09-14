@@ -14,6 +14,7 @@ import {
 import LoginPage from "./Pages/loginPage/Login";
 import RegisterPage from "./Pages/registerPage/Register";
 import ConfirmEmailPage from "./Pages/confirmEmailPage/ConfirmEmail";
+import InviteAcceptPage from "./Pages/InviteAcceptPage/InviteAcceptPage";
 import Dashboard from "./Pages/DashboardPage/Dashboard";
 import POSPage from "./Pages/POSPage/POSPage";
 import POSShiftHistoryPage from "./Pages/POSShiftHistoryPage/POSShiftHistoryPage";
@@ -51,6 +52,7 @@ import ReportsPage from "./Pages/ReportsPage/ReportsPage";
 import ProjectsPage from "./Pages/ProjectsPage/ProjectsPage";
 import HRPage from "./Pages/HRPage/HRPage";
 import SettingsPage from "./Pages/SettingsPage/SettingsPage";
+import UsersAccessPage from "./Pages/UsersAccessPage/UsersAccessPage";
 import MorePage from "./Pages/MorePage/MorePage";
 import ProfilePage from "./Pages/ProfilePage/ProfilePage";
 import NotFound from "./Pages/NotFound/notFound";
@@ -75,6 +77,7 @@ export default function App() {
               <Route path={ROUTES.LOGIN} element={<PublicOnlyRoute><LoginPage /></PublicOnlyRoute>} />
               <Route path={ROUTES.REGISTER} element={<PublicOnlyRoute><RegisterPage /></PublicOnlyRoute>} />
               <Route path={ROUTES.CONFIRM_EMAIL} element={<PublicOnlyRoute><ConfirmEmailPage /></PublicOnlyRoute>} />
+              <Route path={ROUTES.INVITE_ACCEPT} element={<InviteAcceptPage />} />
               <Route path={ROUTES.DASHBOARD} element={protectedPage(<Dashboard />)} />
               <Route path={ROUTES.POS} element={entitlementGatedPage(<POSPage />, ENTITLEMENT_POS)} />
               <Route path={ROUTES.POS_SHIFT_HISTORY} element={entitlementGatedPage(<POSShiftHistoryPage />, ENTITLEMENT_POS)} />
@@ -115,6 +118,7 @@ export default function App() {
               <Route path={ROUTES.PROJECTS} element={protectedPage(<ProjectsPage />)} />
               <Route path={ROUTES.HR} element={protectedPage(<HRPage />)} />
               <Route path={ROUTES.SETTINGS} element={protectedPage(<SettingsPage />)} />
+              <Route path={ROUTES.USERS_ACCESS} element={protectedPage(<UsersAccessPage />)} />
               <Route path={ROUTES.MORE} element={protectedPage(<MorePage />)} />
               <Route path={ROUTES.PROFILE} element={protectedPage(<ProfilePage />)} />
               <Route path={ROUTES.NOT_FOUND} element={<NotFound />} />

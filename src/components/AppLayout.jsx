@@ -168,7 +168,7 @@ export default function AppLayout({ children, onLogout }) {
               );
             }
 
-            if (item.permission) {
+            if (item.permission || item.permissions) {
               return (
                 <PermissionNavItem
                   key={i}
@@ -176,6 +176,7 @@ export default function AppLayout({ children, onLogout }) {
                   labelKey={item.labelKey}
                   to={item.to}
                   permission={item.permission}
+                  permissions={item.permissions}
                   entitlement={item.entitlement}
                   activePath={activePath}
                   navigate={navigate}
@@ -332,7 +333,7 @@ export default function AppLayout({ children, onLogout }) {
               );
             }
 
-            if (item.permission) {
+            if (item.permission || item.permissions) {
               return (
                 <PermissionNavItem
                   key={i}
@@ -340,6 +341,7 @@ export default function AppLayout({ children, onLogout }) {
                   labelKey={item.labelKey}
                   to={item.to}
                   permission={item.permission}
+                  permissions={item.permissions}
                   entitlement={item.entitlement}
                   activePath={activePath}
                   navigate={navigate}
