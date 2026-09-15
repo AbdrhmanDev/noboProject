@@ -39,7 +39,7 @@ export type MatchConfidence = "Exact" | "Strong" | "Possible" | "Ambiguous" | "N
 
 export type PrintJobStatus = "Queued" | "Claimed" | "Printing" | "Succeeded" | "Failed";
 
-export type PrintJobDocumentType = "TestPrint" | "CustomerReceipt" | "ProductLabel";
+export type PrintJobDocumentType = "TestPrint" | "CustomerReceipt" | "ProductLabel" | "KitchenTicket";
 
 export type DeviceHardwareBindingTransportType =
   | "Usb"

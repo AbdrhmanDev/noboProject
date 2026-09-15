@@ -141,3 +141,19 @@ export type AcceptInvitationResponse = {
 };
 
 export type AdminBranch = Branch;
+
+// Anonymous-safe preview shown on the invitation-acceptance page before the visitor has
+// registered or logged in -- deliberately minimal (no inviter identity, no role permission codes,
+// no branch codes/status), matching what the backend's PreviewCompanyInvitationHandler returns.
+export type CompanyInvitationPreview = {
+  invitationId: string;
+  companyId: string;
+  companyName: string;
+  email: string;
+  status: InvitationStatus | string;
+  effectiveStatus: InvitationStatus | string;
+  branchAccessMode: BranchAccessMode;
+  expiresAtUtc: string;
+  roleNames: string[];
+  selectedBranchNames: string[];
+};

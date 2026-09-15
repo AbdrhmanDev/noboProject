@@ -1,9 +1,16 @@
 import type { ReactNode } from "react";
+import { Navigate } from "react-router-dom";
 import { ErrorState, LoadingState } from "../../../shared/components/ui";
+import {
+  buildInviteAcceptPath,
+  getPendingInvitationToken,
+} from "../../users-access/utils/pendingInvitation";
 import { useCompany } from "../context/CompanyContext";
 import { useCompanyPermissions, useMyCompanies } from "../hooks/useCompanies";
+import { hasAnyUsableAccess } from "../hooks/useLandingRoute";
 import { CompanyOnboarding } from "./CompanyOnboarding";
 import { CompanySelector } from "./CompanySelector";
+import { NoAccessState } from "./NoAccessState";
 
 type CompanyGateProps = {
   children: ReactNode;
@@ -47,6 +54,14 @@ export function CompanyGate({ children }: CompanyGateProps) {
   }
 
   if (!companies?.length) {
+    // An invited user awaiting invitation acceptance must never be sent to "Create your Company"
+    // (Section 1.6) -- a brand-new account with zero CompanyMemberships and a still-pending
+    // invitation token belongs back on the invitation page, not in onboarding.
+    const pendingInvitationToken = getPendingInvitationToken();
+    if (pendingInvitationToken) {
+      return <Navigate to={buildInviteAcceptPath(pendingInvitationToken)} replace />;
+    }
+
     return (
       <CompanyGateShell>
         <CompanyOnboarding />
@@ -79,6 +94,14 @@ export function CompanyGate({ children }: CompanyGateProps) {
         />
       </CompanyGateShell>
     );
+  }
+
+  // Section 7: an active CompanyMembership with zero usable permissions (not Owner, no roles
+  // granting anything) is a real, distinct tenant state -- never onboarding, never a silent
+  // half-rendered page. Applies globally (every route under this gate), not just Dashboard,
+  // since nothing permission-gated would ever resolve for this user anyway.
+  if (!hasAnyUsableAccess(permissionsQuery.data)) {
+    return <NoAccessState />;
   }
 
   return children;

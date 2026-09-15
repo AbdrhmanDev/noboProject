@@ -1314,6 +1314,13 @@ export const translations = {
     "entitlements.unavailableMessage": "تعذر تأكيد اشتراك شركتك في هذا التطبيق. حاول مرة أخرى.",
     "entitlements.appNotEnabledTitle": "هذا التطبيق غير مفعّل",
     "entitlements.appNotEnabledMessage": "شركتك ليست مشتركة في هذا التطبيق حاليًا. تواصل مع إدارة NOBO لتفعيله.",
+    "access.unavailableTitle": "تعذر التحقق من صلاحياتك",
+    "access.unavailableMessage": "تعذر تأكيد صلاحياتك حاليًا. حاول مرة أخرى.",
+    "access.deniedTitle": "الوصول غير مسموح",
+    "access.deniedMessage": "لا تملك صلاحية لعرض هذه الصفحة.",
+    "access.noAccessTitle": "لم يتم منح أي صلاحية لحسابك بعد",
+    "access.noAccessMessage": "تواصل مع مسؤول الشركة لمنحك صلاحية الوصول، أو بدّل إلى شركة أخرى إن وُجدت.",
+    "access.switchCompany": "تبديل الشركة",
   },
 
   en: {
@@ -2591,6 +2598,13 @@ export const translations = {
     "entitlements.unavailableMessage": "Unable to confirm your company's subscription for this app. Try again.",
     "entitlements.appNotEnabledTitle": "This app is not enabled",
     "entitlements.appNotEnabledMessage": "Your company is not currently subscribed to this app. Contact NOBO to enable it.",
+    "access.unavailableTitle": "Unable to confirm access",
+    "access.unavailableMessage": "Unable to confirm your access right now. Try again.",
+    "access.deniedTitle": "Access denied",
+    "access.deniedMessage": "You don't have permission to view this page.",
+    "access.noAccessTitle": "No access has been assigned to your account yet.",
+    "access.noAccessMessage": "Contact your company administrator to get access, or switch to another company if you belong to one.",
+    "access.switchCompany": "Switch Company",
   },
 
   es: {

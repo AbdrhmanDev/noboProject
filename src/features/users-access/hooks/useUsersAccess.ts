@@ -13,6 +13,7 @@ import {
   getCompanyMemberships,
   getCompanyRoles,
   getTenantAdminBranches,
+  previewCompanyInvitation,
   resendCompanyInvitation,
   updateCompanyInvitation,
   updateCompanyRole,
@@ -39,6 +40,7 @@ export const usersAccessQueryKeys = {
   invitation: (companyId: string, invitationId: string) =>
     ["users-access", companyId, "invitations", invitationId] as const,
   adminBranches: (companyId: string) => ["users-access", companyId, "admin-branches"] as const,
+  invitationPreview: (token: string) => ["users-access", "invitation-preview", token] as const,
 };
 
 function invalidateCompanyAccess(queryClient: ReturnType<typeof useQueryClient>, companyId: string) {
@@ -169,6 +171,15 @@ export function useUpdateCompanyRole(companyId: string | null | undefined) {
     mutationFn: ({ roleId, payload }: { roleId: string; payload: UpdateRoleRequest }) =>
       updateCompanyRole(companyId as string, roleId, payload),
     onSuccess: () => invalidateCompanyAccess(queryClient, companyId as string),
+  });
+}
+
+export function usePreviewInvitation(token: string | null | undefined) {
+  return useQuery({
+    queryKey: usersAccessQueryKeys.invitationPreview(token || ""),
+    queryFn: () => previewCompanyInvitation(token as string),
+    enabled: Boolean(token),
+    retry: false,
   });
 }
 

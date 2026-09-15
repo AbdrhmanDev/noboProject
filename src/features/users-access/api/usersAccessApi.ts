@@ -4,6 +4,7 @@ import type {
   AdminBranch,
   AssignMembershipRolesRequest,
   CompanyInvitation,
+  CompanyInvitationPreview,
   CompanyMembership,
   CompanyRole,
   CreateInvitationRequest,
@@ -133,6 +134,13 @@ export async function resendCompanyInvitation(companyId: string, invitationId: s
 export async function cancelCompanyInvitation(companyId: string, invitationId: string) {
   const response = await httpClient.post<InvitationMutationResponse>(
     `/api/companies/${companyId}/invitations/${invitationId}/cancel`,
+  );
+  return response.data;
+}
+
+export async function previewCompanyInvitation(token: string) {
+  const response = await httpClient.get<CompanyInvitationPreview>(
+    `/api/companies/invitations/preview/${encodeURIComponent(token)}`,
   );
   return response.data;
 }

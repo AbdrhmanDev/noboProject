@@ -14,6 +14,10 @@ import LanguageSwitcher from "../../i18n/LanguageSwitcher";
 import { useAuth } from "../../features/auth/hooks/useAuth";
 import { loginSchema } from "../../features/auth/schemas/login.schema";
 import AuthLayout from "../../features/auth/components/AuthLayout";
+import {
+  buildInviteAcceptPath,
+  getPendingInvitationToken,
+} from "../../features/users-access/utils/pendingInvitation";
 
 import { ROUTES } from "../../utils/routes";
 
@@ -59,6 +63,16 @@ function LoginCard() {
 
     try {
       await login(values);
+
+      // Resume a pending invitation ahead of any other redirect (Section 1.4/B): an invited
+      // user's accept-invitation intent takes priority over wherever ProtectedRoute happened to
+      // bounce them from, since that's always just the generic Login page itself in this flow.
+      const pendingInvitationToken = getPendingInvitationToken();
+      if (pendingInvitationToken) {
+        navigate(buildInviteAcceptPath(pendingInvitationToken), { replace: true });
+        return;
+      }
+
       const from = location.state?.from?.pathname || ROUTES.DASHBOARD;
       navigate(from, { replace: true });
     } catch {
