@@ -10,8 +10,7 @@ import { OpenShiftPanel } from "./OpenShiftPanel";
 import { OpenShiftSummary } from "./OpenShiftSummary";
 import { PosTerminalOnboarding } from "./PosTerminalOnboarding";
 import { PosTerminalSelector } from "./PosTerminalSelector";
-
-const POS_VIEW_PERMISSION = "Pos.View";
+import { POS_VIEW_PERMISSION } from "../../authorization/constants/applicationPermissions";
 
 type PosOperationalGateProps = {
   children: ReactNode;

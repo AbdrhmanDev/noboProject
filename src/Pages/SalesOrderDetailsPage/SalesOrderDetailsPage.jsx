@@ -13,8 +13,7 @@ import { SalesOrderStatusBadge } from "../../features/sales/components/SalesOrde
 import { SalesOrderPaymentBadge } from "../../features/sales/components/SalesOrderPaymentBadge";
 import { fulfillmentLabelKey, orderNumberDisplay, shortOrderReference } from "../../features/sales/utils/salesOrderFormatters";
 import { ROUTES } from "../../utils/routes";
-
-const SALES_ORDERS_VIEW_PERMISSION = "SalesOrders.View";
+import { SALES_ORDERS_VIEW_PERMISSION } from "../../features/authorization/constants/applicationPermissions";
 
 function Field({ label, value }) {
   return (

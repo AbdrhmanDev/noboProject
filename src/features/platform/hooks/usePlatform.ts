@@ -3,6 +3,7 @@ import {
   assignPlatformStaffRole,
   getCurrentPlatformAccess,
   getPlatformCompanies,
+  getPlatformCompanyDetails,
   getPlatformCompanyEntitlements,
   getPlatformStaff,
   revokePlatformStaffRole,
@@ -10,6 +11,7 @@ import {
 } from "../api/platformApi";
 import type {
   AssignPlatformStaffRoleRequest,
+  PlatformCompanyDetailsFilters,
   PlatformCompanyListFilters,
   SetPlatformCompanyEntitlementRequest,
 } from "../types/platform.types";
@@ -17,6 +19,10 @@ import type {
 export const platformQueryKeys = {
   access: ["platform", "me", "access"] as const,
   companies: (filters: PlatformCompanyListFilters) => ["platform", "companies", filters] as const,
+  // Keyed by companyId + the requested date range -- the backend response depends on the range
+  // (Orders/Sales/LastActivity), so a range change must be a distinct cache entry, not a stale hit.
+  details: (companyId: string, filters: PlatformCompanyDetailsFilters) =>
+    ["platform", "companies", companyId, "details", filters] as const,
   entitlements: (companyId: string) => ["platform", "companies", companyId, "entitlements"] as const,
   staff: ["platform", "staff"] as const,
 };
@@ -40,6 +46,17 @@ export function usePlatformCompanies(filters: PlatformCompanyListFilters = {}, e
     queryKey: platformQueryKeys.companies(filters),
     queryFn: () => getPlatformCompanies(filters),
     enabled,
+  });
+}
+
+export function usePlatformCompanyDetails(
+  companyId: string | null | undefined,
+  filters: PlatformCompanyDetailsFilters = {},
+) {
+  return useQuery({
+    queryKey: platformQueryKeys.details(companyId || "", filters),
+    queryFn: () => getPlatformCompanyDetails(companyId as string, filters),
+    enabled: Boolean(companyId),
   });
 }
 

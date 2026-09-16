@@ -14,9 +14,9 @@ import { useBranch } from "../../branches/context/BranchContext";
 import { useCompany } from "../../companies/context/CompanyContext";
 import { useHasPermission } from "../../companies/hooks/useCompanies";
 import { isTerminalEnterable, posQueryKeys, usePosTerminals } from "../hooks/usePosTerminals";
+import { POS_VIEW_PERMISSION } from "../../authorization/constants/applicationPermissions";
 
 const STORAGE_KEY = "nobo.currentPosTerminalId";
-const POS_VIEW_PERMISSION = "Pos.View";
 
 type PosContextValue = {
   currentPosTerminalId: string | null;

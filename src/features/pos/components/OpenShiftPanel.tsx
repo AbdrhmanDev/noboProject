@@ -15,8 +15,7 @@ import {
   type OpenShiftFormValues,
 } from "../schemas/openShift.schema";
 import type { PosTerminal } from "../types/pos.types";
-
-const POS_OPEN_SHIFT_PERMISSION = "Pos.OpenShift";
+import { POS_OPEN_SHIFT_PERMISSION } from "../../authorization/constants/applicationPermissions";
 
 type OpenShiftPanelProps = {
   terminal: PosTerminal;

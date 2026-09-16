@@ -34,7 +34,9 @@ export const ROUTES = {
   EDGE_AGENT_DETAILS: "/devices/agents/:edgeAgentId",
   DEVICE_DISCOVERY: "/devices/discovery",
   DEVICE_PRINTING: "/devices/printing",
+  PLATFORM_OVERVIEW: "/platform/overview",
   PLATFORM_COMPANIES: "/platform/companies",
+  PLATFORM_COMPANY_DETAILS: "/platform/companies/:companyId",
   PLATFORM_COMPANY_ENTITLEMENTS: "/platform/companies/:companyId/entitlements",
   PLATFORM_STAFF: "/platform/staff",
   ACCOUNTING: "/accounting",
@@ -67,6 +69,10 @@ export function deviceDetailsPath(deviceId) {
 
 export function edgeAgentDetailsPath(edgeAgentId) {
   return `/devices/agents/${edgeAgentId}`;
+}
+
+export function platformCompanyDetailsPath(companyId) {
+  return `/platform/companies/${companyId}`;
 }
 
 export function platformCompanyEntitlementsPath(companyId) {

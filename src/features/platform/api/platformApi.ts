@@ -2,6 +2,8 @@ import { httpClient } from "../../../shared/api/httpClient";
 import type {
   AssignPlatformStaffRoleRequest,
   CurrentPlatformAccess,
+  PlatformCompanyDetails,
+  PlatformCompanyDetailsFilters,
   PlatformCompanyEntitlement,
   PlatformCompanyEntitlementsResponse,
   PlatformCompanyListFilters,
@@ -9,6 +11,13 @@ import type {
   PlatformStaffMember,
   SetPlatformCompanyEntitlementRequest,
 } from "../types/platform.types";
+
+// Mirrors the backend's hard limit exactly (GetPlatformCompaniesHandler.HandleAsync ->
+// "PlatformCompanyList.PageSizeInvalid" -- Page size must be between 1 and 100, the same MaxPageSize
+// convention every other paginated list endpoint in this backend uses). NOT a frontend-invented
+// number: any caller of getPlatformCompanies must stay at or below this value or the backend
+// returns HTTP 400.
+export const PLATFORM_COMPANY_LIST_MAX_PAGE_SIZE = 100;
 
 function compactParams(filters: object) {
   return Object.fromEntries(
@@ -27,6 +36,17 @@ export async function getPlatformCompanies(filters: PlatformCompanyListFilters =
   const response = await httpClient.get<PlatformCompanyListResponse>("/api/platform/companies", {
     params: compactParams(filters),
   });
+  return response.data;
+}
+
+export async function getPlatformCompanyDetails(
+  companyId: string,
+  filters: PlatformCompanyDetailsFilters = {},
+) {
+  const response = await httpClient.get<PlatformCompanyDetails>(
+    `/api/platform/companies/${companyId}`,
+    { params: compactParams(filters) },
+  );
   return response.data;
 }
 

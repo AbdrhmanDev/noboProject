@@ -28,9 +28,11 @@ import {
   usePosTerminals,
   useUpdatePosTerminal,
 } from "../../features/pos/hooks/usePosTerminals";
+import {
+  POS_CONFIGURE_PERMISSION,
+  POS_VIEW_PERMISSION,
+} from "../../features/authorization/constants/applicationPermissions";
 
-const POS_VIEW_PERMISSION = "Pos.View";
-const POS_CONFIGURE_PERMISSION = "Pos.Configure";
 const EMPTY_FORM = {
   code: "",
   name: "",

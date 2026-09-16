@@ -12,8 +12,7 @@ import {
   createPosTerminalSchema,
   type CreatePosTerminalFormValues,
 } from "../schemas/createPosTerminal.schema";
-
-const POS_CONFIGURE_PERMISSION = "Pos.Configure";
+import { POS_CONFIGURE_PERMISSION } from "../../authorization/constants/applicationPermissions";
 
 const VALIDATION_MESSAGES: Record<string, string> = {
   "posTerminal.codeRequired": "Terminal code is required.",

@@ -27,6 +27,7 @@ export function OrderSecondaryActions({
   voidPreparedPermissionQuery,
   holdOrder,
   onOpenCashMovement,
+  cashDrawerPermissionQuery,
   shouldShowPaymentPanel,
   paymentsViewPermissionQuery,
   canRefundPayments,
@@ -95,6 +96,7 @@ export function OrderSecondaryActions({
                 icon={CircleDollarSign}
                 label="حركة نقدية"
                 onClick={onOpenCashMovement}
+                disabled={!cashDrawerPermissionQuery.hasPermission}
               />
               <IconButton
                 icon={PauseCircle}

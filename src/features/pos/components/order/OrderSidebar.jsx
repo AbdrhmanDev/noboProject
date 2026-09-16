@@ -17,6 +17,7 @@ export function OrderSidebar({
   isClosedOrder,
   orderType,
   canEditDraft,
+  canEditDraftLines,
   isDraftMutationPending,
   handleOrderTypeChange,
   selectedRestaurantTable,
@@ -58,6 +59,7 @@ export function OrderSidebar({
   holdOrder,
   onOpenRetrieve,
   onOpenCashMovement,
+  cashDrawerPermissionQuery,
   paymentsViewPermissionQuery,
   canRefundPayments,
   openRefundModal,
@@ -122,7 +124,7 @@ export function OrderSidebar({
         draftLines={draftLines}
         draftOrder={draftOrder}
         catalogCurrencyCode={catalogCurrencyCode}
-        canEditDraft={canEditDraft}
+        canEditDraft={canEditDraftLines}
         isLinePending={isLinePending}
         changeQty={changeQty}
         removeDraftLine={removeDraftLine}
@@ -159,6 +161,7 @@ export function OrderSidebar({
         voidPreparedPermissionQuery={voidPreparedPermissionQuery}
         holdOrder={holdOrder}
         onOpenCashMovement={onOpenCashMovement}
+        cashDrawerPermissionQuery={cashDrawerPermissionQuery}
         shouldShowPaymentPanel={shouldShowPaymentPanel}
         paymentsViewPermissionQuery={paymentsViewPermissionQuery}
         canRefundPayments={canRefundPayments}

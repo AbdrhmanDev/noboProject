@@ -1,4 +1,4 @@
-import { Building2, ShieldCheck, Users } from "lucide-react";
+import { Building2, LayoutDashboard, ShieldCheck, Users } from "lucide-react";
 import { useI18n } from "../../../i18n/I18nContext";
 import { useCurrentPlatformAccess } from "../hooks/usePlatform";
 import { PLATFORM_STAFF_VIEW } from "../constants/platformPermissions";
@@ -15,10 +15,18 @@ export function PlatformNavGroup({ activePath, navigate, variant = "desktop", co
   const isPlatformStaff = Boolean(accessQuery.data?.isPlatformStaff);
   const canViewStaff = (accessQuery.data?.permissions || []).includes(PLATFORM_STAFF_VIEW);
 
+  // Overview/Customers use the same PLATFORM_COMPANIES_VIEW-backed data as before -- gated on bare
+  // platform staff status, same as the pre-existing Companies item was, not a new permission.
   const items = [
     {
+      to: ROUTES.PLATFORM_OVERVIEW,
+      labelKey: "nav.platformOverview",
+      icon: LayoutDashboard,
+      visible: isPlatformStaff,
+    },
+    {
       to: ROUTES.PLATFORM_COMPANIES,
-      labelKey: "nav.platformCompanies",
+      labelKey: "nav.platformCustomers",
       icon: Building2,
       visible: isPlatformStaff,
     },

@@ -73,21 +73,25 @@ import { SCOPE_PRIORITY, SHORTCUT_SCOPES } from "../../features/shortcuts/regist
 import { useShortcutScope } from "../../features/shortcuts/useShortcuts";
 import { ShortcutHint } from "../../features/shortcuts/components/ShortcutHint";
 import { getFocusableGridItems, ROVING_ITEM_SELECTOR } from "../../features/shortcuts/rovingFocus";
+import {
+  CATALOG_MANAGE_PERMISSION,
+  PAYMENTS_RECEIVE_PERMISSION,
+  PAYMENTS_REFUND_PERMISSION,
+  PAYMENTS_VIEW_PERMISSION,
+  POS_ADJUST_CASH_DRAWER_PERMISSION,
+  POS_CLOSE_SHIFT_PERMISSION,
+  PRICING_MANAGE_PERMISSION,
+  RESTAURANT_VIEW_PERMISSION,
+  SALES_ORDERS_APPLY_DISCOUNT_PERMISSION,
+  SALES_ORDERS_CANCEL_PERMISSION,
+  SALES_ORDERS_CLOSE_PERMISSION,
+  SALES_ORDERS_CONFIRM_PERMISSION,
+  SALES_ORDERS_CREATE_PERMISSION,
+  SALES_ORDERS_EDIT_DRAFT_PERMISSION,
+  SALES_ORDERS_VIEW_PERMISSION,
+  SALES_ORDERS_VOID_PREPARED_PERMISSION,
+} from "../../features/authorization/constants/applicationPermissions";
 
-const SALES_ORDERS_CREATE_PERMISSION = "SalesOrders.Create";
-const SALES_ORDERS_APPLY_DISCOUNT_PERMISSION = "SalesOrders.ApplyDiscount";
-const SALES_ORDERS_CONFIRM_PERMISSION = "SalesOrders.Confirm";
-const SALES_ORDERS_CLOSE_PERMISSION = "SalesOrders.Close";
-const SALES_ORDERS_CANCEL_PERMISSION = "SalesOrders.Cancel";
-const SALES_ORDERS_VOID_PREPARED_PERMISSION = "SalesOrders.VoidPrepared";
-const RESTAURANT_VIEW_PERMISSION = "Restaurant.View";
-const POS_ADJUST_CASH_DRAWER_PERMISSION = "Pos.AdjustCashDrawer";
-const POS_CLOSE_SHIFT_PERMISSION = "Pos.CloseShift";
-const PAYMENTS_VIEW_PERMISSION = "Payments.View";
-const PAYMENTS_RECEIVE_PERMISSION = "Payments.Receive";
-const PAYMENTS_REFUND_PERMISSION = "Payments.Refund";
-const CATALOG_MANAGE_PERMISSION = "Catalog.Manage";
-const PRICING_MANAGE_PERMISSION = "Pricing.Manage";
 const DEFAULT_FULFILLMENT_TYPE = "Takeaway";
 
 export default function POSPage() {
@@ -106,6 +110,19 @@ export default function POSPage() {
   const catalogPermissionQuery = useHasPermission(
     currentCompanyId,
     SALES_ORDERS_CREATE_PERMISSION,
+  );
+  // Backend UpdateDraftSalesOrderHandler requires SalesOrders.EditDraft for every line-level
+  // mutation (add/remove/quantity) on an already-existing draft. POS Authorization Hardening,
+  // priority 2: line-item edit controls must honor this permission, not just order status.
+  const editDraftPermissionQuery = useHasPermission(
+    currentCompanyId,
+    SALES_ORDERS_EDIT_DRAFT_PERMISSION,
+  );
+  // Backend GetSalesOrderDetails/GetRetrievableSalesOrders both require SalesOrders.View. POS
+  // Authorization Hardening, priority 4: order retrieval must honor this permission explicitly.
+  const salesOrdersViewPermissionQuery = useHasPermission(
+    currentCompanyId,
+    SALES_ORDERS_VIEW_PERMISSION,
   );
   const discountPermissionQuery = useHasPermission(
     currentCompanyId,
@@ -293,6 +310,12 @@ export default function POSPage() {
   const isClosedOrder = draftOrder?.status === "Closed";
   const isCancelledOrder = draftOrder?.status === "Cancelled";
   const canEditDraft = !draftOrder || draftOrder.status === "Draft";
+  // Narrower than canEditDraft on purpose (POS Authorization Hardening, priority 2): this gates
+  // ONLY the line-item edit controls (remove/quantity, OrderLines.jsx), matching exactly what
+  // backend UpdateDraftSalesOrderHandler requires (SalesOrders.EditDraft). Order-type/table
+  // selection and other canEditDraft-gated actions are deliberately left alone -- they are a
+  // different action surface and must not be blocked by this permission per the task's scope.
+  const canEditDraftLines = canEditDraft && editDraftPermissionQuery.hasPermission;
   const effectiveOrderType = draftOrder?.fulfillmentType || orderType;
   const effectiveRestaurantTableId =
     draftOrder?.restaurantTableId ||
@@ -1175,6 +1198,11 @@ export default function POSPage() {
   const retrieveOrder = async (selectedOrderId) => {
     if (retrievingOrderId || !currentCompanyId || !currentBranchId) return;
 
+    if (!salesOrdersViewPermissionQuery.hasPermission) {
+      notify("SalesOrders.View permission is required.");
+      return;
+    }
+
     const hasMeaningfulDraft =
       draftOrder && draftOrder.status === "Draft" && draftLines.length > 0;
 
@@ -1655,7 +1683,8 @@ export default function POSPage() {
               <button
                 type="button"
                 onClick={() => setModal("retrieve")}
-                className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold text-slate-200 hover:border-blue-400/40 hover:bg-blue-500/10"
+                disabled={!salesOrdersViewPermissionQuery.hasPermission}
+                className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold text-slate-200 hover:border-blue-400/40 hover:bg-blue-500/10 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <RotateCcw size={14} />
                 استرجاع طلب
@@ -1742,6 +1771,7 @@ export default function POSPage() {
               isClosedOrder={isClosedOrder}
               orderType={orderType}
               canEditDraft={canEditDraft}
+              canEditDraftLines={canEditDraftLines}
               isDraftMutationPending={isDraftMutationPending}
               handleOrderTypeChange={handleOrderTypeChange}
               selectedRestaurantTable={selectedRestaurantTable}
@@ -1781,8 +1811,11 @@ export default function POSPage() {
               cancelPermissionQuery={cancelPermissionQuery}
               voidPreparedPermissionQuery={voidPreparedPermissionQuery}
               holdOrder={holdOrder}
-              onOpenRetrieve={() => setModal("retrieve")}
+              onOpenRetrieve={
+                salesOrdersViewPermissionQuery.hasPermission ? () => setModal("retrieve") : undefined
+              }
               onOpenCashMovement={() => setModal("cashMovement")}
+              cashDrawerPermissionQuery={cashDrawerPermissionQuery}
               paymentsViewPermissionQuery={paymentsViewPermissionQuery}
               canRefundPayments={canRefundPayments}
               openRefundModal={openRefundModal}

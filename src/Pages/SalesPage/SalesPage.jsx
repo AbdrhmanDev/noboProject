@@ -19,8 +19,8 @@ import {
 } from "../../features/sales/utils/salesOrderFormatters";
 import { customDateRange } from "../../features/sales/utils/dateRangePresets";
 import { ROUTES, salesOrderDetailsPath } from "../../utils/routes";
+import { SALES_ORDERS_VIEW_PERMISSION } from "../../features/authorization/constants/applicationPermissions";
 
-const SALES_ORDERS_VIEW_PERMISSION = "SalesOrders.View";
 const PAGE_SIZE = 25;
 const STATUS_OPTIONS = ["Draft", "Confirmed", "Closed", "Cancelled"];
 const FULFILLMENT_OPTIONS = ["DineIn", "Takeaway", "Delivery"];

@@ -21,8 +21,8 @@ import {
   usePosShifts,
   usePosTerminals,
 } from "../../features/pos/hooks/usePosTerminals";
+import { POS_VIEW_PERMISSION } from "../../features/authorization/constants/applicationPermissions";
 
-const POS_VIEW_PERMISSION = "Pos.View";
 const PAGE_SIZE = 25;
 
 function toUtcStart(value) {
