@@ -54,6 +54,24 @@ function summarizeBranches(mode, branches) {
   return branches.map((branch) => branch.name).join(", ");
 }
 
+// Mirrors the backend's CompanyRoleGrantGuard exactly (RequireCanGrantRolesAsync /
+// RequireCanGrantPermissionsAsync): a non-owner can only grant a role/permission that is a
+// subset of their OWN effective permissions. This is UX only -- the backend re-checks the same
+// rule on every mutation regardless -- but without it a non-owner Users.Manage/Roles.Manage
+// holder could pick a role or permission they don't personally have, click Save, and get a
+// confusing "Request failed" instead of understanding why upfront (Section 8/15 of the Tenant
+// Users & Access task: "frontend must not imply that a role can grant permissions the current
+// actor is not allowed to grant").
+function canActorGrantPermission(actorPermissions, code) {
+  if (actorPermissions?.isOwner) return true;
+  return (actorPermissions?.permissions || []).includes(code);
+}
+
+function canActorGrantRole(actorPermissions, role) {
+  if (actorPermissions?.isOwner) return true;
+  return (role.permissions || []).every((code) => canActorGrantPermission(actorPermissions, code));
+}
+
 function Dialog({ title, children, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
@@ -70,31 +88,38 @@ function Dialog({ title, children, onClose }) {
   );
 }
 
-function RolePicker({ roles, selectedIds, setSelectedIds, disabled }) {
+function RolePicker({ roles, selectedIds, setSelectedIds, disabled, actorPermissions }) {
   return (
     <div className="grid gap-2 sm:grid-cols-2">
-      {roles.map((role) => (
-        <label key={role.roleId} className="flex items-start gap-2 rounded-xl border border-white/10 bg-white/[0.025] p-3 text-sm text-slate-200">
-          <input
-            type="checkbox"
-            checked={selectedIds.includes(role.roleId)}
-            disabled={disabled}
-            onChange={(event) => {
-              setSelectedIds(
-                event.target.checked
-                  ? [...selectedIds, role.roleId]
-                  : selectedIds.filter((id) => id !== role.roleId),
-              );
-            }}
-            className="mt-1"
-          />
-          <span>
-            <span className="font-bold text-white">{role.name}</span>
-            <span className="ms-2 text-xs text-slate-500">{role.code}</span>
-            {role.isSystem && <span className="ms-2 rounded-full bg-blue-500/15 px-2 py-0.5 text-[10px] font-bold text-blue-200">System Role</span>}
-          </span>
-        </label>
-      ))}
+      {roles.map((role) => {
+        const grantable = canActorGrantRole(actorPermissions, role);
+        return (
+          <label
+            key={role.roleId}
+            className={`flex items-start gap-2 rounded-xl border border-white/10 bg-white/[0.025] p-3 text-sm ${grantable ? "text-slate-200" : "text-slate-500"}`}
+          >
+            <input
+              type="checkbox"
+              checked={selectedIds.includes(role.roleId)}
+              disabled={disabled || !grantable}
+              onChange={(event) => {
+                setSelectedIds(
+                  event.target.checked
+                    ? [...selectedIds, role.roleId]
+                    : selectedIds.filter((id) => id !== role.roleId),
+                );
+              }}
+              className="mt-1"
+            />
+            <span>
+              <span className={`font-bold ${grantable ? "text-white" : "text-slate-400"}`}>{role.name}</span>
+              <span className="ms-2 text-xs text-slate-500">{role.code}</span>
+              {role.isSystem && <span className="ms-2 rounded-full bg-blue-500/15 px-2 py-0.5 text-[10px] font-bold text-blue-200">System Role</span>}
+              {!grantable && <span className="ms-2 text-[11px] text-amber-300">Requires permissions you don't have</span>}
+            </span>
+          </label>
+        );
+      })}
     </div>
   );
 }
@@ -151,26 +176,50 @@ function BranchAccessPicker({ branches, mode, selectedIds, setMode, setSelectedI
   );
 }
 
-function AccessDialog({ title, roles, branches, initial, canSave, isOwner, onSubmit, onClose, pending }) {
+function AccessDialog({ title, member, roles, branches, initial, canSave, isOwner, actorPermissions, onSubmit, onClose, pending }) {
   const [roleIds, setRoleIds] = useState(initial.roleIds);
   const [branchAccessMode, setBranchAccessMode] = useState(initial.branchAccessMode);
   const [selectedBranchIds, setSelectedBranchIds] = useState(initial.selectedBranchIds);
   const [error, setError] = useState("");
 
-  const submit = () => {
+  const submit = async () => {
     if (branchAccessMode === "SelectedBranches" && selectedBranchIds.length === 0) {
       setError("Select at least one branch.");
       return;
     }
-    onSubmit({ roleIds, branchAccessMode, selectedBranchIds });
+    setError("");
+    try {
+      await onSubmit({ roleIds, branchAccessMode, selectedBranchIds });
+    } catch (mutationError) {
+      // The dialog is a full-screen overlay (Section 17: never "nothing happened") -- a failed
+      // mutation must surface here, since the page's own ErrorState banner is hidden behind it.
+      setError(getErrorMessage(mutationError));
+    }
   };
 
   return (
     <Dialog title={title} onClose={onClose}>
       <div className="space-y-5">
+        {/* Section 13: a clean identity/status summary, not just an editable roles/branches form. */}
+        {member && (
+          <section className="grid gap-3 rounded-xl border border-white/10 bg-white/[0.02] p-3 sm:grid-cols-2">
+            <div>
+              <div className="text-[11px] font-bold text-slate-500">Identity</div>
+              <div className="font-bold text-white">{member.displayName}</div>
+              <div className="text-xs text-slate-400">{member.email}</div>
+            </div>
+            <div>
+              <div className="text-[11px] font-bold text-slate-500">Status</div>
+              <div className="mt-1 flex flex-wrap gap-2">
+                <StatusBadge tone={statusTone(member.status)}>{member.status}</StatusBadge>
+                {member.isOwner && <StatusBadge tone="info">Owner</StatusBadge>}
+              </div>
+            </div>
+          </section>
+        )}
         <section>
           <h3 className="mb-2 text-sm font-black text-white">Roles</h3>
-          <RolePicker roles={roles} selectedIds={roleIds} setSelectedIds={setRoleIds} disabled={!canSave || pending || isOwner} />
+          <RolePicker roles={roles} selectedIds={roleIds} setSelectedIds={setRoleIds} disabled={!canSave || pending || isOwner} actorPermissions={actorPermissions} />
         </section>
         <section>
           <h3 className="mb-2 text-sm font-black text-white">Branch Access</h3>
@@ -194,15 +243,20 @@ function AccessDialog({ title, roles, branches, initial, canSave, isOwner, onSub
   );
 }
 
-function InviteDialog({ roles, branches, canManage, onSubmit, onClose, pending }) {
+function InviteDialog({ roles, branches, canManage, actorPermissions, onSubmit, onClose, pending }) {
   const [email, setEmail] = useState("");
   const [access, setAccess] = useState(EMPTY_ACCESS);
   const [error, setError] = useState("");
 
-  const submit = () => {
+  const submit = async () => {
     if (!email.trim()) return setError("Email is required.");
     if (access.branchAccessMode === "SelectedBranches" && access.selectedBranchIds.length === 0) return setError("Select at least one branch.");
-    onSubmit({ email: email.trim(), ...access });
+    setError("");
+    try {
+      await onSubmit({ email: email.trim(), ...access });
+    } catch (mutationError) {
+      setError(getErrorMessage(mutationError));
+    }
   };
 
   return (
@@ -214,7 +268,7 @@ function InviteDialog({ roles, branches, canManage, onSubmit, onClose, pending }
         </label>
         <section>
           <h3 className="mb-2 text-sm font-black text-white">Roles</h3>
-          <RolePicker roles={roles} selectedIds={access.roleIds} setSelectedIds={(ids) => setAccess((draft) => ({ ...draft, roleIds: ids }))} disabled={!canManage || pending} />
+          <RolePicker roles={roles} selectedIds={access.roleIds} setSelectedIds={(ids) => setAccess((draft) => ({ ...draft, roleIds: ids }))} disabled={!canManage || pending} actorPermissions={actorPermissions} />
         </section>
         <section>
           <h3 className="mb-2 text-sm font-black text-white">Branch Access</h3>
@@ -236,11 +290,21 @@ function InviteDialog({ roles, branches, canManage, onSubmit, onClose, pending }
   );
 }
 
-function RoleDialog({ role, entitlements, canManage, onSubmit, onClose, pending }) {
+function RoleDialog({ role, entitlements, canManage, actorPermissions, onSubmit, onClose, pending }) {
   const [name, setName] = useState(role?.name || "");
   const [code, setCode] = useState(role?.code || "");
   const [permissions, setPermissions] = useState(role?.permissions || []);
+  const [error, setError] = useState("");
   const enabledEntitlements = new Set((entitlements?.entitlements || []).filter((item) => item.enabled).map((item) => item.code));
+
+  const submit = async () => {
+    setError("");
+    try {
+      await onSubmit({ code: code.trim(), name: name.trim(), permissions });
+    } catch (mutationError) {
+      setError(getErrorMessage(mutationError));
+    }
+  };
   const grouped = USER_ACCESS_PERMISSIONS.reduce((accumulator, permission) => {
     const items = accumulator.get(permission.group) || [];
     items.push(permission);
@@ -269,12 +333,13 @@ function RoleDialog({ role, entitlements, canManage, onSubmit, onClose, pending 
               {items.map((permission) => {
                 const entitlement = getPermissionEntitlement(permission.code);
                 const unavailable = entitlement && !enabledEntitlements.has(entitlement);
+                const notGrantable = !canActorGrantPermission(actorPermissions, permission.code);
                 return (
-                  <label key={permission.code} className={`flex gap-2 text-sm ${unavailable ? "text-slate-500" : "text-slate-200"}`}>
+                  <label key={permission.code} className={`flex gap-2 text-sm ${unavailable || notGrantable ? "text-slate-500" : "text-slate-200"}`}>
                     <input
                       type="checkbox"
                       checked={permissions.includes(permission.code)}
-                      disabled={!canManage || pending || role?.isSystem || unavailable}
+                      disabled={!canManage || pending || role?.isSystem || unavailable || notGrantable}
                       onChange={(event) =>
                         setPermissions(
                           event.target.checked
@@ -286,6 +351,7 @@ function RoleDialog({ role, entitlements, canManage, onSubmit, onClose, pending 
                     <span>
                       {permission.label}
                       {unavailable && <span className="ms-2 text-[11px] text-amber-300">Unavailable</span>}
+                      {!unavailable && notGrantable && <span className="ms-2 text-[11px] text-amber-300">You don't have this permission</span>}
                     </span>
                   </label>
                 );
@@ -294,7 +360,8 @@ function RoleDialog({ role, entitlements, canManage, onSubmit, onClose, pending 
           </section>
         ))}
         {role?.isSystem && <div className="rounded-xl border border-blue-400/20 bg-blue-500/10 p-3 text-sm text-blue-100">System roles are assignable and readable, but not editable.</div>}
-        <button type="button" disabled={!canManage || pending || role?.isSystem} onClick={() => onSubmit({ code: code.trim(), name: name.trim(), permissions })} className="h-11 rounded-xl bg-blue-600 px-5 text-sm font-black text-white disabled:opacity-50">
+        {error && <div className="rounded-xl border border-red-400/20 bg-red-500/10 p-3 text-sm text-red-100">{error}</div>}
+        <button type="button" disabled={!canManage || pending || role?.isSystem} onClick={submit} className="h-11 rounded-xl bg-blue-600 px-5 text-sm font-black text-white disabled:opacity-50">
           {pending ? "Saving..." : isEdit ? "Save role" : "Create role"}
         </button>
       </div>
@@ -340,7 +407,19 @@ export default function UsersAccessPage() {
   const branches = branchesQuery.data || [];
   const filteredRoles = roles.filter((role) => `${role.name} ${role.code}`.toLowerCase().includes(roleSearch.trim().toLowerCase()));
 
-  const showError = [membershipsQuery, invitationsQuery, rolesQuery, branchesQuery].find((query) => query.isError)?.error;
+  // Section 17 ("avoid nothing happened UX"): actions triggered directly from a list row (no
+  // modal to show an inline error in) must still surface a failure somewhere visible -- the
+  // in-dialog mutations (invite/access/role) handle their own error display instead (see each
+  // Dialog's local `error` state), since this banner sits behind the modal overlay.
+  const showError = [
+    membershipsQuery,
+    invitationsQuery,
+    rolesQuery,
+    branchesQuery,
+    changeStatus,
+    resendInvite,
+    cancelInvite,
+  ].find((query) => query.isError)?.error;
 
   const submitAccess = async (membership, payload) => {
     await assignRoles.mutateAsync({ membershipId: membership.membershipId, payload: { roleIds: payload.roleIds } });
@@ -396,9 +475,16 @@ export default function UsersAccessPage() {
                   <div className="text-sm text-slate-300">{summarizeBranches(member.branchAccessMode, member.selectedBranches)}</div>
                   <div className="flex flex-wrap gap-2">
                     <button onClick={() => setDialog({ type: "member", member })} className="rounded-lg border border-white/10 px-3 py-2 text-xs font-bold text-white"><Edit3 size={14} /></button>
-                    {!member.isOwner && canManageUsers && member.status === "Active" && <button onClick={() => window.confirm("Suspend this member? Temporary access block; history is preserved.") && changeStatus.mutate({ membershipId: member.membershipId, action: "suspend" })} className="rounded-lg border border-amber-400/20 px-3 py-2 text-xs font-bold text-amber-100"><Ban size={14} /></button>}
-                    {!member.isOwner && canManageUsers && member.status === "Suspended" && <button onClick={() => changeStatus.mutate({ membershipId: member.membershipId, action: "activate" })} className="rounded-lg border border-emerald-400/20 px-3 py-2 text-xs font-bold text-emerald-100"><CheckCircle2 size={14} /></button>}
-                    {!member.isOwner && canManageUsers && member.status !== "Revoked" && <button onClick={() => window.confirm("Revoke this member? Future company access is removed; historical records remain.") && changeStatus.mutate({ membershipId: member.membershipId, action: "revoke" })} className="rounded-lg border border-red-400/20 px-3 py-2 text-xs font-bold text-red-100"><XCircle size={14} /></button>}
+                    {/* Owners are not blanket-excluded here (Section 2/15): the backend only
+                        rejects Suspend/Revoke on the LAST active owner
+                        (CompanyMembership.LastOwnerCannotBeSuspended/Revoked) -- a co-owner in a
+                        multi-owner company can legitimately be suspended/revoked by another
+                        owner/authorized admin. Attempting it on the sole owner still fails
+                        cleanly via the backend error surfaced by `showError` above; nothing here
+                        assumes the outcome. */}
+                    {canManageUsers && member.status === "Active" && <button onClick={() => window.confirm(member.isOwner ? "Suspend this Company Owner? This is only possible if another active owner exists. Temporary access block; history is preserved." : "Suspend this member? Temporary access block; history is preserved.") && changeStatus.mutate({ membershipId: member.membershipId, action: "suspend" })} className="rounded-lg border border-amber-400/20 px-3 py-2 text-xs font-bold text-amber-100"><Ban size={14} /></button>}
+                    {canManageUsers && member.status === "Suspended" && <button onClick={() => changeStatus.mutate({ membershipId: member.membershipId, action: "activate" })} className="rounded-lg border border-emerald-400/20 px-3 py-2 text-xs font-bold text-emerald-100"><CheckCircle2 size={14} /></button>}
+                    {canManageUsers && member.status !== "Revoked" && <button onClick={() => window.confirm(member.isOwner ? "Revoke this Company Owner? This is only possible if another active owner exists. Future company access is removed; historical records remain." : "Revoke this member? Future company access is removed; historical records remain.") && changeStatus.mutate({ membershipId: member.membershipId, action: "revoke" })} className="rounded-lg border border-red-400/20 px-3 py-2 text-xs font-bold text-red-100"><XCircle size={14} /></button>}
                   </div>
                 </div>
               ))}
@@ -422,7 +508,7 @@ export default function UsersAccessPage() {
                     <StatusBadge tone={statusTone(invite.effectiveStatus)}>{invite.effectiveStatus}</StatusBadge>
                   </div>
                   <div className="mt-3 grid gap-2 text-sm text-slate-300 md:grid-cols-2"><div>Roles: {invite.roles.map((role) => role.name).join(", ") || "No roles"}</div><div>Branches: {summarizeBranches(invite.branchAccessMode, invite.selectedBranches)}</div></div>
-                  {invite.effectiveStatus === "Pending" && canManageUsers && <div className="mt-3 flex flex-wrap gap-2"><button onClick={() => setDialog({ type: "invitation", invitation: invite })} className="rounded-lg border border-white/10 px-3 py-2 text-xs font-bold text-white"><Edit3 size={14} /></button><button onClick={async () => { const result = await resendInvite.mutateAsync(invite.invitationId); setNotice(result.emailSent ? "Invitation resent." : "Invitation updated, but email delivery was not confirmed."); }} className="rounded-lg border border-blue-400/20 px-3 py-2 text-xs font-bold text-blue-100"><RefreshCw size={14} /></button><button onClick={() => window.confirm("Cancel this invitation? This invalidates the link and does not affect memberships.") && cancelInvite.mutate(invite.invitationId)} className="rounded-lg border border-red-400/20 px-3 py-2 text-xs font-bold text-red-100"><XCircle size={14} /></button></div>}
+                  {invite.effectiveStatus === "Pending" && canManageUsers && <div className="mt-3 flex flex-wrap gap-2"><button onClick={() => setDialog({ type: "invitation", invitation: invite })} className="rounded-lg border border-white/10 px-3 py-2 text-xs font-bold text-white"><Edit3 size={14} /></button><button onClick={async () => { try { const result = await resendInvite.mutateAsync(invite.invitationId); setNotice(result.emailSent ? "Invitation resent." : "Invitation updated, but email delivery was not confirmed."); } catch { /* surfaced via showError above (resendInvite.isError) */ } }} className="rounded-lg border border-blue-400/20 px-3 py-2 text-xs font-bold text-blue-100"><RefreshCw size={14} /></button><button onClick={() => window.confirm("Cancel this invitation? This invalidates the link and does not affect memberships.") && cancelInvite.mutate(invite.invitationId)} className="rounded-lg border border-red-400/20 px-3 py-2 text-xs font-bold text-red-100"><XCircle size={14} /></button></div>}
                 </div>
               ))}
             </div>
@@ -447,10 +533,10 @@ export default function UsersAccessPage() {
         </section>
       )}
 
-      {dialog?.type === "invite" && <InviteDialog roles={roles} branches={branches} canManage={canManageUsers} pending={createInvite.isPending} onClose={() => setDialog(null)} onSubmit={async (payload) => { const result = await createInvite.mutateAsync(payload); setDialog(null); setNotice(result.emailSent ? "Invitation sent." : "Invitation created, but email delivery was not confirmed."); }} />}
-      {dialog?.type === "member" && <AccessDialog title={`Manage ${dialog.member.displayName}`} roles={roles} branches={branches} canSave={canManageUsers} isOwner={dialog.member.isOwner} pending={assignRoles.isPending || updateBranchAccess.isPending} initial={{ roleIds: dialog.member.roles.map((role) => role.roleId), branchAccessMode: dialog.member.branchAccessMode, selectedBranchIds: dialog.member.selectedBranches.map((branch) => branch.branchId) }} onClose={() => setDialog(null)} onSubmit={(payload) => submitAccess(dialog.member, payload)} />}
-      {dialog?.type === "invitation" && <AccessDialog title={`Edit invitation ${dialog.invitation.email}`} roles={roles} branches={branches} canSave={canManageUsers} pending={updateInvite.isPending} initial={{ roleIds: dialog.invitation.roles.map((role) => role.roleId), branchAccessMode: dialog.invitation.branchAccessMode, selectedBranchIds: dialog.invitation.selectedBranches.map((branch) => branch.branchId) }} onClose={() => setDialog(null)} onSubmit={async (payload) => { await updateInvite.mutateAsync({ invitationId: dialog.invitation.invitationId, payload }); setDialog(null); setNotice("Invitation access updated."); }} />}
-      {dialog?.type === "role" && <RoleDialog role={dialog.role} entitlements={entitlementsQuery.data} canManage={canManageRoles} pending={createRole.isPending || updateRole.isPending} onClose={() => setDialog(null)} onSubmit={async (payload) => { if (dialog.role) await updateRole.mutateAsync({ roleId: dialog.role.roleId, payload: { name: payload.name, status: dialog.role.status, permissions: payload.permissions } }); else await createRole.mutateAsync(payload); setDialog(null); setNotice(dialog.role ? "Role updated." : "Role created."); }} />}
+      {dialog?.type === "invite" && <InviteDialog roles={roles} branches={branches} canManage={canManageUsers} actorPermissions={permissionsQuery.data} pending={createInvite.isPending} onClose={() => setDialog(null)} onSubmit={async (payload) => { const result = await createInvite.mutateAsync(payload); setDialog(null); setNotice(result.emailSent ? "Invitation sent." : "Invitation created, but email delivery was not confirmed."); }} />}
+      {dialog?.type === "member" && <AccessDialog title={`Manage ${dialog.member.displayName}`} member={dialog.member} roles={roles} branches={branches} canSave={canManageUsers} isOwner={dialog.member.isOwner} actorPermissions={permissionsQuery.data} pending={assignRoles.isPending || updateBranchAccess.isPending} initial={{ roleIds: dialog.member.roles.map((role) => role.roleId), branchAccessMode: dialog.member.branchAccessMode, selectedBranchIds: dialog.member.selectedBranches.map((branch) => branch.branchId) }} onClose={() => setDialog(null)} onSubmit={(payload) => submitAccess(dialog.member, payload)} />}
+      {dialog?.type === "invitation" && <AccessDialog title={`Edit invitation ${dialog.invitation.email}`} roles={roles} branches={branches} canSave={canManageUsers} actorPermissions={permissionsQuery.data} pending={updateInvite.isPending} initial={{ roleIds: dialog.invitation.roles.map((role) => role.roleId), branchAccessMode: dialog.invitation.branchAccessMode, selectedBranchIds: dialog.invitation.selectedBranches.map((branch) => branch.branchId) }} onClose={() => setDialog(null)} onSubmit={async (payload) => { await updateInvite.mutateAsync({ invitationId: dialog.invitation.invitationId, payload }); setDialog(null); setNotice("Invitation access updated."); }} />}
+      {dialog?.type === "role" && <RoleDialog role={dialog.role} entitlements={entitlementsQuery.data} canManage={canManageRoles} actorPermissions={permissionsQuery.data} pending={createRole.isPending || updateRole.isPending} onClose={() => setDialog(null)} onSubmit={async (payload) => { if (dialog.role) await updateRole.mutateAsync({ roleId: dialog.role.roleId, payload: { name: payload.name, status: dialog.role.status, permissions: payload.permissions } }); else await createRole.mutateAsync(payload); setDialog(null); setNotice(dialog.role ? "Role updated." : "Role created."); }} />}
     </AppLayout>
   );
 }
