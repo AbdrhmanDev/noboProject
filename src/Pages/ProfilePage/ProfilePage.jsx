@@ -1,177 +1,109 @@
-import { useState, useRef } from "react";
-import { Save, Camera, Check, User, Mail, Phone, Building2 } from "lucide-react";
+import { useState } from "react";
+import { Mail, ShieldCheck, ShieldAlert, User } from "lucide-react";
 import AppLayout from "../../components/AppLayout";
+import { EmptyState, ErrorState, LoadingState } from "../../shared/components/ui";
 import { useI18n } from "../../i18n/I18nContext";
-import { useUser } from "../../context/UserContext";
+import { useCurrentUserProfile } from "../../features/auth/hooks/useCurrentUserProfile";
+import { useCompany } from "../../features/companies/context/CompanyContext";
+import { useMyCompanies } from "../../features/companies/hooks/useCompanies";
+import { ManagerPinForm } from "../../features/users-access/components/ManagerPinForm";
 import { ROUTES } from "../../utils/routes";
-import { PRESET_AVATARS, buildAvatar } from "../../utils/user";
 
-const ROLES = [
-  { value: "systemAdmin", labelKey: "profile.roleSystemAdmin" },
-  { value: "accountant", labelKey: "profile.roleAccountant" },
-  { value: "sales", labelKey: "profile.roleSales" },
-  { value: "warehouse", labelKey: "profile.roleWarehouse" },
-];
-
+// Real authenticated-account identity only (Cashier Real Identity task) -- Name/Email straight
+// from GET /api/auth/me (ApplicationUser), no avatar/role/company mock fields, since none of
+// those have any real backend concept behind them today. No edit form: no real profile-update
+// endpoint exists yet (Phase 13 -- reported as a gap, not faked with a local-only save).
 export default function ProfilePage({ onLogout }) {
   const { t } = useI18n();
-  const { user, updateUser } = useUser();
-  const fileRef = useRef(null);
-
-  const [name, setName] = useState(user.name);
-  const [role, setRole] = useState(user.role);
-  const [email, setEmail] = useState(user.email);
-  const [phone, setPhone] = useState(user.phone);
-  const [company, setCompany] = useState(user.company);
-  const [avatar, setAvatar] = useState(user.avatar);
-  const [saved, setSaved] = useState(false);
-
-  const previewAvatar = user.avatarFile || avatar;
-
-  const handleFile = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => setAvatar(reader.result);
-    reader.readAsDataURL(file);
-  };
-
-  const handleSave = () => {
-    updateUser({
-      name,
-      role,
-      email,
-      phone,
-      company,
-      avatar,
-      avatarFile: avatar.startsWith("data:") ? avatar : null,
-    });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
-  };
+  const profileQuery = useCurrentUserProfile();
+  const { currentCompanyId } = useCompany();
+  const { data: myCompanies } = useMyCompanies();
+  const myMembershipId = myCompanies?.find((company) => company.companyId === currentCompanyId)?.membershipId;
+  const [pinNotice, setPinNotice] = useState("");
 
   return (
     <AppLayout onLogout={onLogout} activePath={ROUTES.PROFILE}>
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <div>
-          <h1 className="text-xl font-black brand-text">{t("profile.title")}</h1>
-          <p className="text-xs text-gray-400 mt-1">{t("profile.subtitle")}</p>
-        </div>
-        <button
-          onClick={handleSave}
-          className="primary-btn rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"
-        >
-          <Save size={13} /> {t("profile.save")}
-        </button>
+      <div className="mb-6">
+        <h1 className="text-xl font-black brand-text">{t("profile.title")}</h1>
+        <p className="mt-1 text-xs text-gray-400">{t("profile.subtitle")}</p>
       </div>
 
-      {saved && (
-        <div className="mb-4 flex items-center gap-2 bg-green-500/10 border border-green-400/30 text-green-400 text-xs font-semibold rounded-xl px-3 py-2">
-          <Check size={14} /> {t("profile.saved")}
+      {profileQuery.isLoading && <LoadingState label={t("profile.loading")} />}
+      {profileQuery.isError && (
+        <ErrorState title={t("platform.error.title")} message={t("platform.error.message")} />
+      )}
+
+      {!profileQuery.isLoading && !profileQuery.isError && !profileQuery.data && (
+        <EmptyState title={t("platform.error.title")} message={t("platform.error.message")} />
+      )}
+
+      {profileQuery.data && (
+        <div className="panel max-w-xl rounded-2xl p-5">
+          <div className="flex items-center gap-4">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-blue-500/20 text-2xl font-bold text-blue-200">
+              {profileQuery.data.displayName.trim().charAt(0).toUpperCase()}
+            </div>
+            <div className="min-w-0">
+              <div className="truncate text-lg font-bold text-white">{profileQuery.data.displayName}</div>
+              <div className="mt-1 flex items-center gap-1.5 truncate text-xs text-gray-400">
+                <Mail size={12} />
+                {profileQuery.data.email}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
+              <div className="flex items-center gap-1.5 text-[11px] font-bold text-gray-400">
+                <User size={12} />
+                {t("profile.name")}
+              </div>
+              <div className="mt-1 text-sm font-semibold text-white">{profileQuery.data.displayName}</div>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
+              <div className="flex items-center gap-1.5 text-[11px] font-bold text-gray-400">
+                <Mail size={12} />
+                {t("profile.email")}
+              </div>
+              <div className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-white">
+                {profileQuery.data.email}
+                {profileQuery.data.emailConfirmed ? (
+                  <span className="flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
+                    <ShieldCheck size={11} />
+                    {t("profile.emailVerified")}
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-300">
+                    <ShieldAlert size={11} />
+                    {t("profile.emailNotVerified")}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <p className="mt-4 text-[11px] text-gray-500">{t("profile.editingUnavailable")}</p>
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-4">
-        {/* avatar panel */}
-        <div className="panel rounded-2xl p-5 flex flex-col items-center text-center">
-          <h3 className="font-bold text-sm mb-4 self-start">{t("profile.photo")}</h3>
-          <img
-            src={previewAvatar}
-            alt=""
-            className="w-28 h-28 rounded-full bg-gray-700 object-cover"
-            style={{ boxShadow: "0 0 35px rgba(43,140,255,.35)" }}
-          />
-          <button
-            onClick={() => fileRef.current?.click()}
-            className="mt-4 primary-btn rounded-xl px-4 py-2 text-xs font-bold flex items-center gap-2"
-          >
-            <Camera size={14} /> {t("profile.changePhoto")}
-          </button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleFile}
-          />
-
-          <div className="w-full mt-5">
-            <div className="text-[11px] text-gray-400 mb-2">{t("profile.presetAvatar")}</div>
-            <div className="flex flex-wrap justify-center gap-2">
-              {PRESET_AVATARS.map((seed) => (
-                <button
-                  key={seed}
-                  onClick={() => setAvatar(buildAvatar(seed))}
-                  className={`rounded-full overflow-hidden ring-2 transition ${
-                    avatar === buildAvatar(seed) ? "ring-blue-500 scale-110" : "ring-transparent hover:ring-blue-500/40"
-                  }`}
-                >
-                  <img src={buildAvatar(seed)} alt="" className="w-10 h-10 bg-gray-700" />
-                </button>
-              ))}
+      {profileQuery.data && currentCompanyId && myMembershipId && (
+        <div className="panel mt-4 max-w-xl rounded-2xl p-5">
+          <h2 className="text-sm font-black text-white">{t("usersAccess.pin.myTitle")}</h2>
+          {pinNotice && (
+            <div className="mt-2 rounded-xl border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-100">
+              {pinNotice}
             </div>
+          )}
+          <div className="mt-3">
+            <ManagerPinForm
+              key={`${currentCompanyId}-${myMembershipId}`}
+              companyId={currentCompanyId}
+              membershipId={myMembershipId}
+              onSuccess={() => setPinNotice(t("usersAccess.pin.myUpdatedNotice"))}
+            />
           </div>
         </div>
-
-        {/* personal info */}
-        <div className="panel rounded-2xl p-5">
-          <h3 className="font-bold text-sm mb-4">{t("profile.personalInfo")}</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-[11px] text-gray-400 block mb-1 flex items-center gap-1">
-                <User size={11} /> {t("profile.name")}
-              </label>
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full input-dark rounded-xl px-3 py-2 text-sm text-white outline-none"
-              />
-            </div>
-            <div>
-              <label className="text-[11px] text-gray-400 block mb-1">{t("profile.role")}</label>
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className="w-full input-dark rounded-xl px-3 py-2 text-sm text-white outline-none"
-              >
-{ROLES.map((r) => (
-                  <option key={r.value} value={r.value} className="bg-black">{t(r.labelKey)}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="text-[11px] text-gray-400 block mb-1 flex items-center gap-1">
-                <Mail size={11} /> {t("profile.email")}
-              </label>
-              <input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full input-dark rounded-xl px-3 py-2 text-sm text-white outline-none"
-              />
-            </div>
-            <div>
-              <label className="text-[11px] text-gray-400 block mb-1 flex items-center gap-1">
-                <Phone size={11} /> {t("profile.phone")}
-              </label>
-              <input
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="w-full input-dark rounded-xl px-3 py-2 text-sm text-white outline-none"
-              />
-            </div>
-            <div className="md:col-span-2">
-              <label className="text-[11px] text-gray-400 block mb-1 flex items-center gap-1">
-                <Building2 size={11} /> {t("profile.company")}
-              </label>
-              <input
-                value={company}
-                onChange={(e) => setCompany(e.target.value)}
-                className="w-full input-dark rounded-xl px-3 py-2 text-sm text-white outline-none"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
+      )}
     </AppLayout>
   );
 }

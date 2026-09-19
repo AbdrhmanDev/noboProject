@@ -1,6 +1,7 @@
 import { useMemo, useRef } from "react";
-import { AlertTriangle, Ban, CircleCheckBig, RotateCcw } from "lucide-react";
+import { AlertTriangle, Ban, CircleCheckBig, RotateCcw, ShieldAlert } from "lucide-react";
 import { formatMoney } from "../../../../shared/utils/formatters";
+import { formatPaymentDate } from "../../utils/posFormatters";
 import { PosModal } from "../PosModal";
 import { Metric } from "../PosPrimitives";
 import { SCOPE_PRIORITY, SHORTCUT_SCOPES } from "../../../shortcuts/registry";
@@ -10,6 +11,7 @@ import {
   useAutoFocusFirstItem,
   useGridArrowNav,
 } from "../../../shortcuts/rovingFocus";
+import { useI18n } from "../../../../i18n/I18nContext";
 
 export function OrderDialogs({
   modal,
@@ -35,12 +37,26 @@ export function OrderDialogs({
   setDiscountInput,
   discountPermissionQuery,
   applyDraftDiscount,
+  discountReason,
+  setDiscountReason,
+  discountApproval,
+  isDiscountRequestPending,
+  onRefreshDraft,
+  isRefreshingDraft,
   // Refund payment
   refundDraft,
   setRefundDraft,
   paymentsRefundPermissionQuery,
   refundPaymentMutation,
   refundCurrentPayment,
+  // Refund approval (manager PIN)
+  pendingRefundApproval,
+  setPendingRefundApproval,
+  refundApprovalDetailsQuery,
+  managerPin,
+  setManagerPin,
+  approveRefundMutation,
+  approveRefundRequest,
   // Close order
   draftOrder,
   total,
@@ -61,6 +77,7 @@ export function OrderDialogs({
   canRequestCancel,
   runLifecycleAction,
 }) {
+  const { t } = useI18n();
   const variantListRef = useRef(null);
   const handleVariantListKeyDown = useGridArrowNav(variantListRef, ROVING_ITEM_SELECTOR);
   // Nothing else focuses these lists when their dialog opens, so arrow keys
@@ -206,8 +223,8 @@ export function OrderDialogs({
       )}
 
       {modal === "discount" && (
-        <PosModal title="Draft Discount" onClose={() => setModal(null)}>
-          <label className="block text-xs text-slate-400">Percentage discount</label>
+        <PosModal title={t("pos.discount.title")} onClose={() => setModal(null)}>
+          <label className="block text-xs text-slate-400">{t("pos.discount.percentageLabel")}</label>
           <div className="mt-2 flex items-center gap-2 rounded-xl border border-white/10 bg-black/20 px-3">
             <input
               type="number"
@@ -219,10 +236,50 @@ export function OrderDialogs({
             />
             <span className="text-slate-400">%</span>
           </div>
-          {!discountPermissionQuery.hasPermission && (
-            <p className="mt-2 rounded-xl border border-amber-400/25 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
-              SalesOrders.ApplyDiscount permission is required.
-            </p>
+          {!discountPermissionQuery.isLoading && !discountPermissionQuery.hasPermission && (
+            <>
+              <p className="mt-2 rounded-xl border border-amber-400/25 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+                {t("pos.discount.approvalHint")}
+              </p>
+              <label className="mt-3 block text-xs text-slate-400">{t("pos.discount.reasonLabel")}</label>
+              <textarea
+                rows={2}
+                maxLength={500}
+                value={discountReason}
+                onChange={(event) => setDiscountReason(event.target.value)}
+                placeholder={t("pos.discount.reasonPlaceholder")}
+                className="mt-1 w-full rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-sm outline-none"
+              />
+            </>
+          )}
+          {discountApproval && (
+            <div className="mt-3 rounded-xl border border-blue-400/25 bg-blue-500/10 px-3 py-3 text-xs text-blue-100">
+              <div className="font-bold">{t("pos.discount.approvalRequiredTitle")}</div>
+              <p className="mt-1 leading-5">{t("pos.discount.approvalRequiredBody")}</p>
+              <p className="mt-2">
+                {t("pos.discount.pendingRequested", {
+                  value:
+                    discountApproval.discountType === "Percentage"
+                      ? `${Number(discountApproval.requestedValue)}%`
+                      : formatMoney(discountApproval.requestedValue, ""),
+                })}
+              </p>
+              <p>
+                {t("pos.discount.pendingEstimate", {
+                  amount: formatMoney(discountApproval.estimatedAppliedAmount, ""),
+                  percent: Number(discountApproval.estimatedEffectivePercent),
+                })}
+              </p>
+              <p>{t("pos.discount.pendingExpires", { time: formatPaymentDate(discountApproval.expiresAtUtc) })}</p>
+              <button
+                type="button"
+                onClick={onRefreshDraft}
+                disabled={isRefreshingDraft}
+                className="mt-3 w-full rounded-xl border border-blue-300/30 bg-blue-500/10 py-2 text-xs font-bold disabled:opacity-50"
+              >
+                {t("pos.discount.refreshOrder")}
+              </button>
+            </div>
           )}
           <div className="mt-3 grid grid-cols-3 gap-2">
             {[5, 10, 15].map((value) => (
@@ -239,10 +296,15 @@ export function OrderDialogs({
           <button
             type="button"
             onClick={applyDraftDiscount}
-            disabled={!canEditDraft || isDraftMutationPending || !discountPermissionQuery.hasPermission}
+            disabled={
+              !canEditDraft ||
+              isDraftMutationPending ||
+              isDiscountRequestPending ||
+              discountPermissionQuery.isLoading
+            }
             className="mt-4 w-full rounded-xl bg-pink-600 py-2.5 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Apply Discount
+            {discountPermissionQuery.hasPermission ? "Apply Discount" : t("pos.discount.submitApproval")}
           </button>
         </PosModal>
       )}
@@ -324,14 +386,91 @@ export function OrderDialogs({
               />
               Confirm money refund
             </label>
+            {!paymentsRefundPermissionQuery.hasPermission && (
+              <p className="rounded-xl border border-amber-400/25 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+                {t("pos.refundApproval.directPermissionHint")}
+              </p>
+            )}
             <button
               type="button"
-              disabled={refundPaymentMutation.isPending || !paymentsRefundPermissionQuery.hasPermission}
+              disabled={refundPaymentMutation.isPending}
               onClick={refundCurrentPayment}
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-rose-600 py-2.5 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-50"
             >
               <RotateCcw size={15} />
               Process Refund
+            </button>
+          </div>
+        </PosModal>
+      )}
+
+      {modal === "refundApprovalPending" && pendingRefundApproval && (
+        <PosModal
+          title={t("pos.refundApproval.requiredTitle")}
+          onClose={() => {
+            setPendingRefundApproval(null);
+            setManagerPin("");
+            setModal(null);
+          }}
+        >
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 rounded-xl border border-amber-400/25 bg-amber-500/10 p-3 text-xs text-amber-100">
+              <ShieldAlert size={16} className="shrink-0" />
+              {t("pos.refundApproval.requiredMessage")}
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Metric
+                label={t("pos.refundApproval.amount")}
+                value={formatMoney(pendingRefundApproval.amount, pendingRefundApproval.currencyCode, 2)}
+                tone="gold"
+              />
+              <Metric
+                label={t("pos.refundApproval.statusLabel")}
+                value={refundApprovalDetailsQuery.data?.status || pendingRefundApproval.status}
+                tone="blue"
+              />
+            </div>
+            {refundApprovalDetailsQuery.data && (
+              <div className="space-y-1 rounded-xl border border-white/10 bg-white/[0.025] p-3 text-[11px] text-slate-300">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-slate-500">{t("pos.refundApproval.reason")}</span>
+                  <span className="max-w-[65%] truncate text-right font-bold">
+                    {refundApprovalDetailsQuery.data.reason || "—"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-slate-500">{t("pos.refundApproval.expiresAt")}</span>
+                  <span className="font-bold">
+                    {formatPaymentDate(refundApprovalDetailsQuery.data.expiresAtUtc)}
+                  </span>
+                </div>
+              </div>
+            )}
+            <div className="rounded-xl border border-rose-400/20 bg-rose-500/10 p-3 text-[10px] leading-4 text-rose-100">
+              {t("pos.refundApproval.disclaimer")}
+            </div>
+            <label className="block text-xs text-slate-400">
+              {t("pos.refundApproval.managerPinLabel")}
+            </label>
+            <input
+              type="password"
+              inputMode="numeric"
+              autoComplete="off"
+              value={managerPin}
+              onChange={(event) => setManagerPin(event.target.value)}
+              placeholder={t("pos.refundApproval.managerPinPlaceholder")}
+              className="h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm outline-none"
+            />
+            <button
+              type="button"
+              disabled={approveRefundMutation.isPending || !managerPin.trim()}
+              onClick={approveRefundRequest}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-2.5 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <CircleCheckBig size={15} />
+              {approveRefundMutation.isPending
+                ? t("pos.refundApproval.approving")
+                : t("pos.refundApproval.approveButton")}
             </button>
           </div>
         </PosModal>

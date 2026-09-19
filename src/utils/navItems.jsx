@@ -1,12 +1,14 @@
 import {
   Home, ScanLine, ChefHat, ShoppingBag, ShoppingCart, Boxes, Contact,
   Calculator, BarChart3, Briefcase, UserCog, Settings, MoreHorizontal, Package,
-  Coins, ReceiptText, WalletCards, Armchair, Printer, ShieldCheck, UsersRound,
+  Coins, ReceiptText, WalletCards, Armchair, Printer, ShieldCheck, ShieldAlert, UsersRound,
 } from "lucide-react";
 import { ROUTES } from "./routes";
 import { ENTITLEMENT_POS } from "../features/companies/constants/entitlementCodes";
 import {
+  PAYMENTS_REFUND_PERMISSION,
   POS_VIEW_PERMISSION,
+  SALES_ORDERS_APPLY_DISCOUNT_PERMISSION,
   SALES_ORDERS_VIEW_PERMISSION,
 } from "../features/authorization/constants/applicationPermissions";
 
@@ -32,6 +34,11 @@ export const NAV_ITEMS = [
   // entitlement/permission at all (see PlatformNavGroup); visible only to platform staff.
   { icon: ShieldCheck, labelKey: "nav.platform", kind: "group", module: "platform" },
   { icon: UsersRound, labelKey: "nav.usersAccess", to: ROUTES.USERS_ACCESS, permissions: ["Users.View", "Roles.View"] },
+  { icon: ShieldCheck, labelKey: "nav.approvalPolicies", to: ROUTES.APPROVAL_POLICIES, permission: "Company.Manage" },
+  // Presentation-level only -- Payments.Refund + POS.REFUNDS just controls whether this nav entry
+  // is shown to someone who could plausibly be an approver. The backend independently re-checks
+  // permission/branch/entitlement/PIN on every approve attempt regardless (never trust this gate).
+  { icon: ShieldAlert, labelKey: "nav.approvals", to: ROUTES.APPROVALS, permissions: [PAYMENTS_REFUND_PERMISSION, SALES_ORDERS_APPLY_DISCOUNT_PERMISSION], entitlement: ENTITLEMENT_POS },
   { icon: Settings, labelKey: "nav.settings", to: ROUTES.SETTINGS },
   { icon: MoreHorizontal, labelKey: "nav.more", to: ROUTES.MORE },
 ];

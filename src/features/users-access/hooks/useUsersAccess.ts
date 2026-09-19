@@ -15,16 +15,20 @@ import {
   getTenantAdminBranches,
   previewCompanyInvitation,
   resendCompanyInvitation,
+  setCompanyMembershipPin,
   updateCompanyInvitation,
   updateCompanyRole,
   updateMembershipBranchAccess,
+  updateMembershipSalesScope,
 } from "../api/usersAccessApi";
 import type {
   AssignMembershipRolesRequest,
   CreateInvitationRequest,
   CreateRoleRequest,
+  SetCompanyMembershipPinRequest,
   UpdateInvitationRequest,
   UpdateMembershipBranchAccessRequest,
+  UpdateMembershipSalesScopeRequest,
   UpdateRoleRequest,
 } from "../types/usersAccess.types";
 
@@ -144,6 +148,34 @@ export function useUpdateMembershipBranchAccess(companyId: string | null | undef
   return useMutation({
     mutationFn: ({ membershipId, payload }: { membershipId: string; payload: UpdateMembershipBranchAccessRequest }) =>
       updateMembershipBranchAccess(companyId as string, membershipId, payload),
+    onSuccess: () => invalidateCompanyAccess(queryClient, companyId as string),
+  });
+}
+
+export function useUpdateMembershipSalesScope(companyId: string | null | undefined) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ membershipId, payload }: { membershipId: string; payload: UpdateMembershipSalesScopeRequest }) =>
+      updateMembershipSalesScope(companyId as string, membershipId, payload),
+    // Same invalidation as branch access/roles (Section 9): refreshes the Members list (and any
+    // membership detail queries under the same "users-access" root) plus the current actor's own
+    // effective permissions/company-membership in case they edited their own access. No broader
+    // app-wide refresh -- permissions are genuinely unaffected by this setting (it's a data scope,
+    // not a permission), included here only because invalidateCompanyAccess is shared verbatim
+    // with every other membership mutation on this page.
+    onSuccess: () => invalidateCompanyAccess(queryClient, companyId as string),
+  });
+}
+
+// No query key/cache entry for PIN status -- there is nothing to cache (no GET endpoint exposes
+// it). The mutation's own response is the only source of truth for "is it set now", consumed
+// directly by the caller; this invalidation only refreshes the ordinary membership/permission data
+// in case anything else changed, matching every other membership mutation on this page.
+export function useSetCompanyMembershipPin(companyId: string | null | undefined) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ membershipId, payload }: { membershipId: string; payload: SetCompanyMembershipPinRequest }) =>
+      setCompanyMembershipPin(companyId as string, membershipId, payload),
     onSuccess: () => invalidateCompanyAccess(queryClient, companyId as string),
   });
 }

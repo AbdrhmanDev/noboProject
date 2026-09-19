@@ -54,3 +54,12 @@ export type ResendConfirmationRequest = {
 export type ResendConfirmationResponse = {
   message: string;
 };
+
+// Self-scoped identity read (Cashier Real Identity task) -- GET /api/auth/me. Deliberately
+// minimal: only fields ApplicationUser actually stores (DisplayName, Email, EmailConfirmed).
+export type CurrentUserProfile = {
+  userId: string;
+  displayName: string;
+  email: string;
+  emailConfirmed: boolean;
+};

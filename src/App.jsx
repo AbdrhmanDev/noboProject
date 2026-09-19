@@ -64,6 +64,8 @@ import ProjectsPage from "./Pages/ProjectsPage/ProjectsPage";
 import HRPage from "./Pages/HRPage/HRPage";
 import SettingsPage from "./Pages/SettingsPage/SettingsPage";
 import UsersAccessPage from "./Pages/UsersAccessPage/UsersAccessPage";
+import ApprovalPoliciesPage from "./Pages/ApprovalPoliciesPage/ApprovalPoliciesPage";
+import ApprovalsPage from "./Pages/ApprovalsPage/ApprovalsPage";
 import MorePage from "./Pages/MorePage/MorePage";
 import ProfilePage from "./Pages/ProfilePage/ProfilePage";
 import NotFound from "./Pages/NotFound/notFound";
@@ -138,6 +140,8 @@ export default function App() {
               <Route path={ROUTES.HR} element={protectedPage(<HRPage />)} />
               <Route path={ROUTES.SETTINGS} element={protectedPage(<SettingsPage />)} />
               <Route path={ROUTES.USERS_ACCESS} element={accessGatedPage(<UsersAccessPage />, { permissions: ["Users.View", "Roles.View"] })} />
+              <Route path={ROUTES.APPROVAL_POLICIES} element={accessGatedPage(<ApprovalPoliciesPage />, { permission: "Company.Manage" })} />
+              <Route path={ROUTES.APPROVALS} element={accessGatedPage(<ApprovalsPage />, { permissions: ["Payments.Refund", "SalesOrders.ApplyDiscount"], entitlement: ENTITLEMENT_POS })} />
               <Route path={ROUTES.MORE} element={protectedPage(<MorePage />)} />
               <Route path={ROUTES.PROFILE} element={protectedPage(<ProfilePage />)} />
               <Route path={ROUTES.NOT_FOUND} element={<NotFound />} />

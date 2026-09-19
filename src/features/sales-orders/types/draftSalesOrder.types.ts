@@ -17,6 +17,7 @@ export type DraftSalesOrderDiscountInput = {
 export type CreateDraftSalesOrderRequest = {
   fulfillmentType: SalesOrderFulfillmentType;
   restaurantTableId: string | null;
+  customerId: string | null;
   lines: DraftSalesOrderLineInput[];
   discount: DraftSalesOrderDiscountInput | null;
 };
@@ -99,6 +100,15 @@ export type DraftSalesOrderRestaurantTable = {
   restaurantFloorName: string;
 };
 
+// Real customer association (POS Customer Data task) -- Customers are company-wide, never
+// branch-scoped; this is just the small subset of Customer fields the order needs to display.
+export type DraftSalesOrderCustomer = {
+  customerId: string;
+  customerNumberFormatted: string;
+  name: string;
+  phone: string | null;
+};
+
 export type DraftSalesOrder = {
   salesOrderId: string;
   orderNumber?: number;
@@ -111,6 +121,8 @@ export type DraftSalesOrder = {
   fulfillmentType: SalesOrderFulfillmentType;
   restaurantTableId: string | null;
   restaurantTable?: DraftSalesOrderRestaurantTable | null;
+  customerId?: string | null;
+  customer?: DraftSalesOrderCustomer | null;
   status: "Draft" | "Confirmed" | "Cancelled" | "Closed";
   cancellationKind?: "Standard" | "PreparedVoid" | string | null;
   draftVersion: number;
@@ -269,4 +281,43 @@ export type RetrievableSalesOrdersResponse = {
   totalCount: number;
   totalPages: number;
   items: RetrievableSalesOrder[];
+};
+
+// Discount Approval Integration. Backend enum names: "Percentage" | "FixedAmount". Only the fields
+// below are ever sent -- never lines/customer/table/applied amount/allocations.
+export type RequestSalesOrderDiscountRequest = {
+  discountType: "Percentage" | "FixedAmount";
+  value: number;
+  reason: string;
+};
+
+export type AppliedSalesOrderDiscountResponse = {
+  salesOrderDiscountId: string;
+  discountType: string;
+  requestedValue: number;
+  appliedAmount: number;
+  reason: string;
+  netAmount: number;
+  taxAmount: number;
+  grossAmount: number;
+  payableAmount: number;
+  draftVersion: number;
+};
+
+// Display-only estimates: computed by the backend at request time, never used for execution.
+export type PendingDiscountApprovalResponse = {
+  approvalRequestId: string;
+  status: string;
+  expiresAtUtc: string;
+  discountType: string;
+  requestedValue: number;
+  estimatedAppliedAmount: number;
+  estimatedEffectivePercent: number;
+};
+
+// Discriminated by outcome -- exactly one of applied/approval is populated.
+export type RequestSalesOrderDiscountResponse = {
+  outcome: "Applied" | "ApprovalRequired";
+  applied: AppliedSalesOrderDiscountResponse | null;
+  approval: PendingDiscountApprovalResponse | null;
 };

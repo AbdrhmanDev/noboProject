@@ -6,12 +6,14 @@ import {
   createDraftSalesOrder,
   getRetrievableSalesOrders,
   getSalesOrderDetails,
+  requestSalesOrderDiscount,
   updateDraftSalesOrder,
   voidPreparedSalesOrder,
 } from "../api/draftSalesOrdersApi";
 import type {
   CancelSalesOrderRequest,
   CreateDraftSalesOrderRequest,
+  RequestSalesOrderDiscountRequest,
   RetrievableSalesOrdersFilters,
   UpdateDraftSalesOrderRequest,
   VoidPreparedSalesOrderRequest,
@@ -230,6 +232,34 @@ export function useVoidPreparedSalesOrder(
           branchId,
           salesOrderId,
         ),
+      });
+    },
+  });
+}
+
+// Discount-only request (direct apply OR pending approval, decided by the backend). Never touches
+// lines/customer/table. On success the draft is REFETCHED from the server (never patched locally),
+// so totals always come from the backend's own discount math and a stale local draft can't later
+// overwrite an applied/approved discount.
+export function useRequestSalesOrderDiscount(
+  companyId: string | null | undefined,
+  branchId: string | null | undefined,
+  salesOrderId: string | null | undefined,
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: RequestSalesOrderDiscountRequest) =>
+      requestSalesOrderDiscount(
+        companyId as string,
+        branchId as string,
+        salesOrderId as string,
+        payload,
+      ),
+    onSettled: () => {
+      if (!companyId || !branchId || !salesOrderId) return;
+      queryClient.invalidateQueries({
+        queryKey: draftSalesOrderQueryKeys.details(companyId, branchId, salesOrderId),
       });
     },
   });

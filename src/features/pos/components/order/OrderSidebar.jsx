@@ -9,8 +9,9 @@ export function OrderSidebar({
   navigate,
   draftLines,
   customer,
-  setCustomer,
+  onClearCustomer,
   onOpenCustomer,
+  canViewCustomers,
   draftOrder,
   isCancelledOrder,
   isConfirmedOrder,
@@ -100,8 +101,9 @@ export function OrderSidebar({
         navigate={navigate}
         draftLines={draftLines}
         customer={customer}
-        setCustomer={setCustomer}
+        onClearCustomer={onClearCustomer}
         onOpenCustomer={onOpenCustomer}
+        canViewCustomers={canViewCustomers}
         draftOrder={draftOrder}
         isCancelledOrder={isCancelledOrder}
         isConfirmedOrder={isConfirmedOrder}

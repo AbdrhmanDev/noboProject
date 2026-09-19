@@ -5,6 +5,8 @@ import type {
   CloseSalesOrderResponse,
   ConfirmSalesOrderResponse,
   CreateDraftSalesOrderRequest,
+  RequestSalesOrderDiscountRequest,
+  RequestSalesOrderDiscountResponse,
   DraftSalesOrder,
   RetrievableSalesOrdersFilters,
   RetrievableSalesOrdersResponse,
@@ -169,6 +171,15 @@ function normalizeDraftDetails(data: Record<string, any>): DraftSalesOrder {
           restaurantFloorName: data.restaurantTable.restaurantFloorName,
         }
       : null,
+    customerId: data.customer?.customerId ?? null,
+    customer: data.customer
+      ? {
+          customerId: data.customer.customerId,
+          customerNumberFormatted: data.customer.customerNumberFormatted,
+          name: data.customer.name,
+          phone: data.customer.phone ?? null,
+        }
+      : null,
     status: data.status,
     draftVersion: data.draftVersion,
     confirmedAtUtc: data.confirmedAtUtc || null,
@@ -255,4 +266,20 @@ function normalizeDraftDetails(data: Record<string, any>): DraftSalesOrder {
       })),
     })),
   };
+}
+
+// Narrow discount-only endpoint (Discount Approval Integration) -- deliberately NOT the full-draft
+// PUT. The backend decides between applying directly and creating a Pending approval request.
+export async function requestSalesOrderDiscount(
+  companyId: string,
+  branchId: string,
+  salesOrderId: string,
+  payload: RequestSalesOrderDiscountRequest,
+) {
+  const response = await httpClient.post<RequestSalesOrderDiscountResponse>(
+    `${salesOrdersBaseUrl(companyId, branchId)}/${salesOrderId}/discount-approval`,
+    payload,
+  );
+
+  return response.data;
 }

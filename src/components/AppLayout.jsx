@@ -4,8 +4,8 @@ import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import Header from "./Header";
 import Footer from "./Footer";
 import { useI18n } from "../i18n/I18nContext";
-import { useUser } from "../context/UserContext";
 import { useAuth } from "../features/auth/hooks/useAuth";
+import { useCurrentUserProfile } from "../features/auth/hooks/useCurrentUserProfile";
 import { useBranch } from "../features/branches/context/BranchContext";
 import { isBranchEnterable, useBranches } from "../features/branches/hooks/useBranches";
 import { useCurrentBranch } from "../features/branches/hooks/useCurrentBranch";
@@ -62,8 +62,12 @@ export default function AppLayout({ children, onLogout }) {
     });
   };
   const { t, dir } = useI18n();
-  const { user } = useUser();
-  const { logout } = useAuth();
+  const { session, logout } = useAuth();
+  const profileQuery = useCurrentUserProfile();
+  // Real identity only (Cashier Real Identity task) -- displayName once /api/auth/me resolves,
+  // the session's own real email as an immediate fallback (never a fake seeded name).
+  const displayName = profileQuery.data?.displayName || session?.email || "";
+  const initial = (displayName || "?").trim().charAt(0).toUpperCase();
   const { currentCompanyId, clearCompany } = useCompany();
   const { clearBranch } = useBranch();
   const { data: companies = [] } = useMyCompanies();
@@ -254,8 +258,8 @@ export default function AppLayout({ children, onLogout }) {
 
         <button
           onClick={() => navigate(ROUTES.PROFILE)}
-          title={collapsed ? user.name : undefined}
-          aria-label={user.name}
+          title={collapsed ? displayName : undefined}
+          aria-label={displayName}
           className={`
             rounded-3xl
             border
@@ -272,18 +276,20 @@ export default function AppLayout({ children, onLogout }) {
             ${collapsed ? "mx-auto mt-4 h-11 w-11 justify-center p-0" : "mt-4 gap-3 p-4"}
           `}
         >
-          <img
-            src={user.avatarFile || user.avatar}
-            alt=""
-            className={`rounded-full bg-gray-700 object-cover ${collapsed ? "h-9 w-9" : "h-14 w-14"}`}
+          {/* Real identity only -- no fake seeded avatar image (Cashier Real Identity task).
+              A plain initials circle needs no backend "avatar" concept that doesn't exist. */}
+          <div
+            className={`flex shrink-0 items-center justify-center rounded-full bg-blue-500/20 font-bold text-blue-200 ${collapsed ? "h-9 w-9 text-sm" : "h-14 w-14 text-lg"}`}
             style={{ boxShadow: "0 0 25px rgba(43,140,255,.3)" }}
-          />
+          >
+            {initial}
+          </div>
           {!collapsed && (
-            <div>
-              <div className="text-sm font-bold">{user.name}</div>
-              <div className="text-[11px] text-gray-400">
-                {user.role === "systemAdmin" ? t("layout.systemAdmin") : t(`profile.role${user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : "SystemAdmin"}`)}
-              </div>
+            <div className="min-w-0">
+              <div className="truncate text-sm font-bold">{displayName}</div>
+              {session?.email && session.email !== displayName && (
+                <div className="truncate text-[11px] text-gray-400">{session.email}</div>
+              )}
             </div>
           )}
         </button>

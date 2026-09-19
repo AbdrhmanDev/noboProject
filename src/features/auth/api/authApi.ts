@@ -3,6 +3,7 @@ import type {
   AuthSession,
   ConfirmEmailRequest,
   ConfirmEmailResponse,
+  CurrentUserProfile,
   LoginRequest,
   RegisterRequest,
   RegisterResponse,
@@ -67,4 +68,9 @@ export async function logoutApi() {
   await httpClient.post("/api/auth/logout", undefined, {
     skipAuthRefresh: true,
   });
+}
+
+export async function getCurrentUserProfileApi() {
+  const response = await httpClient.get<CurrentUserProfile>("/api/auth/me");
+  return response.data;
 }

@@ -15,8 +15,10 @@ import {
 } from "lucide-react";
 import { ROUTES } from "../../utils/routes";
 import AppLayout from "../../components/AppLayout";
+import { useI18n } from "../../i18n/I18nContext";
 import { formatMoney } from "../../shared/utils/formatters";
 import { useAuth } from "../../features/auth/hooks/useAuth";
+import { useCurrentUserProfile } from "../../features/auth/hooks/useCurrentUserProfile";
 import { useBranch } from "../../features/branches/context/BranchContext";
 import { useCompany } from "../../features/companies/context/CompanyContext";
 import { useHasPermission } from "../../features/companies/hooks/useCompanies";
@@ -37,6 +39,7 @@ import {
   useCloseSalesOrder,
   useCancelSalesOrder,
   useDraftSalesOrderDetails,
+  useRequestSalesOrderDiscount,
   useVoidPreparedSalesOrder,
   useUpdateDraftSalesOrder,
 } from "../../features/sales-orders/hooks/useDraftSalesOrder";
@@ -47,6 +50,10 @@ import {
   useReceiveSalesOrderPayment,
   useRefundSalesOrderPayment,
 } from "../../features/payments/hooks/usePayments";
+import {
+  useApproveSalesOrderPaymentRefund,
+  useSalesOrderPaymentRefundApproval,
+} from "../../features/approvals/hooks/useApprovals";
 import {
   useInvalidateRestaurantSeating,
   useRestaurantSeating,
@@ -75,6 +82,8 @@ import { ShortcutHint } from "../../features/shortcuts/components/ShortcutHint";
 import { getFocusableGridItems, ROVING_ITEM_SELECTOR } from "../../features/shortcuts/rovingFocus";
 import {
   CATALOG_MANAGE_PERMISSION,
+  CUSTOMERS_MANAGE_PERMISSION,
+  CUSTOMERS_VIEW_PERMISSION,
   PAYMENTS_RECEIVE_PERMISSION,
   PAYMENTS_REFUND_PERMISSION,
   PAYMENTS_VIEW_PERMISSION,
@@ -94,10 +103,32 @@ import {
 
 const DEFAULT_FULFILLMENT_TYPE = "Takeaway";
 
+// Backend error codes -> localized POS discount messages (never raw exception text when known).
+const DISCOUNT_ERROR_KEYS = {
+  "Authorization.PermissionDenied": "pos.discount.errors.permissionDenied",
+  "Entitlement.NotEnabled": "pos.discount.errors.entitlementNotEnabled",
+  "Branch.NotAccessible": "pos.discount.errors.branchNotAccessible",
+  "SalesOrder.NotEditable": "pos.discount.errors.notEditable",
+  "SalesOrder.NotAvailable": "pos.discount.errors.notAvailable",
+  "SalesOrder.DiscountExceedsOrderAmount": "pos.discount.errors.exceedsOrder",
+  "SalesOrder.DiscountNotApplicable": "pos.discount.errors.notApplicable",
+  "SalesOrder.InvalidDiscountValue": "pos.discount.errors.invalidValue",
+  "SalesOrder.InvalidDiscountType": "pos.discount.errors.invalidValue",
+  "SalesOrder.DiscountPrecisionInvalid": "pos.discount.errors.invalidValue",
+  "SalesOrder.DiscountReasonRequired": "pos.discount.errors.reasonRequired",
+  "SalesOrder.DiscountReasonTooLong": "pos.discount.errors.reasonRequired",
+};
+
 export default function POSPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { status } = useAuth();
+  const { t } = useI18n();
+  const { status, session } = useAuth();
+  const currentUserProfileQuery = useCurrentUserProfile();
+  // Real authenticated cashier identity only (Cashier Real Identity task) -- displayName once
+  // /api/auth/me resolves, the session's own real email as an immediate fallback. Never a
+  // hardcoded name.
+  const currentCashierName = currentUserProfileQuery.data?.displayName || session?.email || "";
   const { currentCompanyId } = useCompany();
   const { currentBranchId } = useBranch();
   const { currentPosTerminalId } = usePos();
@@ -176,6 +207,14 @@ export default function POSPage() {
     currentCompanyId,
     PRICING_MANAGE_PERMISSION,
   );
+  const customersViewPermissionQuery = useHasPermission(
+    currentCompanyId,
+    CUSTOMERS_VIEW_PERMISSION,
+  );
+  const customersManagePermissionQuery = useHasPermission(
+    currentCompanyId,
+    CUSTOMERS_MANAGE_PERMISSION,
+  );
   const canLoadCatalog =
     status === "authenticated" &&
     Boolean(currentCompanyId) &&
@@ -230,6 +269,13 @@ export default function POSPage() {
     currentBranchId,
     draftSalesOrderId,
   );
+  // Discount-only endpoint used ONLY when the user lacks SalesOrders.ApplyDiscount (the backend
+  // decides Applied vs ApprovalRequired). Authorized users keep the existing full-draft PUT path.
+  const requestDiscountMutation = useRequestSalesOrderDiscount(
+    currentCompanyId,
+    currentBranchId,
+    draftSalesOrderId,
+  );
   const confirmSalesOrderMutation = useConfirmSalesOrder(
     currentCompanyId,
     currentBranchId,
@@ -268,6 +314,12 @@ export default function POSPage() {
     draftSalesOrderId,
     currentPosTerminalId,
   );
+  const approveRefundMutation = useApproveSalesOrderPaymentRefund(
+    currentCompanyId,
+    currentBranchId,
+    draftSalesOrderId,
+    currentPosTerminalId,
+  );
   const invalidateRestaurantSeating = useInvalidateRestaurantSeating();
   const [taxCategoryBanner, setTaxCategoryBanner] = useState(null);
   const [showAddPaymentMethod, setShowAddPaymentMethod] = useState(false);
@@ -276,10 +328,23 @@ export default function POSPage() {
   const [orderType, setOrderType] = useState(DEFAULT_FULFILLMENT_TYPE);
   const [selectedRestaurantTableId, setSelectedRestaurantTableId] = useState(null);
   const [discountInput, setDiscountInput] = useState("");
-  const [customer, setCustomer] = useState(null);
+  const [discountReason, setDiscountReason] = useState("");
+  // Pending approval reference returned by the backend (display only -- never applied locally).
+  const [discountApproval, setDiscountApproval] = useState(null);
+  // Real customer association (POS Customer Data task) -- once a draft order exists, the
+  // persisted SalesOrder.CustomerId is the single source of truth (see `effectiveCustomer`
+  // below); this local state only ever matters BEFORE a draft exists (no order to attach a
+  // customer to yet), holding the choice until the first item creates the draft.
+  const [pendingCustomer, setPendingCustomer] = useState(null);
   const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState("");
   const [paymentAmountInput, setPaymentAmountInput] = useState("");
   const [refundDraft, setRefundDraft] = useState(null);
+  // Set when a refund submission comes back with Outcome: "ApprovalRequired" -- holds just enough
+  // to open the manager-approval dialog and load full details via GET .../approvals/{id}/refund.
+  const [pendingRefundApproval, setPendingRefundApproval] = useState(null);
+  // Never persisted anywhere beyond this local input state -- cleared immediately after every
+  // approve attempt, success or failure.
+  const [managerPin, setManagerPin] = useState("");
   const [lifecycleDraft, setLifecycleDraft] = useState(null);
   const [cashMovementDraft, setCashMovementDraft] = useState({
     type: "CashIn",
@@ -287,6 +352,11 @@ export default function POSPage() {
     reason: "",
   });
   const [modal, setModal] = useState(null);
+  const refundApprovalDetailsQuery = useSalesOrderPaymentRefundApproval(
+    currentCompanyId,
+    pendingRefundApproval?.approvalRequestId,
+    modal === "refundApprovalPending",
+  );
   // Persistent 3-phase workspace — never a route change, POSPage/AppLayout
   // never unmount. "payment" replaces the old PaymentModal as a non-modal
   // step; "complete" is the calm success state entered once payment finishes.
@@ -320,6 +390,10 @@ export default function POSPage() {
   const effectiveRestaurantTableId =
     draftOrder?.restaurantTableId ||
     (orderType === "DineIn" ? selectedRestaurantTableId : null);
+  // Once a draft exists, the server-persisted customer is authoritative (never local-only state
+  // -- Phase 5/13 of the POS Customer Data task). Before that, whatever the cashier picked is
+  // shown from `pendingCustomer` and gets included the moment the draft is actually created.
+  const effectiveCustomer = draftOrder ? (draftOrder.customer ?? null) : pendingCustomer;
   const seatingQuery = useRestaurantSeating(
     currentCompanyId,
     currentBranchId,
@@ -495,7 +569,11 @@ export default function POSPage() {
     paymentAmount.amount !== null &&
     (isCashSelected || paymentAmount.amount <= remainingAmount);
   const shouldShowPaymentPanel = isConfirmedOrder || isClosedOrder || isCancelledOrder;
-  const canRefundPayments = isConfirmedOrder && paymentsRefundPermissionQuery.hasPermission;
+  // Refund Approval Integration: gating on Payments.Refund alone would hard-disable Refund for a
+  // Cashier who is meant to be able to REQUEST one (the backend decides direct-execute / approval-
+  // required / denied). Payments.View is the baseline "may look at this order's payments at all"
+  // capability; the backend response is what's authoritative from here, not this frontend check.
+  const canRefundPayments = isConfirmedOrder && paymentsViewPermissionQuery.hasPermission;
   const closeBlockers = [];
 
   if (!isConfirmedOrder) {
@@ -607,12 +685,59 @@ export default function POSPage() {
     discount = getDraftDiscountInput(),
     fulfillmentType = effectiveOrderType,
     restaurantTableId = effectiveRestaurantTableId,
+    customerId = effectiveCustomer?.customerId ?? null,
   ) => ({
     fulfillmentType,
     restaurantTableId: fulfillmentType === "DineIn" ? restaurantTableId : null,
+    customerId,
     lines,
     discount,
   });
+  // The create-draft response only echoes back `customerId` (no name/phone -- see
+  // CreateDraftSalesOrderResponse), so a customer chosen before the draft existed is patched
+  // into the freshly-cached draft here rather than waiting for a follow-up GET to show it.
+  const finalizeCreatedDraft = (created) => {
+    setDraftSession({ scope: draftScope, salesOrderId: created.salesOrderId });
+    if (pendingCustomer) {
+      queryClient.setQueryData(
+        draftSalesOrderQueryKeys.details(currentCompanyId, currentBranchId, created.salesOrderId),
+        (old) => (old ? { ...old, customerId: pendingCustomer.customerId, customer: pendingCustomer } : old),
+      );
+      setPendingCustomer(null);
+    }
+  };
+  // Selecting/clearing a customer always writes through to the real SalesOrder (Phase 5/6/7 of
+  // the POS Customer Data task) -- never local-only state. Before a draft exists there is nothing
+  // to persist to yet, so the choice is remembered in `pendingCustomer` and sent the moment the
+  // first item creates the draft (see buildDraftPayload's customerId default).
+  const assignCustomerToOrder = async (nextCustomer) => {
+    if (!draftOrder) {
+      setPendingCustomer(nextCustomer);
+      return;
+    }
+
+    if (!canEditDraft) {
+      notify("Only a draft order's customer can be changed.");
+      return;
+    }
+
+    await updateDraftMutation.mutateAsync({
+      ...buildDraftPayload(
+        mapDraftLinesToRequest(),
+        getDraftDiscountInput(),
+        undefined,
+        undefined,
+        nextCustomer?.customerId ?? null,
+      ),
+      expectedDraftVersion: draftOrder.draftVersion,
+    });
+
+    queryClient.setQueryData(
+      draftSalesOrderQueryKeys.details(currentCompanyId, currentBranchId, draftOrder.salesOrderId),
+      (old) =>
+        old ? { ...old, customerId: nextCustomer?.customerId ?? null, customer: nextCustomer ?? null } : old,
+    );
+  };
   const handleDraftError = (error, lines) => {
     if (error?.code === "SalesOrder.DraftVersionConflict") {
       draftDetailsQuery.refetch();
@@ -660,7 +785,7 @@ export default function POSPage() {
         const created = await createDraftMutation.mutateAsync(
           buildDraftPayload(lines, discount),
         );
-        setDraftSession({ scope: draftScope, salesOrderId: created.salesOrderId });
+        finalizeCreatedDraft(created);
         return;
       }
 
@@ -692,7 +817,7 @@ export default function POSPage() {
 
     if (!baseDraft) {
       const created = await createDraftMutation.mutateAsync(payload);
-      setDraftSession({ scope: draftScope, salesOrderId: created.salesOrderId });
+      finalizeCreatedDraft(created);
       return created;
     }
 
@@ -1124,11 +1249,9 @@ export default function POSPage() {
   const refundCurrentPayment = async () => {
     if (!refundDraft?.payment || !draftSalesOrderId) return;
 
-    if (!paymentsRefundPermissionQuery.hasPermission) {
-      notify("Payments.Refund permission is required.");
-      return;
-    }
-
+    // Payments.Refund is intentionally NOT checked here anymore (Refund Approval Integration):
+    // a Cashier without it may still legitimately REQUEST a refund, and the backend -- never this
+    // frontend check -- decides whether that means direct execution, approval-required, or denied.
     if (!refundDraft.confirmation) {
       notify("Confirm the refund before processing.");
       return;
@@ -1155,7 +1278,7 @@ export default function POSPage() {
     }
 
     try {
-      await refundPaymentMutation.mutateAsync({
+      const result = await refundPaymentMutation.mutateAsync({
         salesOrderPaymentId: refundDraft.payment.salesOrderPaymentId,
         payload: {
           amount: refundAmount.amount,
@@ -1163,7 +1286,30 @@ export default function POSPage() {
           reason: refundDraft.reason,
         },
       });
+
       setRefundDraft(null);
+
+      if (result.outcome === "ApprovalRequired") {
+        // Never pretend this succeeded and never mark anything refunded locally -- nothing has
+        // happened to the payment yet. Open the manager-approval dialog with what we already know;
+        // it loads the authoritative details itself via GET .../approvals/{id}/refund.
+        setPendingRefundApproval({
+          approvalRequestId: result.approval.approvalRequestId,
+          status: result.approval.status,
+          expiresAtUtc: result.approval.expiresAtUtc,
+          amount: result.approval.amount,
+          currencyCode: result.approval.currencyCode,
+        });
+        setModal("refundApprovalPending");
+        notify(
+          t("pos.refundApproval.requestCreated", {
+            id: result.approval.approvalRequestId.slice(-8),
+          }),
+        );
+        refreshPaymentState();
+        return;
+      }
+
       setModal(null);
       notify("Refund processed.");
       refreshPaymentState();
@@ -1171,16 +1317,84 @@ export default function POSPage() {
       handlePaymentError(error);
     }
   };
+  const approveRefundRequest = async () => {
+    if (!pendingRefundApproval?.approvalRequestId) return;
+
+    if (!managerPin.trim()) {
+      notify(t("pos.refundApproval.errors.pinRequired"));
+      return;
+    }
+
+    try {
+      await approveRefundMutation.mutateAsync({
+        approvalRequestId: pendingRefundApproval.approvalRequestId,
+        pin: managerPin,
+      });
+      setManagerPin("");
+      setPendingRefundApproval(null);
+      setModal(null);
+      notify(t("pos.refundApproval.approvedMessage"));
+      refreshPaymentState();
+    } catch (error) {
+      // Never leave a PIN attempt sitting in the input after a failed try.
+      setManagerPin("");
+      handleRefundApprovalError(error);
+    }
+  };
+  const handleRefundApprovalError = (error) => {
+    const messageByCode = {
+      "ManagerPin.Invalid": t("pos.refundApproval.errors.invalidPin"),
+      "ManagerPin.Locked": t("pos.refundApproval.errors.pinLocked"),
+      "ManagerPin.NotSet": t("pos.refundApproval.errors.pinNotSet"),
+      "ManagerPin.Required": t("pos.refundApproval.errors.pinRequired"),
+      "Branch.NotAccessible": t("pos.refundApproval.errors.branchNotAccessible"),
+      "Authorization.PermissionDenied": t("pos.refundApproval.errors.permissionDenied"),
+      "Entitlement.NotEnabled": t("pos.refundApproval.errors.entitlementNotEnabled"),
+      "Approval.SelfApprovalNotAllowed": t("pos.refundApproval.errors.selfApproval"),
+      "Approval.Expired": t("pos.refundApproval.errors.expired"),
+      "Approval.NotPending": t("pos.refundApproval.errors.notPending"),
+      "Approval.NotAvailable": t("pos.refundApproval.errors.notAvailable"),
+      "Approval.RefundSnapshotMissing": t("pos.refundApproval.errors.notAvailable"),
+      "PaymentRefund.AmountExceedsRefundable": t("pos.refundApproval.errors.staleAmount"),
+      "PaymentRefund.AlreadyFullyRefunded": t("pos.refundApproval.errors.staleAmount"),
+      "PaymentRefund.SalesOrderNotRefundable": t("pos.refundApproval.errors.staleAmount"),
+      "PosShift.InsufficientExpectedCash": t("pos.refundApproval.errors.cashValidationFailed"),
+      "PosShift.NotOpen": t("pos.refundApproval.errors.cashValidationFailed"),
+      "PosShift.CurrencyMismatch": t("pos.refundApproval.errors.cashValidationFailed"),
+      "PosShift.RequiredForCashRefund": t("pos.refundApproval.errors.cashValidationFailed"),
+      "PosShift.NotAvailable": t("pos.refundApproval.errors.cashValidationFailed"),
+    };
+
+    notify(messageByCode[error?.code] || error?.message || t("pos.refundApproval.errors.generic"));
+
+    // A stale/terminal request state -- refresh both the payment/order state and the approval
+    // details shown in the dialog so the cashier/manager see what's actually true now, rather than
+    // silently retrying against data that's already wrong.
+    const staleCodes = [
+      "Approval.Expired",
+      "Approval.NotPending",
+      "Approval.NotAvailable",
+      "PaymentRefund.AmountExceedsRefundable",
+      "PaymentRefund.AlreadyFullyRefunded",
+      "PaymentRefund.SalesOrderNotRefundable",
+    ];
+    if (staleCodes.includes(error?.code)) {
+      refreshPaymentState();
+      refundApprovalDetailsQuery.refetch();
+    }
+  };
   const startNewOrder = () => {
     setDraftSession({ scope: "", salesOrderId: null });
     setOrderType(DEFAULT_FULFILLMENT_TYPE);
     setSelectedRestaurantTableId(null);
     setDiscountInput("");
+    setDiscountReason("");
+    setDiscountApproval(null);
     setPaymentAmountInput("");
     setSelectedPaymentMethodId("");
     setRefundDraft(null);
     setLifecycleDraft(null);
-    setCustomer(null);
+    setPendingCustomer(null);
     setSelectedVariantProduct(null);
     setSelectedModifierVariant(null);
     setModifierSelections({});
@@ -1231,11 +1445,13 @@ export default function POSPage() {
       setOrderType(details.fulfillmentType || DEFAULT_FULFILLMENT_TYPE);
       setSelectedRestaurantTableId(details.restaurantTableId || null);
       setDiscountInput("");
+      setDiscountReason("");
+      setDiscountApproval(null);
       setPaymentAmountInput("");
       setSelectedPaymentMethodId("");
       setRefundDraft(null);
       setLifecycleDraft(null);
-      setCustomer(null);
+      setPendingCustomer(null);
       setSelectedVariantProduct(null);
       setSelectedModifierVariant(null);
       setModifierSelections({});
@@ -1372,6 +1588,39 @@ export default function POSPage() {
   const holdOrder = () => {
     notify("Draft hold is not integrated yet.");
   };
+  const submitDiscountRequest = async (value) => {
+    if (requestDiscountMutation.isPending) return;
+
+    const reason = discountReason.trim();
+    if (!reason) {
+      notify(t("pos.discount.invalidReason"));
+      return;
+    }
+
+    try {
+      // Only { discountType, value, reason } is sent -- never lines/customer/table/amounts.
+      const result = await requestDiscountMutation.mutateAsync({
+        discountType: "Percentage",
+        value,
+        reason,
+      });
+
+      setDiscountReason("");
+
+      if (result.outcome === "ApprovalRequired" && result.approval) {
+        // Not applied: the draft is refetched by the mutation hook, so totals stay server-truth.
+        setDiscountApproval({ salesOrderId: draftOrder.salesOrderId, ...result.approval });
+        return;
+      }
+
+      setDiscountApproval(null);
+      notify(t("pos.discount.appliedMessage"));
+      setModal(null);
+    } catch (error) {
+      const key = DISCOUNT_ERROR_KEYS[error?.code];
+      notify(key ? t(key) : error?.message || t("pos.discount.errors.generic"));
+    }
+  };
   const applyDraftDiscount = () => {
     if (!canEditDraft) return;
 
@@ -1380,14 +1629,16 @@ export default function POSPage() {
       return;
     }
 
-    if (!discountPermissionQuery.hasPermission) {
-      notify("Sales order discount permission is required.");
-      return;
-    }
-
     const value = Number(discountInput);
     if (!Number.isFinite(value) || value <= 0 || value > 100) {
       notify("Enter a percentage discount between 1 and 100.");
+      return;
+    }
+
+    // Users WITHOUT SalesOrders.ApplyDiscount go through the narrow discount endpoint instead of
+    // sending an unauthorized full-draft update. The backend stays authoritative on the outcome.
+    if (!discountPermissionQuery.hasPermission) {
+      submitDiscountRequest(value);
       return;
     }
 
@@ -1647,7 +1898,7 @@ export default function POSPage() {
               <div className="rounded-xl border border-white/10 px-3 py-2">
                 <div className="text-[10px] text-slate-400">الكاشير</div>
                 <div className="flex items-center gap-1 text-xs font-bold">
-                  <UserRound size={13} className="text-blue-300" /> أحمد محمد
+                  <UserRound size={13} className="text-blue-300" /> {currentCashierName || "..."}
                 </div>
               </div>
               <button
@@ -1762,9 +2013,10 @@ export default function POSPage() {
             <OrderSidebar
               navigate={navigate}
               draftLines={displayDraftLines}
-              customer={customer}
-              setCustomer={setCustomer}
+              customer={effectiveCustomer}
+              onClearCustomer={() => assignCustomerToOrder(null).catch((error) => handleDraftError(error))}
               onOpenCustomer={() => setModal("customer")}
+              canViewCustomers={customersViewPermissionQuery.hasPermission}
               draftOrder={draftOrder}
               isCancelledOrder={isCancelledOrder}
               isConfirmedOrder={isConfirmedOrder}
@@ -1855,7 +2107,7 @@ export default function POSPage() {
               draftOrder={draftOrder}
               draftLines={displayDraftLines}
               catalogCurrencyCode={catalogCurrencyCode}
-              customer={customer}
+              customer={effectiveCustomer}
               subtotal={subtotal}
               discountValue={discountValue}
               vat={vat}
@@ -1938,11 +2190,28 @@ export default function POSPage() {
           setDiscountInput={setDiscountInput}
           discountPermissionQuery={discountPermissionQuery}
           applyDraftDiscount={applyDraftDiscount}
+          discountReason={discountReason}
+          setDiscountReason={setDiscountReason}
+          discountApproval={
+            discountApproval && discountApproval.salesOrderId === draftOrder?.salesOrderId
+              ? discountApproval
+              : null
+          }
+          isDiscountRequestPending={requestDiscountMutation.isPending}
+          onRefreshDraft={() => draftDetailsQuery.refetch()}
+          isRefreshingDraft={draftDetailsQuery.isFetching}
           refundDraft={refundDraft}
           setRefundDraft={setRefundDraft}
           paymentsRefundPermissionQuery={paymentsRefundPermissionQuery}
           refundPaymentMutation={refundPaymentMutation}
           refundCurrentPayment={refundCurrentPayment}
+          pendingRefundApproval={pendingRefundApproval}
+          setPendingRefundApproval={setPendingRefundApproval}
+          refundApprovalDetailsQuery={refundApprovalDetailsQuery}
+          managerPin={managerPin}
+          setManagerPin={setManagerPin}
+          approveRefundMutation={approveRefundMutation}
+          approveRefundRequest={approveRefundRequest}
           draftOrder={draftOrder}
           total={total}
           settlementCurrencyCode={settlementCurrencyCode}
@@ -2002,7 +2271,15 @@ export default function POSPage() {
           closeShiftMutation={closeShiftMutation}
         />
 
-        <PosMiscDialogs modal={modal} setModal={setModal} setCustomer={setCustomer} notify={notify} />
+        <PosMiscDialogs
+          modal={modal}
+          setModal={setModal}
+          currentCompanyId={currentCompanyId}
+          canViewCustomers={customersViewPermissionQuery.hasPermission}
+          canManageCustomers={customersManagePermissionQuery.hasPermission}
+          onSelectCustomer={assignCustomerToOrder}
+          notify={notify}
+        />
 
         {modal === "editQuantity" && quantityKeypadTarget && (
           <NumericKeypadModal

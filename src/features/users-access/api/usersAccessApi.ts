@@ -6,14 +6,17 @@ import type {
   CompanyInvitation,
   CompanyInvitationPreview,
   CompanyMembership,
+  CompanyMembershipPinResponse,
   CompanyRole,
   CreateInvitationRequest,
   CreateRoleRequest,
   InvitationMutationResponse,
   PagedInvitations,
   PagedMemberships,
+  SetCompanyMembershipPinRequest,
   UpdateInvitationRequest,
   UpdateMembershipBranchAccessRequest,
+  UpdateMembershipSalesScopeRequest,
   UpdateRoleRequest,
 } from "../types/usersAccess.types";
 
@@ -53,6 +56,32 @@ export async function updateMembershipBranchAccess(
 ) {
   const response = await httpClient.put(
     `/api/companies/${companyId}/memberships/${membershipId}/branch-access`,
+    payload,
+  );
+  return response.data;
+}
+
+export async function updateMembershipSalesScope(
+  companyId: string,
+  membershipId: string,
+  payload: UpdateMembershipSalesScopeRequest,
+) {
+  const response = await httpClient.put(
+    `/api/companies/${companyId}/memberships/${membershipId}/sales-scope`,
+    payload,
+  );
+  return response.data;
+}
+
+// PIN travels in the request body only -- never logged, never stored, never echoed back (the
+// response confirms only that a PIN is now set, never the value itself).
+export async function setCompanyMembershipPin(
+  companyId: string,
+  membershipId: string,
+  payload: SetCompanyMembershipPinRequest,
+) {
+  const response = await httpClient.put<CompanyMembershipPinResponse>(
+    `/api/companies/${companyId}/memberships/${membershipId}/pin`,
     payload,
   );
   return response.data;

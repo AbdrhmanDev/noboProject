@@ -3,6 +3,11 @@ import type { Branch } from "../../branches/types/branch.types";
 export type MembershipStatus = "Active" | "Suspended" | "Revoked";
 export type InvitationStatus = "Pending" | "Accepted" | "Cancelled" | "Expired";
 export type BranchAccessMode = "AllBranches" | "SelectedBranches";
+// null = no explicit restriction set yet -- behaviorally identical to "Branch" (unrestricted
+// within the member's existing branch access), but kept distinct from "Branch" in the UI so an
+// admin can tell no explicit choice has been recorded, rather than silently implying one was
+// (Sales Order Visibility Scope, Users & Access wiring task).
+export type SalesOrderVisibilityScope = "Own" | "Branch" | null;
 export type RoleStatus = "Active" | "Suspended";
 
 export type RoleSummary = {
@@ -28,6 +33,7 @@ export type CompanyMembership = {
   isOwner: boolean;
   status: MembershipStatus;
   branchAccessMode: BranchAccessMode;
+  salesOrderVisibilityScope: SalesOrderVisibilityScope;
   createdAtUtc: string;
   roles: RoleSummary[];
   selectedBranches: SelectedBranchSummary[];
@@ -113,8 +119,28 @@ export type UpdateMembershipBranchAccessRequest = {
   selectedBranchIds: string[];
 };
 
+// Body key is `scope`, not `salesOrderVisibilityScope` -- matches the backend's
+// SetCompanyMembershipSalesOrderVisibilityScopeRequest exactly.
+export type UpdateMembershipSalesScopeRequest = {
+  scope: SalesOrderVisibilityScope;
+};
+
 export type AssignMembershipRolesRequest = {
   roleIds: string[];
+};
+
+// Manager PIN. Request carries only the new PIN -- the backend endpoint accepts no "current PIN"
+// field, so none is collected here either. The response never carries the PIN itself, only
+// confirmation that it is now set (and when) -- this is the ONLY safe, server-confirmed signal the
+// frontend ever has for "is a PIN set", since no GET endpoint exposes PIN status at all.
+export type SetCompanyMembershipPinRequest = {
+  pin: string;
+};
+
+export type CompanyMembershipPinResponse = {
+  companyMembershipId: string;
+  hasPinSet: boolean;
+  pinSetAtUtc: string | null;
 };
 
 export type CreateRoleRequest = {

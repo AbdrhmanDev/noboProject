@@ -57,7 +57,10 @@ function invalidatePaymentMethodAdmin(
   }
 }
 
-function invalidatePaymentState(
+// Exported so the approvals feature's approve-refund mutation (which also results in an executed
+// refund, just via a different endpoint) can refresh the exact same query state without
+// duplicating this invalidation list.
+export function invalidatePaymentState(
   queryClient: ReturnType<typeof useQueryClient>,
   companyId: string | null | undefined,
   branchId: string | null | undefined,
@@ -236,14 +239,19 @@ export function useRefundSalesOrderPayment(
         salesOrderPaymentId,
         payload,
       ),
-    onSuccess: () => {
-      invalidatePaymentState(
-        queryClient,
-        companyId,
-        branchId,
-        salesOrderId,
-        posTerminalId,
-      );
+    onSuccess: (data) => {
+      // Only an executed refund actually changed payment/order state -- an ApprovalRequired
+      // outcome hasn't refunded anything yet, so invalidating here would just be a no-op refetch
+      // and, worse, could visually imply something changed when nothing has.
+      if (data.outcome === "Refunded") {
+        invalidatePaymentState(
+          queryClient,
+          companyId,
+          branchId,
+          salesOrderId,
+          posTerminalId,
+        );
+      }
     },
   });
 }

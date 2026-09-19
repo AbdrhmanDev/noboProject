@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { Crown, Loader2, ShoppingCart, X } from "lucide-react";
+import { Loader2, ShoppingCart, UserRound, X } from "lucide-react";
 import { ROUTES } from "../../../../utils/routes";
 import { RestaurantSeatingOnboarding } from "../../../restaurant/components/RestaurantSeatingOnboarding";
 import { ShortcutHint } from "../../../shortcuts/components/ShortcutHint";
@@ -15,8 +15,9 @@ export function OrderHeader({
   navigate,
   draftLines,
   customer,
-  setCustomer,
+  onClearCustomer,
   onOpenCustomer,
+  canViewCustomers,
   draftOrder,
   isCancelledOrder,
   isConfirmedOrder,
@@ -67,18 +68,20 @@ export function OrderHeader({
         <button
           type="button"
           onClick={onOpenCustomer}
-          className="shrink-0 rounded-lg border border-white/10 px-2 py-1 text-[10px] text-blue-300 hover:bg-blue-500/10"
+          disabled={!canEditDraft || !canViewCustomers}
+          className="shrink-0 rounded-lg border border-white/10 px-2 py-1 text-[10px] text-blue-300 hover:bg-blue-500/10 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {customer ? customer.name : "اختيار عميل"}
         </button>
       </div>
       {customer && (
         <div className="mb-1.5 flex items-center justify-between rounded-xl bg-blue-500/10 px-3 py-2 text-xs text-blue-100">
-          <span className="flex items-center gap-1">
-            <Crown size={13} className="text-amber-300" />
-            {customer.name} · سعر VIP
+          <span className="flex items-center gap-1.5">
+            <UserRound size={13} className="text-blue-300" />
+            {customer.name}
+            {customer.phone && <span className="text-[10px] text-blue-300/70">· {customer.phone}</span>}
           </span>
-          <button type="button" onClick={() => setCustomer(null)}>
+          <button type="button" onClick={onClearCustomer} disabled={!canEditDraft} className="disabled:cursor-not-allowed disabled:opacity-50">
             <X size={14} />
           </button>
         </div>

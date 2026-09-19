@@ -7,9 +7,9 @@ import type {
   PaymentMethodAdminFilters,
   PaymentMethodResponse,
   ReceiveSalesOrderPaymentRequest,
+  RefundOrApprovalResponse,
   RefundSalesOrderPaymentRequest,
   SalesOrderPaymentHistory,
-  SalesOrderPaymentRefundResponse,
   SalesOrderPaymentResponse,
   UpdatePaymentMethodRequest,
 } from "../types/payment.types";
@@ -151,7 +151,7 @@ export async function refundSalesOrderPayment(
   salesOrderPaymentId: string,
   payload: RefundSalesOrderPaymentRequest,
 ) {
-  const response = await httpClient.post<SalesOrderPaymentRefundResponse>(
+  const response = await httpClient.post<RefundOrApprovalResponse>(
     `${salesOrderPaymentsUrl(
       companyId,
       branchId,

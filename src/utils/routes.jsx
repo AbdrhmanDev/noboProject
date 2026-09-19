@@ -45,6 +45,8 @@ export const ROUTES = {
   HR: "/hr",
   SETTINGS: "/settings",
   USERS_ACCESS: "/settings/users",
+  APPROVAL_POLICIES: "/settings/approval-policies",
+  APPROVALS: "/settings/approvals",
   MORE: "/more",
   PROFILE: "/profile",
   NOT_FOUND: "*",

@@ -102,6 +102,22 @@ export type SalesOrderPaymentRefundResponse = {
   wasAlreadyProcessed: boolean;
 };
 
+// Refund Approval Integration: the refund submission endpoint no longer always returns a refund
+// directly -- when the caller lacks direct refund authority and the company's approval policy
+// applies, it instead returns a Pending approval reference. Both branches must be handled
+// explicitly; never assume "Refunded".
+export type PendingRefundApprovalResult = {
+  approvalRequestId: string;
+  status: string;
+  expiresAtUtc: string;
+  amount: number;
+  currencyCode: string;
+};
+
+export type RefundOrApprovalResponse =
+  | { outcome: "Refunded"; refund: SalesOrderPaymentRefundResponse; approval: null }
+  | { outcome: "ApprovalRequired"; refund: null; approval: PendingRefundApprovalResult };
+
 export type SalesOrderPaymentRefundHistoryItem = {
   salesOrderPaymentRefundId: string;
   amount: number;
