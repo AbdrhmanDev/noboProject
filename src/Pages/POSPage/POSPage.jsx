@@ -1,17 +1,12 @@
 import { Fragment, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  AlertTriangle,
-  Bot,
   History,
   Layers3,
-  Monitor,
   Package,
-  RotateCcw,
+  Power,
   Search,
-  Truck,
   UserRound,
-  Wifi,
 } from "lucide-react";
 import { ROUTES } from "../../utils/routes";
 import AppLayout from "../../components/AppLayout";
@@ -64,13 +59,11 @@ import { OrderDialogs } from "../../features/pos/components/order/OrderDialogs";
 import { OrderRetrievalModal } from "../../features/pos/components/order/OrderRetrievalModal";
 import { PaymentStep } from "../../features/pos/components/payment/PaymentStep";
 import { CompleteStep } from "../../features/pos/components/payment/CompleteStep";
-import { PosPhaseIndicator } from "../../features/pos/components/PosPhaseIndicator";
 import { ShiftDialogs } from "../../features/pos/components/shift/ShiftDialogs";
-import { PosSecondaryPanels } from "../../features/pos/components/PosSecondaryPanels";
+import { ShiftReportDialog } from "../../features/pos/components/shift/ShiftReportDialog";
 import { PosMiscDialogs } from "../../features/pos/components/PosMiscDialogs";
 import { NumericKeypadModal } from "../../features/pos/components/keypad/NumericKeypadModal";
 import {
-  formatPaymentDate,
   getCashMovementLabel,
   parseMoneyInput,
   parseNonNegativeMoneyInput,
@@ -296,11 +289,11 @@ export default function POSPage() {
     currentBranchId,
     draftSalesOrderId,
   );
+  // Loaded as soon as the cashier is allowed to take payments (not only once a draft exists), so
+  // the basket's payment-method choice is usable on an empty cart too.
   const paymentMethodsQuery = useActivePaymentMethods(
     currentCompanyId,
-    Boolean(draftSalesOrderId) &&
-      !paymentsReceivePermissionQuery.isLoading &&
-      paymentsReceivePermissionQuery.hasPermission,
+    !paymentsReceivePermissionQuery.isLoading && paymentsReceivePermissionQuery.hasPermission,
   );
   const receivePaymentMutation = useReceiveSalesOrderPayment(
     currentCompanyId,
@@ -337,6 +330,8 @@ export default function POSPage() {
   // customer to yet), holding the choice until the first item creates the draft.
   const [pendingCustomer, setPendingCustomer] = useState(null);
   const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState("");
+  // Free-text note for the kitchen, typed from the basket. Cleared with every new/reset order.
+  const [kitchenNote, setKitchenNote] = useState("");
   const [paymentAmountInput, setPaymentAmountInput] = useState("");
   const [refundDraft, setRefundDraft] = useState(null);
   // Set when a refund submission comes back with Outcome: "ApprovalRequired" -- holds just enough
@@ -369,7 +364,6 @@ export default function POSPage() {
   const [countedCashInput, setCountedCashInput] = useState("");
   const [closingNoteInput, setClosingNoteInput] = useState("");
   const [lastClosedShift, setLastClosedShift] = useState(null);
-  const [aiDismissed, setAiDismissed] = useState([]);
   const [selectedLineId, setSelectedLineId] = useState(null);
   const [quantityKeypadTarget, setQuantityKeypadTarget] = useState(null);
   const searchInputRef = useRef(null);
@@ -1392,6 +1386,7 @@ export default function POSPage() {
     setDiscountApproval(null);
     setPaymentAmountInput("");
     setSelectedPaymentMethodId("");
+    setKitchenNote("");
     setRefundDraft(null);
     setLifecycleDraft(null);
     setPendingCustomer(null);
@@ -1449,6 +1444,7 @@ export default function POSPage() {
       setDiscountApproval(null);
       setPaymentAmountInput("");
       setSelectedPaymentMethodId("");
+      setKitchenNote("");
       setRefundDraft(null);
       setLifecycleDraft(null);
       setPendingCustomer(null);
@@ -1584,9 +1580,6 @@ export default function POSPage() {
   };
   const removeDraftLine = (salesOrderLineId) => {
     lineEditor.removeLine(salesOrderLineId);
-  };
-  const holdOrder = () => {
-    notify("Draft hold is not integrated yet.");
   };
   const submitDiscountRequest = async (value) => {
     if (requestDiscountMutation.isPending) return;
@@ -1856,139 +1849,75 @@ export default function POSPage() {
     bindings: posPageBindings,
   });
 
-  const insights = [
-    {
-      id: "water",
-      title: "المياه ستنفد خلال 3 أيام.",
-      detail: "مخزون فرع الرياض: 18 وحدة مقابل معدل بيع 6 وحدات يوميًا.",
-      action: "إنشاء طلب شراء",
-      icon: AlertTriangle,
-    },
-    {
-      id: "sales",
-      title: "مبيعات الشيبس انخفضت 18%.",
-      detail: "مقارنة بمتوسط آخر 4 أسابيع، بثقة 91%.",
-      action: "اقتراح عرض",
-      icon: Bot,
-    },
-    {
-      id: "branch",
-      title: "فرع جدة يحتاج 40 وحدة من المنتج X.",
-      detail: "الطلب المتوقع يتجاوز المخزون المتاح نهاية الأسبوع.",
-      action: "إنشاء تحويل",
-      icon: Truck,
-    },
-  ];
-
   return (
     <AppLayout activePath={ROUTES.POS}>
-      <main className="min-w-0 flex-1 p-3 sm:p-4 xl:p-5">
+      <main className="min-w-0 flex-1">
         <PosOperationalGate>
-          <div className="mx-auto max-w-[1680px] space-y-2.5" dir="rtl">
-          <header className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-[#0c1424]/85 p-2.5 shadow-lg shadow-black/15 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              <div className="rounded-xl border border-blue-400/25 bg-blue-500/10 px-3 py-2">
-                <div className="text-[10px] text-slate-400">
-                  POS MAIN / SMART CHECKOUT
-                </div>
-                <div className="text-xs font-bold text-white">
-                  الرياض الرئيسي · POS-01
-                </div>
-              </div>
-              <div className="rounded-xl border border-white/10 px-3 py-2">
-                <div className="text-[10px] text-slate-400">الكاشير</div>
-                <div className="flex items-center gap-1 text-xs font-bold">
-                  <UserRound size={13} className="text-blue-300" /> {currentCashierName || "..."}
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setModal(hasOpenShift ? "closeShift" : "openShift")}
-                className={`rounded-xl border px-3 py-2 text-xs font-bold ${hasOpenShift ? "border-emerald-400/25 bg-emerald-500/10 text-emerald-200" : "border-amber-400/25 bg-amber-500/10 text-amber-200"}`}
-              >
-                <span className="ml-1 inline-block h-2 w-2 rounded-full bg-current" />
-                {hasOpenShift
-                  ? `Open shift - ${formatPaymentDate(openShiftQuery.data?.openedAtUtc)}`
-                  : "Open shift"}
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate(ROUTES.POS_SHIFT_HISTORY)}
-                className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold text-slate-200 hover:border-blue-400/40 hover:bg-blue-500/10"
-              >
-                <History size={14} />
-                Shift History
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate(ROUTES.POS_TERMINALS_ADMIN)}
-                className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold text-slate-200 hover:border-blue-400/40 hover:bg-blue-500/10"
-              >
-                <Monitor size={14} />
-                Terminals
-              </button>
-              {/* Retrieve Order lives here (not in the basket) — it's a
-                  low-frequency, session-level action, not per-order work,
-                  and the basket's vertical space is worth far more to the
-                  line list. Same F6 shortcut, same setModal("retrieve"). */}
-              <button
-                type="button"
-                onClick={() => setModal("retrieve")}
-                disabled={!salesOrdersViewPermissionQuery.hasPermission}
-                className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold text-slate-200 hover:border-blue-400/40 hover:bg-blue-500/10 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                <RotateCcw size={14} />
-                استرجاع طلب
-                <ShortcutHint action="pos.selectOrder" />
-              </button>
-            </div>
-            <div className="flex flex-1 items-center gap-2 lg:max-w-xl">
-              <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-white/10 bg-black/20 px-3 py-2.5 focus-within:border-blue-400/60">
-                <Search size={16} className="shrink-0 text-slate-400" />
-                <input
-                  ref={searchInputRef}
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.code === "Escape") {
-                      event.preventDefault();
-                      if (query) {
-                        setQuery("");
-                      } else {
-                        event.currentTarget.blur();
-                      }
-                      return;
-                    }
-
-                    // The only arrow that leaves the input: ArrowDown hands
-                    // focus to the first visible product result. ArrowLeft/
-                    // ArrowRight (and ArrowUp, which has nothing useful to
-                    // do in a single-line input) are left completely alone
-                    // so normal caret/text editing keeps working.
-                    if (event.code !== "ArrowDown") return;
-
-                    const items = getFocusableGridItems(productGridRef.current, ROVING_ITEM_SELECTOR);
-                    if (!items.length) return;
-
+          <div className="mx-auto w-full max-w-[2200px] space-y-3" dir="rtl">
+          <header className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-3 shadow-[var(--shadow-surface)] md:flex-row md:items-center">
+            <button
+              type="button"
+              onClick={() => setModal("closeShift")}
+              disabled={!hasOpenShift}
+              title="إغلاق الوردية"
+              className="group flex shrink-0 items-center gap-3 rounded-xl border border-line bg-inset px-3 py-2 text-start transition hover:border-danger/40 hover:bg-danger-soft disabled:cursor-default disabled:hover:border-line disabled:hover:bg-inset"
+            >
+              <span>
+                <span className="block text-[10px] text-subtle">الكاشير</span>
+                <span className="flex items-center gap-1.5 text-sm font-bold text-ink">
+                  <UserRound size={14} className="text-accent" /> {currentCashierName || "..."}
+                </span>
+              </span>
+              {hasOpenShift && <Power size={15} className="text-subtle transition group-hover:text-danger" />}
+            </button>
+            <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-line bg-inset px-3 py-2.5 transition focus-within:border-accent focus-within:ring-[3px] focus-within:ring-accent/20">
+              <Search size={16} className="shrink-0 text-subtle" />
+              <input
+                ref={searchInputRef}
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.code === "Escape") {
                     event.preventDefault();
-                    items[0].focus();
-                  }}
-                  className="min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:text-slate-500"
-                  placeholder="ابحث بالباركود أو الاسم أو SKU..."
-                />
-                <ShortcutHint action="pos.focusProductSearch" />
-              </div>
-              <div className="hidden items-center gap-1 rounded-lg border border-emerald-400/15 bg-emerald-500/10 px-2 py-1.5 text-xs text-emerald-300 sm:flex">
-                <Wifi size={15} /> Online
-              </div>
-            </div>
-          </header>
+                    if (query) {
+                      setQuery("");
+                    } else {
+                      event.currentTarget.blur();
+                    }
+                    return;
+                  }
 
-          <PosPhaseIndicator phase={phase} />
+                  // The only arrow that leaves the input: ArrowDown hands
+                  // focus to the first visible product result. ArrowLeft/
+                  // ArrowRight (and ArrowUp, which has nothing useful to
+                  // do in a single-line input) are left completely alone
+                  // so normal caret/text editing keeps working.
+                  if (event.code !== "ArrowDown") return;
+
+                  const items = getFocusableGridItems(productGridRef.current, ROVING_ITEM_SELECTOR);
+                  if (!items.length) return;
+
+                  event.preventDefault();
+                  items[0].focus();
+                }}
+                className="min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-subtle"
+                placeholder="ابحث بالباركود أو الاسم أو SKU..."
+              />
+              <ShortcutHint action="pos.focusProductSearch" />
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate(ROUTES.POS_SHIFT_HISTORY)}
+              className="flex items-center gap-2 rounded-xl border border-line bg-inset px-3 py-2 text-xs font-bold text-ink transition hover:border-accent-line hover:bg-accent-soft"
+            >
+              <History size={14} />
+              Transactions
+            </button>
+          </header>
 
           {phase === "order" && (
           <Fragment>
-          <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_390px]">
+          <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_500px]">
             <CatalogPanel
               navigate={navigate}
               catalogCategories={catalogCategories}
@@ -2045,6 +1974,11 @@ export default function POSPage() {
                 setModal("editQuantity");
               }}
               onOpenDiscount={() => setModal("discount")}
+              paymentMethods={paymentMethods}
+              selectedPaymentMethod={selectedPaymentMethod}
+              onSelectPaymentMethod={setSelectedPaymentMethodId}
+              kitchenNote={kitchenNote}
+              onKitchenNoteChange={setKitchenNote}
               subtotal={subtotal}
               discountValue={discountValue}
               vat={vat}
@@ -2062,12 +1996,9 @@ export default function POSPage() {
               lifecycleBlocker={lifecycleBlocker}
               cancelPermissionQuery={cancelPermissionQuery}
               voidPreparedPermissionQuery={voidPreparedPermissionQuery}
-              holdOrder={holdOrder}
               onOpenRetrieve={
                 salesOrdersViewPermissionQuery.hasPermission ? () => setModal("retrieve") : undefined
               }
-              onOpenCashMovement={() => setModal("cashMovement")}
-              cashDrawerPermissionQuery={cashDrawerPermissionQuery}
               paymentsViewPermissionQuery={paymentsViewPermissionQuery}
               canRefundPayments={canRefundPayments}
               openRefundModal={openRefundModal}
@@ -2083,22 +2014,9 @@ export default function POSPage() {
               canConfirmOrder={canConfirmOrder}
               confirmCurrentOrder={confirmCurrentOrder}
               goToPayment={goToPayment}
+              onOpenShiftReport={() => setModal("shiftReport")}
             />
           </div>
-
-          <PosSecondaryPanels
-            setModal={setModal}
-            expectedCashAmount={expectedCashAmount}
-            shiftCurrencyCode={shiftCurrencyCode}
-            shiftMinorUnitDigits={shiftMinorUnitDigits}
-            openShiftQuery={openShiftQuery}
-            openShiftId={openShiftId}
-            cashDrawerPermissionQuery={cashDrawerPermissionQuery}
-            notify={notify}
-            insights={insights}
-            aiDismissed={aiDismissed}
-            setAiDismissed={setAiDismissed}
-          />
           </Fragment>
           )}
 
@@ -2241,6 +2159,16 @@ export default function POSPage() {
           />
         )}
 
+        {modal === "shiftReport" && openShiftQuery.data && (
+          <ShiftReportDialog
+            shift={openShiftQuery.data}
+            companyId={currentCompanyId}
+            branchId={currentBranchId}
+            cashierName={currentCashierName}
+            onClose={() => setModal(null)}
+          />
+        )}
+
         <ShiftDialogs
           modal={modal}
           setModal={setModal}
@@ -2278,7 +2206,6 @@ export default function POSPage() {
           canViewCustomers={customersViewPermissionQuery.hasPermission}
           canManageCustomers={customersManagePermissionQuery.hasPermission}
           onSelectCustomer={assignCustomerToOrder}
-          notify={notify}
         />
 
         {modal === "editQuantity" && quantityKeypadTarget && (

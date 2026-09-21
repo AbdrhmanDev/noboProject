@@ -2,6 +2,7 @@ import { OrderHeader } from "./OrderHeader";
 import { OrderLines } from "./OrderLines";
 import { OrderSummary } from "./OrderSummary";
 import { OrderSecondaryActions } from "./OrderSecondaryActions";
+import { ReceiptText } from "lucide-react";
 import { OrderPrimaryAction } from "./OrderPrimaryAction";
 
 export function OrderSidebar({
@@ -39,6 +40,11 @@ export function OrderSidebar({
   onEditQuantity,
   // OrderSummary
   onOpenDiscount,
+  paymentMethods,
+  selectedPaymentMethod,
+  onSelectPaymentMethod,
+  kitchenNote,
+  onKitchenNoteChange,
   subtotal,
   discountValue,
   vat,
@@ -57,10 +63,7 @@ export function OrderSidebar({
   lifecycleBlocker,
   cancelPermissionQuery,
   voidPreparedPermissionQuery,
-  holdOrder,
   onOpenRetrieve,
-  onOpenCashMovement,
-  cashDrawerPermissionQuery,
   paymentsViewPermissionQuery,
   canRefundPayments,
   openRefundModal,
@@ -77,6 +80,7 @@ export function OrderSidebar({
   canConfirmOrder,
   confirmCurrentOrder,
   goToPayment,
+  onOpenShiftReport,
 }) {
   return (
     // `xl:h-[calc(100vh-21rem)]` — a *definite* height, not just a cap —
@@ -96,7 +100,7 @@ export function OrderSidebar({
     // last-resort safety net — the normal path for "more lines than fit" is
     // OrderLines' own flex-1 + overflow-y-auto below, which shrinks/scrolls
     // before this outer boundary ever needs to.
-    <aside className="flex flex-col rounded-2xl border border-white/10 bg-[#0d1728]/95 p-3 shadow-xl shadow-black/20 xl:sticky xl:top-4 xl:h-[calc(100vh-21rem)] xl:overflow-y-auto xl:scrollbar-none">
+    <aside className="flex flex-col rounded-2xl border border-line bg-surface p-4 shadow-[var(--shadow-surface)] min-h-[440px] xl:sticky xl:top-4 xl:h-[calc(100vh-12rem)] xl:min-h-[680px] xl:overflow-y-auto xl:scrollbar-none">
       <OrderHeader
         navigate={navigate}
         draftLines={draftLines}
@@ -161,9 +165,6 @@ export function OrderSidebar({
         lifecycleBlocker={lifecycleBlocker}
         cancelPermissionQuery={cancelPermissionQuery}
         voidPreparedPermissionQuery={voidPreparedPermissionQuery}
-        holdOrder={holdOrder}
-        onOpenCashMovement={onOpenCashMovement}
-        cashDrawerPermissionQuery={cashDrawerPermissionQuery}
         shouldShowPaymentPanel={shouldShowPaymentPanel}
         paymentsViewPermissionQuery={paymentsViewPermissionQuery}
         canRefundPayments={canRefundPayments}
@@ -171,6 +172,14 @@ export function OrderSidebar({
         onOpenDiscount={onOpenDiscount}
         canEditDraft={canEditDraft}
         isDraftMutationPending={isDraftMutationPending}
+        selectedLineId={selectedLineId}
+        removeDraftLine={removeDraftLine}
+        canEditDraftLines={canEditDraftLines}
+        paymentMethods={paymentMethods}
+        selectedPaymentMethod={selectedPaymentMethod}
+        onSelectPaymentMethod={onSelectPaymentMethod}
+        kitchenNote={kitchenNote}
+        onKitchenNoteChange={onKitchenNoteChange}
       />
 
       <div className="mt-1 shrink-0">
@@ -200,6 +209,16 @@ export function OrderSidebar({
           catalogCurrencyCode={catalogCurrencyCode}
           onOpenRetrieve={onOpenRetrieve}
         />
+        {hasOpenShift && onOpenShiftReport && (
+          <button
+            type="button"
+            onClick={onOpenShiftReport}
+            className="mt-2 flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-line bg-inset text-xs font-bold text-muted transition hover:border-accent-line hover:bg-accent-soft hover:text-ink"
+          >
+            <ReceiptText size={15} />
+            Z Report
+          </button>
+        )}
       </div>
     </aside>
   );

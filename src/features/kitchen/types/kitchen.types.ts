@@ -34,6 +34,8 @@ export type OpenKitchenTicketItem = {
   quantity: number;
   salesUnitOfMeasure: OpenKitchenTicketUnitOfMeasure;
   modifiers: OpenKitchenTicketItemModifier[];
+  // Not sent by the API yet — the kitchen card shows it when present.
+  note?: string | null;
 };
 
 export type OpenKitchenTicket = {
@@ -45,6 +47,9 @@ export type OpenKitchenTicket = {
   fulfillmentType: "DineIn" | "Takeaway" | "Delivery" | string;
   restaurantTable: OpenKitchenTicketRestaurantTable | null;
   items: OpenKitchenTicketItem[];
+  // Not sent by the API yet — the kitchen card shows them when present.
+  createdByName?: string | null;
+  kitchenNote?: string | null;
 };
 
 export type KitchenTicketLifecycleResponse = {
@@ -64,13 +69,8 @@ export type KitchenStationFilters = {
   search?: string;
 };
 
-export type CreateKitchenStationRequest = {
-  code: string;
-  name: string;
-  sortOrder: number;
-};
-
-export type CreateKitchenStationResponse = {
+// Shape of a station as the API returns it (also the base of the list / details / update results).
+export type KitchenStationBase = {
   kitchenStationId: string;
   branchId: string;
   code: string;
@@ -80,7 +80,7 @@ export type CreateKitchenStationResponse = {
   createdAtUtc: string;
 };
 
-export type KitchenStationListItem = CreateKitchenStationResponse & {
+export type KitchenStationListItem = KitchenStationBase & {
   routeCount: number;
 };
 
@@ -96,7 +96,7 @@ export type KitchenStationRouteSummary = {
   updatedAtUtc: string;
 };
 
-export type KitchenStationDetails = CreateKitchenStationResponse & {
+export type KitchenStationDetails = KitchenStationBase & {
   routes: KitchenStationRouteSummary[];
 };
 

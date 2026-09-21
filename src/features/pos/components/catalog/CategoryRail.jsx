@@ -14,7 +14,7 @@ function ScrollButton({ icon: Icon, label, onClick }) {
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="z-10 hidden h-8 w-8 shrink-0 place-items-center rounded-full border border-white/10 bg-[#0d1728] text-slate-300 shadow-lg shadow-black/30 transition hover:border-blue-400/50 hover:bg-blue-500/15 hover:text-blue-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400 sm:grid"
+      className="z-10 hidden h-8 w-8 shrink-0 place-items-center rounded-full border border-line bg-surface text-muted shadow-[var(--shadow-surface)] transition hover:border-accent-line hover:bg-accent-soft hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent sm:grid"
     >
       <Icon size={16} />
     </button>
@@ -109,7 +109,7 @@ export function CategoryRail({ categories, activeCategoryId, onSelect }) {
     zIndex: 1,
     background: `linear-gradient(to ${
       (edge === "start") === !rtl ? "right" : "left"
-    }, rgba(0,0,0,.65), transparent)`,
+    }, var(--nobo-surface), transparent)`,
   });
 
   return (
@@ -145,13 +145,13 @@ export function CategoryRail({ categories, activeCategoryId, onSelect }) {
                 }}
                 onClick={() => onSelect(id)}
                 aria-pressed={active}
-                className={`flex h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 text-xs font-semibold transition ${
+                className={`flex h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-4 text-xs font-bold transition ${
                   active
-                    ? "border-blue-400/70 bg-blue-500/15 text-blue-100 shadow-md shadow-blue-950/30"
-                    : "border-white/10 bg-[#0d1728] text-slate-400 hover:border-white/20 hover:bg-white/[0.06] hover:text-slate-200"
+                    ? "border-accent bg-accent text-white shadow-[var(--shadow-surface)]"
+                    : "border-line bg-surface text-muted hover:border-line-strong hover:bg-hover hover:text-ink"
                 }`}
               >
-                <Icon size={14} className={active ? "text-blue-300" : "text-slate-500"} />
+                <Icon size={14} className={active ? "text-white" : "text-subtle"} />
                 {label}
               </button>
             );

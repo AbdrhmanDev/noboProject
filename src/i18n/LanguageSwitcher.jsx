@@ -21,49 +21,35 @@ export default function LanguageSwitcher() {
   return (
     <div className="relative" ref={ref}>
       <button
+        type="button"
         onClick={() => setOpen((o) => !o)}
-        className="
-          flex
-          items-center
-          gap-2
-          rounded-xl
-          border
-          border-white/10
-          bg-white/5
-          px-4
-          py-2
-          text-sm
-          hover:bg-white/10
-          transition
-        "
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        className="flex h-10 items-center gap-2 rounded-control border border-line bg-raised px-3 text-sm font-semibold text-ink transition-colors hover:border-line-strong hover:bg-hover"
       >
-        <Globe size={14} className="text-gray-300" />
+        <Globe size={15} className="text-muted" />
         <span>{current.label}</span>
-        <ChevronDown size={12} className={`transition ${open ? "rotate-180" : ""}`} />
+        <ChevronDown size={13} className={`text-subtle transition ${open ? "rotate-180" : ""}`} />
       </button>
 
       {open && (
-        <div className="absolute end-0 top-full mt-2 w-44 rounded-xl border border-white/10 bg-[#0d1224]/95 backdrop-blur-xl shadow-xl overflow-hidden z-50">
+        <div
+          role="listbox"
+          className="absolute end-0 top-full z-50 mt-2 w-44 overflow-hidden rounded-control border border-line bg-surface shadow-[var(--shadow-float)]"
+        >
           {LANGUAGES.map((l) => (
             <button
               key={l.code}
+              type="button"
+              role="option"
+              aria-selected={l.code === lang}
               onClick={() => {
                 setLang(l.code);
                 setOpen(false);
               }}
-              className={`
-                w-full
-                flex
-                items-center
-                justify-between
-                gap-2
-                px-4
-                py-2.5
-                text-sm
-                transition
-                hover:bg-white/10
-                ${l.code === lang ? "text-violet-300 font-semibold" : "text-gray-300"}
-              `}
+              className={`flex h-11 w-full items-center justify-between gap-2 px-4 text-sm transition-colors hover:bg-hover ${
+                l.code === lang ? "font-bold text-accent" : "text-ink"
+              }`}
             >
               <span>{l.native}</span>
               {l.code === lang && <Check size={14} />}

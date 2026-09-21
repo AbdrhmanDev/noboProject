@@ -3,6 +3,8 @@ import type {
   AuthSession,
   ConfirmEmailRequest,
   ConfirmEmailResponse,
+  ForgotPasswordRequest,
+  ForgotPasswordResponse,
   CurrentUserProfile,
   LoginRequest,
   RegisterRequest,
@@ -72,5 +74,16 @@ export async function logoutApi() {
 
 export async function getCurrentUserProfileApi() {
   const response = await httpClient.get<CurrentUserProfile>("/api/auth/me");
+  return response.data;
+}
+
+// Always resolves with a neutral message whether or not the account exists (no enumeration).
+export async function forgotPasswordApi(payload: ForgotPasswordRequest) {
+  const response = await httpClient.post<ForgotPasswordResponse>(
+    "/api/auth/forgot-password",
+    payload,
+    { skipAuthRefresh: true },
+  );
+
   return response.data;
 }

@@ -63,3 +63,11 @@ export type CurrentUserProfile = {
   email: string;
   emailConfirmed: boolean;
 };
+
+export type ForgotPasswordRequest = {
+  email: string;
+};
+
+export type ForgotPasswordResponse = {
+  message: string;
+};

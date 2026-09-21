@@ -1,0 +1,66 @@
+/* Auth pages: ambient background + hero motion. Decorative only — no effect on behaviour. */
+
+/* Stars: three layers of different sizes twinkle out of phase, so the field shimmers
+   instead of pulsing as one block. */
+.auth-stars {
+  overflow: hidden;
+}
+.auth-stars,
+.auth-stars::before,
+.auth-stars::after {
+  background-repeat: repeat;
+}
+.auth-stars {
+  background-image:
+    radial-gradient(#fff 1.2px, transparent 1.2px),
+    radial-gradient(#fff 1px, transparent 1px);
+  background-size: 120px 120px, 200px 200px;
+  background-position: 0 0, 40px 60px;
+  animation: auth-twinkle 3.2s ease-in-out infinite;
+}
+.auth-stars::before,
+.auth-stars::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+.auth-stars::before {
+  background-image:
+    radial-gradient(#bcd6ff 1.4px, transparent 1.4px),
+    radial-gradient(#fff 0.8px, transparent 0.8px);
+  background-size: 280px 280px, 160px 160px;
+  background-position: 130px 270px, 70px 100px;
+  animation: auth-twinkle 4.6s ease-in-out -1.5s infinite;
+}
+.auth-stars::after {
+  background-image:
+    radial-gradient(#ffd9a0 1.6px, transparent 1.6px),
+    radial-gradient(#9fd8ff 1.1px, transparent 1.1px);
+  background-size: 500px 500px, 700px 700px;
+  animation: auth-twinkle 5.8s ease-in-out -3s infinite;
+}
+
+@keyframes auth-twinkle {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Earth drifts up and down on its own; the logo stays fixed. */
+.auth-float {
+  animation: auth-float 7s ease-in-out infinite;
+}
+
+@keyframes auth-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-18px);
+  }
+}

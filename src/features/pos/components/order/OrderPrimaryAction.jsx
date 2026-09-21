@@ -89,7 +89,7 @@ export function OrderPrimaryAction({
           <button
             type="button"
             onClick={onOpenRetrieve}
-            className="flex h-9 w-full items-center justify-center gap-1.5 rounded-lg text-xs font-bold text-slate-400 transition hover:text-slate-200"
+            className="flex h-9 w-full items-center justify-center gap-1.5 rounded-lg text-xs font-bold text-muted transition hover:text-ink"
           >
             Pay Later — continue service
           </button>
@@ -167,7 +167,7 @@ export function OrderPrimaryAction({
           type="button"
           disabled={primaryAction.disabled}
           onClick={confirmCurrentOrder}
-          className="flex h-9 w-full items-center justify-center gap-1.5 rounded-lg text-xs font-bold text-slate-400 transition hover:text-slate-200 disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex h-9 w-full items-center justify-center gap-1.5 rounded-lg text-xs font-bold text-muted transition hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
         >
           <Check size={13} />
           Confirm — Pay Later

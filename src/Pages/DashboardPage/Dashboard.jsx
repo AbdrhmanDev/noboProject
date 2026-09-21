@@ -1,103 +1,62 @@
 import {
-  ChevronDown, Package, UserPlus, ArrowLeftRight,
-  Receipt, FileText, ShoppingCart, ShoppingBag, Boxes, Contact,
-  BarChart3, Briefcase,
+  ChevronDown, Receipt, ShoppingCart, Package, ArrowLeftRight, FileText,
 } from "lucide-react";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip,
-  PieChart, Pie, Cell,
+  LineChart, Line, PieChart, Pie, Cell,
 } from "recharts";
 import AppLayout from "../../components/AppLayout";
 import { useI18n } from "../../i18n/I18nContext";
 import { ROUTES } from "../../utils/routes";
-import { Link } from "react-router-dom";
 
 /* ---------------------------------- data ---------------------------------- */
 
 const salesTrend = [
-  { day: "19 مايو", sales: 62000, profit: 30000 },
-  { day: "20 مايو", sales: 71000, profit: 34000 },
-  { day: "21 مايو", sales: 68000, profit: 33000 },
-  { day: "22 مايو", sales: 89000, profit: 41000 },
-  { day: "23 مايو", sales: 97000, profit: 46000 },
-  { day: "24 مايو", sales: 112000, profit: 52000 },
-  { day: "25 مايو", sales: 125430, profit: 58000 },
+  { day: "19 مايو", sales: 62000, profit: 30000, orders: 210 },
+  { day: "20 مايو", sales: 71000, profit: 34000, orders: 235 },
+  { day: "21 مايو", sales: 68000, profit: 33000, orders: 228 },
+  { day: "22 مايو", sales: 89000, profit: 41000, orders: 262 },
+  { day: "23 مايو", sales: 97000, profit: 46000, orders: 281 },
+  { day: "24 مايو", sales: 112000, profit: 52000, orders: 299 },
+  { day: "25 مايو", sales: 125430, profit: 58000, orders: 320 },
 ];
 
 const channelData = [
-  { nameKey: "dash.pos", value: 45, color: "#ff3d6b" },
-  { nameKey: "dash.eshop", value: 35, color: "#2b8cff" },
+  { nameKey: "dash.pos", value: 45, color: "#22c55e" },
+  { nameKey: "dash.eshop", value: 35, color: "#3b82f6" },
   { nameKey: "dash.corporate", value: 20, color: "#f5b800" },
 ];
 
-const branches = [
-  { name: "الرياض", value: "45,430", dot: "#2b8cff" },
-  { name: "جدة", value: "32,250", dot: "#ff3d6b" },
-  { name: "الدمام", value: "18,760", dot: "#f5b800" },
-  { name: "مكة", value: "12,340", dot: "#17d9c4" },
-  { name: "المدينة", value: "8,650", dot: "#8b5cf6" },
-];
-
-const topProducts = [
-  { name: "جهاز POS متكامل", qty: 25, sales: 1250 },
-  { name: "طابعة إيصالات حرارية", qty: 42, sales: 980 },
-  { name: "قارئ باركود لاسلكي", qty: 37, sales: 750 },
-  { name: "شاشة لمس 15 بوصة", qty: 18, sales: 640 },
-  { name: "درج كاشير", qty: 30, sales: 520 },
-];
-
-const dailyTasks = [
-  { time: "10:30 ص", color: "#ff3d6b", text: "مراجعة طلبية #1258 مؤسسة السليم" },
-  { time: "12:00 م", color: "#f5b800", text: "تسليم طلبية الموردين عدد الفواتير: 12" },
-  { time: "02:00 م", color: "#2b8cff", text: "إجتماع فريق المبيعات قاعة الإجتماعات" },
-];
-
-const upcomingTasks = [
-  { time: "09:00 ص", text: "مراجعة تقرير المبيعات" },
-  { time: "11:00 ص", text: "إجتماع مع الموردين" },
-  { time: "02:00 م", text: "متابعة طلبية العملاء" },
-  { time: "10:30 ص", text: "متابعة شحنة #1259" },
-  { time: "01:00 م", text: "تجديد عقد إيجار المكتب" },
-];
-
 const recentActivity = [
-  { time: "منذ 10 دقائق", tag: "#INV-2025-1054", text: "فاتورة بيع" },
-  { time: "منذ 45 دقيقة", tag: "#PO-2025-1234", text: "شراء" },
-  { time: "تم اليوم", tag: "", text: "استلام منتجات إستلام 15 صنف" },
-  { time: "منذ 30 دقيقة", tag: "#ST-2025-0123", text: "تحويل مخزون" },
-  { time: "09:15 ص", tag: "#PR-2025-0891", text: "فاتورة شراء" },
-];
-
-const financials = [
-  { labelKey: "dash.totalRevenue", value: "125,430", color: "#2b8cff" },
-  { labelKey: "dash.totalExpenses", value: "96,890", color: "#ff3d6b" },
-  { labelKey: "dash.netProfit", value: "28,540", color: "#17d9c4" },
-  { labelKey: "dash.dueDebt", value: "18,760", color: "#f5b800" },
+  { time: "منذ 10 دقائق", tag: "#INV-2025-1054", text: "فاتورة بيع", icon: Receipt, color: "#2b8cff" },
+  { time: "منذ 45 دقيقة", tag: "#PO-2025-1234", text: "شراء", icon: ShoppingCart, color: "#17d9c4" },
+  { time: "تم اليوم", tag: "", text: "استلام منتجات إستلام 15 صنف", icon: Package, color: "#f5b800" },
+  { time: "منذ 30 دقيقة", tag: "#ST-2025-0123", text: "تحويل مخزون", icon: ArrowLeftRight, color: "#8b5cf6" },
+  { time: "09:15 ص", tag: "#PR-2025-0891", text: "فاتورة شراء", icon: FileText, color: "#ff3d6b" },
 ];
 
 /* ------------------------------ dashboard page ------------------------------ */
 
-function StatCard({ label, value, delta, color, icon: Icon }) {
+function Sparkline({ dataKey, color }) {
   return (
-    <div className="stat-card rounded-2xl p-4 flex-1 min-w-[160px]">
-      <div className="flex items-center justify-between mb-2">
-        <div className="rounded-xl p-2" style={{ background: `${color}22` }}>
-          <Icon size={18} color={color} />
-        </div>
-        <span className="text-[11px] font-bold" style={{ color: "#34d399" }}>{delta}</span>
-      </div>
-      <div className="text-lg font-black text-white">{value}</div>
-      <div className="text-[11px] text-gray-400 mt-1">{label}</div>
-    </div>
+    <ResponsiveContainer width="100%" height={48}>
+      <LineChart data={salesTrend}>
+        <Line type="monotone" dataKey={dataKey} stroke={color} strokeWidth={2} dot={false} isAnimationActive={false} />
+      </LineChart>
+    </ResponsiveContainer>
   );
 }
 
-function QuickAction({ icon: Icon, label }) {
+function StatCard({ label, value, delta, color, dataKey }) {
   return (
-    <button className="panel rounded-xl px-3 py-2 flex items-center gap-2 text-xs text-gray-200 whitespace-nowrap hover:border-blue-500/50">
-      <Icon size={14} color="#60a5fa" />
-      {label}
-    </button>
+    <div className="stat-card rounded-2xl p-4 min-w-0">
+      <div className="text-[12px] text-gray-400">{label}</div>
+      <div className="mt-1 text-2xl font-black text-white">{value}</div>
+      <div className="text-[11px] font-bold" style={{ color: "#34d399" }}>{delta}</div>
+      <div className="mt-2">
+        <Sparkline dataKey={dataKey} color={color} />
+      </div>
+    </div>
   );
 }
 
@@ -105,164 +64,75 @@ export default function Dashboard({ onLogout }) {
   const { t } = useI18n();
   return (
     <AppLayout onLogout={onLogout} activePath={ROUTES.DASHBOARD}>
-      {/* quick actions */}
-      <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1 mb-6">
-          <Link to={ROUTES.SALES} className="inline-block"><QuickAction icon={Receipt} label={t("dash.saleInvoice")} /></Link>
-          <Link to={ROUTES.PURCHASES} className="inline-block"><QuickAction icon={FileText} label={t("dash.purchaseInvoice")} /></Link>
-          <Link to={ROUTES.INVENTORY} className="inline-block"><QuickAction icon={Package} label={t("dash.addProduct")} /></Link>
-          <Link to={ROUTES.CUSTOMERS} className="inline-block"><QuickAction icon={UserPlus} label={t("dash.newCustomer")} /></Link>
-          <Link to={ROUTES.REPORTS} className="inline-block"><QuickAction icon={BarChart3} label={t("dash.salesReport")} /></Link>
-          <Link to={ROUTES.INVENTORY} className="inline-block"><QuickAction icon={ArrowLeftRight} label={t("dash.transferStock")} /></Link>
-          <Link to={ROUTES.ACCOUNTING} className="inline-block"><QuickAction icon={Receipt} label={t("dash.newExpense")} /></Link>
-          <Link to={ROUTES.SETTINGS} className="inline-block"><QuickAction icon={UserPlus} label={t("dash.addUser")} /></Link>
-      </div>
-
       {/* stat cards */}
-      <div className="flex flex-wrap gap-3 mb-6">
-        <StatCard label={t("dash.totalProfit")} value="28,540 ر.س" delta="+8.3%" color="#f5b800" icon={Briefcase} />
-        <StatCard label={t("dash.totalSales")} value="125,430 ر.س" delta="+12.5%" color="#2b8cff" icon={ShoppingBag} />
-        <StatCard label={t("dash.totalOrders")} value="320 طلب" delta="+15.7%" color="#ff3d6b" icon={ShoppingCart} />
-        <StatCard label={t("dash.totalInventory")} value="2,540 صنف" delta="+6.2%" color="#8b5cf6" icon={Boxes} />
-        <StatCard label={t("dash.totalCustomers")} value="8,920 عميل" delta="+7.1%" color="#34d399" icon={Contact} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+        <StatCard label={t("dash.totalSales")} value="125,430 ر.س" delta="+12.5%" color="#ff3d6b" dataKey="sales" />
+        <StatCard label={t("dash.totalProfit")} value="28,540 ر.س" delta="+8.3%" color="#f5b800" dataKey="profit" />
+        <StatCard label={t("dash.totalOrders")} value="320" delta="+15.7%" color="#2b8cff" dataKey="orders" />
+
+        <div className="stat-card rounded-2xl p-4 min-w-0 flex items-center justify-between gap-2">
+          <div>
+            <div className="text-[12px] text-gray-400">{t("dash.growth")}</div>
+            <div className="mt-1 text-2xl font-black text-white">+12.5%</div>
+            <div className="mt-2 space-y-1">
+              {channelData.map((c, i) => (
+                <div key={i} className="flex items-center gap-1.5 text-[11px] text-gray-300">
+                  <span className="w-2 h-2 rounded-full" style={{ background: c.color }} />
+                  {t(c.nameKey)} {c.value}%
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="w-[96px] h-[96px] shrink-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={channelData} dataKey="value" innerRadius={30} outerRadius={46} paddingAngle={2} stroke="none">
+                  {channelData.map((c, i) => <Cell key={i} fill={c.color} />)}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
       </div>
 
-      {/* charts row */}
-      <div className="grid grid-cols-1 xl:grid-cols-[1.4fr_1fr_1fr] gap-4 mb-6">
+      {/* overview + recent activity */}
+      <div className="grid grid-cols-1 xl:grid-cols-[1.6fr_1fr] gap-4">
         <div className="panel rounded-2xl p-4">
           <div className="flex items-center justify-between mb-2">
             <h3 className="font-bold text-sm">{t("dash.salesOverview")}</h3>
             <span className="text-[11px] text-gray-400 flex items-center gap-1">{t("dash.last7Days")} <ChevronDown size={12} /></span>
           </div>
-          <ResponsiveContainer width="100%" height={220}>
+          <ResponsiveContainer width="100%" height={300}>
             <AreaChart data={salesTrend}>
               <defs>
                 <linearGradient id="sales" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#2b8cff" stopOpacity={0.4} />
-                  <stop offset="100%" stopColor="#2b8cff" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="profit" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#f5b800" stopOpacity={0.35} />
-                  <stop offset="100%" stopColor="#f5b800" stopOpacity={0} />
+                  <stop offset="0%" stopColor="#22d3ee" stopOpacity={0.4} />
+                  <stop offset="100%" stopColor="#22d3ee" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <XAxis dataKey="day" stroke="#6b7280" fontSize={10} />
               <YAxis stroke="#6b7280" fontSize={10} />
-              <Tooltip contentStyle={{ background: "#0b1020", border: "1px solid #2b3a5c", fontSize: 12 }} />
-              <Area type="monotone" dataKey="sales" stroke="#2b8cff" fill="url(#sales)" strokeWidth={2} name={t("dash.sales")} />
-              <Area type="monotone" dataKey="profit" stroke="#f5b800" fill="url(#profit)" strokeWidth={2} name={t("dash.profit")} />
+              <Tooltip contentStyle={{ background: "var(--nobo-surface)", border: "1px solid var(--nobo-line-strong)", color: "var(--nobo-text)", fontSize: 12 }} />
+              <Area type="monotone" dataKey="sales" stroke="#22d3ee" fill="url(#sales)" strokeWidth={2} name={t("dash.sales")} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
 
         <div className="panel rounded-2xl p-4">
-          <h3 className="font-bold text-sm mb-2">{t("dash.salesByChannel")}</h3>
-          <div className="relative">
-            <ResponsiveContainer width="100%" height={200}>
-              <PieChart>
-                <Pie data={channelData} dataKey="value" innerRadius={55} outerRadius={80} paddingAngle={2}>
-                  {channelData.map((c, i) => <Cell key={i} fill={c.color} />)}
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-lg font-black">125,430</span>
-              <span className="text-[10px] text-gray-400">{t("dash.sar")}</span>
-            </div>
-          </div>
-          <div className="space-y-1.5 mt-2">
-            {channelData.map((c, i) => (
-              <div key={i} className="flex items-center justify-between text-[11px] text-gray-300">
-                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: c.color }} />{t(c.nameKey)}</span>
-                <span>{c.value}%</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="panel rounded-2xl p-4">
-          <h3 className="font-bold text-sm mb-3">{t("dash.branchPerf")}</h3>
-          <div className="space-y-3">
-            {branches.map((b, i) => (
-              <div key={i} className="flex items-center justify-between text-xs">
-                <span className="flex items-center gap-2 text-gray-300">
-                  <span className="w-2 h-2 rounded-full" style={{ background: b.dot }} />
-                  {b.name}
-                </span>
-                <span className="font-bold text-gray-100">{b.value}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* products table */}
-      <div className="panel rounded-2xl p-4 mb-6">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-bold text-sm">{t("dash.topProducts")}</h3>
-          <span className="text-[11px] text-blue-400">{t("dash.viewAll")}</span>
-        </div>
-        <table className="w-full text-xs">
-          <thead>
-            <tr className="text-gray-500 text-right">
-              <th className="font-medium pb-2">{t("dash.product")}</th>
-              <th className="font-medium pb-2">{t("dash.qty")}</th>
-              <th className="font-medium pb-2">{t("dash.sales")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {topProducts.map((p, i) => (
-              <tr key={i} className="border-t border-white/5">
-                <td className="py-2 text-gray-200">{p.name}</td>
-                <td className="py-2 text-gray-300">{p.qty}</td>
-                <td className="py-2 text-gray-300">{p.sales}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* bottom widgets */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-        <div className="panel rounded-2xl p-4">
-          <h3 className="font-bold text-sm mb-3">{t("dash.dailyTasks")}</h3>
-          <div className="space-y-3">
-            {dailyTasks.map((t, i) => (
-              <div key={i} className="flex items-start gap-2 text-xs">
-                <span className="font-bold shrink-0" style={{ color: t.color }}>{t.time}</span>
-                <span className="text-gray-300">{t.text}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="panel rounded-2xl p-4">
-          <h3 className="font-bold text-sm mb-3">{t("dash.upcomingTasks")}</h3>
-          <div className="space-y-3">
-            {upcomingTasks.map((t, i) => (
-              <div key={i} className="flex items-start gap-2 text-xs">
-                <span className="font-bold text-blue-400 shrink-0">{t.time}</span>
-                <span className="text-gray-300">{t.text}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="panel rounded-2xl p-4">
-          <h3 className="font-bold text-sm mb-3">{t("dash.recentActivity")}</h3>
-          <div className="space-y-3">
-            {recentActivity.map((a, i) => (
-              <div key={i} className="text-xs">
-                <div className="text-gray-300">{a.tag && <span className="text-blue-400">{a.tag} </span>}{a.text}</div>
-                <div className="text-[10px] text-gray-500">{a.time}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="panel rounded-2xl p-4">
-          <h3 className="font-bold text-sm mb-3">{t("dash.financialSummary")}</h3>
-          <div className="space-y-3">
-            {financials.map((f, i) => (
-              <div key={i} className="flex items-center justify-between text-xs">
-                <span className="text-gray-300">{t(f.labelKey)}</span>
-                <span className="font-bold" style={{ color: f.color }}>{f.value}</span>
+          <h3 className="font-bold text-sm mb-4">{t("dash.recentActivity")}</h3>
+          <div className="space-y-4">
+            {recentActivity.map(({ icon: Icon, color, tag, text, time }, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full" style={{ background: `${color}26` }}>
+                  <Icon size={18} color={color} />
+                </div>
+                <div className="min-w-0 flex-1 text-xs">
+                  <div className="truncate font-semibold text-gray-100">
+                    {tag && <span className="text-blue-400">{tag} </span>}
+                    {text}
+                  </div>
+                </div>
+                <div className="shrink-0 text-[10px] text-gray-500">{time}</div>
               </div>
             ))}
           </div>

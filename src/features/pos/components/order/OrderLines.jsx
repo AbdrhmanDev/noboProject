@@ -26,13 +26,13 @@ export function OrderLines({
   // order lines; the same shortcuts are still discoverable via ShortcutHint
   // badges elsewhere in the basket.
   return (
-    <div className="min-h-0 flex-1 space-y-0.5 overflow-y-auto pr-1 scrollbar-none">
+    <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1 scrollbar-none">
       {!draftLines.length && (
-        <div className="grid min-h-36 place-items-center rounded-xl border border-dashed border-white/10 text-center">
+        <div className="grid h-full min-h-36 place-items-center rounded-xl border border-dashed border-line text-center">
           <div>
-            <ShoppingCart className="mx-auto mb-2 text-slate-600" size={26} />
-            <p className="text-xs text-slate-500">السلة فارغة</p>
-            <p className="mt-1 text-[10px] text-slate-600">اختر المنتجات لإنشاء مسودة بيع حقيقية</p>
+            <ShoppingCart className="mx-auto mb-2 text-subtle" size={26} />
+            <p className="text-xs text-muted">السلة فارغة</p>
+            <p className="mt-1 text-[10px] text-subtle">اختر المنتجات لإنشاء مسودة بيع حقيقية</p>
           </div>
         </div>
       )}
@@ -44,78 +44,80 @@ export function OrderLines({
           <div
             key={item.salesOrderLineId}
             onClick={() => onSelectLine?.(item.salesOrderLineId)}
-            className={`flex cursor-pointer items-center gap-2 rounded-lg px-1.5 py-0.5 transition ${
+            className={`cursor-pointer rounded-xl border bg-raised p-2.5 transition ${
               selected
-                ? "bg-blue-500/[0.06] ring-1 ring-inset ring-blue-400/60"
-                : "bg-white/[0.02] hover:bg-white/[0.05]"
+                ? "border-accent ring-2 ring-accent/20"
+                : "border-line hover:border-line-strong"
             }`}
           >
-            <button
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation();
-                removeDraftLine(item.salesOrderLineId);
-              }}
-              disabled={!canEditDraft}
-              className="shrink-0 text-slate-500 hover:text-rose-300 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Trash2 size={14} />
-            </button>
-
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 truncate text-xs font-bold text-slate-100">
-                <span className="truncate">{item.productName}</span>
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 text-sm font-bold text-ink">
+                  <span className="truncate">{item.productName}</span>
+                  {item.modifiers.length > 0 && (
+                    <span className="shrink-0 rounded-full bg-accent-soft px-1.5 py-0.5 text-[9px] font-bold text-accent">
+                      +{item.modifiers.length}
+                    </span>
+                  )}
+                </div>
                 {item.variantName && item.variantName !== "Standard" && (
-                  <span className="shrink-0 truncate text-[10px] font-normal text-slate-500">
-                    · {item.variantName}
-                  </span>
-                )}
-                {item.modifiers.length > 0 && (
-                  <span className="shrink-0 rounded bg-blue-500/10 px-1 py-0.5 text-[9px] font-normal text-blue-200">
-                    +{item.modifiers.length}
-                  </span>
+                  <div className="mt-0.5 truncate text-[11px] text-subtle">{item.variantName}</div>
                 )}
               </div>
-            </div>
-
-            <div
-              className="flex h-11 shrink-0 items-center rounded-lg border border-white/10"
-              onClick={(event) => event.stopPropagation()}
-            >
               <button
                 type="button"
-                onClick={() => changeQty(item.salesOrderLineId, -1)}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  removeDraftLine(item.salesOrderLineId);
+                }}
                 disabled={!canEditDraft}
-                className="grid h-11 w-11 place-items-center text-slate-300 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+                aria-label="Remove line"
+                className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-danger-soft text-danger transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <Minus size={15} />
-              </button>
-              <button
-                type="button"
-                onClick={() => onEditQuantity?.(item.salesOrderLineId, Number(item.quantity))}
-                disabled={!canEditDraft || !onEditQuantity}
-                aria-label="Edit quantity"
-                className={`min-w-9 px-1 text-center text-xs font-bold transition-opacity ${pending ? "opacity-60" : ""} ${onEditQuantity ? "hover:text-blue-300" : ""}`}
-              >
-                {Number(item.quantity)}
-              </button>
-              <button
-                type="button"
-                onClick={() => changeQty(item.salesOrderLineId, 1)}
-                disabled={!canEditDraft}
-                className="grid h-11 w-11 place-items-center text-blue-300 hover:bg-blue-500/15 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <Plus size={15} />
+                <Trash2 size={14} />
               </button>
             </div>
 
-            <span className="w-16 shrink-0 text-right text-xs font-bold">
-              {formatMoney(
-                item.lineSubtotalAmount,
-                draftOrder?.currencyCode || catalogCurrencyCode,
-                draftOrder?.currencyMinorUnitDigits || 2,
-              )}
-            </span>
+            <div className="mt-2 flex items-center justify-between gap-2">
+              <div
+                className="flex h-10 shrink-0 items-center rounded-lg border border-line bg-surface"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <button
+                  type="button"
+                  onClick={() => changeQty(item.salesOrderLineId, -1)}
+                  disabled={!canEditDraft}
+                  className="grid h-10 w-10 place-items-center text-muted hover:bg-hover hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Minus size={15} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onEditQuantity?.(item.salesOrderLineId, Number(item.quantity))}
+                  disabled={!canEditDraft || !onEditQuantity}
+                  aria-label="Edit quantity"
+                  className={`min-w-9 px-1 text-center text-sm font-bold text-ink transition-opacity ${pending ? "opacity-60" : ""} ${onEditQuantity ? "hover:text-accent" : ""}`}
+                >
+                  {Number(item.quantity)}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => changeQty(item.salesOrderLineId, 1)}
+                  disabled={!canEditDraft}
+                  className="grid h-10 w-10 place-items-center text-accent hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Plus size={15} />
+                </button>
+              </div>
+
+              <span className="text-base font-extrabold text-ink">
+                {formatMoney(
+                  item.lineSubtotalAmount,
+                  draftOrder?.currencyCode || catalogCurrencyCode,
+                  draftOrder?.currencyMinorUnitDigits || 2,
+                )}
+              </span>
+            </div>
           </div>
         );
       })}

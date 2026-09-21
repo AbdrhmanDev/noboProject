@@ -1,5 +1,5 @@
 const GlobalStyle = () => (
-  <style>{`
+  <style>{String.raw`
     :root {
       --color-bg: #000;
       --color-surface: #0d1728;
@@ -314,6 +314,101 @@ const GlobalStyle = () => (
     [data-theme="light"] .text-pink-100 { color: #be185d !important; }
     [data-theme="light"] .text-amber-100 { color: #b45309 !important; }
     [data-theme="light"] button, [data-theme="light"] input, [data-theme="light"] select, [data-theme="light"] textarea { color: #111827; }
+    /* ---- light theme: systematic fixes ---- */
+    [data-theme="light"] body { background: var(--nobo-canvas); color: var(--nobo-text); }
+    /* dark navy card / panel backgrounds hard-coded as arbitrary hex (bg-[#0c1424] ...) */
+    [data-theme="light"] [class*="bg-[#0"]:not([class*="0A84FF"]) { background-color: var(--nobo-surface) !important; }
+    [data-theme="light"] [class*="bg-[#0"]:not([class*="0A84FF"])[class*="]/"] { background-color: color-mix(in srgb, var(--nobo-surface) 90%, transparent) !important; }
+    [data-theme="light"] .bg-gray-900 { background-color: var(--nobo-surface); }
+    /* pastel text colours are tuned for dark surfaces; use readable shades on light */
+    [data-theme="light"] .text-gray-100, [data-theme="light"] .text-gray-200, [data-theme="light"] .text-gray-300 { color: #334155; }
+    [data-theme="light"] .text-blue-100 { color: #1d4ed8; }
+    [data-theme="light"] .text-blue-200 { color: #1d4ed8; }
+    [data-theme="light"] .text-blue-300 { color: #2563eb; }
+    [data-theme="light"] .text-sky-100 { color: #0369a1; }
+    [data-theme="light"] .text-sky-200 { color: #0369a1; }
+    [data-theme="light"] .text-sky-300 { color: #0284c7; }
+    [data-theme="light"] .text-cyan-100 { color: #0e7490; }
+    [data-theme="light"] .text-cyan-200 { color: #0e7490; }
+    [data-theme="light"] .text-cyan-300 { color: #0891b2; }
+    [data-theme="light"] .text-indigo-100 { color: #4338ca; }
+    [data-theme="light"] .text-indigo-200 { color: #4338ca; }
+    [data-theme="light"] .text-indigo-300 { color: #4f46e5; }
+    [data-theme="light"] .text-violet-100 { color: #6d28d9; }
+    [data-theme="light"] .text-violet-200 { color: #6d28d9; }
+    [data-theme="light"] .text-violet-300 { color: #7c3aed; }
+    [data-theme="light"] .text-purple-100 { color: #7e22ce; }
+    [data-theme="light"] .text-purple-200 { color: #7e22ce; }
+    [data-theme="light"] .text-purple-300 { color: #9333ea; }
+    [data-theme="light"] .text-fuchsia-100 { color: #a21caf; }
+    [data-theme="light"] .text-fuchsia-200 { color: #a21caf; }
+    [data-theme="light"] .text-fuchsia-300 { color: #c026d3; }
+    [data-theme="light"] .text-pink-100 { color: #be185d; }
+    [data-theme="light"] .text-pink-200 { color: #be185d; }
+    [data-theme="light"] .text-pink-300 { color: #db2777; }
+    [data-theme="light"] .text-rose-100 { color: #be123c; }
+    [data-theme="light"] .text-rose-200 { color: #be123c; }
+    [data-theme="light"] .text-rose-300 { color: #e11d48; }
+    [data-theme="light"] .text-red-100 { color: #b91c1c; }
+    [data-theme="light"] .text-red-200 { color: #b91c1c; }
+    [data-theme="light"] .text-red-300 { color: #dc2626; }
+    [data-theme="light"] .text-orange-100 { color: #c2410c; }
+    [data-theme="light"] .text-orange-200 { color: #c2410c; }
+    [data-theme="light"] .text-orange-300 { color: #ea580c; }
+    [data-theme="light"] .text-amber-100 { color: #92400e; }
+    [data-theme="light"] .text-amber-200 { color: #b45309; }
+    [data-theme="light"] .text-amber-300 { color: #b45309; }
+    [data-theme="light"] .text-yellow-100 { color: #854d0e; }
+    [data-theme="light"] .text-yellow-200 { color: #a16207; }
+    [data-theme="light"] .text-yellow-300 { color: #a16207; }
+    [data-theme="light"] .text-lime-100 { color: #4d7c0f; }
+    [data-theme="light"] .text-lime-200 { color: #4d7c0f; }
+    [data-theme="light"] .text-lime-300 { color: #65a30d; }
+    [data-theme="light"] .text-green-100 { color: #15803d; }
+    [data-theme="light"] .text-green-200 { color: #15803d; }
+    [data-theme="light"] .text-green-300 { color: #16a34a; }
+    [data-theme="light"] .text-emerald-100 { color: #047857; }
+    [data-theme="light"] .text-emerald-200 { color: #047857; }
+    [data-theme="light"] .text-emerald-300 { color: #059669; }
+    [data-theme="light"] .text-teal-100 { color: #0f766e; }
+    [data-theme="light"] .text-teal-200 { color: #0f766e; }
+    [data-theme="light"] .text-teal-300 { color: #0d9488; }
+    /* dark navy gradient stops (to-[#0c1627] ...) */
+    [data-theme="light"] [class*="from-[#0"]:not([class*="0A84FF"]) { --tw-gradient-from: var(--nobo-surface); }
+    [data-theme="light"] [class*="via-[#0"]:not([class*="0A84FF"]) { --tw-gradient-via: var(--nobo-surface); }
+    [data-theme="light"] [class*="to-[#0"]:not([class*="0A84FF"]) { --tw-gradient-to: var(--nobo-surface); }
+    /* the AI Copilot card's pink wash reads as a red background on light: keep it neutral */
+    [data-theme="light"] [class*="from-pink-500"] { --tw-gradient-from: var(--nobo-surface); }
+    .nobo-logo-dark, .nobo-logo-light { filter: saturate(1.2) contrast(1.12); }
+    .nobo-logo-light { display: none; }
+    [data-theme="light"] .nobo-logo-dark { display: none; }
+    [data-theme="light"] .nobo-logo-light { display: block; }
+    /* solid dark-grey buttons (bg-slate-700 ...) become light grey (a step darker than the panels) so dark text stays readable */
+    [data-theme="light"] :is(.bg-slate-600, .bg-slate-700, .bg-slate-800, .bg-gray-700, .bg-gray-800) { background-color: #cbd5e1; color: #0f172a; }
+    [data-theme="light"] :is(.bg-slate-600, .bg-slate-700, .bg-slate-800, .bg-gray-700, .bg-gray-800):hover { background-color: #b6c2d3; }
+    /* near-white "-50" text sits on tinted alert boxes: darken for light theme */
+    [data-theme="light"] .text-blue-50 { color: #1e40af; }
+    [data-theme="light"] .text-sky-50 { color: #075985; }
+    [data-theme="light"] .text-cyan-50 { color: #155e75; }
+    [data-theme="light"] .text-indigo-50 { color: #3730a3; }
+    [data-theme="light"] .text-violet-50 { color: #5b21b6; }
+    [data-theme="light"] .text-purple-50 { color: #6b21a8; }
+    [data-theme="light"] .text-fuchsia-50 { color: #86198f; }
+    [data-theme="light"] .text-pink-50 { color: #9d174d; }
+    [data-theme="light"] .text-rose-50 { color: #9f1239; }
+    [data-theme="light"] .text-red-50 { color: #991b1b; }
+    [data-theme="light"] .text-orange-50 { color: #9a3412; }
+    [data-theme="light"] .text-amber-50 { color: #78350f; }
+    [data-theme="light"] .text-yellow-50 { color: #713f12; }
+    [data-theme="light"] .text-lime-50 { color: #3f6212; }
+    [data-theme="light"] .text-green-50 { color: #166534; }
+    [data-theme="light"] .text-emerald-50 { color: #065f46; }
+    [data-theme="light"] .text-teal-50 { color: #115e59; }
+    [data-theme="light"] .text-gray-50 { color: #1f2937; }
+    [data-theme="light"] .text-slate-50 { color: #1e293b; }
+    /* white text must stay white on solid coloured buttons / badges */
+    [data-theme="light"] :is(.bg-amber-600, .bg-amber-700, .bg-blue-500,.bg-blue-600,.bg-blue-700,.bg-blue-800,.bg-sky-500,.bg-sky-600,.bg-sky-700,.bg-sky-800,.bg-cyan-500,.bg-cyan-600,.bg-cyan-700,.bg-cyan-800,.bg-indigo-500,.bg-indigo-600,.bg-indigo-700,.bg-indigo-800,.bg-violet-500,.bg-violet-600,.bg-violet-700,.bg-violet-800,.bg-purple-500,.bg-purple-600,.bg-purple-700,.bg-purple-800,.bg-fuchsia-500,.bg-fuchsia-600,.bg-fuchsia-700,.bg-fuchsia-800,.bg-pink-500,.bg-pink-600,.bg-pink-700,.bg-pink-800,.bg-rose-500,.bg-rose-600,.bg-rose-700,.bg-rose-800,.bg-red-500,.bg-red-600,.bg-red-700,.bg-red-800,.bg-orange-500,.bg-orange-600,.bg-orange-700,.bg-orange-800,.bg-emerald-500,.bg-emerald-600,.bg-emerald-700,.bg-emerald-800,.bg-green-500,.bg-green-600,.bg-green-700,.bg-green-800,.bg-teal-500,.bg-teal-600,.bg-teal-700,.bg-teal-800,.bg-accent,.bg-accent-strong,.bg-danger,.from-blue-600,.from-violet-600,.from-pink-500).text-white,
+    [data-theme="light"] :is(.bg-blue-500,.bg-blue-600,.bg-blue-700,.bg-blue-800,.bg-sky-500,.bg-sky-600,.bg-sky-700,.bg-sky-800,.bg-cyan-500,.bg-cyan-600,.bg-cyan-700,.bg-cyan-800,.bg-indigo-500,.bg-indigo-600,.bg-indigo-700,.bg-indigo-800,.bg-violet-500,.bg-violet-600,.bg-violet-700,.bg-violet-800,.bg-purple-500,.bg-purple-600,.bg-purple-700,.bg-purple-800,.bg-fuchsia-500,.bg-fuchsia-600,.bg-fuchsia-700,.bg-fuchsia-800,.bg-pink-500,.bg-pink-600,.bg-pink-700,.bg-pink-800,.bg-rose-500,.bg-rose-600,.bg-rose-700,.bg-rose-800,.bg-red-500,.bg-red-600,.bg-red-700,.bg-red-800,.bg-orange-500,.bg-orange-600,.bg-orange-700,.bg-orange-800,.bg-emerald-500,.bg-emerald-600,.bg-emerald-700,.bg-emerald-800,.bg-green-500,.bg-green-600,.bg-green-700,.bg-green-800,.bg-teal-500,.bg-teal-600,.bg-teal-700,.bg-teal-800,.bg-accent,.bg-accent-strong,.bg-danger,.from-blue-600,.from-violet-600,.from-pink-500) .text-white { color: #fff; }
     @media (max-width: 639px) {
           .nobo-root .panel,
           .nobo-root .stat-card { min-width: 0; }

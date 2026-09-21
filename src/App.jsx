@@ -23,6 +23,7 @@ import {
 import LoginPage from "./Pages/loginPage/Login";
 import RegisterPage from "./Pages/registerPage/Register";
 import ConfirmEmailPage from "./Pages/confirmEmailPage/ConfirmEmail";
+import ForgotPasswordPage from "./Pages/forgotPasswordPage/ForgotPassword";
 import InviteAcceptPage from "./Pages/InviteAcceptPage/InviteAcceptPage";
 import Dashboard from "./Pages/DashboardPage/Dashboard";
 import POSPage from "./Pages/POSPage/POSPage";
@@ -93,6 +94,7 @@ export default function App() {
               <Route path={ROUTES.LOGIN} element={<PublicOnlyRoute><LoginPage /></PublicOnlyRoute>} />
               <Route path={ROUTES.REGISTER} element={<PublicOnlyRoute><RegisterPage /></PublicOnlyRoute>} />
               <Route path={ROUTES.CONFIRM_EMAIL} element={<PublicOnlyRoute><ConfirmEmailPage /></PublicOnlyRoute>} />
+              <Route path={ROUTES.FORGOT_PASSWORD} element={<PublicOnlyRoute><ForgotPasswordPage /></PublicOnlyRoute>} />
               <Route path={ROUTES.INVITE_ACCEPT} element={<InviteAcceptPage />} />
               <Route
                 path={ROUTES.DASHBOARD}

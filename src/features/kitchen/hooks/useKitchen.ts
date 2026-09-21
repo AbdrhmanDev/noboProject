@@ -1,7 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMemo } from "react";
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   changeKitchenStationStatus,
-  createKitchenStation,
   getKitchenStationDetails,
   getKitchenStations,
   getOpenKitchenTickets,
@@ -14,8 +14,9 @@ import {
 } from "../api/kitchenApi";
 import type {
   ChangeKitchenStationStatusRequest,
-  CreateKitchenStationRequest,
   KitchenStationFilters,
+  OpenKitchenTicket,
+  OperationalKitchenStation,
   SetProductVariantKitchenRouteRequest,
   UpdateKitchenStationRequest,
 } from "../types/kitchen.types";
@@ -140,19 +141,6 @@ function invalidateKitchenAdmin(
       queryKey: kitchenQueryKeys.adminStation(companyId, branchId, kitchenStationId),
     });
   }
-}
-
-export function useCreateKitchenStation(
-  companyId: string | null | undefined,
-  branchId: string | null | undefined,
-) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (payload: CreateKitchenStationRequest) =>
-      createKitchenStation(companyId as string, branchId as string, payload),
-    onSuccess: () => invalidateKitchenAdmin(queryClient, companyId, branchId),
-  });
 }
 
 export function useUpdateKitchenStation(
@@ -320,4 +308,85 @@ export function useMarkKitchenTicketReady(
       });
     },
   });
+}
+
+export type KitchenBoardTicket = OpenKitchenTicket & {
+  kitchenStationId: string;
+  kitchenStationName: string;
+};
+
+// The kitchen board shows every active station on one screen. Tickets are still fetched (and
+// started / marked ready) per station because that is how the API is scoped, so each ticket keeps
+// the station it belongs to. Queries share their keys with useOpenKitchenTickets.
+export function useAllOpenKitchenTickets(
+  companyId: string | null | undefined,
+  branchId: string | null | undefined,
+  stations: OperationalKitchenStation[],
+  enabled = true,
+) {
+  const active = enabled && Boolean(companyId) && Boolean(branchId);
+  const results = useQueries({
+    queries: stations.map((station) => ({
+      queryKey: kitchenQueryKeys.openTickets(companyId || "", branchId || "", station.kitchenStationId),
+      queryFn: () =>
+        getOpenKitchenTickets(companyId as string, branchId as string, station.kitchenStationId),
+      enabled: active,
+      refetchInterval: active ? 15000 : (false as const),
+    })),
+  });
+
+  const dataKey = results.map((result) => result.dataUpdatedAt).join(",");
+  const tickets = useMemo<KitchenBoardTicket[]>(() => {
+    const merged: KitchenBoardTicket[] = [];
+    results.forEach((result, index) => {
+      const station = stations[index];
+      for (const ticket of result.data ?? []) {
+        merged.push({
+          ...ticket,
+          kitchenStationId: station.kitchenStationId,
+          kitchenStationName: station.name,
+        });
+      }
+    });
+    // Oldest first: the kitchen works the queue in the order orders arrived.
+    return merged.sort(
+      (a, b) => new Date(a.createdAtUtc).getTime() - new Date(b.createdAtUtc).getTime(),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataKey, stations]);
+
+  return {
+    tickets,
+    isLoading: results.length > 0 && results.every((result) => result.isLoading),
+    isFetching: results.some((result) => result.isFetching),
+    failedCount: results.filter((result) => result.isError).length,
+    stationCount: results.length,
+    refetch: () => Promise.all(results.map((result) => result.refetch())),
+  };
+}
+
+export function useKitchenTicketActions(
+  companyId: string | null | undefined,
+  branchId: string | null | undefined,
+) {
+  const queryClient = useQueryClient();
+  const refresh = (kitchenStationId: string) => {
+    if (!companyId || !branchId) return;
+    queryClient.invalidateQueries({
+      queryKey: kitchenQueryKeys.openTickets(companyId, branchId, kitchenStationId),
+    });
+  };
+
+  const start = useMutation({
+    mutationFn: ({ kitchenStationId, kitchenTicketId }: { kitchenStationId: string; kitchenTicketId: string }) =>
+      startKitchenTicketPreparation(companyId as string, branchId as string, kitchenStationId, kitchenTicketId),
+    onSuccess: (_data, variables) => refresh(variables.kitchenStationId),
+  });
+  const ready = useMutation({
+    mutationFn: ({ kitchenStationId, kitchenTicketId }: { kitchenStationId: string; kitchenTicketId: string }) =>
+      markKitchenTicketReady(companyId as string, branchId as string, kitchenStationId, kitchenTicketId),
+    onSuccess: (_data, variables) => refresh(variables.kitchenStationId),
+  });
+
+  return { start, ready };
 }

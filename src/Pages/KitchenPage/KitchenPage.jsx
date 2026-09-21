@@ -1,176 +1,126 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  CheckCircle2,
-  ChefHat,
-  Clock3,
-  CookingPot,
-  Flame,
-  RefreshCw,
-  Settings,
-  Timer,
-  Utensils,
-} from "lucide-react";
+import { ChefHat, ChevronLeft, ChevronRight, RefreshCw, Settings } from "lucide-react";
 import AppLayout from "../../components/AppLayout";
 import { EmptyState, ErrorState, LoadingState } from "../../shared/components/ui";
 import { useBranch } from "../../features/branches/context/BranchContext";
 import { useCompany } from "../../features/companies/context/CompanyContext";
 import { useHasPermission } from "../../features/companies/hooks/useCompanies";
 import {
-  useMarkKitchenTicketReady,
-  useOpenKitchenTickets,
+  useAllOpenKitchenTickets,
+  useKitchenTicketActions,
   useOperationalKitchenStations,
-  useStartKitchenTicketPreparation,
 } from "../../features/kitchen/hooks/useKitchen";
+import { KitchenTicketCard } from "../../features/kitchen/components/KitchenTicketCard";
 import { ROUTES } from "../../utils/routes";
 
 const KITCHEN_VIEW_PERMISSION = "Kitchen.View";
 const KITCHEN_MANAGE_PERMISSION = "Kitchen.Manage";
 
-function formatTicketAge(createdAtUtc) {
-  const createdAt = new Date(createdAtUtc).getTime();
-  if (!Number.isFinite(createdAt)) return "--";
+// Card footprint used to work out how many orders fit on one screen.
+const CARD_MIN_WIDTH = 300;
+const CARD_HEIGHT = 420;
+const GRID_GAP = 16;
+// Room kept under the board for the pager and the page's bottom padding.
+const BOARD_BOTTOM_RESERVE = 96;
 
-  const minutes = Math.max(0, Math.floor((Date.now() - createdAt) / 60000));
-  if (minutes < 1) return "الآن";
-  if (minutes < 60) return `${minutes} د`;
+// How many card columns / rows fit in the board's box, so one page is exactly one screen.
+function useBoardCapacity(dependency) {
+  const boardRef = useRef(null);
+  const [capacity, setCapacity] = useState({ cols: 3, rows: 1 });
 
-  const hours = Math.floor(minutes / 60);
-  const remainder = minutes % 60;
-  return remainder ? `${hours} س ${remainder} د` : `${hours} س`;
+  useEffect(() => {
+    const measure = () => {
+      const board = boardRef.current;
+      if (!board) return;
+
+      const height = window.innerHeight - board.getBoundingClientRect().top - BOARD_BOTTOM_RESERVE;
+      const cols = Math.max(1, Math.floor((board.clientWidth + GRID_GAP) / (CARD_MIN_WIDTH + GRID_GAP)));
+      const rows = Math.max(1, Math.floor((height + GRID_GAP) / (CARD_HEIGHT + GRID_GAP)));
+      setCapacity((current) => (current.cols === cols && current.rows === rows ? current : { cols, rows }));
+    };
+
+    measure();
+    window.addEventListener("resize", measure);
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
+    if (observer && boardRef.current) observer.observe(boardRef.current);
+
+    return () => {
+      window.removeEventListener("resize", measure);
+      observer?.disconnect();
+    };
+  }, [dependency]);
+
+  return [boardRef, capacity];
 }
 
-function formatTicketTime(value) {
-  if (!value) return "--";
-
-  return new Intl.DateTimeFormat("ar-SA", {
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(value));
+function SectionTab({ label, count, active, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`flex h-11 shrink-0 items-center gap-2 rounded-full border px-5 text-sm font-bold transition ${
+        active
+          ? "border-accent bg-accent text-white shadow-[var(--shadow-surface)]"
+          : "border-line bg-surface text-muted hover:border-line-strong hover:bg-hover hover:text-ink"
+      }`}
+    >
+      {label}
+      <span
+        className={`grid h-6 min-w-6 place-items-center rounded-full px-1.5 text-xs font-black ${
+          active ? "bg-white/25 text-white" : "bg-inset text-muted"
+        }`}
+      >
+        {count}
+      </span>
+    </button>
+  );
 }
 
-function statusTone(status) {
-  if (status === "Preparing") {
-    return "border-amber-400/35 bg-amber-500/15 text-amber-100";
-  }
+function Pager({ page, pageCount, onChange }) {
+  if (pageCount <= 1) return null;
 
-  return "border-blue-400/35 bg-blue-500/15 text-blue-100";
-}
-
-function TicketCard({
-  ticket,
-  canManage,
-  isMutating,
-  onStart,
-  onReady,
-}) {
-  const tableLabel = ticket.restaurantTable
-    ? `${ticket.restaurantTable.name || ticket.restaurantTable.code} · ${ticket.restaurantTable.code}`
-    : null;
+  const pages = Array.from({ length: pageCount }, (_, index) => index);
+  const btn =
+    "grid h-10 min-w-10 place-items-center rounded-xl border px-3 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-40";
 
   return (
-    <article className="flex min-h-[360px] flex-col rounded-xl border border-white/10 bg-[#0d1728] p-4 shadow-xl shadow-black/20">
-      <div className="mb-3 flex items-start justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2 text-xs text-slate-400">
-            <ChefHat size={15} className="text-blue-300" />
-            <span>تذكرة مطبخ</span>
-            <span className="text-slate-600">#{ticket.kitchenTicketId.slice(-6)}</span>
-          </div>
-          <h2 className="mt-1 text-lg font-black text-white">
-            {ticket.fulfillmentType}
-            {tableLabel ? ` · ${tableLabel}` : ""}
-          </h2>
-        </div>
-        <span className={`rounded-full border px-2.5 py-1 text-[11px] font-bold ${statusTone(ticket.status)}`}>
-          {ticket.status}
-        </span>
-      </div>
-
-      <div className="mb-3 grid grid-cols-3 gap-2 text-[11px]">
-        <div className="rounded-lg bg-white/[0.035] p-2">
-          <div className="flex items-center gap-1 text-slate-500">
-            <Timer size={13} /> العمر
-          </div>
-          <div className="mt-1 font-bold text-white">{formatTicketAge(ticket.createdAtUtc)}</div>
-        </div>
-        <div className="rounded-lg bg-white/[0.035] p-2">
-          <div className="flex items-center gap-1 text-slate-500">
-            <Clock3 size={13} /> الإنشاء
-          </div>
-          <div className="mt-1 font-bold text-white">{formatTicketTime(ticket.createdAtUtc)}</div>
-        </div>
-        <div className="rounded-lg bg-white/[0.035] p-2">
-          <div className="flex items-center gap-1 text-slate-500">
-            <Flame size={13} /> البدء
-          </div>
-          <div className="mt-1 font-bold text-white">{formatTicketTime(ticket.startedAtUtc)}</div>
-        </div>
-      </div>
-
-      <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1 scrollbar-none">
-        {ticket.items.map((item) => (
-          <div
-            key={item.kitchenTicketItemId}
-            className="rounded-lg border border-white/8 bg-white/[0.025] p-3"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className="text-sm font-black text-slate-50">
-                  {Number(item.quantity)} × {item.productName}
-                </div>
-                <div className="mt-1 text-xs text-slate-400">
-                  {item.variantName} · {item.salesUnitOfMeasure.symbol || item.salesUnitOfMeasure.code}
-                </div>
-              </div>
-              <Utensils size={17} className="shrink-0 text-slate-500" />
-            </div>
-            {item.modifiers.length > 0 && (
-              <div className="mt-2 space-y-1 border-t border-white/8 pt-2">
-                {item.modifiers.map((modifier) => (
-                  <div
-                    key={`${item.kitchenTicketItemId}-${modifier.modifierGroupName}-${modifier.modifierOptionName}`}
-                    className="text-[11px] text-blue-100"
-                  >
-                    - {modifier.modifierGroupName}: {modifier.modifierOptionName}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-4 grid grid-cols-2 gap-2">
-        {ticket.status === "New" && (
-          <button
-            type="button"
-            disabled={!canManage || isMutating}
-            onClick={() => onStart(ticket.kitchenTicketId)}
-            className="col-span-2 flex h-11 items-center justify-center gap-2 rounded-lg bg-amber-600 text-xs font-black text-white transition hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <CookingPot size={16} />
-            بدء التحضير
-          </button>
-        )}
-        {ticket.status === "Preparing" && (
-          <button
-            type="button"
-            disabled={!canManage || isMutating}
-            onClick={() => onReady(ticket.kitchenTicketId)}
-            className="col-span-2 flex h-11 items-center justify-center gap-2 rounded-lg bg-emerald-600 text-xs font-black text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <CheckCircle2 size={16} />
-            جاهز
-          </button>
-        )}
-      </div>
-      {!canManage && (
-        <p className="mt-2 text-center text-[10px] text-slate-500">
-          صلاحية Kitchen.Manage مطلوبة لتغيير حالة التذكرة
-        </p>
-      )}
-    </article>
+    <nav className="flex items-center justify-center gap-2" aria-label="Kitchen pages">
+      <button
+        type="button"
+        onClick={() => onChange(page - 1)}
+        disabled={page === 0}
+        aria-label="الصفحة السابقة"
+        className={`${btn} border-line bg-surface text-muted hover:border-accent-line hover:text-ink`}
+      >
+        <ChevronRight size={18} />
+      </button>
+      {pages.map((index) => (
+        <button
+          key={index}
+          type="button"
+          onClick={() => onChange(index)}
+          aria-current={index === page ? "page" : undefined}
+          className={`${btn} ${
+            index === page
+              ? "border-accent bg-accent text-white"
+              : "border-line bg-surface text-muted hover:border-accent-line hover:text-ink"
+          }`}
+        >
+          {index + 1}
+        </button>
+      ))}
+      <button
+        type="button"
+        onClick={() => onChange(page + 1)}
+        disabled={page === pageCount - 1}
+        aria-label="الصفحة التالية"
+        className={`${btn} border-line bg-surface text-muted hover:border-accent-line hover:text-ink`}
+      >
+        <ChevronLeft size={18} />
+      </button>
+    </nav>
   );
 }
 
@@ -178,64 +128,70 @@ export default function KitchenPage() {
   const navigate = useNavigate();
   const { currentCompanyId } = useCompany();
   const { currentBranchId } = useBranch();
-  const [selectedStationId, setSelectedStationId] = useState(null);
+  const [page, setPage] = useState(0);
+  // "all", or the id of one section (= kitchen station) whose products this tab shows.
+  const [sectionId, setSectionId] = useState("all");
   const [toast, setToast] = useState("");
-  const viewPermissionQuery = useHasPermission(
-    currentCompanyId,
-    KITCHEN_VIEW_PERMISSION,
-  );
-  const managePermissionQuery = useHasPermission(
-    currentCompanyId,
-    KITCHEN_MANAGE_PERMISSION,
-  );
+  // The API only returns open tickets, so an order marked ready would vanish at once. Keep it on
+  // the board (as a snapshot) until the cook removes it with the trash button.
+  const [readyTickets, setReadyTickets] = useState({});
+  const viewPermissionQuery = useHasPermission(currentCompanyId, KITCHEN_VIEW_PERMISSION);
+  const managePermissionQuery = useHasPermission(currentCompanyId, KITCHEN_MANAGE_PERMISSION);
   const canLoadKitchen =
     Boolean(currentCompanyId) &&
     Boolean(currentBranchId) &&
     !viewPermissionQuery.isLoading &&
     !viewPermissionQuery.isError &&
     viewPermissionQuery.hasPermission;
-  const stationsQuery = useOperationalKitchenStations(
-    currentCompanyId,
-    currentBranchId,
-    canLoadKitchen,
-  );
+  const stationsQuery = useOperationalKitchenStations(currentCompanyId, currentBranchId, canLoadKitchen);
   const stations = useMemo(() => stationsQuery.data || [], [stationsQuery.data]);
-  const effectiveStationId = stations.some(
-    (station) => station.kitchenStationId === selectedStationId,
-  )
-    ? selectedStationId
-    : stations[0]?.kitchenStationId || null;
 
-  const selectedStation = useMemo(
+  // Every active station's open tickets, merged into one queue (oldest first).
+  const board = useAllOpenKitchenTickets(currentCompanyId, currentBranchId, stations, canLoadKitchen);
+  const allTickets = useMemo(() => {
+    const openIds = new Set(board.tickets.map((ticket) => ticket.kitchenTicketId));
+    const kept = Object.values(readyTickets).filter((ticket) => !openIds.has(ticket.kitchenTicketId));
+    return [...board.tickets, ...kept].sort(
+      (a, b) => new Date(a.createdAtUtc).getTime() - new Date(b.createdAtUtc).getTime(),
+    );
+  }, [board.tickets, readyTickets]);
+  const activeSectionId =
+    sectionId === "all" || stations.some((station) => station.kitchenStationId === sectionId)
+      ? sectionId
+      : "all";
+  const tickets = useMemo(
     () =>
-      stations.find((station) => station.kitchenStationId === effectiveStationId) ||
-      null,
-    [effectiveStationId, stations],
+      activeSectionId === "all"
+        ? allTickets
+        : allTickets.filter((ticket) => ticket.kitchenStationId === activeSectionId),
+    [activeSectionId, allTickets],
   );
-  const ticketsQuery = useOpenKitchenTickets(
+  const sectionCounts = useMemo(() => {
+    const counts = {};
+    for (const ticket of allTickets) {
+      counts[ticket.kitchenStationId] = (counts[ticket.kitchenStationId] || 0) + 1;
+    }
+    return counts;
+  }, [allTickets]);
+  const selectSection = (id) => {
+    setSectionId(id);
+    setPage(0);
+  };
+  const { start: startMutation, ready: readyMutation } = useKitchenTicketActions(
     currentCompanyId,
     currentBranchId,
-    effectiveStationId,
-    canLoadKitchen && Boolean(effectiveStationId),
-  );
-  const tickets = ticketsQuery.data || [];
-  const startMutation = useStartKitchenTicketPreparation(
-    currentCompanyId,
-    currentBranchId,
-    effectiveStationId,
-  );
-  const readyMutation = useMarkKitchenTicketReady(
-    currentCompanyId,
-    currentBranchId,
-    effectiveStationId,
   );
   const isMutating = startMutation.isPending || readyMutation.isPending;
-  const canManage =
-    !managePermissionQuery.isLoading && managePermissionQuery.hasPermission;
-  const newCount = tickets.filter((ticket) => ticket.status === "New").length;
-  const preparingCount = tickets.filter(
-    (ticket) => ticket.status === "Preparing",
-  ).length;
+  const canManage = !managePermissionQuery.isLoading && managePermissionQuery.hasPermission;
+  const newCount = allTickets.filter((ticket) => ticket.status === "New").length;
+  const preparingCount = allTickets.filter((ticket) => ticket.status === "Preparing").length;
+  const readyCount = allTickets.filter((ticket) => ticket.status === "Ready").length;
+
+  const [boardRef, { cols, rows }] = useBoardCapacity(tickets.length);
+  const pageSize = cols * rows;
+  const pageCount = Math.max(1, Math.ceil(tickets.length / pageSize));
+  const currentPage = Math.min(page, pageCount - 1);
+  const visibleTickets = tickets.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
 
   const notify = (message) => {
     setToast(message);
@@ -246,61 +202,88 @@ export default function KitchenPage() {
       error?.code === "KitchenTicket.InvalidStatusTransition" ||
       error?.code === "KitchenTicket.NotAvailable"
     ) {
-      ticketsQuery.refetch();
+      board.refetch();
     }
 
     notify(error?.message || "تعذر تحديث تذكرة المطبخ");
   };
-  const startTicket = async (ticketId) => {
+  const startTicket = async (ticket) => {
     try {
-      await startMutation.mutateAsync(ticketId);
+      await startMutation.mutateAsync({
+        kitchenStationId: ticket.kitchenStationId,
+        kitchenTicketId: ticket.kitchenTicketId,
+      });
       notify("تم بدء التحضير");
     } catch (error) {
       handleLifecycleError(error);
     }
   };
-  const markReady = async (ticketId) => {
+  const markReady = async (ticket) => {
     try {
-      await readyMutation.mutateAsync(ticketId);
+      await readyMutation.mutateAsync({
+        kitchenStationId: ticket.kitchenStationId,
+        kitchenTicketId: ticket.kitchenTicketId,
+      });
+      setReadyTickets((current) => ({
+        ...current,
+        [ticket.kitchenTicketId]: { ...ticket, status: "Ready" },
+      }));
       notify("تم تعليم التذكرة كجاهزة");
     } catch (error) {
       handleLifecycleError(error);
     }
   };
 
+  const dismissTicket = (ticket) => {
+    setReadyTickets((current) => {
+      const next = { ...current };
+      delete next[ticket.kitchenTicketId];
+      return next;
+    });
+  };
+
+  const allFailed = board.stationCount > 0 && board.failedCount === board.stationCount;
+
   return (
     <AppLayout activePath={ROUTES.KITCHEN}>
       <main className="min-w-0 flex-1 p-3 sm:p-4 xl:p-5" dir="rtl">
-        <div className="mx-auto max-w-[1680px] space-y-4">
-          <header className="flex flex-col gap-3 border-b border-white/10 pb-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="mx-auto max-w-[2200px] space-y-4">
+          <header className="flex flex-col gap-3 border-b border-line pb-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <div className="flex items-center gap-2 text-xs font-bold text-blue-300">
+              <div className="flex items-center gap-2 text-xs font-bold text-accent">
                 <ChefHat size={17} />
                 KDS
               </div>
-              <h1 className="mt-1 text-2xl font-black text-white">
-                شاشة تشغيل المطبخ
-              </h1>
-              <p className="mt-1 text-xs text-slate-400">
-                تذاكر مؤكدة من الطلبات الحقيقية حسب محطة المطبخ
-              </p>
+              <h1 className="mt-1 text-2xl font-black text-ink">شاشة تشغيل المطبخ</h1>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-2 rounded-xl border border-accent-line bg-accent-soft px-3 py-2 text-xs font-bold text-accent">
+                جديدة
+                <span className="text-base font-black">{newCount}</span>
+              </div>
+              <div className="flex items-center gap-2 rounded-xl border border-warning/40 bg-warning-soft px-3 py-2 text-xs font-bold text-warning">
+                قيد التحضير
+                <span className="text-base font-black">{preparingCount}</span>
+              </div>
+              <div className="flex items-center gap-2 rounded-xl border border-success/40 bg-success-soft px-3 py-2 text-xs font-bold text-success">
+                جاهزة
+                <span className="text-base font-black">{readyCount}</span>
+              </div>
               <button
                 type="button"
                 onClick={() => navigate(ROUTES.KITCHEN_ADMIN)}
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 text-xs font-bold text-slate-200 transition hover:border-blue-400/40"
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-line bg-inset px-3 text-xs font-bold text-ink transition hover:border-accent-line hover:bg-accent-soft"
               >
                 <Settings size={15} />
                 Configuration
               </button>
               <button
                 type="button"
-                onClick={() => ticketsQuery.refetch()}
-                disabled={!effectiveStationId || ticketsQuery.isFetching}
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 text-xs font-bold text-slate-200 transition hover:border-blue-400/40 disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => board.refetch()}
+                disabled={!stations.length || board.isFetching}
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-line bg-inset px-3 text-xs font-bold text-ink transition hover:border-accent-line hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <RefreshCw size={15} className={ticketsQuery.isFetching ? "animate-spin" : ""} />
+                <RefreshCw size={15} className={board.isFetching ? "animate-spin" : ""} />
                 Refresh
               </button>
             </div>
@@ -314,10 +297,7 @@ export default function KitchenPage() {
           ) : viewPermissionQuery.isLoading ? (
             <LoadingState label="Checking kitchen access..." />
           ) : viewPermissionQuery.isError || !viewPermissionQuery.hasPermission ? (
-            <EmptyState
-              title="لا توجد صلاحية للمطبخ"
-              message="تحتاج Kitchen.View لعرض تذاكر المطبخ."
-            />
+            <EmptyState title="لا توجد صلاحية للمطبخ" message="تحتاج Kitchen.View لعرض تذاكر المطبخ." />
           ) : stationsQuery.isLoading ? (
             <LoadingState label="Loading kitchen stations..." />
           ) : stationsQuery.isError ? (
@@ -332,95 +312,74 @@ export default function KitchenPage() {
             />
           ) : (
             <>
-              <section className="grid gap-3 lg:grid-cols-[280px_minmax(0,1fr)]">
-                <aside className="rounded-xl border border-white/10 bg-[#0d1728] p-3">
-                  <div className="mb-3 text-xs font-bold text-slate-400">
-                    محطات المطبخ
-                  </div>
-                  <div className="space-y-2">
-                    {stations.map((station) => (
-                      <button
-                        key={station.kitchenStationId}
-                        type="button"
-                        onClick={() => setSelectedStationId(station.kitchenStationId)}
-                        className={`flex w-full items-center justify-between gap-3 rounded-lg border px-3 py-2 text-right transition ${
-                          effectiveStationId === station.kitchenStationId
-                            ? "border-blue-400/60 bg-blue-500/15 text-blue-50"
-                            : "border-white/10 bg-black/10 text-slate-300 hover:bg-white/10"
-                        }`}
-                      >
-                        <span>
-                          <span className="block text-xs font-black">
-                            {station.name}
-                          </span>
-                          <span className="mt-0.5 block text-[10px] text-slate-500">
-                            {station.code}
-                          </span>
-                        </span>
-                        <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[9px] font-bold text-emerald-300">
-                          {station.status}
-                        </span>
-                      </button>
+              {board.failedCount > 0 && !allFailed && (
+                <p className="rounded-xl border border-warning/40 bg-warning-soft px-3 py-2 text-xs font-semibold text-warning">
+                  تعذر تحميل تذاكر بعض المحطات، الأوردرات المعروضة قد تكون ناقصة.
+                </p>
+              )}
+
+              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+                <SectionTab
+                  label="الكل"
+                  count={allTickets.length}
+                  active={activeSectionId === "all"}
+                  onClick={() => selectSection("all")}
+                />
+                {stations.map((station) => (
+                  <SectionTab
+                    key={station.kitchenStationId}
+                    label={station.name}
+                    count={sectionCounts[station.kitchenStationId] || 0}
+                    active={activeSectionId === station.kitchenStationId}
+                    onClick={() => selectSection(station.kitchenStationId)}
+                  />
+                ))}
+              </div>
+
+              <div ref={boardRef}>
+                {board.isLoading ? (
+                  <LoadingState label="Loading kitchen tickets..." />
+                ) : allFailed ? (
+                  <ErrorState
+                    title="Kitchen tickets unavailable"
+                    message="Unable to load open tickets for the kitchen."
+                  />
+                ) : !tickets.length ? (
+                  <EmptyState
+                    title="لا توجد تذاكر مفتوحة"
+                    message={
+                      activeSectionId === "all"
+                        ? "ستظهر الطلبات المؤكدة هنا عندما ينشئ Confirm تذاكر للمطبخ."
+                        : "لا توجد أوردرات مفتوحة في هذا القسم."
+                    }
+                  />
+                ) : (
+                  <div
+                    className="grid gap-4"
+                    style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
+                  >
+                    {visibleTickets.map((ticket) => (
+                      <KitchenTicketCard
+                        key={ticket.kitchenTicketId}
+                        ticket={ticket}
+                        canManage={canManage}
+                        isMutating={isMutating}
+                        onStart={startTicket}
+                        onReady={markReady}
+                        onDismiss={dismissTicket}
+                      />
                     ))}
                   </div>
-                </aside>
+                )}
+              </div>
 
-                <section className="min-w-0 space-y-3">
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    <div className="rounded-xl border border-white/10 bg-[#0d1728] p-3">
-                      <div className="text-[11px] text-slate-400">المحطة</div>
-                      <div className="mt-1 text-lg font-black text-white">
-                        {selectedStation?.name || "--"}
-                      </div>
-                    </div>
-                    <div className="rounded-xl border border-blue-400/20 bg-blue-500/10 p-3">
-                      <div className="text-[11px] text-blue-200">جديدة</div>
-                      <div className="mt-1 text-lg font-black text-blue-100">
-                        {newCount}
-                      </div>
-                    </div>
-                    <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 p-3">
-                      <div className="text-[11px] text-amber-200">قيد التحضير</div>
-                      <div className="mt-1 text-lg font-black text-amber-100">
-                        {preparingCount}
-                      </div>
-                    </div>
-                  </div>
-
-                  {ticketsQuery.isLoading ? (
-                    <LoadingState label="Loading kitchen tickets..." />
-                  ) : ticketsQuery.isError ? (
-                    <ErrorState
-                      title="Kitchen tickets unavailable"
-                      message="Unable to load open tickets for this station."
-                    />
-                  ) : !tickets.length ? (
-                    <EmptyState
-                      title="لا توجد تذاكر مفتوحة"
-                      message="ستظهر الطلبات المؤكدة هنا عندما ينشئ Confirm تذاكر لهذه المحطة."
-                    />
-                  ) : (
-                    <div className="grid gap-3 xl:grid-cols-2 2xl:grid-cols-3">
-                      {tickets.map((ticket) => (
-                        <TicketCard
-                          key={ticket.kitchenTicketId}
-                          ticket={ticket}
-                          canManage={canManage}
-                          isMutating={isMutating}
-                          onStart={startTicket}
-                          onReady={markReady}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </section>
-              </section>
+              <Pager page={currentPage} pageCount={pageCount} onChange={setPage} />
             </>
           )}
         </div>
 
         {toast && (
-          <div className="fixed bottom-5 left-1/2 z-[110] -translate-x-1/2 rounded-xl border border-blue-400/25 bg-[#10182a] px-4 py-3 text-xs font-bold text-blue-100 shadow-xl">
+          <div className="fixed bottom-5 left-1/2 z-[110] -translate-x-1/2 rounded-xl border border-accent-line bg-surface px-4 py-3 text-xs font-bold text-ink shadow-xl">
             {toast}
           </div>
         )}

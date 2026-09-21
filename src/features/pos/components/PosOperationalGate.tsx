@@ -7,7 +7,6 @@ import { usePos } from "../context/PosContext";
 import { useOpenPosShift } from "../hooks/useOpenPosShift";
 import { isTerminalEnterable, usePosTerminals } from "../hooks/usePosTerminals";
 import { OpenShiftPanel } from "./OpenShiftPanel";
-import { OpenShiftSummary } from "./OpenShiftSummary";
 import { PosTerminalOnboarding } from "./PosTerminalOnboarding";
 import { PosTerminalSelector } from "./PosTerminalSelector";
 import { POS_VIEW_PERMISSION } from "../../authorization/constants/applicationPermissions";
@@ -139,7 +138,6 @@ export function PosOperationalGate({ children }: PosOperationalGateProps) {
 
   return (
     <div className="space-y-3">
-      <OpenShiftSummary shift={openShiftQuery.data} />
       {children}
     </div>
   );

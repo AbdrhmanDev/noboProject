@@ -1,4 +1,4 @@
-import { Package, X } from "lucide-react";
+import { Package, Plus, X } from "lucide-react";
 import { ROUTES } from "../../../../utils/routes";
 import { EmptyState, ErrorState, LoadingState } from "../../../../shared/components/ui";
 import { formatMoney } from "../../../../shared/utils/formatters";
@@ -35,17 +35,17 @@ export function CatalogPanel({
   const handleProductGridKeyDown = useGridArrowNav(productGridRef, ROVING_ITEM_SELECTOR);
 
   return (
-    <section className="flex min-w-0 flex-col gap-4 xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)]">
+    <section className="flex min-w-0 flex-col gap-4 rounded-2xl border border-line bg-surface p-4 shadow-[var(--shadow-surface)] xl:sticky xl:top-4 xl:h-[calc(100vh-12rem)] xl:min-h-[680px]">
       <CategoryRail categories={catalogCategories} activeCategoryId={category} onSelect={setCategory} />
 
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/8 bg-white/[0.02] px-3 py-2.5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="flex flex-wrap items-center gap-2 text-base font-black text-white">
+          <h1 className="flex flex-wrap items-center gap-2 text-base font-black text-ink">
             المنتجات القابلة للبيع{" "}
-            <span className="text-slate-500">({filteredProducts.length})</span>
+            <span className="text-subtle">({filteredProducts.length})</span>
             <ShortcutHint action="pos.browseProducts" />
           </h1>
-          <p className="mt-0.5 text-[10px] text-slate-500">
+          <p className="mt-0.5 text-[11px] text-subtle">
             {sellableCatalogQuery.data
               ? `${sellableCatalogQuery.data.priceListName} · ${catalogCurrencyCode}`
               : "تحميل الكتالوج التشغيلي للفرع"}
@@ -157,42 +157,50 @@ export function CatalogPanel({
                     data-roving-item=""
                     onClick={() => addItem(product)}
                     disabled={!canEditDraft}
-                    className="group overflow-hidden rounded-xl border border-white/10 bg-[#0d1728] p-2.5 text-right transition hover:-translate-y-0.5 hover:border-blue-400/60 hover:bg-[#111f36] hover:shadow-lg hover:shadow-blue-950/25 active:scale-[0.97] focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="group flex flex-col overflow-hidden rounded-xl border border-line bg-surface p-2.5 text-start transition hover:-translate-y-0.5 hover:border-accent-line hover:shadow-[var(--shadow-float)] active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    <div className="relative mb-2 grid aspect-[1.3] place-items-center overflow-hidden rounded-lg border border-white/8 bg-white/[0.025]">
-                      <Package size={28} className="text-blue-300/80" />
+                    <div className="relative mb-2.5 grid aspect-[16/11] place-items-center overflow-hidden rounded-lg bg-inset">
+                      <Package size={30} className="text-subtle" />
                       {product.imageUrl && (
                         <img
                           src={product.imageUrl}
                           alt=""
                           loading="lazy"
-                          className="absolute inset-0 h-full w-full object-cover"
+                          className="absolute inset-0 h-full w-full object-cover transition duration-200 group-hover:scale-105"
                           onError={(event) => {
                             event.currentTarget.style.display = "none";
                           }}
                         />
                       )}
-                      <span className="absolute bottom-1.5 right-2 rounded bg-black/25 px-1.5 py-0.5 text-[9px] text-slate-300">
+                      <span className="absolute bottom-1.5 start-1.5 rounded-md bg-surface/85 px-1.5 py-0.5 text-[9px] font-semibold text-muted backdrop-blur-sm">
                         {product.categoryName}
                       </span>
                     </div>
-                    <div className="line-clamp-2 min-h-8 text-[11px] font-bold leading-4 text-slate-100">
+                    <div className="line-clamp-2 min-h-9 text-[13px] font-bold leading-[1.35] text-ink">
                       {product.productName}
                     </div>
-                    <div className="mt-1 min-h-4 truncate text-[10px] text-slate-500">
+                    <div className="mt-0.5 min-h-4 truncate text-[10px] text-subtle">
                       {product.variants.length > 1
                         ? `${product.variants.length} variants`
                         : product.variants[0]?.variantName}
                     </div>
-                    <div className="mt-2 flex items-end justify-between gap-2">
-                      <span className="text-xs font-black text-white">
+                    <div className="mt-2 flex items-center justify-between gap-2">
+                      <span className="text-sm font-extrabold text-danger">
                         {formatMoney(product.startingPrice, catalogCurrencyCode, 2)}
                       </span>
-                      {hasModifiers && (
-                        <span className="rounded-full bg-blue-500/10 px-1.5 py-0.5 text-[9px] font-bold text-blue-300">
-                          Modifiers
+                      <span className="flex items-center gap-1.5">
+                        {hasModifiers && (
+                          <span className="rounded-full bg-accent-soft px-1.5 py-0.5 text-[9px] font-bold text-accent">
+                            Modifiers
+                          </span>
+                        )}
+                        <span
+                          aria-hidden="true"
+                          className="grid h-7 w-7 place-items-center rounded-full bg-accent text-white shadow-[var(--shadow-surface)] transition group-hover:bg-accent-strong"
+                        >
+                          <Plus size={15} strokeWidth={2.5} />
                         </span>
-                      )}
+                      </span>
                     </div>
                   </button>
                 );

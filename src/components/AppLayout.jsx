@@ -1,6 +1,7 @@
 import { Fragment, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import NoboLogo from "./NoboLogo";
 import Header from "./Header";
 import Footer from "./Footer";
 import { useI18n } from "../i18n/I18nContext";
@@ -86,7 +87,7 @@ export default function AppLayout({ children, onLogout }) {
           hidden
           lg:flex
           flex-col
-          ${collapsed ? "w-[68px]" : "w-[240px]"}
+          ${collapsed ? "w-[68px]" : "w-[300px]"}
           shrink-0
           bg-black
           border-l
@@ -100,32 +101,8 @@ export default function AppLayout({ children, onLogout }) {
         `}
       >
         <div className="bg-stars absolute inset-0 pointer-events-none opacity-40" />
-        <div className={`flex items-center mb-8 ${collapsed ? "justify-center" : "gap-3 mb-10"}`}>
-          <div
-            className="
-              w-12
-              h-12
-              shrink-0
-              rounded-2xl
-              bg-gradient-to-br
-              from-cyan-400
-              to-blue-600
-              flex
-              items-center
-              justify-center
-              text-xl
-              font-black
-              shadow-[0_0_25px_rgba(59,130,246,.5)]
-            "
-          >
-            N
-          </div>
-          {!collapsed && (
-            <div>
-              <div className="text-2xl font-black brand-text">NOBO</div>
-              <div className="text-xs text-gray-500">ERP III</div>
-            </div>
-          )}
+        <div className={`flex items-center justify-center ${collapsed ? "mb-8" : "mb-8"}`}>
+          <NoboLogo className={`relative h-auto object-contain ${collapsed ? "w-[52px]" : "w-[230px]"}`} />
         </div>
         <button
           onClick={() => navigate(ROUTES.DASHBOARD)}

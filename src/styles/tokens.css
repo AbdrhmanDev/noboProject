@@ -1,0 +1,103 @@
+/*
+ * NOBO design tokens — the single source of truth for the redesigned visual language.
+ *
+ * Purely additive: these variables and Tailwind utilities (`bg-surface`, `text-muted`,
+ * `border-line`, `rounded-control` …) only affect components that opt in to them, so
+ * pages can be migrated one at a time.
+ *
+ * Surfaces step up in luminance: canvas < surface < raised < hover. One accent (blue)
+ * carries primary actions; status colours are reserved for state, never decoration.
+ */
+
+:root {
+  color-scheme: dark;
+
+  --nobo-canvas: #080b12;
+  --nobo-surface: #0e131d;
+  --nobo-raised: #141a27;
+  --nobo-hover: #1b2334;
+  --nobo-inset: rgb(255 255 255 / 0.035);
+
+  --nobo-line: rgb(255 255 255 / 0.09);
+  --nobo-line-strong: rgb(255 255 255 / 0.18);
+
+  --nobo-text: #eef2f8;
+  --nobo-muted: #a0abbf;
+  --nobo-subtle: #6f7b90;
+
+  --nobo-accent: #3b82f6;
+  --nobo-accent-strong: #2563eb;
+  --nobo-accent-soft: rgb(59 130 246 / 0.14);
+  --nobo-accent-line: rgb(96 165 250 / 0.5);
+  --nobo-success: #34d399;
+  --nobo-success-soft: rgb(52 211 153 / 0.13);
+  --nobo-warning: #fbbf24;
+  --nobo-warning-soft: rgb(251 191 36 / 0.13);
+  --nobo-danger: #fb7185;
+  --nobo-danger-soft: rgb(251 113 133 / 0.13);
+
+  /* dark-only glyphs (e.g. black brand logos) need inverting on dark surfaces */
+  --nobo-logo-filter: invert(1);
+
+  --shadow-surface: 0 1px 2px rgb(0 0 0 / 0.35);
+  --shadow-float: 0 18px 48px rgb(0 0 0 / 0.55), 0 2px 6px rgb(0 0 0 / 0.4);
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+
+  --nobo-canvas: #f3f5f9;
+  --nobo-surface: #ffffff;
+  --nobo-raised: #f8fafc;
+  --nobo-hover: #eaeff6;
+  --nobo-inset: rgb(15 23 42 / 0.04);
+
+  --nobo-line: rgb(15 23 42 / 0.11);
+  --nobo-line-strong: rgb(15 23 42 / 0.22);
+
+  --nobo-text: #0f172a;
+  --nobo-muted: #475569;
+  --nobo-subtle: #64748b;
+
+  --nobo-accent: #2563eb;
+  --nobo-accent-strong: #1d4ed8;
+  --nobo-accent-soft: rgb(37 99 235 / 0.1);
+  --nobo-accent-line: rgb(37 99 235 / 0.45);
+  --nobo-success: #059669;
+  --nobo-success-soft: rgb(5 150 105 / 0.1);
+  --nobo-warning: #b45309;
+  --nobo-warning-soft: rgb(217 119 6 / 0.12);
+  --nobo-danger: #e11d48;
+  --nobo-danger-soft: rgb(225 29 72 / 0.1);
+
+  --nobo-logo-filter: none;
+
+  --shadow-surface: 0 1px 2px rgb(15 23 42 / 0.08);
+  --shadow-float: 0 18px 40px rgb(15 23 42 / 0.2), 0 2px 6px rgb(15 23 42 / 0.1);
+}
+
+@theme inline {
+  --color-canvas: var(--nobo-canvas);
+  --color-surface: var(--nobo-surface);
+  --color-raised: var(--nobo-raised);
+  --color-hover: var(--nobo-hover);
+  --color-inset: var(--nobo-inset);
+  --color-line: var(--nobo-line);
+  --color-line-strong: var(--nobo-line-strong);
+  --color-ink: var(--nobo-text);
+  --color-muted: var(--nobo-muted);
+  --color-subtle: var(--nobo-subtle);
+  --color-accent: var(--nobo-accent);
+  --color-accent-strong: var(--nobo-accent-strong);
+  --color-accent-soft: var(--nobo-accent-soft);
+  --color-accent-line: var(--nobo-accent-line);
+  --color-success: var(--nobo-success);
+  --color-success-soft: var(--nobo-success-soft);
+  --color-warning: var(--nobo-warning);
+  --color-warning-soft: var(--nobo-warning-soft);
+  --color-danger: var(--nobo-danger);
+  --color-danger-soft: var(--nobo-danger-soft);
+
+  --radius-control: 0.625rem;
+  --radius-surface: 0.875rem;
+}

@@ -42,6 +42,25 @@ function toAuthUser(session: AuthSession | null): AuthUser | null {
   };
 }
 
+// Startup restore relies on the httpOnly refresh cookie. Only a definitive rejection from the
+// server means "signed out"; a network blip or a cold-starting backend must not log the user
+// out on refresh, so those are retried before giving up.
+const RESTORE_RETRY_DELAYS_MS = [1500, 3000, 6000];
+const DEFINITIVE_REJECTION_STATUSES = new Set([400, 401, 403]);
+
+async function restoreSession(isActive: () => boolean): Promise<AuthSession> {
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      return await refreshApi();
+    } catch (error) {
+      const status = (error as { response?: { status?: number } })?.response?.status;
+      const isDefinitive = status !== undefined && DEFINITIVE_REJECTION_STATUSES.has(status);
+      if (isDefinitive || attempt >= RESTORE_RETRY_DELAYS_MS.length || !isActive()) throw error;
+      await new Promise((resolve) => setTimeout(resolve, RESTORE_RETRY_DELAYS_MS[attempt]));
+    }
+  }
+}
+
 type AuthProviderProps = {
   children: ReactNode;
 };
@@ -59,7 +78,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setStatus(nextSession ? "authenticated" : "anonymous");
     });
 
-    refreshApi()
+    restoreSession(() => active)
       .then((nextSession) => {
         if (!active) return;
         setAuthSession(nextSession);

@@ -42,62 +42,63 @@ export function OrderHeader({
     <>
       <div className="mb-1.5 flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-1.5">
-          <ShoppingCart size={13} className="shrink-0 text-blue-300" />
-          <h2 className="shrink-0 text-xs font-bold">سلة المشتريات</h2>
+          <ShoppingCart size={16} className="shrink-0 text-accent" />
+          <h2 className="shrink-0 text-base font-extrabold text-ink">
+            {draftOrder?.orderNumberFormatted ? `طلب ${draftOrder.orderNumberFormatted}` : "سلة المشتريات"}
+          </h2>
           <span
-            className={`shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-bold ${
+            className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
               isCancelledOrder
-                ? "bg-rose-500/15 text-rose-300"
+                ? "bg-danger-soft text-danger"
                 : isConfirmedOrder || isClosedOrder
-                  ? "bg-emerald-500/15 text-emerald-300"
-                  : "bg-blue-500/15 text-blue-300"
+                  ? "bg-success-soft text-success"
+                  : "bg-accent-soft text-accent"
             }`}
           >
             {draftOrder?.status || "New"}
           </span>
           {isDraftMutationPending && (
-            <span className="flex items-center text-blue-300/80" title="جارٍ الحفظ">
+            <span className="flex items-center text-accent" title="جارٍ الحفظ">
               <Loader2 size={11} className="animate-spin" />
             </span>
           )}
-          <span className="truncate text-[10px] text-slate-500">
+          <span className="truncate text-[11px] text-subtle">
             · {draftLines.reduce((sum, item) => sum + Number(item.quantity), 0)} صنف
-            {draftOrder?.orderNumberFormatted && ` · ${draftOrder.orderNumberFormatted}`}
           </span>
         </div>
         <button
           type="button"
           onClick={onOpenCustomer}
           disabled={!canEditDraft || !canViewCustomers}
-          className="shrink-0 rounded-lg border border-white/10 px-2 py-1 text-[10px] text-blue-300 hover:bg-blue-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+          className="shrink-0 rounded-lg border border-line bg-inset px-2.5 py-1.5 text-[11px] font-semibold text-accent transition hover:border-accent-line hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-50"
         >
           {customer ? customer.name : "اختيار عميل"}
         </button>
       </div>
       {customer && (
-        <div className="mb-1.5 flex items-center justify-between rounded-xl bg-blue-500/10 px-3 py-2 text-xs text-blue-100">
+        <div className="mb-2 flex items-center justify-between rounded-xl bg-accent-soft px-3 py-2 text-xs text-ink">
           <span className="flex items-center gap-1.5">
-            <UserRound size={13} className="text-blue-300" />
+            <UserRound size={13} className="text-accent" />
             {customer.name}
-            {customer.phone && <span className="text-[10px] text-blue-300/70">· {customer.phone}</span>}
+            {customer.phone && <span className="text-[10px] text-muted">· {customer.phone}</span>}
           </span>
           <button type="button" onClick={onClearCustomer} disabled={!canEditDraft} className="disabled:cursor-not-allowed disabled:opacity-50">
             <X size={14} />
           </button>
         </div>
       )}
-      <div className="mb-1.5 space-y-1.5">
-        <div className="grid grid-cols-3 gap-1">
+      <div className="mb-2 space-y-2">
+        <div className="grid grid-cols-3 gap-1 rounded-control bg-inset p-1">
           {ORDER_TYPES.map((type) => (
             <button
               key={type}
               type="button"
               disabled={!canEditDraft || isDraftMutationPending}
               onClick={() => handleOrderTypeChange(type)}
-              className={`flex min-h-9 items-center justify-center gap-1 rounded-lg border px-2 text-xs font-bold transition disabled:cursor-not-allowed disabled:opacity-50 ${
+              className={`flex min-h-9 items-center justify-center gap-1 rounded-[0.5rem] px-2 text-xs font-bold transition disabled:cursor-not-allowed disabled:opacity-50 ${
                 orderType === type
-                  ? "border-blue-400 bg-blue-500/15 text-blue-100"
-                  : "border-white/10 bg-black/10 text-slate-400 hover:bg-white/10"
+                  ? "bg-accent text-white shadow-[var(--shadow-surface)]"
+                  : "text-muted hover:bg-hover hover:text-ink"
               }`}
             >
               {type}
@@ -109,16 +110,16 @@ export function OrderHeader({
         </div>
         {orderType === "DineIn" && (
           <div className="space-y-2">
-            <div className="flex items-center justify-between gap-2 text-[10px] text-slate-400">
+            <div className="flex items-center justify-between gap-2 text-[10px] text-muted">
               <span>Table</span>
-              <span className="text-blue-300">
+              <span className="text-accent">
                 {selectedRestaurantTable
                   ? `${selectedRestaurantTable.floorName} · ${selectedRestaurantTable.code}`
                   : "Required"}
               </span>
             </div>
             {restaurantPermissionQuery.isLoading && (
-              <p className="rounded-lg bg-black/10 px-2 py-2 text-[10px] text-slate-500">
+              <p className="rounded-lg bg-inset px-2 py-2 text-[10px] text-subtle">
                 Checking restaurant access...
               </p>
             )}
@@ -128,7 +129,7 @@ export function OrderHeader({
               </p>
             )}
             {seatingQuery.isLoading && (
-              <p className="rounded-lg bg-black/10 px-2 py-2 text-[10px] text-slate-500">
+              <p className="rounded-lg bg-inset px-2 py-2 text-[10px] text-subtle">
                 Loading tables...
               </p>
             )}
@@ -150,7 +151,7 @@ export function OrderHeader({
                   <button
                     type="button"
                     onClick={() => navigate(ROUTES.RESTAURANT_ADMIN)}
-                    className="block w-full text-[10px] font-semibold text-blue-300 hover:text-blue-200"
+                    className="block w-full text-[10px] font-semibold text-accent hover:underline"
                   >
                     Manage in Restaurant Admin
                   </button>
@@ -159,7 +160,7 @@ export function OrderHeader({
             <div ref={tableGridRef} onKeyDown={handleTableGridKeyDown}>
               {seatingQuery.data?.map((floor) => (
                 <div key={floor.restaurantFloorId}>
-                  <div className="mb-1 text-[10px] font-bold text-slate-400">{floor.name}</div>
+                  <div className="mb-1 text-[10px] font-bold text-muted">{floor.name}</div>
                   <div className="grid grid-cols-3 gap-1">
                     {floor.tables.map((table) => (
                       <button
@@ -170,12 +171,12 @@ export function OrderHeader({
                         onClick={() => handleTableSelect(table)}
                         className={`min-h-11 rounded-lg border px-2 py-2 text-[11px] transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400 disabled:cursor-not-allowed disabled:opacity-45 ${
                           effectiveRestaurantTableId === table.restaurantTableId
-                            ? "border-emerald-400 bg-emerald-500/15 text-emerald-100"
-                            : "border-white/10 bg-black/10 text-slate-300 hover:bg-white/10"
+                            ? "border-success bg-success-soft text-ink"
+                            : "border-line bg-inset text-ink hover:bg-hover"
                         }`}
                       >
                         <span className="block truncate font-bold">{table.code}</span>
-                        <span className="block truncate text-[9px] text-slate-500">
+                        <span className="block truncate text-[9px] text-subtle">
                           {table.isOccupied
                             ? `${table.openSalesOrderCount} open`
                             : table.name || "Available"}

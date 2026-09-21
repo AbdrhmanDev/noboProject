@@ -1,8 +1,6 @@
 import { httpClient } from "../../../shared/api/httpClient";
 import type {
   ChangeKitchenStationStatusRequest,
-  CreateKitchenStationRequest,
-  CreateKitchenStationResponse,
   KitchenStationDetails,
   KitchenStationFilters,
   KitchenStationListItem,
@@ -60,19 +58,6 @@ export async function getKitchenStationDetails(
 ) {
   const response = await httpClient.get<KitchenStationDetails>(
     `${kitchenBaseUrl(companyId, branchId)}/admin/stations/${kitchenStationId}`,
-  );
-
-  return response.data;
-}
-
-export async function createKitchenStation(
-  companyId: string,
-  branchId: string,
-  payload: CreateKitchenStationRequest,
-) {
-  const response = await httpClient.post<CreateKitchenStationResponse>(
-    `${kitchenBaseUrl(companyId, branchId)}/stations`,
-    payload,
   );
 
   return response.data;

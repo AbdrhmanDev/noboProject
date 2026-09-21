@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Clock, Phone, Plus, ShieldCheck, UserRound } from "lucide-react";
+import { Clock, Phone, Plus, UserRound } from "lucide-react";
 import { PosModal } from "./PosModal";
 import { useCreateCustomer, useCustomers } from "../../customers/hooks/useCustomers";
 
@@ -272,7 +272,6 @@ export function PosMiscDialogs({
   canViewCustomers,
   canManageCustomers,
   onSelectCustomer,
-  notify,
 }) {
   return (
     <>
@@ -297,44 +296,6 @@ export function PosMiscDialogs({
               يمكنك تطبيق خصم يدوي على الفاتورة الحالية من زر "خصم وعروض" في السلة.
             </p>
           </div>
-        </PosModal>
-      )}
-
-      {modal === "askAi" && (
-        <PosModal title="اسأل NOBO AI" onClose={() => setModal(null)}>
-          <textarea
-            className="h-28 w-full rounded-xl border border-white/10 bg-black/20 p-3 text-xs outline-none"
-            placeholder="مثال: اقترح عرضًا على المشروبات الراكدة..."
-          />
-          <button
-            type="button"
-            onClick={() => {
-              setModal(null);
-              notify("تم إرسال سؤالك إلى NOBO AI.");
-            }}
-            className="mt-3 w-full rounded-xl bg-pink-600 py-2.5 text-xs font-bold"
-          >
-            إرسال السؤال
-          </button>
-        </PosModal>
-      )}
-
-      {modal === "aiConfirm" && (
-        <PosModal title="تأكيد الإجراء المقترح" onClose={() => setModal(null)}>
-          <div className="rounded-xl border border-pink-400/20 bg-pink-500/10 p-3 text-xs leading-5 text-pink-50">
-            <ShieldCheck size={17} className="mb-2 text-pink-300" />
-            NOBO AI لا ينفذ أي عملية حساسة تلقائيًا. راجع الإجراء ثم أكده ليتم فتح الشاشة المناسبة.
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              setModal(null);
-              notify("تم تأكيد الاقتراح وفتح الإجراء المرتبط.");
-            }}
-            className="mt-4 w-full rounded-xl bg-pink-600 py-2.5 text-xs font-bold"
-          >
-            تأكيد ومتابعة
-          </button>
         </PosModal>
       )}
     </>

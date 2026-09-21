@@ -6,7 +6,6 @@ import {
   CirclePause,
   CookingPot,
   Pencil,
-  Plus,
   Power,
   RefreshCw,
   Route,
@@ -26,7 +25,6 @@ import { useCompany } from "../../features/companies/context/CompanyContext";
 import { useHasPermission } from "../../features/companies/hooks/useCompanies";
 import {
   useChangeKitchenStationStatus,
-  useCreateKitchenStation,
   useKitchenStationDetails,
   useKitchenStations,
   useProductVariantKitchenRoutes,
@@ -106,7 +104,6 @@ function StationCard({ station, selected, onSelect }) {
 }
 
 function StationForm({
-  mode,
   form,
   setForm,
   canManage,
@@ -115,7 +112,6 @@ function StationForm({
   onSubmit,
   onStatusChange,
 }) {
-  const isEdit = mode === "edit";
   const nextStatus = selectedStation?.status === "Active" ? "Suspended" : "Active";
 
   return (
@@ -170,10 +166,10 @@ function StationForm({
           disabled={!canManage || isPending}
           className="flex h-10 items-center gap-2 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {isEdit ? <Pencil size={15} /> : <Plus size={15} />}
-          {isPending ? "Saving..." : isEdit ? "Save station" : "Create station"}
+          <Pencil size={15} />
+          {isPending ? "Saving..." : "Save station"}
         </button>
-        {isEdit && selectedStation && (
+        {selectedStation && (
           <button
             type="button"
             disabled={!canManage || isPending}
@@ -232,7 +228,6 @@ export default function KitchenAdminPage() {
   const [stationSearch, setStationSearch] = useState("");
   const [stationStatus, setStationStatus] = useState("");
   const [selectedStationId, setSelectedStationId] = useState(null);
-  const [stationMode, setStationMode] = useState("create");
   const [stationForm, setStationForm] = useState(EMPTY_STATION_FORM);
   const [selectedVariantId, setSelectedVariantId] = useState("");
   const [routeSearch, setRouteSearch] = useState("");
@@ -273,7 +268,6 @@ export default function KitchenAdminPage() {
     selectedVariantId,
     canRead && Boolean(selectedVariantId),
   );
-  const createStationMutation = useCreateKitchenStation(currentCompanyId, currentBranchId);
   const updateStationMutation = useUpdateKitchenStation(
     currentCompanyId,
     currentBranchId,
@@ -291,7 +285,6 @@ export default function KitchenAdminPage() {
   );
   const selectedStation = stationDetailsQuery.data || null;
   const isStationMutating =
-    createStationMutation.isPending ||
     updateStationMutation.isPending ||
     statusMutation.isPending;
   const variants = useMemo(() => {
@@ -313,14 +306,7 @@ export default function KitchenAdminPage() {
     window.setTimeout(() => setNotice(""), 3000);
   };
 
-  const startCreateStation = () => {
-    setStationMode("create");
-    setSelectedStationId(null);
-    setStationForm(EMPTY_STATION_FORM);
-  };
-
   const selectStation = (station) => {
-    setStationMode("edit");
     setSelectedStationId(station.kitchenStationId);
     setStationForm({
       code: station.code,
@@ -337,23 +323,6 @@ export default function KitchenAdminPage() {
     }
 
     try {
-      if (stationMode === "create") {
-        const created = await createStationMutation.mutateAsync({
-          code: stationForm.code,
-          name: stationForm.name,
-          sortOrder,
-        });
-        setStationMode("edit");
-        setSelectedStationId(created.kitchenStationId);
-        setStationForm({
-          code: created.code,
-          name: created.name,
-          sortOrder: String(created.sortOrder),
-        });
-        showNotice("Kitchen station created.");
-        return;
-      }
-
       const updated = await updateStationMutation.mutateAsync({
         code: stationForm.code,
         name: stationForm.name,
@@ -434,14 +403,6 @@ export default function KitchenAdminPage() {
               >
                 <RefreshCw size={14} />
                 Refresh
-              </button>
-              <button
-                type="button"
-                onClick={startCreateStation}
-                className="flex items-center gap-2 rounded-xl bg-blue-600 px-3 py-2 text-xs font-bold text-white"
-              >
-                <Plus size={14} />
-                New station
               </button>
             </div>
           }
@@ -548,12 +509,10 @@ export default function KitchenAdminPage() {
                 <div>
                   <div className="flex items-center gap-2 text-xs text-slate-400">
                     <Power size={15} className="text-blue-300" />
-                    {stationMode === "create" ? "Create station" : "Station details"}
+                    Station details
                   </div>
                   <h2 className="mt-1 text-xl font-black text-white">
-                    {stationMode === "create"
-                      ? "New Kitchen station"
-                      : selectedStation?.code || "Loading station"}
+                    {selectedStation?.code || (selectedStationId ? "Loading station" : "Select a station")}
                   </h2>
                 </div>
                 {selectedStation && (
@@ -563,16 +522,16 @@ export default function KitchenAdminPage() {
                 )}
               </div>
 
-              {stationMode === "edit" && stationDetailsQuery.isLoading && (
+              {selectedStationId && stationDetailsQuery.isLoading && (
                 <LoadingState label="Loading station details..." />
               )}
-              {stationMode === "edit" && stationDetailsQuery.isError && (
+              {selectedStationId && stationDetailsQuery.isError && (
                 <ErrorState
                   title="Unable to load station details"
                   message={getErrorMessage(stationDetailsQuery.error)}
                 />
               )}
-              {(stationMode === "create" || selectedStation) && (
+              {selectedStation && (
                 <div className="space-y-4">
                   {selectedStation && (
                     <div className="grid gap-2 sm:grid-cols-3">
@@ -598,7 +557,6 @@ export default function KitchenAdminPage() {
                   )}
 
                   <StationForm
-                    mode={stationMode}
                     form={stationForm}
                     setForm={setStationForm}
                     canManage={canManage}
