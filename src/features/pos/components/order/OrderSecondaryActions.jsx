@@ -58,10 +58,10 @@ function QuickAction({ icon: Icon, label, active = false, onClick, disabled = fa
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl border px-2 py-2 text-[11px] font-bold transition disabled:cursor-not-allowed disabled:opacity-45 ${
+      className={`pos-fs-name flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-pos border px-2 py-2 transition disabled:cursor-not-allowed disabled:opacity-45 ${
         active
-          ? "border-accent bg-accent-soft text-accent"
-          : "border-line bg-inset text-ink hover:border-accent-line hover:bg-accent-soft"
+          ? "border-pos-primary bg-pos-tint text-pos-primary-text"
+          : "border-pos-border bg-pos-card text-pos-text hover:border-pos-primary hover:bg-pos-tint"
       }`}
     >
       <Icon size={17} />
@@ -176,15 +176,15 @@ export function OrderSecondaryActions({
             aria-label="More actions"
             title="More actions"
             aria-expanded={expanded}
-            className={`relative grid w-11 shrink-0 place-items-center rounded-xl border transition ${
+            className={`relative grid w-12 shrink-0 place-items-center rounded-pos border transition ${
               expanded
-                ? "border-accent bg-accent-soft text-accent"
-                : "border-line bg-inset text-muted hover:border-accent-line hover:text-ink"
+                ? "border-pos-primary bg-pos-tint text-pos-primary-text"
+                : "border-pos-border bg-pos-card text-pos-muted hover:border-pos-primary hover:text-pos-text"
             }`}
           >
             <MoreHorizontal size={16} />
             {(lifecycleBlocker || paymentsCount > 0) && (
-              <span className="absolute -end-1 -top-1 h-2.5 w-2.5 rounded-full bg-accent" />
+              <span className="absolute -end-1 -top-1 h-2.5 w-2.5 rounded-full bg-pos-primary" />
             )}
           </button>
         )}
@@ -196,7 +196,7 @@ export function OrderSecondaryActions({
             type="button"
             onClick={() => removeDraftLine(selectedLineId)}
             disabled={!canVoidLine}
-            className="flex h-10 items-center justify-center gap-1.5 rounded-xl border border-danger/35 bg-danger-soft text-xs font-bold text-danger transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-45"
+            className="pos-control pos-fs-name flex items-center justify-center gap-1.5 border border-pos-danger/50 bg-pos-card text-pos-danger transition hover:bg-pos-danger/10 disabled:cursor-not-allowed disabled:opacity-45"
           >
             <Trash2 size={14} />
             Void line
@@ -205,7 +205,7 @@ export function OrderSecondaryActions({
             type="button"
             onClick={() => openLifecycleModal(voidAllAction)}
             disabled={!canVoidAll}
-            className="flex h-10 items-center justify-center gap-1.5 rounded-xl border border-danger/35 bg-danger-soft text-xs font-bold text-danger transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-45"
+            className="pos-control pos-fs-name flex items-center justify-center gap-1.5 border border-pos-danger/50 bg-pos-card text-pos-danger transition hover:bg-pos-danger/10 disabled:cursor-not-allowed disabled:opacity-45"
           >
             <Ban size={14} />
             Void all
@@ -331,16 +331,16 @@ export function OrderSecondaryActions({
                     onSelectPaymentMethod?.(method.paymentMethodId);
                     setMethodOpen(false);
                   }}
-                  className={`relative flex min-h-24 flex-col items-center justify-center gap-2 rounded-xl border px-2 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-45 ${
+                  className={`pos-fs-base relative flex min-h-24 flex-col items-center justify-center gap-2 rounded-pos border px-2 font-medium transition disabled:cursor-not-allowed disabled:opacity-45 ${
                     selected
-                      ? "border-accent bg-accent-soft text-accent"
-                      : "border-line bg-inset text-ink hover:border-accent-line hover:bg-accent-soft"
+                      ? "border-pos-primary bg-pos-tint text-pos-primary-text"
+                      : "border-pos-border bg-pos-bg text-pos-text hover:border-pos-primary hover:bg-pos-tint"
                   }`}
                 >
                   {selected && <Check size={14} className="absolute end-2 top-2" />}
                   <Icon size={26} />
                   {label}
-                  {!method && <span className="text-[10px] font-normal text-subtle">غير مفعّل</span>}
+                  {!method && <span className="text-[10px] font-normal text-pos-muted">غير مفعّل</span>}
                 </button>
               );
             })}
@@ -357,9 +357,9 @@ export function OrderSecondaryActions({
             value={noteDraft}
             onChange={(event) => setNoteDraft(event.target.value)}
             placeholder="اكتب ملاحظة تظهر مع الطلب في شاشة المطبخ..."
-            className="w-full resize-none rounded-xl border border-line bg-inset px-3 py-2 text-sm text-ink outline-none placeholder:text-subtle focus:border-accent focus:ring-[3px] focus:ring-accent/20"
+            className="pos-fs-base w-full resize-none rounded-pos border border-pos-border bg-pos-card px-3 py-2 text-pos-text outline-none placeholder:text-subtle focus:border-accent focus:ring-[3px] focus:ring-pos-primary/20"
           />
-          <div className="mt-1 text-end text-[10px] text-subtle">
+          <div className="mt-1 text-end text-[10px] text-pos-muted">
             {noteDraft.length}/{KITCHEN_NOTE_MAX_LENGTH}
           </div>
           <div className="mt-3 grid grid-cols-2 gap-2">
@@ -369,7 +369,7 @@ export function OrderSecondaryActions({
                 onKitchenNoteChange?.("");
                 setNoteOpen(false);
               }}
-              className="h-11 rounded-xl border border-line bg-inset text-xs font-bold text-muted transition hover:bg-hover hover:text-ink"
+              className="pos-control pos-fs-name border border-pos-border bg-pos-card text-pos-text transition hover:bg-pos-tint"
             >
               مسح
             </button>
@@ -379,7 +379,7 @@ export function OrderSecondaryActions({
                 onKitchenNoteChange?.(noteDraft.trim());
                 setNoteOpen(false);
               }}
-              className="h-11 rounded-xl bg-accent text-xs font-bold text-white transition hover:bg-accent-strong"
+              className="pos-control pos-fs-name bg-pos-primary text-white transition hover:bg-pos-primary-hover"
             >
               حفظ الملاحظة
             </button>

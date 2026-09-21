@@ -35,27 +35,27 @@ export function OrderSummary({
   isFullyPaid,
 }) {
   return (
-    <div className="mt-3 shrink-0 border-t border-line pt-3">
-      <div className="space-y-2 text-sm">
-        <div className="flex justify-between text-muted">
+    <div className="mt-2 shrink-0 border-t border-pos-border pt-2">
+      <div className="pos-fs-line space-y-1 !font-normal">
+        <div className="flex justify-between text-pos-muted">
           <span>المجموع الفرعي</span>
           <span>{formatMoney(subtotal, catalogCurrencyCode, 2)}</span>
         </div>
-        <div className="flex justify-between text-danger">
+        <div className="flex justify-between text-pos-danger">
           <span className="flex items-center gap-1">
             الخصم
             {draftOrder?.discount && <Gift size={11} />}
           </span>
           <span>- {formatMoney(discountValue, catalogCurrencyCode, 2)}</span>
         </div>
-        <div className="flex justify-between text-muted">
+        <div className="flex justify-between text-pos-muted">
           <span>{getTaxLabel(draftOrder)}</span>
           <span>{formatMoney(vat, catalogCurrencyCode, 2)}</span>
         </div>
       </div>
-      <div className="mt-2 flex items-baseline justify-between border-t border-line pt-2">
-        <span className="font-bold text-ink">الإجمالي</span>
-        <span className="text-3xl font-black text-accent">{formatMoney(total, catalogCurrencyCode, 2)}</span>
+      <div className="mt-2 flex items-baseline justify-between border-t border-pos-border pt-2">
+        <span className="pos-fs-line font-bold text-pos-text">الإجمالي</span>
+        <span className="pos-fs-total text-pos-text">{formatMoney(total, catalogCurrencyCode, 2)}</span>
       </div>
       {shouldShowPaymentPanel && (
         <div className="mt-2 grid grid-cols-3 gap-2 text-[10px]">

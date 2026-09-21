@@ -1,0 +1,124 @@
+/*
+ * POS design tokens — Odoo 17 POS look. Every font, size, colour, radius and spacing the POS uses
+ * lives here, so the whole screen can be re-tuned from this one file. Scoped to `.pos-root`
+ * (the POS page's <main>), so nothing outside the POS is affected.
+ *
+ * Colour tokens are theme-aware: the light values are the Odoo palette, the dark block keeps the
+ * same structure for the app's dark mode.
+ */
+
+.pos-root {
+  /* ---- typography ---- */
+  --pos-font: "Roboto", "Noto Sans Arabic", -apple-system, "Segoe UI", Arial, sans-serif;
+  --pos-fs-base: 16px;
+  --pos-fs-name: 14px; /* product name on a card */
+  --pos-fs-price: 15px; /* product price on a card */
+  --pos-fs-line: 15px; /* order line */
+  --pos-fs-secondary: 13px; /* qty × unit price, notes, muted info */
+  --pos-fs-numpad: 20px;
+  --pos-fs-total: 26px;
+  --pos-fs-label: 12px;
+  /* Noto Sans Arabic renders visibly smaller than Roboto at the same px, so Arabic gets a bump.
+     Change the number here to retune Arabic without touching any size above. */
+  --pos-font-scale: 1;
+
+  /* ---- colour (light = Odoo) ---- */
+  --pos-primary: #714b67;
+  --pos-primary-hover: #5f3f57;
+  --pos-primary-text: #714b67; /* primary used as text / outline colour */
+  --pos-primary-tint: rgb(113 75 103 / 0.1);
+  --pos-action: #017e84;
+  --pos-action-hover: #016267;
+  --pos-bg: #f3f4f6; /* product area */
+  --pos-card: #ffffff; /* cards and the order panel */
+  --pos-border: #dee2e6;
+  --pos-text: #212529;
+  --pos-muted: #6c757d;
+  --pos-danger: #dc3545;
+
+  /* ---- shape & spacing ---- */
+  --pos-radius: 6px;
+  --pos-radius-lg: 8px;
+  --pos-gap: 10px;
+  --pos-control-h: 44px; /* minimum touch height */
+  --pos-card-min-w: 140px;
+  --pos-shadow-hover: 0 4px 12px rgb(0 0 0 / 0.1);
+
+  font-family: var(--pos-font);
+  font-size: calc(var(--pos-fs-base) * var(--pos-font-scale));
+  line-height: 1.5;
+  color: var(--pos-text);
+}
+
+[data-theme="dark"] .pos-root {
+  --pos-primary-text: #c99bbd;
+  --pos-primary-tint: rgb(201 155 189 / 0.16);
+  --pos-bg: #10131a;
+  --pos-card: #1a1e28;
+  --pos-border: #2c3340;
+  --pos-text: #e9ecef;
+  --pos-muted: #9aa4b2;
+  --pos-shadow-hover: 0 4px 14px rgb(0 0 0 / 0.5);
+}
+
+html[lang="ar"] .pos-root {
+  --pos-font-scale: 1.08;
+}
+
+/* Tailwind utilities for the tokens: bg-pos-card, text-pos-muted, border-pos-border, rounded-pos … */
+@theme inline {
+  --color-pos-primary: var(--pos-primary);
+  --color-pos-primary-hover: var(--pos-primary-hover);
+  --color-pos-primary-text: var(--pos-primary-text);
+  --color-pos-tint: var(--pos-primary-tint);
+  --color-pos-action: var(--pos-action);
+  --color-pos-action-hover: var(--pos-action-hover);
+  --color-pos-bg: var(--pos-bg);
+  --color-pos-card: var(--pos-card);
+  --color-pos-border: var(--pos-border);
+  --color-pos-text: var(--pos-text);
+  --color-pos-muted: var(--pos-muted);
+  --color-pos-danger: var(--pos-danger);
+  --radius-pos: var(--pos-radius);
+  --radius-pos-lg: var(--pos-radius-lg);
+}
+
+/* Type scale — every size goes through --pos-font-scale so Arabic/English stay balanced. */
+.pos-fs-name {
+  font-size: calc(var(--pos-fs-name) * var(--pos-font-scale));
+  font-weight: 500;
+  line-height: 1.35;
+}
+.pos-fs-price {
+  font-size: calc(var(--pos-fs-price) * var(--pos-font-scale));
+  font-weight: 500;
+}
+.pos-fs-line {
+  font-size: calc(var(--pos-fs-line) * var(--pos-font-scale));
+  font-weight: 500;
+}
+.pos-fs-secondary {
+  font-size: calc(var(--pos-fs-secondary) * var(--pos-font-scale));
+  color: var(--pos-muted);
+}
+.pos-fs-numpad {
+  font-size: calc(var(--pos-fs-numpad) * var(--pos-font-scale));
+  font-weight: 500;
+}
+.pos-fs-total {
+  font-size: calc(var(--pos-fs-total) * var(--pos-font-scale));
+  font-weight: 700;
+  line-height: 1.2;
+}
+.pos-fs-label {
+  font-size: calc(var(--pos-fs-label) * var(--pos-font-scale));
+}
+.pos-fs-base {
+  font-size: calc(var(--pos-fs-base) * var(--pos-font-scale));
+}
+
+/* Touch-height controls (buttons, inputs). */
+.pos-control {
+  min-height: var(--pos-control-h);
+  border-radius: var(--pos-radius);
+}

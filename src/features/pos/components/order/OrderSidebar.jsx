@@ -100,7 +100,7 @@ export function OrderSidebar({
     // last-resort safety net — the normal path for "more lines than fit" is
     // OrderLines' own flex-1 + overflow-y-auto below, which shrinks/scrolls
     // before this outer boundary ever needs to.
-    <aside className="flex flex-col rounded-2xl border border-line bg-surface p-4 shadow-[var(--shadow-surface)] min-h-[440px] xl:sticky xl:top-4 xl:h-[calc(100vh-12rem)] xl:min-h-[680px] xl:overflow-y-auto xl:scrollbar-none">
+    <aside className="flex flex-col rounded-pos-lg border border-pos-border bg-pos-card p-4 min-h-[440px] xl:order-first xl:sticky xl:top-4 xl:h-[calc(100vh-12rem)] xl:min-h-[680px] xl:overflow-y-auto xl:scrollbar-none">
       <OrderHeader
         navigate={navigate}
         draftLines={draftLines}
@@ -213,7 +213,7 @@ export function OrderSidebar({
           <button
             type="button"
             onClick={onOpenShiftReport}
-            className="mt-2 flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-line bg-inset text-xs font-bold text-muted transition hover:border-accent-line hover:bg-accent-soft hover:text-ink"
+            className="mt-2 flex w-full items-center justify-center gap-2 pos-control pos-fs-name border border-pos-border bg-pos-card text-pos-text transition hover:border-pos-primary hover:bg-pos-tint"
           >
             <ReceiptText size={15} />
             Z Report

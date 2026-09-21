@@ -14,7 +14,7 @@ function ScrollButton({ icon: Icon, label, onClick }) {
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="z-10 hidden h-8 w-8 shrink-0 place-items-center rounded-full border border-line bg-surface text-muted shadow-[var(--shadow-surface)] transition hover:border-accent-line hover:bg-accent-soft hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent sm:grid"
+      className="z-10 hidden h-8 w-8 shrink-0 place-items-center rounded-full border border-pos-border bg-pos-card text-pos-muted shadow-sm transition hover:border-pos-primary hover:text-pos-primary-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-pos-primary sm:grid"
     >
       <Icon size={16} />
     </button>
@@ -109,7 +109,7 @@ export function CategoryRail({ categories, activeCategoryId, onSelect }) {
     zIndex: 1,
     background: `linear-gradient(to ${
       (edge === "start") === !rtl ? "right" : "left"
-    }, var(--nobo-surface), transparent)`,
+    }, var(--pos-bg), transparent)`,
   });
 
   return (
@@ -145,13 +145,13 @@ export function CategoryRail({ categories, activeCategoryId, onSelect }) {
                 }}
                 onClick={() => onSelect(id)}
                 aria-pressed={active}
-                className={`flex h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-4 text-xs font-bold transition ${
+                className={`pos-fs-name flex h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-4 transition ${
                   active
-                    ? "border-accent bg-accent text-white shadow-[var(--shadow-surface)]"
-                    : "border-line bg-surface text-muted hover:border-line-strong hover:bg-hover hover:text-ink"
+                    ? "border-pos-primary bg-pos-primary text-white"
+                    : "border-pos-border bg-pos-card text-pos-text hover:border-pos-primary hover:text-pos-primary-text"
                 }`}
               >
-                <Icon size={14} className={active ? "text-white" : "text-subtle"} />
+                <Icon size={15} className={active ? "text-white" : "text-pos-muted"} />
                 {label}
               </button>
             );

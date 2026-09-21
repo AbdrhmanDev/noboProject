@@ -37,7 +37,7 @@ export function NumericKeypadInline({
   };
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-[#0d1728] p-3">
+    <div className="rounded-pos-lg border border-pos-border bg-pos-bg p-3">
       <NumericKeypadCore
         value={value ?? ""}
         inputRef={inputRef}

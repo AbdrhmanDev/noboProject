@@ -1,4 +1,4 @@
-import { Package, Plus, X } from "lucide-react";
+import { Package, X } from "lucide-react";
 import { ROUTES } from "../../../../utils/routes";
 import { EmptyState, ErrorState, LoadingState } from "../../../../shared/components/ui";
 import { formatMoney } from "../../../../shared/utils/formatters";
@@ -35,17 +35,17 @@ export function CatalogPanel({
   const handleProductGridKeyDown = useGridArrowNav(productGridRef, ROVING_ITEM_SELECTOR);
 
   return (
-    <section className="flex min-w-0 flex-col gap-4 rounded-2xl border border-line bg-surface p-4 shadow-[var(--shadow-surface)] xl:sticky xl:top-4 xl:h-[calc(100vh-12rem)] xl:min-h-[680px]">
+    <section className="flex min-w-0 flex-col gap-3 rounded-pos-lg border border-pos-border bg-pos-bg p-3 xl:sticky xl:top-4 xl:h-[calc(100vh-12rem)] xl:min-h-[680px]">
       <CategoryRail categories={catalogCategories} activeCategoryId={category} onSelect={setCategory} />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="flex flex-wrap items-center gap-2 text-base font-black text-ink">
+          <h1 className="pos-fs-line flex flex-wrap items-center gap-2 font-bold text-pos-text">
             المنتجات القابلة للبيع{" "}
-            <span className="text-subtle">({filteredProducts.length})</span>
+            <span className="text-pos-muted">({filteredProducts.length})</span>
             <ShortcutHint action="pos.browseProducts" />
           </h1>
-          <p className="mt-0.5 text-[11px] text-subtle">
+          <p className="pos-fs-secondary mt-0.5">
             {sellableCatalogQuery.data
               ? `${sellableCatalogQuery.data.priceListName} · ${catalogCurrencyCode}`
               : "تحميل الكتالوج التشغيلي للفرع"}
@@ -143,7 +143,7 @@ export function CatalogPanel({
             <div
               ref={productGridRef}
               onKeyDown={handleProductGridKeyDown}
-              className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
+              className="grid grid-cols-[repeat(auto-fill,minmax(var(--pos-card-min-w),1fr))] gap-[var(--pos-gap)]"
             >
               {filteredProducts.map((product) => {
                 const hasModifiers = product.variants.some(
@@ -157,50 +157,39 @@ export function CatalogPanel({
                     data-roving-item=""
                     onClick={() => addItem(product)}
                     disabled={!canEditDraft}
-                    className="group flex flex-col overflow-hidden rounded-xl border border-line bg-surface p-2.5 text-start transition hover:-translate-y-0.5 hover:border-accent-line hover:shadow-[var(--shadow-float)] active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50"
+                    className="group flex flex-col overflow-hidden rounded-pos border border-pos-border bg-pos-card text-start transition hover:-translate-y-0.5 hover:border-pos-primary hover:shadow-[var(--pos-shadow-hover)] active:translate-y-0 active:bg-pos-tint focus-visible:outline focus-visible:outline-2 focus-visible:outline-pos-primary disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    <div className="relative mb-2.5 grid aspect-[16/11] place-items-center overflow-hidden rounded-lg bg-inset">
-                      <Package size={30} className="text-subtle" />
+                    <div className="relative grid aspect-[4/3] place-items-center overflow-hidden bg-white">
+                      <Package size={30} className="text-pos-muted" />
                       {product.imageUrl && (
                         <img
                           src={product.imageUrl}
                           alt=""
                           loading="lazy"
-                          className="absolute inset-0 h-full w-full object-cover transition duration-200 group-hover:scale-105"
+                          className="absolute inset-0 h-full w-full bg-white object-contain p-2"
                           onError={(event) => {
                             event.currentTarget.style.display = "none";
                           }}
                         />
                       )}
-                      <span className="absolute bottom-1.5 start-1.5 rounded-md bg-surface/85 px-1.5 py-0.5 text-[9px] font-semibold text-muted backdrop-blur-sm">
-                        {product.categoryName}
-                      </span>
-                    </div>
-                    <div className="line-clamp-2 min-h-9 text-[13px] font-bold leading-[1.35] text-ink">
-                      {product.productName}
-                    </div>
-                    <div className="mt-0.5 min-h-4 truncate text-[10px] text-subtle">
-                      {product.variants.length > 1
-                        ? `${product.variants.length} variants`
-                        : product.variants[0]?.variantName}
-                    </div>
-                    <div className="mt-2 flex items-center justify-between gap-2">
-                      <span className="text-sm font-extrabold text-danger">
+                      <span className="pos-fs-price absolute end-1.5 top-1.5 rounded-pos bg-pos-primary px-2 py-0.5 leading-snug text-white shadow-sm">
                         {formatMoney(product.startingPrice, catalogCurrencyCode, 2)}
                       </span>
-                      <span className="flex items-center gap-1.5">
-                        {hasModifiers && (
-                          <span className="rounded-full bg-accent-soft px-1.5 py-0.5 text-[9px] font-bold text-accent">
-                            Modifiers
-                          </span>
-                        )}
-                        <span
-                          aria-hidden="true"
-                          className="grid h-7 w-7 place-items-center rounded-full bg-accent text-white shadow-[var(--shadow-surface)] transition group-hover:bg-accent-strong"
-                        >
-                          <Plus size={15} strokeWidth={2.5} />
+                      {hasModifiers && (
+                        <span className="pos-fs-label absolute bottom-1.5 start-1.5 rounded-pos bg-pos-tint px-1.5 py-0.5 font-medium text-pos-primary-text">
+                          Modifiers
                         </span>
-                      </span>
+                      )}
+                    </div>
+                    <div className="px-2.5 pb-2.5 pt-2">
+                      <div className="pos-fs-name line-clamp-2 min-h-[2.7em] text-pos-text">
+                        {product.productName}
+                      </div>
+                      <div className="pos-fs-label mt-0.5 min-h-[1.5em] truncate text-pos-muted">
+                        {product.variants.length > 1
+                          ? `${product.variants.length} variants`
+                          : product.variants[0]?.variantName}
+                      </div>
                     </div>
                   </button>
                 );

@@ -1851,27 +1851,27 @@ export default function POSPage() {
 
   return (
     <AppLayout activePath={ROUTES.POS}>
-      <main className="min-w-0 flex-1">
+      <main className="pos-root min-w-0 flex-1">
         <PosOperationalGate>
           <div className="mx-auto w-full max-w-[2200px] space-y-3" dir="rtl">
-          <header className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-3 shadow-[var(--shadow-surface)] md:flex-row md:items-center">
+          <header className="flex flex-col gap-3 rounded-pos-lg border border-pos-border bg-pos-card p-3 md:flex-row md:items-center">
             <button
               type="button"
               onClick={() => setModal("closeShift")}
               disabled={!hasOpenShift}
               title="إغلاق الوردية"
-              className="group flex shrink-0 items-center gap-3 rounded-xl border border-line bg-inset px-3 py-2 text-start transition hover:border-danger/40 hover:bg-danger-soft disabled:cursor-default disabled:hover:border-line disabled:hover:bg-inset"
+              className="pos-control group flex shrink-0 items-center gap-3 border border-pos-border bg-pos-card px-3 py-2 text-start transition hover:border-pos-danger/50 hover:bg-pos-danger/10 disabled:cursor-default disabled:hover:border-pos-border disabled:hover:bg-pos-card"
             >
               <span>
-                <span className="block text-[10px] text-subtle">الكاشير</span>
-                <span className="flex items-center gap-1.5 text-sm font-bold text-ink">
-                  <UserRound size={14} className="text-accent" /> {currentCashierName || "..."}
+                <span className="pos-fs-label block text-pos-muted">الكاشير</span>
+                <span className="pos-fs-name flex items-center gap-1.5 text-pos-text">
+                  <UserRound size={14} className="text-pos-primary-text" /> {currentCashierName || "..."}
                 </span>
               </span>
-              {hasOpenShift && <Power size={15} className="text-subtle transition group-hover:text-danger" />}
+              {hasOpenShift && <Power size={15} className="text-pos-muted transition group-hover:text-pos-danger" />}
             </button>
-            <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-line bg-inset px-3 py-2.5 transition focus-within:border-accent focus-within:ring-[3px] focus-within:ring-accent/20">
-              <Search size={16} className="shrink-0 text-subtle" />
+            <div className="pos-control flex min-w-0 flex-1 items-center gap-2 border border-pos-border bg-pos-card px-3 transition focus-within:border-pos-primary focus-within:ring-[3px] focus-within:ring-pos-primary/20">
+              <Search size={17} className="shrink-0 text-pos-muted" />
               <input
                 ref={searchInputRef}
                 value={query}
@@ -1900,7 +1900,7 @@ export default function POSPage() {
                   event.preventDefault();
                   items[0].focus();
                 }}
-                className="min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-subtle"
+                className="pos-fs-base min-w-0 flex-1 bg-transparent text-pos-text outline-none placeholder:text-pos-muted"
                 placeholder="ابحث بالباركود أو الاسم أو SKU..."
               />
               <ShortcutHint action="pos.focusProductSearch" />
@@ -1908,7 +1908,7 @@ export default function POSPage() {
             <button
               type="button"
               onClick={() => navigate(ROUTES.POS_SHIFT_HISTORY)}
-              className="flex items-center gap-2 rounded-xl border border-line bg-inset px-3 py-2 text-xs font-bold text-ink transition hover:border-accent-line hover:bg-accent-soft"
+              className="pos-control pos-fs-name flex items-center gap-2 border border-pos-border bg-pos-card px-4 text-pos-text transition hover:border-pos-primary hover:bg-pos-tint"
             >
               <History size={14} />
               Transactions
@@ -1917,7 +1917,7 @@ export default function POSPage() {
 
           {phase === "order" && (
           <Fragment>
-          <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_500px]">
+          <div className="grid items-start gap-4 xl:grid-cols-[500px_minmax(0,1fr)]">
             <CatalogPanel
               navigate={navigate}
               catalogCategories={catalogCategories}

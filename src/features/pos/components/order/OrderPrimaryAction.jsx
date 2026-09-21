@@ -52,7 +52,7 @@ export function OrderPrimaryAction({
       <button
         type="button"
         onClick={primaryAction.run}
-        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-slate-700 text-sm font-black transition hover:bg-slate-600"
+        className="pos-fs-base flex h-14 w-full items-center justify-center gap-2 rounded-pos bg-slate-700 font-bold transition hover:bg-slate-600"
       >
         {isClosedOrder ? <CircleCheckBig size={18} /> : <Ban size={18} />}
         {isClosedOrder
@@ -79,7 +79,7 @@ export function OrderPrimaryAction({
         <button
           type="button"
           onClick={primaryAction.run}
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 text-sm font-black shadow-lg shadow-emerald-950/30 transition hover:brightness-110"
+          className="pos-fs-base flex h-14 w-full items-center justify-center gap-2 rounded-pos bg-pos-action font-bold text-white transition hover:bg-pos-action-hover"
         >
           <WalletCards size={19} />
           Pay Now · {formatMoney(remainingAmount, settlementCurrencyCode, settlementMinorUnitDigits)}
@@ -110,7 +110,7 @@ export function OrderPrimaryAction({
         <button
           type="button"
           onClick={primaryAction.run}
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 text-sm font-black shadow-lg shadow-blue-950/30 transition hover:brightness-110"
+          className="pos-fs-base flex h-14 w-full items-center justify-center gap-2 rounded-pos bg-pos-primary font-bold text-white transition hover:bg-pos-primary-hover"
         >
           <Plus size={18} />
           New Order
@@ -132,7 +132,7 @@ export function OrderPrimaryAction({
           type="button"
           disabled={primaryAction.disabled}
           onClick={primaryAction.run}
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 text-sm font-black shadow-lg shadow-emerald-950/30 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+          className="pos-fs-base flex h-14 w-full items-center justify-center gap-2 rounded-pos bg-pos-action font-bold text-white transition hover:bg-pos-action-hover disabled:cursor-not-allowed disabled:opacity-50"
         >
           <CircleCheckBig size={19} />
           Close Order
@@ -156,7 +156,7 @@ export function OrderPrimaryAction({
         type="button"
         disabled={primaryAction.disabled}
         onClick={primaryAction.run}
-        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-l from-blue-600 to-[#0A84FF] text-sm font-black shadow-lg shadow-blue-950/40 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+        className="pos-fs-base flex h-14 w-full items-center justify-center gap-2 rounded-pos bg-pos-action font-bold text-white transition hover:bg-pos-action-hover disabled:cursor-not-allowed disabled:opacity-50"
       >
         <WalletCards size={19} />
         Payment · {formatMoney(total, catalogCurrencyCode, 2)}

@@ -48,18 +48,18 @@ export function PosModal({ title, children, onClose, size = "md" }) {
   }, []);
 
   return (
-    <div className="fixed inset-0 z-[100] grid place-items-center bg-[#030713]/75 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[100] grid place-items-center bg-black/50 p-4">
       <div
         role="dialog"
         aria-modal="true"
-        className={`flex max-h-[calc(100vh-2rem)] w-full flex-col overflow-hidden rounded-2xl border border-white/15 bg-[#10182a] p-5 shadow-2xl ${sizes[size]}`}
+        className={`flex max-h-[calc(100vh-2rem)] w-full flex-col overflow-hidden rounded-pos-lg border border-pos-border bg-pos-card p-5 text-pos-text shadow-2xl ${sizes[size]}`}
       >
         <div className="mb-4 flex shrink-0 items-center justify-between">
-          <h2 className="font-bold">{title}</h2>
+          <h2 className="pos-fs-base font-bold text-pos-text">{title}</h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1 text-slate-400 hover:bg-white/10 hover:text-white"
+            className="rounded-pos p-1.5 text-pos-muted hover:bg-pos-tint hover:text-pos-text"
           >
             <X size={18} />
           </button>
