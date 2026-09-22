@@ -35,17 +35,17 @@ export function CatalogPanel({
   const handleProductGridKeyDown = useGridArrowNav(productGridRef, ROVING_ITEM_SELECTOR);
 
   return (
-    <section className="flex min-w-0 flex-col gap-3 rounded-pos-lg border border-pos-border bg-pos-bg p-3 xl:sticky xl:top-4 xl:h-[calc(100vh-12rem)] xl:min-h-[680px]">
+    <section className="flex min-w-0 flex-col gap-2 rounded-pos-lg border border-pos-border bg-pos-bg p-2 xl:h-[calc(100dvh-var(--pos-chrome))]">
       <CategoryRail categories={catalogCategories} activeCategoryId={category} onSelect={setCategory} />
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
+      <div className="flex flex-wrap items-baseline gap-x-3">
+        <div className="contents">
           <h1 className="pos-fs-line flex flex-wrap items-center gap-2 font-bold text-pos-text">
             المنتجات القابلة للبيع{" "}
             <span className="text-pos-muted">({filteredProducts.length})</span>
             <ShortcutHint action="pos.browseProducts" />
           </h1>
-          <p className="pos-fs-secondary mt-0.5">
+          <p className="pos-fs-secondary">
             {sellableCatalogQuery.data
               ? `${sellableCatalogQuery.data.priceListName} · ${catalogCurrencyCode}`
               : "تحميل الكتالوج التشغيلي للفرع"}
@@ -80,7 +80,7 @@ export function CatalogPanel({
         </div>
       )}
 
-      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1 scrollbar-none">
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-1 py-1 scrollbar-none">
         {catalogPermissionQuery.isLoading && (
           <LoadingState label="Checking catalog access..." />
         )}
@@ -157,7 +157,7 @@ export function CatalogPanel({
                     data-roving-item=""
                     onClick={() => addItem(product)}
                     disabled={!canEditDraft}
-                    className="group flex flex-col overflow-hidden rounded-pos border border-pos-border bg-pos-card text-start transition hover:-translate-y-0.5 hover:border-pos-primary hover:shadow-[var(--pos-shadow-hover)] active:translate-y-0 active:bg-pos-tint focus-visible:outline focus-visible:outline-2 focus-visible:outline-pos-primary disabled:cursor-not-allowed disabled:opacity-50"
+                    className="pos-product-card group flex flex-col overflow-hidden rounded-pos border border-pos-border bg-pos-card text-start disabled:opacity-50"
                   >
                     <div className="relative grid aspect-[4/3] place-items-center overflow-hidden bg-white">
                       <Package size={30} className="text-pos-muted" />
@@ -172,7 +172,7 @@ export function CatalogPanel({
                           }}
                         />
                       )}
-                      <span className="pos-fs-price absolute end-1.5 top-1.5 rounded-pos bg-pos-primary px-2 py-0.5 leading-snug text-white shadow-sm">
+                      <span className="pos-num pos-fs-price absolute end-1.5 top-1.5 rounded-pos bg-pos-primary-strong px-2 py-0.5 leading-snug text-white shadow-sm">
                         {formatMoney(product.startingPrice, catalogCurrencyCode, 2)}
                       </span>
                       {hasModifiers && (
@@ -181,7 +181,7 @@ export function CatalogPanel({
                         </span>
                       )}
                     </div>
-                    <div className="px-2.5 pb-2.5 pt-2">
+                    <div className="px-2 pb-2 pt-1.5">
                       <div className="pos-fs-name line-clamp-2 min-h-[2.7em] text-pos-text">
                         {product.productName}
                       </div>

@@ -67,7 +67,7 @@ export function NumericKeypadModal({
           type="button"
           onClick={confirm}
           disabled={isEmpty}
-          className="pos-control pos-fs-name flex items-center justify-center gap-1.5 bg-pos-action text-white transition hover:bg-pos-action-hover disabled:cursor-not-allowed disabled:opacity-40"
+          className="pos-control pos-fs-name flex items-center justify-center gap-1.5 bg-pos-action text-pos-on-action transition hover:bg-pos-action-hover disabled:cursor-not-allowed disabled:opacity-40"
         >
           <Check size={15} />
           {confirmLabel}

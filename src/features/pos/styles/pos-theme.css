@@ -1,10 +1,16 @@
 /*
- * POS design tokens — Odoo 17 POS look. Every font, size, colour, radius and spacing the POS uses
- * lives here, so the whole screen can be re-tuned from this one file. Scoped to `.pos-root`
- * (the POS page's <main>), so nothing outside the POS is affected.
+ * POS design tokens. Every font, size, colour, radius and spacing the POS uses lives here, so the
+ * whole screen can be re-tuned from this one file. Scoped to `.pos-root` (the POS page's <main>),
+ * so nothing outside the POS is affected.
  *
- * Colour tokens are theme-aware: the light values are the Odoo palette, the dark block keeps the
- * same structure for the app's dark mode.
+ * Colours come from the NOBO brand palette in styles/tokens.css. Roles:
+ *   primary (blue)   borders, focus rings, indicators, active/selected — and, via -strong, fills
+ *                    that carry white text (raw brand blue is only 3.9:1 with white)
+ *   action  (green)  Payment / confirm — carries DARK text (white on green is only 2.1:1)
+ *   danger  (pink)   delete / remove / refund — -text for pink used as text
+ *   warning (yellow) discounts, warnings, the selected-line accent — never used as text
+ * The colour tokens are theme-aware: the base values are for the light POS, the dark block below
+ * keeps the same structure for the app's dark mode.
  */
 
 .pos-root {
@@ -22,26 +28,41 @@
      Change the number here to retune Arabic without touching any size above. */
   --pos-font-scale: 1;
 
-  /* ---- colour (light = Odoo) ---- */
-  --pos-primary: #714b67;
-  --pos-primary-hover: #5f3f57;
-  --pos-primary-text: #714b67; /* primary used as text / outline colour */
-  --pos-primary-tint: rgb(113 75 103 / 0.1);
-  --pos-action: #017e84;
-  --pos-action-hover: #016267;
+  /* ---- colour (light) ---- */
+  --pos-primary: var(--brand-blue); /* borders, rings, indicators */
+  --pos-primary-strong: var(--brand-blue-strong); /* fills that carry white text */
+  --pos-primary-strong-hover: var(--brand-blue-strong-hover);
+  --pos-primary-hover: var(--brand-blue-strong-hover);
+  --pos-primary-text: var(--brand-blue-ink); /* primary used as text */
+  --pos-primary-tint: var(--brand-blue-tint);
+  --pos-action: var(--brand-green); /* Payment / confirm — pair with --pos-on-action */
+  --pos-action-hover: var(--brand-green-hover);
+  --pos-on-action: var(--brand-dark);
+  --pos-action-text: var(--brand-green-ink);
+  --pos-action-tint: var(--brand-green-tint);
+  --pos-danger: var(--brand-pink); /* borders, icons, tints */
+  --pos-danger-strong: var(--brand-pink-strong); /* fills that carry white text */
+  --pos-danger-text: var(--brand-pink-ink); /* pink used as text */
+  --pos-danger-tint: var(--brand-pink-tint);
+  --pos-warning: var(--brand-yellow); /* highlights, discounts, selected-line accent */
+  --pos-warning-tint: var(--brand-yellow-tint);
+  --pos-warning-text: var(--brand-yellow-ink);
   --pos-bg: #f3f4f6; /* product area */
   --pos-card: #ffffff; /* cards and the order panel */
   --pos-border: #dee2e6;
   --pos-text: #212529;
-  --pos-muted: #6c757d;
-  --pos-danger: #dc3545;
+  --pos-muted: #5f6873; /* 5.1:1 on --pos-bg (the old #6c757d was 4.26) */
 
   /* ---- shape & spacing ---- */
   --pos-radius: 6px;
   --pos-radius-lg: 8px;
-  --pos-gap: 10px;
+  --pos-gap: 8px;
   --pos-control-h: 44px; /* minimum touch height */
-  --pos-card-min-w: 140px;
+  /* Everything above and below the workspace on the POS route (app header, POS toolbar, footer, and
+     the paddings between them). The catalog and order panels are 100dvh minus this, so the screen
+     fits the viewport and only the product grid and the order lines scroll. */
+  --pos-chrome: 9.1rem;
+  --pos-card-min-w: 128px;
   --pos-shadow-hover: 0 4px 12px rgb(0 0 0 / 0.1);
 
   font-family: var(--pos-font);
@@ -51,8 +72,14 @@
 }
 
 [data-theme="dark"] .pos-root {
-  --pos-primary-text: #c99bbd;
-  --pos-primary-tint: rgb(201 155 189 / 0.16);
+  --pos-primary-text: #7daeff;
+  --pos-primary-tint: rgb(47 125 246 / 0.18);
+  --pos-action-text: #5fe39a;
+  --pos-action-tint: rgb(46 204 113 / 0.16);
+  --pos-danger-text: #ff7fa1;
+  --pos-danger-tint: rgb(242 56 107 / 0.16);
+  --pos-warning-text: var(--brand-yellow);
+  --pos-warning-tint: rgb(255 197 61 / 0.16);
   --pos-bg: #10131a;
   --pos-card: #1a1e28;
   --pos-border: #2c3340;
@@ -68,17 +95,28 @@ html[lang="ar"] .pos-root {
 /* Tailwind utilities for the tokens: bg-pos-card, text-pos-muted, border-pos-border, rounded-pos … */
 @theme inline {
   --color-pos-primary: var(--pos-primary);
+  --color-pos-primary-strong: var(--pos-primary-strong);
+  --color-pos-primary-strong-hover: var(--pos-primary-strong-hover);
   --color-pos-primary-hover: var(--pos-primary-hover);
   --color-pos-primary-text: var(--pos-primary-text);
   --color-pos-tint: var(--pos-primary-tint);
   --color-pos-action: var(--pos-action);
   --color-pos-action-hover: var(--pos-action-hover);
+  --color-pos-on-action: var(--pos-on-action);
+  --color-pos-action-text: var(--pos-action-text);
+  --color-pos-action-tint: var(--pos-action-tint);
   --color-pos-bg: var(--pos-bg);
   --color-pos-card: var(--pos-card);
   --color-pos-border: var(--pos-border);
   --color-pos-text: var(--pos-text);
   --color-pos-muted: var(--pos-muted);
   --color-pos-danger: var(--pos-danger);
+  --color-pos-danger-strong: var(--pos-danger-strong);
+  --color-pos-danger-text: var(--pos-danger-text);
+  --color-pos-danger-tint: var(--pos-danger-tint);
+  --color-pos-warning: var(--pos-warning);
+  --color-pos-warning-tint: var(--pos-warning-tint);
+  --color-pos-warning-text: var(--pos-warning-text);
   --radius-pos: var(--pos-radius);
   --radius-pos-lg: var(--pos-radius-lg);
 }
@@ -115,6 +153,69 @@ html[lang="ar"] .pos-root {
 }
 .pos-fs-base {
   font-size: calc(var(--pos-fs-base) * var(--pos-font-scale));
+}
+
+/* Prices, quantities, order numbers and barcodes stay left-to-right and are isolated from the
+   surrounding text, so "SAR 20.00" or "ORD-100315" is never reordered inside Arabic. */
+.pos-num {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+/*
+ * Product card. The whole card is the click target. Feedback is CSS-only (hover lift, press scale,
+ * and a tint flash on press) so it can never delay or block the click handler; every duration is
+ * under 200ms so the cashier never waits, and all of it is off under prefers-reduced-motion.
+ * The flash: --pos-primary-tint appears instantly on press and fades out over 180ms on release, so
+ * even a very quick tap shows it.
+ */
+.pos-product-card {
+  position: relative;
+  cursor: pointer;
+  transition:
+    transform 150ms ease-out,
+    box-shadow 150ms ease-out,
+    border-color 150ms ease-out;
+}
+.pos-product-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--pos-primary-tint);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease-out;
+}
+.pos-product-card:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: var(--pos-primary);
+  box-shadow: var(--pos-shadow-hover);
+}
+.pos-product-card:active:not(:disabled) {
+  transform: scale(0.97);
+  transition-duration: 80ms;
+}
+.pos-product-card:active:not(:disabled)::after {
+  opacity: 1;
+  transition: none;
+}
+.pos-product-card:focus-visible {
+  outline: 2px solid var(--pos-primary);
+  outline-offset: 2px;
+}
+.pos-product-card:disabled {
+  cursor: not-allowed;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pos-product-card,
+  .pos-product-card::after {
+    transition: none;
+  }
+  .pos-product-card:hover:not(:disabled),
+  .pos-product-card:active:not(:disabled) {
+    transform: none;
+  }
 }
 
 /* Touch-height controls (buttons, inputs). */

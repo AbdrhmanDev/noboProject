@@ -99,7 +99,7 @@ function CustomerPickerDialog({ onClose, currentCompanyId, canViewCustomers, can
                   type="button"
                   disabled={selectingId === customer.customerId}
                   onClick={() => selectCustomer(customer)}
-                  className="flex w-full items-center justify-between rounded-xl border border-white/10 p-3 text-right hover:border-blue-400/50 hover:bg-blue-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="flex w-full items-center justify-between rounded-xl border border-white/10 p-3 text-start hover:border-blue-400/50 hover:bg-blue-500/10 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <span className="min-w-0">
                     <span className="flex items-center gap-2 text-xs font-bold">

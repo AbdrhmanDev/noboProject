@@ -9,6 +9,39 @@
  * carries primary actions; status colours are reserved for state, never decoration.
  */
 
+/*
+ * NOBO brand palette — the four bars of the logo, plus the logo's own dark.
+ *
+ * Raw brand colours are for borders, focus rings, indicators, icons, tints, and fills that carry
+ * DARK text. White text needs a deeper shade to reach WCAG AA, so each colour also ships:
+ *   -strong  a fill that carries white text     (contrast with #fff: blue 5.26, pink 4.92)
+ *   -ink     the colour when used AS text on a light surface (blue 6.24, pink 5.83, green 5.93, yellow 6.85)
+ * Yellow is never text on white; on yellow, use --brand-dark (12.1:1). Green carries dark text too.
+ * Tints are ~12% of the colour, for hover / selected backgrounds.
+ */
+:root {
+  --brand-pink: #f2386b; /* danger / delete / remove line / refund */
+  --brand-yellow: #ffc53d; /* highlights, discounts, warnings, selected-line accent */
+  --brand-blue: #2f7df6; /* primary: active category, links, focus rings, selected states */
+  --brand-green: #2ecc71; /* success / Payment / confirm */
+  --brand-dark: #0e0f13; /* sidebar background — matches the logo background */
+
+  --brand-pink-tint: rgb(242 56 107 / 0.12);
+  --brand-yellow-tint: rgb(255 197 61 / 0.18);
+  --brand-blue-tint: rgb(47 125 246 / 0.12);
+  --brand-green-tint: rgb(46 204 113 / 0.12);
+
+  --brand-blue-strong: #1f66dc;
+  --brand-blue-strong-hover: #1a58c2;
+  --brand-pink-strong: #d91e56;
+  --brand-green-hover: #27b862;
+
+  --brand-blue-ink: #1b5bc7;
+  --brand-pink-ink: #c41a4d;
+  --brand-green-ink: #12733a;
+  --brand-yellow-ink: #7a5300;
+}
+
 :root {
   color-scheme: dark;
 
@@ -97,6 +130,12 @@
   --color-warning-soft: var(--nobo-warning-soft);
   --color-danger: var(--nobo-danger);
   --color-danger-soft: var(--nobo-danger-soft);
+
+  --color-brand-pink: var(--brand-pink);
+  --color-brand-yellow: var(--brand-yellow);
+  --color-brand-blue: var(--brand-blue);
+  --color-brand-green: var(--brand-green);
+  --color-brand-dark: var(--brand-dark);
 
   --radius-control: 0.625rem;
   --radius-surface: 0.875rem;

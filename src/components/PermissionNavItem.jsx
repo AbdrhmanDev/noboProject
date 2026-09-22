@@ -44,13 +44,13 @@ export function PermissionNavItem({
       <button
         type="button"
         onClick={() => navigate(to)}
-        title={t(labelKey)}
         aria-label={t(labelKey)}
-        className={`mx-auto flex h-11 w-11 items-center justify-center rounded-2xl transition-all duration-300 hover:bg-blue-500/10 ${
-          isActive ? "border border-blue-500/40 bg-blue-500/15" : ""
-        }`}
+        aria-current={isActive ? "page" : undefined}
+        data-active={isActive}
+        className="nobo-sb-item"
       >
-        <Icon size={20} color={isActive ? "#2b8cff" : "#60a5fa"} />
+        <Icon size={20} className="nobo-sb-icon" />
+        <span className="nobo-sb-tip">{t(labelKey)}</span>
       </button>
     );
   }
@@ -71,19 +71,16 @@ export function PermissionNavItem({
   }
 
   return (
-    <div
+    <button
+      type="button"
       onClick={() => navigate(to)}
-      className={`group flex cursor-pointer items-center gap-4 rounded-2xl px-4 py-3.5 transition-all duration-300 hover:border hover:border-blue-500/30 hover:bg-blue-500/10 ${
-        isActive ? "border border-blue-500/40 bg-blue-500/15" : ""
-      }`}
+      aria-current={isActive ? "page" : undefined}
+      data-active={isActive}
+      className="nobo-sb-item"
     >
-      <Icon
-        size={20}
-        color={isActive ? "#2b8cff" : "#60a5fa"}
-        className="shrink-0 transition group-hover:scale-110"
-      />
-      <span className={`flex-1 font-semibold tracking-wide ${isActive ? "text-white" : ""}`}>{t(labelKey)}</span>
+      <Icon size={20} className="nobo-sb-icon" />
+      <span className="nobo-sb-label">{t(labelKey)}</span>
       {shortcutAction && <ShortcutHint action={shortcutAction} />}
-    </div>
+    </button>
   );
 }

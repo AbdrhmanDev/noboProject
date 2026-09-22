@@ -1,7 +1,8 @@
-import { Fragment, useState } from "react";
+import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { ChevronsLeft } from "lucide-react";
 import NoboLogo from "./NoboLogo";
+import logoDark from "../assets/nobo-logo-dark.png";
 import Header from "./Header";
 import Footer from "./Footer";
 import { useI18n } from "../i18n/I18nContext";
@@ -36,12 +37,42 @@ const NAV_GROUPS = {
   platform: PlatformNavGroup,
 };
 
+// Design-only grouping of the existing NAV_ITEMS into titled sections. Each section takes one of the
+// four logo-bar colours (see styles/sidebar.css). Items keep their own order, permissions and
+// routes; anything not listed here falls into the last section so nothing is ever dropped.
+const SIDEBAR_SECTIONS = [
+  { id: "operations", titleKey: "nav.section.operations", accent: "blue", labelKeys: ["nav.pos", "nav.kitchen", "nav.restaurant"] },
+  { id: "setup", titleKey: "nav.section.setup", accent: "yellow", labelKeys: ["nav.catalog", "nav.pricing", "nav.tax", "nav.payments", "nav.devices"] },
+  { id: "backOffice", titleKey: "nav.section.backOffice", accent: "green", labelKeys: ["nav.inventory", "nav.sales", "nav.purchases"] },
+];
+const SIDEBAR_ADMIN_SECTION = { id: "admin", titleKey: "nav.section.admin", accent: "pink" };
+const SIDEBAR_SOON_SECTION = { id: "soon", titleKey: "nav.comingSoon", accent: "muted" };
+
+function buildSidebarSections(items) {
+  const soonItems = items.filter((item) => item.comingSoon);
+  const liveItems = items.filter((item) => !item.comingSoon);
+  const assigned = new Set(SIDEBAR_SECTIONS.flatMap((section) => section.labelKeys));
+  const sections = SIDEBAR_SECTIONS.map((section) => ({
+    ...section,
+    items: liveItems.filter((item) => section.labelKeys.includes(item.labelKey)),
+  }));
+  const adminItems = liveItems.filter((item) => !assigned.has(item.labelKey));
+  return [
+    ...sections,
+    ...(soonItems.length ? [{ ...SIDEBAR_SOON_SECTION, items: soonItems }] : []),
+    ...(adminItems.length ? [{ ...SIDEBAR_ADMIN_SECTION, items: adminItems }] : []),
+  ];
+}
+
+const NAV_SECTIONS = buildSidebarSections(NAV_ITEMS.slice(1));
+
 const SIDEBAR_COLLAPSE_STORAGE_KEY = "nobo-sidebar-collapsed";
 
 export default function AppLayout({ children, onLogout }) {
   const navigate = useNavigate();
   const location = useLocation();
   const activePath = (location?.hash && location.hash.replace("#", "")) || location?.pathname || ROUTES.DASHBOARD;
+  const isPos = activePath === ROUTES.POS;
   const [collapsed, setCollapsed] = useState(() => {
     try {
       const stored = localStorage.getItem(SIDEBAR_COLLAPSE_STORAGE_KEY);
@@ -79,229 +110,164 @@ export default function AppLayout({ children, onLogout }) {
   const switchableCompanies = companies.filter(isCompanyEnterable);
   const switchableBranches = branches.filter(isBranchEnterable);
 
+  const HomeIcon = NAV_ITEMS[0].icon;
+
+  const renderNavItem = (item) => {
+    if (item.comingSoon) {
+      return <ComingSoonNavItem key={item.labelKey} icon={item.icon} labelKey={item.labelKey} collapsed={collapsed} />;
+    }
+
+    if (item.kind === "group") {
+      const GroupComponent = NAV_GROUPS[item.module];
+      return (
+        <GroupComponent
+          key={item.module}
+          activePath={activePath}
+          navigate={navigate}
+          collapsed={collapsed}
+        />
+      );
+    }
+
+    if (item.permission || item.permissions) {
+      return (
+        <PermissionNavItem
+          key={item.labelKey}
+          icon={item.icon}
+          labelKey={item.labelKey}
+          to={item.to}
+          permission={item.permission}
+          permissions={item.permissions}
+          entitlement={item.entitlement}
+          activePath={activePath}
+          navigate={navigate}
+          shortcutAction={item.shortcutAction}
+          collapsed={collapsed}
+        />
+      );
+    }
+
+    const isActive = activePath === item.to;
+    return (
+      <button
+        key={item.labelKey}
+        type="button"
+        onClick={() => navigate(item.to)}
+        aria-label={t(item.labelKey)}
+        aria-current={isActive ? "page" : undefined}
+        data-active={isActive}
+        className="nobo-sb-item"
+      >
+        <item.icon size={20} className="nobo-sb-icon" />
+        {collapsed ? (
+          <span className="nobo-sb-tip">{t(item.labelKey)}</span>
+        ) : (
+          <span className="nobo-sb-label">{t(item.labelKey)}</span>
+        )}
+      </button>
+    );
+  };
+
   return (
     <div dir={dir} className="bg-space min-h-screen w-full text-white flex flex-col lg:flex-row">
-      {/* sidebar (RTL: sits on the right) */}
-      <aside
-        className={`
-          hidden
-          lg:flex
-          flex-col
-          ${collapsed ? "w-[68px]" : "w-[300px]"}
-          shrink-0
-          bg-black
-          border-l
-          border-white/10
-          ${collapsed ? "px-2" : "px-5"}
-          py-6
-          relative
-          overflow-hidden
-          transition-[width,padding]
-          duration-200
-        `}
-      >
-        <div className="bg-stars absolute inset-0 pointer-events-none opacity-40" />
-        <div className={`flex items-center justify-center ${collapsed ? "mb-8" : "mb-8"}`}>
-          <NoboLogo className={`relative h-auto object-contain ${collapsed ? "w-[52px]" : "w-[230px]"}`} />
+      {/* sidebar (RTL: sits on the right; the CSS is logical, so it mirrors with dir) */}
+      <aside className="nobo-sidebar hidden lg:flex flex-col" data-collapsed={collapsed}>
+        <div className="nobo-sb-top">
+          {collapsed ? (
+            <span className="nobo-sb-mark" aria-hidden="true">
+              <img src={logoDark} alt="" />
+            </span>
+          ) : (
+            <NoboLogo className="nobo-sb-logo" />
+          )}
+          <button
+            type="button"
+            onClick={toggleCollapsed}
+            aria-label={collapsed ? t("layout.expandSidebar") : t("layout.collapseSidebar")}
+            aria-expanded={!collapsed}
+            className="nobo-sb-toggle"
+          >
+            <ChevronsLeft size={16} />
+            {collapsed && <span className="nobo-sb-tip">{t("layout.expandSidebar")}</span>}
+          </button>
         </div>
-        <button
-          onClick={() => navigate(ROUTES.DASHBOARD)}
-          title={collapsed ? t("layout.home") : undefined}
-          aria-label={t("layout.home")}
-          className={`
-            rounded-2xl
-            font-bold
-            text-white
-            mb-4
-            transition
-            duration-300
-            hover:scale-[1.02]
-            shadow-[0_0_30px_rgba(43,140,255,.35)]
-            text-sm
-            ${collapsed ? "mx-auto h-11 w-11 shrink-0" : "w-full py-4"}
-          `}
-          style={{ background: "linear-gradient(90deg,#2b8cff,#4f6bff)" }}
-        >
-          {collapsed ? "N" : t("layout.home")}
-        </button>
-        <nav className="flex-1 space-y-1 overflow-y-auto overflow-x-hidden scrollbar-none">
-          {NAV_ITEMS.slice(1).map((item, i, arr) => {
-            const showDivider = item.comingSoon && !arr[i - 1]?.comingSoon;
 
-            if (item.comingSoon) {
-              return (
-                <Fragment key={i}>
-                  {showDivider && <div className="my-2 border-t border-white/10" />}
-                  <ComingSoonNavItem icon={item.icon} labelKey={item.labelKey} collapsed={collapsed} />
-                </Fragment>
-              );
-            }
-
-            if (item.kind === "group") {
-              const GroupComponent = NAV_GROUPS[item.module];
-              return (
-                <GroupComponent
-                  key={i}
-                  activePath={activePath}
-                  navigate={navigate}
-                  collapsed={collapsed}
-                />
-              );
-            }
-
-            if (item.permission || item.permissions) {
-              return (
-                <PermissionNavItem
-                  key={i}
-                  icon={item.icon}
-                  labelKey={item.labelKey}
-                  to={item.to}
-                  permission={item.permission}
-                  permissions={item.permissions}
-                  entitlement={item.entitlement}
-                  activePath={activePath}
-                  navigate={navigate}
-                  shortcutAction={item.shortcutAction}
-                  collapsed={collapsed}
-                />
-              );
-            }
-
-            const isActive = activePath === item.to;
-
-            if (collapsed) {
-              return (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => navigate(item.to)}
-                  title={t(item.labelKey)}
-                  aria-label={t(item.labelKey)}
-                  className={`mx-auto flex h-11 w-11 items-center justify-center rounded-2xl transition-all duration-300 hover:bg-blue-500/10 ${
-                    isActive ? "border border-blue-500/40 bg-blue-500/15" : ""
-                  }`}
-                >
-                  <item.icon size={20} color={isActive ? "#2b8cff" : "#60a5fa"} />
-                </button>
-              );
-            }
-
-            return (
-              <div
-                key={i}
-                onClick={() => navigate(item.to)}
-                className={`
-                  group
-                  rounded-2xl
-                  px-4
-                  py-3.5
-                  flex
-                  items-center
-                  gap-4
-                  cursor-pointer
-                  transition-all
-                  duration-300
-                  hover:bg-blue-500/10
-                  hover:border
-                  hover:border-blue-500/30
-                  ${isActive ? "bg-blue-500/15 border border-blue-500/40" : ""}
-                `}
+        <nav className="nobo-sb-nav scrollbar-none" aria-label={t("layout.home")}>
+          <div className="nobo-sb-section" data-accent="blue">
+            <div className="nobo-sb-items">
+              <button
+                type="button"
+                onClick={() => navigate(ROUTES.DASHBOARD)}
+                aria-label={t("layout.home")}
+                aria-current={activePath === ROUTES.DASHBOARD ? "page" : undefined}
+                data-active={activePath === ROUTES.DASHBOARD}
+                className="nobo-sb-item"
               >
-                <item.icon size={20} color={isActive ? "#2b8cff" : "#60a5fa"} className="group-hover:scale-110 transition" />
-                <span className={`font-semibold tracking-wide ${isActive ? "text-white" : ""}`}>{t(item.labelKey)}</span>
-              </div>
-            );
-          })}
+                <HomeIcon size={20} className="nobo-sb-icon" />
+                {collapsed ? (
+                  <span className="nobo-sb-tip">{t("layout.home")}</span>
+                ) : (
+                  <span className="nobo-sb-label">{t("layout.home")}</span>
+                )}
+              </button>
+            </div>
+          </div>
+          {NAV_SECTIONS.map((section) => (
+            <div key={section.id} className="nobo-sb-section" data-accent={section.accent}>
+              <div className="nobo-sb-title">{t(section.titleKey)}</div>
+              <div className="nobo-sb-items">{section.items.map(renderNavItem)}</div>
+            </div>
+          ))}
         </nav>
 
-        <button
-          type="button"
-          onClick={toggleCollapsed}
-          title={collapsed ? t("layout.expandSidebar") : t("layout.collapseSidebar")}
-          aria-label={collapsed ? t("layout.expandSidebar") : t("layout.collapseSidebar")}
-          className={`mt-3 flex h-10 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] text-gray-400 transition hover:border-blue-500/40 hover:bg-blue-500/10 hover:text-white ${
-            collapsed ? "mx-auto w-11" : "w-full"
-          }`}
-        >
-          {dir === "rtl" ? (
-            collapsed ? <PanelLeftOpen size={18} className="rotate-180" /> : <PanelLeftClose size={18} className="rotate-180" />
-          ) : collapsed ? (
-            <PanelLeftOpen size={18} />
-          ) : (
-            <PanelLeftClose size={18} />
-          )}
-          {!collapsed && <span className="text-xs font-semibold">{t("layout.collapseSidebar")}</span>}
-        </button>
-
-        <button
-          onClick={() => navigate(ROUTES.PROFILE)}
-          title={collapsed ? displayName : undefined}
-          aria-label={displayName}
-          className={`
-            rounded-3xl
-            border
-            border-white/10
-            bg-white/5
-            backdrop-blur-xl
-            flex
-            items-center
-            text-left
-            cursor-pointer
-            transition
-            hover:border-blue-500/40
-            hover:bg-blue-500/10
-            ${collapsed ? "mx-auto mt-4 h-11 w-11 justify-center p-0" : "mt-4 gap-3 p-4"}
-          `}
-        >
-          {/* Real identity only -- no fake seeded avatar image (Cashier Real Identity task).
-              A plain initials circle needs no backend "avatar" concept that doesn't exist. */}
-          <div
-            className={`flex shrink-0 items-center justify-center rounded-full bg-blue-500/20 font-bold text-blue-200 ${collapsed ? "h-9 w-9 text-sm" : "h-14 w-14 text-lg"}`}
-            style={{ boxShadow: "0 0 25px rgba(43,140,255,.3)" }}
+        <div className="nobo-sb-footer">
+          <button
+            type="button"
+            onClick={() => navigate(ROUTES.PROFILE)}
+            aria-label={displayName}
+            className="nobo-sb-profile"
           >
-            {initial}
-          </div>
+            {/* Real identity only -- no fake seeded avatar image (Cashier Real Identity task).
+                A plain initials circle needs no backend "avatar" concept that doesn't exist. */}
+            <span className="nobo-sb-avatar">{initial}</span>
+            {collapsed ? (
+              <span className="nobo-sb-tip">{displayName}</span>
+            ) : (
+              <span className="nobo-sb-who">
+                <div className="nobo-sb-who-name">{displayName}</div>
+                {session?.email && session.email !== displayName && (
+                  <div className="nobo-sb-who-mail">{session.email}</div>
+                )}
+              </span>
+            )}
+          </button>
           {!collapsed && (
-            <div className="min-w-0">
-              <div className="truncate text-sm font-bold">{displayName}</div>
-              {session?.email && session.email !== displayName && (
-                <div className="truncate text-[11px] text-gray-400">{session.email}</div>
-              )}
+            <div className="nobo-sb-status">
+              <div>
+                <strong>{t("layout.systemStatus")}</strong>
+                {t("layout.allServices")}
+              </div>
+              <span className="nobo-sb-dot" />
             </div>
           )}
-        </button>
-        {!collapsed && (
-          <div
-            className="
-              mt-4
-              rounded-2xl
-              bg-green-500/10
-              border
-              border-green-400/30
-              p-3
-              flex
-              items-center
-              justify-between
-            "
-          >
-            <div>
-              <div className="text-xs text-green-400">{t("layout.systemStatus")}</div>
-              <div className="text-[11px] text-gray-400">{t("layout.allServices")}</div>
-            </div>
-            <div className="w-3 h-3 rounded-full bg-green-400 animate-pulse" />
-          </div>
-        )}
+        </div>
       </aside>
 
       {/* main */}
-      <main className="min-w-0 flex-1 p-3 sm:p-4 md:p-6 overflow-x-hidden">
-        <Header
-          onLogout={handleLogout}
-          companyName={currentCompany ? getCompanyDisplayName(currentCompany) : ""}
-          onSwitchCompany={switchableCompanies.length > 1 ? clearCompany : undefined}
-          branchName={currentBranch ? currentBranch.name : ""}
-          onSwitchBranch={switchableBranches.length > 1 ? clearBranch : undefined}
-        />
+      <main className={`min-w-0 flex-1 overflow-x-hidden ${isPos ? "p-1.5" : "p-3 sm:p-4 md:p-6"}`}>
+        {/* On the POS route the clock/theme/logout/shortcuts row moves down to sit right above the
+            footer instead of taking a row at the top — that row is prime real estate for the actual
+            workspace (product grid / basket / payment) on a screen where every pixel of vertical
+            space matters for how fast the cashier can work. Every other route keeps it at the top. */}
+        {!isPos && (
+          <Header
+            onLogout={handleLogout}
+            companyName={currentCompany ? getCompanyDisplayName(currentCompany) : ""}
+            onSwitchCompany={switchableCompanies.length > 1 ? clearCompany : undefined}
+            branchName={currentBranch ? currentBranch.name : ""}
+            onSwitchBranch={switchableBranches.length > 1 ? clearBranch : undefined}
+          />
+        )}
         <nav className="mb-5 flex gap-2 overflow-x-auto pb-1 scrollbar-none lg:hidden">
           {NAV_ITEMS.filter((item) => !item.comingSoon).map((item, i) => {
             if (item.kind === "group") {
@@ -348,7 +314,17 @@ export default function AppLayout({ children, onLogout }) {
           })}
         </nav>
         {children}
-        <Footer />
+        {isPos && (
+          <Header
+            compact
+            onLogout={handleLogout}
+            companyName={currentCompany ? getCompanyDisplayName(currentCompany) : ""}
+            onSwitchCompany={switchableCompanies.length > 1 ? clearCompany : undefined}
+            branchName={currentBranch ? currentBranch.name : ""}
+            onSwitchBranch={switchableBranches.length > 1 ? clearBranch : undefined}
+          />
+        )}
+        <Footer compact={isPos} />
       </main>
     </div>
   );

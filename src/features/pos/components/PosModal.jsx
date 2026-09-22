@@ -64,7 +64,7 @@ export function PosModal({ title, children, onClose, size = "md" }) {
             <X size={18} />
           </button>
         </div>
-        <div className="min-h-0 overflow-y-auto pr-1 scrollbar-none">{children}</div>
+        <div className="min-h-0 overflow-y-auto pe-1 scrollbar-none">{children}</div>
       </div>
     </div>
   );

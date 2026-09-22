@@ -472,6 +472,10 @@ export const translations = {
     "usersAccess.accessSummary.salesHistory": "سجل المبيعات",
     "nav.more": "المزيد",
     "nav.comingSoon": "قريبًا",
+    "nav.section.operations": "التشغيل",
+    "nav.section.setup": "الإعداد",
+    "nav.section.backOffice": "الإدارة الخلفية",
+    "nav.section.admin": "الإدارة",
 
     // ---- Keyboard shortcuts ----
     "shortcuts.title": "اختصارات لوحة المفاتيح",
@@ -2053,6 +2057,10 @@ export const translations = {
     "usersAccess.accessSummary.salesHistory": "Sales History",
     "nav.more": "More",
     "nav.comingSoon": "Coming Soon",
+    "nav.section.operations": "Operations",
+    "nav.section.setup": "Setup",
+    "nav.section.backOffice": "Back office",
+    "nav.section.admin": "Administration",
 
     // ---- Keyboard shortcuts ----
     "shortcuts.title": "Keyboard Shortcuts",
@@ -3429,6 +3437,10 @@ export const translations = {
     "nav.approvals": "Aprobaciones",
     "nav.more": "Más",
     "nav.comingSoon": "Próximamente",
+    "nav.section.operations": "Operaciones",
+    "nav.section.setup": "Configuración",
+    "nav.section.backOffice": "Administración interna",
+    "nav.section.admin": "Administración",
 
     // ---- Keyboard shortcuts ----
     "shortcuts.title": "Atajos de teclado",
@@ -4688,6 +4700,10 @@ export const translations = {
     "nav.approvals": "Genehmigungen",
     "nav.more": "Mehr",
     "nav.comingSoon": "Demnächst",
+    "nav.section.operations": "Betrieb",
+    "nav.section.setup": "Einrichtung",
+    "nav.section.backOffice": "Backoffice",
+    "nav.section.admin": "Verwaltung",
 
     // ---- Keyboard shortcuts ----
     "shortcuts.title": "Tastenkombinationen",

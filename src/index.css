@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "./styles/tokens.css";
+@import "./styles/sidebar.css";
 @import "./features/pos/styles/pos-theme.css";
 
 /* ---------- app reset ---------- */

@@ -1,0 +1,462 @@
+/*
+ * NOBO app sidebar: dark (--brand-dark, the logo's own background), Odoo-inspired but distinctive:
+ * each section takes ONE of the logo's four bar colours for its icons and active indicator.
+ *
+ * Built from its own .nobo-sb-* classes instead of Tailwind colour utilities on purpose:
+ * GlobalStyle's light-theme overrides remap every `aside` background and many Tailwind colour
+ * classes, which would turn a dark sidebar light. The [data-theme] prefix + !important below keep
+ * it dark in both themes. Everything uses logical properties, so it mirrors with `dir`.
+ *
+ * Contrast on --brand-dark: text 15.6:1, muted 8.7:1, section titles 6.2:1, and the four brand
+ * accents 4.9 to 12.1:1, all AA.
+ */
+
+.nobo-sidebar {
+  --sb-w: 240px;
+  --sb-w-collapsed: 64px;
+  --sb-pad: 8px;
+  --sb-bg: var(--brand-dark);
+  --sb-text: #e6e8ec;
+  --sb-muted: #a7afbc;
+  --sb-title: #8b93a3;
+  --sb-hover: rgb(255 255 255 / 0.06);
+  --sb-line: rgb(255 255 255 / 0.09);
+  --sb-accent: var(--brand-blue);
+
+  /* Anything inside that reads the app's theme tokens (badges, hints) gets the dark values,
+     whatever the current theme is. */
+  --nobo-text: #eef2f8;
+  --nobo-muted: #a0abbf;
+  --nobo-subtle: #8b93a3;
+  --nobo-inset: rgb(255 255 255 / 0.06);
+  --nobo-line: rgb(255 255 255 / 0.12);
+
+  /* sticky makes this its own stacking context, so the collapsed-rail tooltips (position: fixed) are
+     trapped inside it: it needs a z-index to paint above the page content next to it. Below modals. */
+  position: sticky;
+  z-index: 40;
+  top: 0;
+  align-self: flex-start;
+  flex-shrink: 0;
+  width: var(--sb-w);
+  height: 100vh;
+  height: 100dvh;
+  padding: 12px var(--sb-pad);
+  overflow: hidden;
+  border-inline-end: 1px solid var(--sb-line);
+  font-family: "Roboto", "Noto Sans Arabic", system-ui, sans-serif;
+  transition: width 220ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nobo-sidebar[data-collapsed="true"] {
+  width: var(--sb-w-collapsed);
+}
+
+/* Beats GlobalStyle's `[data-theme="light"] .nobo-root aside { ... !important }`. */
+[data-theme] .nobo-root aside.nobo-sidebar,
+.nobo-root aside.nobo-sidebar {
+  background: var(--sb-bg) !important;
+  color: var(--sb-text) !important;
+  border-color: var(--sb-line) !important;
+}
+
+/* ---- section accents: the four bars of the logo ---- */
+.nobo-sidebar .nobo-sb-section[data-accent="blue"],
+.nobo-sidebar .nobo-sb-item[data-accent="blue"] {
+  --sb-accent: var(--brand-blue);
+}
+.nobo-sidebar .nobo-sb-section[data-accent="yellow"] {
+  --sb-accent: var(--brand-yellow);
+}
+.nobo-sidebar .nobo-sb-section[data-accent="green"] {
+  --sb-accent: var(--brand-green);
+}
+.nobo-sidebar .nobo-sb-section[data-accent="pink"] {
+  --sb-accent: var(--brand-pink);
+}
+.nobo-sidebar .nobo-sb-section[data-accent="muted"] {
+  --sb-accent: var(--sb-title);
+}
+
+/* ---- top: logo + collapse toggle ---- */
+.nobo-sidebar .nobo-sb-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 56px;
+  padding: 2px 4px 10px;
+}
+.nobo-sidebar[data-collapsed="true"] .nobo-sb-top {
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 8px;
+  padding-inline: 0;
+}
+
+/* The logo image is 282x200 with the wordmark in the middle. Expanded: whole logo, sized to the
+   bar. Collapsed: only the four bars, cropped out with a fixed box (physical offsets on purpose,
+   the crop is about the image's own pixels, not text direction). */
+.nobo-sidebar .nobo-sb-logo {
+  display: block;
+  height: 52px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+/* Both logo files are in the DOM (GlobalStyle shows one per theme). The sidebar is always dark, so
+   it always wants the light-on-dark one. */
+.nobo-sidebar .nobo-logo-dark {
+  display: block !important;
+}
+.nobo-sidebar .nobo-logo-light {
+  display: none !important;
+}
+.nobo-sidebar .nobo-sb-mark {
+  position: relative;
+  width: 40px;
+  height: 24px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.nobo-sidebar .nobo-sb-mark img {
+  position: absolute;
+  left: -33px;
+  top: -6px;
+  width: 116px;
+  height: auto;
+  max-width: none;
+}
+
+.nobo-sidebar .nobo-sb-toggle {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--sb-line);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--sb-muted);
+  cursor: pointer;
+  transition:
+    background-color 150ms,
+    border-color 150ms,
+    color 150ms;
+}
+.nobo-sidebar .nobo-sb-toggle:hover {
+  background: var(--sb-hover);
+  border-color: rgb(255 255 255 / 0.18);
+  color: #fff;
+}
+/* One chevron, points toward the sidebar's own edge to collapse; rotates to point inward to expand.
+   Mirrored in RTL (the sidebar is on the right there). */
+.nobo-sidebar .nobo-sb-toggle svg {
+  transition: transform 220ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+[dir="rtl"] .nobo-sidebar .nobo-sb-toggle svg {
+  transform: scaleX(-1);
+}
+.nobo-sidebar[data-collapsed="true"] .nobo-sb-toggle svg {
+  transform: rotate(180deg);
+}
+[dir="rtl"] .nobo-sidebar[data-collapsed="true"] .nobo-sb-toggle svg {
+  transform: scaleX(-1) rotate(180deg);
+}
+
+/* ---- nav ---- */
+.nobo-sidebar .nobo-sb-nav {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  margin-inline: calc(var(--sb-pad) * -1);
+  padding: 4px var(--sb-pad);
+}
+.nobo-sidebar .nobo-sb-section + .nobo-sb-section {
+  margin-top: 14px;
+}
+/* A section whose items are all hidden by permissions renders no children: hide its title too. */
+.nobo-sidebar .nobo-sb-section:has(> .nobo-sb-items:empty) {
+  display: none;
+}
+.nobo-sidebar .nobo-sb-title {
+  margin: 0 0 4px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--sb-title);
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Letter-spacing breaks Arabic letter joining, so only Latin gets it. */
+html:not([lang="ar"]) .nobo-sidebar .nobo-sb-title {
+  letter-spacing: 0.06em;
+}
+.nobo-sidebar .nobo-sb-items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.nobo-sidebar[data-collapsed="true"] .nobo-sb-title {
+  display: none;
+}
+.nobo-sidebar[data-collapsed="true"] .nobo-sb-section + .nobo-sb-section {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--sb-line);
+}
+
+/* ---- item ---- */
+.nobo-sidebar .nobo-sb-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--sb-muted);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    background-color 150ms,
+    color 150ms;
+}
+.nobo-sidebar .nobo-sb-item:hover {
+  background: var(--sb-hover);
+  color: var(--sb-text);
+}
+.nobo-sidebar .nobo-sb-item:focus-visible {
+  outline: 2px solid var(--sb-accent);
+  outline-offset: -2px;
+}
+.nobo-sidebar .nobo-sb-item svg.nobo-sb-icon {
+  flex-shrink: 0;
+  color: var(--sb-accent);
+}
+.nobo-sidebar .nobo-sb-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nobo-sidebar .nobo-sb-item[data-active="true"] {
+  background: color-mix(in srgb, var(--sb-accent) 16%, transparent);
+  color: #fff;
+}
+/* 3px rounded indicator on the inline-start edge, flush with the sidebar's own edge. */
+.nobo-sidebar .nobo-sb-item[data-active="true"]::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: calc(var(--sb-pad) * -1);
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--sb-accent);
+}
+.nobo-sidebar .nobo-sb-item[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.nobo-sidebar .nobo-sb-item[aria-disabled="true"]:hover {
+  background: transparent;
+  color: var(--sb-muted);
+}
+.nobo-sidebar .nobo-sb-chevron {
+  flex-shrink: 0;
+  color: var(--sb-title);
+  transition: transform 150ms;
+}
+.nobo-sidebar .nobo-sb-item[data-expanded="true"] .nobo-sb-chevron {
+  transform: rotate(180deg);
+}
+.nobo-sidebar .nobo-sb-badge {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.08);
+  color: var(--sb-muted);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+/* Shortcut keycaps (ShortcutHint) are revealed on hover/focus: three keycaps take ~80px, which would
+   truncate the label of every item that has one. */
+.nobo-sidebar .nobo-sb-item > span[aria-hidden="true"] {
+  display: none;
+}
+.nobo-sidebar .nobo-sb-item:hover > span[aria-hidden="true"],
+.nobo-sidebar .nobo-sb-item:focus-visible > span[aria-hidden="true"] {
+  display: inline-flex;
+}
+.nobo-sidebar kbd {
+  color: var(--sb-title) !important;
+  border-color: var(--sb-line) !important;
+  background: rgb(255 255 255 / 0.05) !important;
+}
+
+/* group children */
+.nobo-sidebar .nobo-sb-sub {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 2px 0 2px 0;
+  margin-inline-start: 22px;
+  padding-inline-start: 10px;
+  border-inline-start: 1px solid var(--sb-line);
+}
+.nobo-sidebar .nobo-sb-sub .nobo-sb-item {
+  height: 36px;
+  gap: 10px;
+}
+.nobo-sidebar .nobo-sb-sub .nobo-sb-item[data-active="true"]::before {
+  display: none;
+}
+
+/* ---- collapsed rail: icon-only ---- */
+.nobo-sidebar[data-collapsed="true"] .nobo-sb-item {
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-inline: auto;
+  padding: 0;
+}
+/* Tooltip. position:fixed with top:auto keeps the item's own vertical position (static position),
+   so it isn't clipped by the scrolling nav; only the inline offset is set. */
+.nobo-sidebar .nobo-sb-tip {
+  position: fixed;
+  inset-inline-start: calc(var(--sb-w-collapsed) + 6px);
+  z-index: 60;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #1c1f27;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.35);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.3;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms;
+}
+.nobo-sidebar .nobo-sb-item:hover > .nobo-sb-tip,
+.nobo-sidebar .nobo-sb-item:focus-visible > .nobo-sb-tip,
+.nobo-sidebar .nobo-sb-toggle:hover > .nobo-sb-tip,
+.nobo-sidebar .nobo-sb-toggle:focus-visible > .nobo-sb-tip,
+.nobo-sidebar .nobo-sb-profile:hover > .nobo-sb-tip,
+.nobo-sidebar .nobo-sb-profile:focus-visible > .nobo-sb-tip {
+  opacity: 1;
+}
+
+/* ---- footer: profile + status ---- */
+.nobo-sidebar .nobo-sb-footer {
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--sb-line);
+}
+.nobo-sidebar .nobo-sb-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 6px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--sb-text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: background-color 150ms;
+}
+.nobo-sidebar .nobo-sb-profile:hover {
+  background: var(--sb-hover);
+}
+.nobo-sidebar .nobo-sb-profile:focus-visible {
+  outline: 2px solid var(--brand-blue);
+  outline-offset: -2px;
+}
+.nobo-sidebar[data-collapsed="true"] .nobo-sb-profile {
+  justify-content: center;
+  padding: 4px;
+}
+.nobo-sidebar .nobo-sb-avatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--brand-blue) 22%, transparent);
+  color: #cfe0ff;
+  font-size: 14px;
+  font-weight: 700;
+}
+.nobo-sidebar .nobo-sb-who {
+  min-width: 0;
+}
+.nobo-sidebar .nobo-sb-who-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--sb-text);
+}
+.nobo-sidebar .nobo-sb-who-mail {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--sb-title);
+}
+.nobo-sidebar .nobo-sb-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--brand-green-tint);
+  font-size: 12px;
+  color: var(--sb-muted);
+}
+.nobo-sidebar .nobo-sb-status strong {
+  display: block;
+  font-weight: 500;
+  color: var(--brand-green);
+}
+.nobo-sidebar .nobo-sb-dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--brand-green);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nobo-sidebar,
+  .nobo-sidebar .nobo-sb-item,
+  .nobo-sidebar .nobo-sb-toggle,
+  .nobo-sidebar .nobo-sb-toggle svg,
+  .nobo-sidebar .nobo-sb-tip,
+  .nobo-sidebar .nobo-sb-chevron,
+  .nobo-sidebar .nobo-sb-profile {
+    transition: none;
+  }
+}

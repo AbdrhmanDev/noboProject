@@ -136,7 +136,7 @@ export function OrderDialogs({
                 onClick={() => {
                   selectVariantForDraft(variant);
                 }}
-                className="flex w-full items-center justify-between gap-3 rounded-xl border border-white/10 p-3 text-right transition hover:border-blue-400/50 hover:bg-blue-500/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400"
+                className="flex w-full items-center justify-between gap-3 rounded-xl border border-white/10 p-3 text-start transition hover:border-blue-400/50 hover:bg-blue-500/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400"
               >
                 <span className="min-w-0">
                   <span className="block truncate text-xs font-bold text-slate-100">
@@ -434,7 +434,7 @@ export function OrderDialogs({
               <div className="space-y-1 rounded-xl border border-white/10 bg-white/[0.025] p-3 text-[11px] text-slate-300">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-slate-500">{t("pos.refundApproval.reason")}</span>
-                  <span className="max-w-[65%] truncate text-right font-bold">
+                  <span className="max-w-[65%] truncate text-start font-bold">
                     {refundApprovalDetailsQuery.data.reason || "—"}
                   </span>
                 </div>

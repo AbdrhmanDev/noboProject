@@ -40,16 +40,22 @@ export function OrderHeader({
 
   return (
     <>
-      <div className="mb-1.5 flex items-center justify-between gap-2">
+      <div className="mb-1 flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-1.5">
           <ShoppingCart size={16} className="shrink-0 text-pos-primary-text" />
           <h2 className="pos-fs-base shrink-0 font-bold text-pos-text">
-            {draftOrder?.orderNumberFormatted ? `طلب ${draftOrder.orderNumberFormatted}` : "سلة المشتريات"}
+            {draftOrder?.orderNumberFormatted ? (
+              <>
+                طلب <span className="pos-num">{draftOrder.orderNumberFormatted}</span>
+              </>
+            ) : (
+              "سلة المشتريات"
+            )}
           </h2>
           <span
             className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
               isCancelledOrder
-                ? "bg-pos-danger/10 text-pos-danger"
+                ? "bg-pos-danger/10 text-pos-danger-text"
                 : isConfirmedOrder || isClosedOrder
                   ? "bg-success-soft text-success"
                   : "bg-pos-tint text-pos-primary-text"
@@ -87,8 +93,8 @@ export function OrderHeader({
           </button>
         </div>
       )}
-      <div className="mb-2 space-y-2">
-        <div className="grid grid-cols-3 gap-1 rounded-pos bg-pos-bg p-1">
+      <div className="mb-1.5 space-y-2">
+        <div className="grid grid-cols-3 gap-1 rounded-pos bg-pos-bg p-0.5">
           {ORDER_TYPES.map((type) => (
             <button
               key={type}
@@ -97,7 +103,7 @@ export function OrderHeader({
               onClick={() => handleOrderTypeChange(type)}
               className={`pos-fs-name flex min-h-11 items-center justify-center gap-1 rounded-pos px-2 transition disabled:cursor-not-allowed disabled:opacity-50 ${
                 orderType === type
-                  ? "bg-pos-primary text-white"
+                  ? "bg-pos-primary-strong text-white"
                   : "text-pos-text hover:bg-pos-tint"
               }`}
             >

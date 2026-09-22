@@ -8,10 +8,10 @@ export function getPaymentMethodIcon(kind) {
 }
 
 export function getPaymentMethodColor(kind) {
-  if (kind === "Cash") return "text-emerald-300";
-  if (kind === "Card") return "text-blue-300";
-  if (kind === "BankTransfer") return "text-violet-300";
-  return "text-amber-300";
+  if (kind === "Cash") return "text-pos-action-text";
+  if (kind === "Card") return "text-pos-primary-text";
+  if (kind === "BankTransfer") return "text-pos-primary-text";
+  return "text-pos-warning-text";
 }
 
 function getDecimalScale(value) {

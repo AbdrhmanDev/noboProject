@@ -58,7 +58,7 @@ function QuickAction({ icon: Icon, label, active = false, onClick, disabled = fa
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`pos-fs-name flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-pos border px-2 py-2 transition disabled:cursor-not-allowed disabled:opacity-45 ${
+      className={`pos-fs-name flex min-h-11 min-w-0 flex-col items-center justify-center gap-0.5 rounded-pos border px-2 py-1 transition disabled:cursor-not-allowed disabled:opacity-45 ${
         active
           ? "border-pos-primary bg-pos-tint text-pos-primary-text"
           : "border-pos-border bg-pos-card text-pos-text hover:border-pos-primary hover:bg-pos-tint"
@@ -140,10 +140,10 @@ export function OrderSecondaryActions({
   const canVoidLine = Boolean(selectedLineId) && canEditDraftLines && !isDraftMutationPending;
 
   return (
-    <div className="mt-3 shrink-0 space-y-2">
-      <div className="flex items-stretch gap-2">
+    <div className="mt-2 shrink-0 space-y-1.5">
+      <div className="flex items-stretch gap-1.5">
         {showShiftActions && (
-          <div className="grid min-w-0 flex-1 grid-cols-3 gap-2">
+          <div className="grid min-w-0 flex-1 grid-cols-3 gap-1.5">
             <QuickAction
               icon={Percent}
               label={hasDiscount ? "تعديل الخصم" : "خصم"}
@@ -191,12 +191,12 @@ export function OrderSecondaryActions({
       </div>
 
       {showShiftActions && (
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-1.5">
           <button
             type="button"
             onClick={() => removeDraftLine(selectedLineId)}
             disabled={!canVoidLine}
-            className="pos-control pos-fs-name flex items-center justify-center gap-1.5 border border-pos-danger/50 bg-pos-card text-pos-danger transition hover:bg-pos-danger/10 disabled:cursor-not-allowed disabled:opacity-45"
+            className="pos-control pos-fs-name flex !min-h-10 items-center justify-center gap-1.5 border border-pos-danger/50 bg-pos-card text-pos-danger-text transition hover:bg-pos-danger/10 disabled:cursor-not-allowed disabled:opacity-45"
           >
             <Trash2 size={14} />
             Void line
@@ -205,7 +205,7 @@ export function OrderSecondaryActions({
             type="button"
             onClick={() => openLifecycleModal(voidAllAction)}
             disabled={!canVoidAll}
-            className="pos-control pos-fs-name flex items-center justify-center gap-1.5 border border-pos-danger/50 bg-pos-card text-pos-danger transition hover:bg-pos-danger/10 disabled:cursor-not-allowed disabled:opacity-45"
+            className="pos-control pos-fs-name flex !min-h-10 items-center justify-center gap-1.5 border border-pos-danger/50 bg-pos-card text-pos-danger-text transition hover:bg-pos-danger/10 disabled:cursor-not-allowed disabled:opacity-45"
           >
             <Ban size={14} />
             Void all
@@ -214,7 +214,7 @@ export function OrderSecondaryActions({
       )}
 
       {expanded && hasMoreSection && (
-        <div className="mt-2 max-h-[22vh] min-h-0 space-y-3 overflow-y-auto pr-1 scrollbar-none">
+        <div className="mt-2 max-h-[22vh] min-h-0 space-y-3 overflow-y-auto pe-1 scrollbar-none">
           {showLifecycle && (
             <div className="rounded-xl border border-white/10 bg-white/[0.025] p-3">
               <div className="flex items-center justify-between gap-3">
@@ -287,7 +287,7 @@ export function OrderSecondaryActions({
                         {formatPaymentDate(payment.receivedAtUtc)}
                       </div>
                     </div>
-                    <div className="text-right text-xs font-black text-emerald-300">
+                    <div className="text-end text-xs font-black text-emerald-300">
                       {formatMoney(payment.amount, payment.currencyCode, payment.currencyMinorUnitDigits)}
                     </div>
                   </div>
@@ -379,7 +379,7 @@ export function OrderSecondaryActions({
                 onKitchenNoteChange?.(noteDraft.trim());
                 setNoteOpen(false);
               }}
-              className="pos-control pos-fs-name bg-pos-primary text-white transition hover:bg-pos-primary-hover"
+              className="pos-control pos-fs-name bg-pos-primary-strong text-white transition hover:bg-pos-primary-strong-hover"
             >
               حفظ الملاحظة
             </button>

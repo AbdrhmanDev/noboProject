@@ -29,7 +29,7 @@ function OrderRow({ order, onSelect, disabled }) {
       data-roving-item=""
       disabled={disabled}
       onClick={() => onSelect(order.salesOrderId)}
-      className="flex w-full items-center justify-between gap-3 rounded-xl border border-white/10 bg-[#0d1728] px-3 py-2.5 text-right transition hover:border-blue-400/50 hover:bg-[#111f36] focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400 disabled:cursor-not-allowed disabled:opacity-50"
+      className="flex w-full items-center justify-between gap-3 rounded-xl border border-white/10 bg-[#0d1728] px-3 py-2.5 text-start transition hover:border-blue-400/50 hover:bg-[#111f36] focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400 disabled:cursor-not-allowed disabled:opacity-50"
     >
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-1.5">
@@ -170,7 +170,7 @@ export function OrderRetrievalModal({
             <div
               ref={listRef}
               onKeyDown={handleListKeyDown}
-              className="max-h-[50vh] space-y-2 overflow-y-auto pr-1 scrollbar-none"
+              className="max-h-[50vh] space-y-2 overflow-y-auto pe-1 scrollbar-none"
             >
               {items.map((order) => (
                 <OrderRow

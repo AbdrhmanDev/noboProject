@@ -118,7 +118,7 @@ export function ShiftDialogs({
                 <History size={13} />
                 Current shift drawer activity
               </div>
-              <div className="max-h-48 space-y-2 overflow-y-auto pr-1 scrollbar-none">
+              <div className="max-h-48 space-y-2 overflow-y-auto pe-1 scrollbar-none">
                 {recentCashMovements.length === 0 && (
                   <div className="rounded-xl border border-dashed border-white/10 p-4 text-center text-xs text-slate-500">
                     No cash movement yet.

@@ -147,7 +147,7 @@ export function CategoryRail({ categories, activeCategoryId, onSelect }) {
                 aria-pressed={active}
                 className={`pos-fs-name flex h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-4 transition ${
                   active
-                    ? "border-pos-primary bg-pos-primary text-white"
+                    ? "border-pos-primary-strong bg-pos-primary-strong text-white"
                     : "border-pos-border bg-pos-card text-pos-text hover:border-pos-primary hover:text-pos-primary-text"
                 }`}
               >

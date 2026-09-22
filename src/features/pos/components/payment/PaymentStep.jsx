@@ -1,5 +1,5 @@
 import { useMemo, useRef } from "react";
-import { ArrowRight, CircleDollarSign, ReceiptText, Wallet } from "lucide-react";
+import { CircleDollarSign, ReceiptText, Wallet } from "lucide-react";
 import { formatMoney } from "../../../../shared/utils/formatters";
 import { formatPaymentDate, getPaymentMethodColor, getPaymentMethodIcon } from "../../utils/posFormatters";
 import { PaymentMethodOnboarding } from "../../../payments/components/PaymentMethodOnboarding";
@@ -11,12 +11,16 @@ import { ShortcutHint } from "../../../shortcuts/components/ShortcutHint";
 import { OrderLines } from "../order/OrderLines";
 import { NumericKeypadInline } from "../keypad/NumericKeypadInline";
 
-const noop = () => {};
-
 /**
  * Non-modal, touch-first Payment workspace. Occupies the same grid slot the
- * Order step uses (product grid on the right in RTL / basket on the left)
- * so the transition between phases doesn't visually jump.
+ * Order step uses (product grid on the far side / order info on the near
+ * side, in RTL: order info on the right) so the transition between phases
+ * doesn't visually jump — the order the cashier just built stays exactly
+ * where they were already looking at it. The order list itself is
+ * read-only here (OrderLines' `readOnly` mode: no stepper, no trash, one
+ * glanceable row per line) so as much of it as possible is visible at once
+ * without scrolling — the point of this screen is to catch anything
+ * missing before money changes hands, at a glance.
  */
 export function PaymentStep({
   draftOrder,
@@ -101,78 +105,185 @@ export function PaymentStep({
   if (!draftOrder) return null;
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <button
-          type="button"
-          onClick={onBack}
-          className="flex h-10 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 text-xs font-bold text-slate-300 hover:border-blue-400/40 hover:bg-blue-500/10"
-        >
-          <ArrowRight size={16} />
-          العودة للطلب
-        </button>
-        <div className="text-sm font-bold text-slate-200">الدفع</div>
-      </div>
+    <div className="grid items-start gap-2 xl:grid-cols-[380px_minmax(0,1fr)]">
+      {/* Order review — same physical position (right, in RTL) as the basket during the Order step,
+          and the exact same definite-height technique as CatalogPanel/OrderSidebar (100dvh minus
+          the shared --pos-chrome budget — the "Back to Order" row now lives in the toolbar those
+          also sit under, not in a row of its own here, so there's nothing extra to account for). */}
+      <aside className="flex min-h-[420px] flex-col gap-2 rounded-pos-lg border border-pos-border bg-pos-card p-3 xl:order-first xl:h-[calc(100dvh-var(--pos-chrome))] xl:min-h-0 xl:overflow-y-auto xl:scrollbar-none">
+          <div className="flex shrink-0 items-center justify-between gap-2">
+            <span className="pos-fs-name font-bold text-pos-text">الطلب</span>
+            <span className="flex items-center gap-1.5">
+              {draftOrder?.orderNumberFormatted && (
+                <span className="pos-num rounded-full bg-pos-tint px-2 py-0.5 text-[10px] font-bold text-pos-primary-text">
+                  {draftOrder.orderNumberFormatted}
+                </span>
+              )}
+              <span className="rounded-full bg-pos-action-tint px-2 py-0.5 text-[10px] font-bold text-pos-action-text">
+                {draftOrder?.status}
+              </span>
+            </span>
+          </div>
 
-      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_390px]">
-        <div className="rounded-2xl border border-white/10 bg-[#0d1728]/95 p-4 shadow-xl shadow-black/20">
-          <div className="rounded-xl border border-white/10 bg-black/20 p-4 text-center">
-            <div className="text-[10px] font-bold uppercase text-slate-500">
+          {customer && (
+            <div className="shrink-0 rounded-pos bg-pos-tint px-3 py-2 text-xs text-pos-primary-text">
+              {customer.name}
+            </div>
+          )}
+
+          <OrderLines
+            draftLines={draftLines}
+            draftOrder={draftOrder}
+            catalogCurrencyCode={catalogCurrencyCode}
+            isLinePending={isLinePending}
+            readOnly
+          />
+
+          <div className="pos-fs-secondary shrink-0 space-y-0.5 border-t border-pos-border pt-2">
+            <div className="flex justify-between text-pos-muted">
+              <span>المجموع الفرعي</span>
+              <span className="pos-num">{formatMoney(subtotal, catalogCurrencyCode, 2)}</span>
+            </div>
+            <div className="flex justify-between text-pos-warning-text">
+              <span>الخصم</span>
+              <span className="pos-num">- {formatMoney(discountValue, catalogCurrencyCode, 2)}</span>
+            </div>
+            <div className="flex justify-between text-pos-muted">
+              <span>ضريبة القيمة المضافة</span>
+              <span className="pos-num">{formatMoney(vat, catalogCurrencyCode, 2)}</span>
+            </div>
+            <div className="mt-1 flex items-end justify-between border-t border-pos-border pt-1">
+              <span className="pos-fs-line font-bold text-pos-text">الإجمالي</span>
+              <span className="pos-num pos-fs-total text-pos-primary-text">
+                {formatMoney(total, catalogCurrencyCode, 2)}
+              </span>
+            </div>
+          </div>
+
+          <div className="grid shrink-0 grid-cols-2 gap-2 text-[10px]">
+            <div className="rounded-pos border border-pos-action/30 bg-pos-action-tint p-2 text-center">
+              <div className="font-bold text-pos-action-text">Paid</div>
+              <div className="pos-num mt-0.5 font-black text-pos-action-text">
+                {formatMoney(netPaidAmount, settlementCurrencyCode, settlementMinorUnitDigits)}
+              </div>
+            </div>
+            <div className="rounded-pos border border-pos-warning/40 bg-pos-warning-tint p-2 text-center">
+              <div className="font-bold text-pos-warning-text">Remaining</div>
+              <div className="pos-num mt-0.5 font-black text-pos-warning-text">
+                {formatMoney(remainingAmount, settlementCurrencyCode, settlementMinorUnitDigits)}
+              </div>
+            </div>
+          </div>
+
+          {paymentsViewPermissionQuery.hasPermission && (draftOrder?.payments || []).length > 0 && (
+            <div className="min-h-0 shrink-0 space-y-2 border-t border-pos-border pt-2">
+              <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-pos-muted">
+                <ReceiptText size={13} />
+                Payment History
+              </div>
+              {(draftOrder?.payments || []).map((payment) => (
+                <div
+                  key={payment.salesOrderPaymentId}
+                  className="rounded-pos border border-pos-border bg-pos-bg p-2"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="truncate text-xs font-bold text-pos-text">
+                        {payment.paymentMethod.name}
+                      </div>
+                      <div className="mt-0.5 text-[10px] text-pos-muted">
+                        {payment.paymentMethod.code} · {payment.paymentMethod.kind} ·{" "}
+                        {formatPaymentDate(payment.receivedAtUtc)}
+                      </div>
+                    </div>
+                    <div className="pos-num text-end text-xs font-black text-pos-action-text">
+                      {formatMoney(payment.amount, payment.currencyCode, payment.currencyMinorUnitDigits)}
+                    </div>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between gap-2 text-[10px] text-pos-muted">
+                    <span className="pos-num">
+                      Refunded{" "}
+                      {formatMoney(
+                        payment.refundedAmount,
+                        payment.currencyCode,
+                        payment.currencyMinorUnitDigits,
+                      )}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={payment.refundableAmount <= 0 || !canRefundPayments}
+                      onClick={() => openRefundModal(payment)}
+                      className="rounded-pos border border-pos-danger/40 px-2 py-1 font-bold text-pos-danger-text disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Refund
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </aside>
+
+        {/* Payment actions — same physical position (left, in RTL) as the product grid during the
+            Order step. The Due-now hero and the Receive CTA are pinned (shrink-0); only the
+            payment-method/amount/keypad middle scrolls if it doesn't fit, so Receive is always
+            reachable without hunting for it. */}
+        <div className="flex min-h-0 flex-col gap-2 rounded-pos-lg border border-pos-border bg-pos-card p-3 xl:h-[calc(100dvh-var(--pos-chrome))]">
+          <div className="shrink-0 rounded-pos border border-pos-primary/30 bg-pos-tint p-3 text-center">
+            <div className="pos-fs-label font-bold uppercase text-pos-muted">
               {netPaidAmount > 0 ? "Amount Due Now" : "Total Due"}
             </div>
-            <div className="mt-1 text-4xl font-black text-blue-300">
+            <div className="pos-num mt-1 text-4xl font-black text-pos-primary-text">
               {formatMoney(remainingAmount, settlementCurrencyCode, settlementMinorUnitDigits)}
             </div>
             {netPaidAmount > 0 && (
-              <div className="mt-2 flex items-center justify-center gap-4 text-xs text-slate-400">
-                <span>Order Total {formatMoney(total, settlementCurrencyCode, settlementMinorUnitDigits)}</span>
-                <span className="font-bold text-emerald-300">
-                  Paid {formatMoney(netPaidAmount, settlementCurrencyCode, settlementMinorUnitDigits)}
+              <div className="mt-2 flex items-center justify-center gap-4 text-xs text-pos-muted">
+                <span>Order Total <span className="pos-num">{formatMoney(total, settlementCurrencyCode, settlementMinorUnitDigits)}</span></span>
+                <span className="font-bold text-pos-action-text">
+                  Paid <span className="pos-num">{formatMoney(netPaidAmount, settlementCurrencyCode, settlementMinorUnitDigits)}</span>
                 </span>
               </div>
             )}
           </div>
 
           {!paymentsReceivePermissionQuery.hasPermission ? (
-            <div className="mt-4 rounded-xl border border-amber-400/20 bg-amber-500/10 px-3 py-3 text-xs text-amber-100">
+            <div className="rounded-pos border border-pos-warning/40 bg-pos-warning-tint px-3 py-3 text-xs text-pos-warning-text">
               Payments.Receive permission is required to collect payment.
             </div>
           ) : (
             <>
               {paymentMethodsQuery.isLoading && (
-                <div className="mt-4 rounded-xl bg-white/[0.025] px-3 py-3 text-center text-xs text-slate-400">
+                <div className="rounded-pos bg-pos-bg px-3 py-3 text-center text-xs text-pos-muted">
                   Loading payment methods...
                 </div>
               )}
               {!paymentMethodsQuery.isLoading &&
                 paymentMethods.length === 0 &&
                 (showAddPaymentMethod ? (
-                  <div className="mt-4">
-                    <PaymentMethodOnboarding
-                      onCreated={() => {
-                        paymentMethodsQuery.refetch();
-                        setShowAddPaymentMethod(false);
-                      }}
-                    />
-                  </div>
+                  <PaymentMethodOnboarding
+                    onCreated={() => {
+                      paymentMethodsQuery.refetch();
+                      setShowAddPaymentMethod(false);
+                    }}
+                  />
                 ) : (
-                  <div className="mt-4 rounded-xl border border-amber-400/20 bg-amber-500/10 p-4 text-center">
-                    <div className="text-sm font-bold text-amber-100">Payment Setup Required</div>
-                    <p className="mt-1 text-xs text-amber-100/80">
+                  <div className="rounded-pos border border-pos-warning/40 bg-pos-warning-tint p-4 text-center">
+                    <div className="text-sm font-bold text-pos-warning-text">Payment Setup Required</div>
+                    <p className="mt-1 text-xs text-pos-warning-text/80">
                       No active payment methods are configured for this company. Add at least one
                       method to accept payments.
                     </p>
                     <button
                       type="button"
                       onClick={() => setShowAddPaymentMethod(true)}
-                      className="mt-3 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-bold text-white hover:brightness-110"
+                      className="pos-control mt-3 inline-flex items-center justify-center gap-2 bg-pos-primary-strong px-4 text-sm font-bold text-white hover:bg-pos-primary-strong-hover"
                     >
                       Add Payment Method
                     </button>
                     <button
                       type="button"
                       onClick={() => navigate(ROUTES.PAYMENT_METHODS_ADMIN)}
-                      className="mt-3 block w-full text-[11px] font-semibold text-blue-300 hover:text-blue-200"
+                      className="mt-3 block w-full text-[11px] font-semibold text-pos-primary-text hover:underline"
                     >
                       Manage in Payment Methods Admin
                     </button>
@@ -180,11 +291,11 @@ export function PaymentStep({
                 ))}
 
               {!paymentMethodsQuery.isLoading && paymentMethods.length > 0 && (
-                <>
+                <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pe-1 scrollbar-none">
                   <div
                     ref={paymentMethodGridRef}
                     onKeyDown={handlePaymentMethodGridKeyDown}
-                    className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-4"
+                    className="grid grid-cols-3 gap-1.5 sm:grid-cols-4"
                   >
                     {paymentMethods.map((method) => {
                       const Icon = getPaymentMethodIcon(method.kind);
@@ -195,28 +306,28 @@ export function PaymentStep({
                           key={method.paymentMethodId}
                           data-roving-item=""
                           onClick={() => setSelectedPaymentMethodId(method.paymentMethodId)}
-                          className={`min-h-[64px] rounded-xl border px-3 py-3 text-center transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400 ${
+                          className={`min-h-14 rounded-pos border px-3 py-2 text-center transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-pos-primary ${
                             active
-                              ? "border-blue-400 bg-blue-500/15"
-                              : "border-white/10 bg-white/[0.025] hover:bg-white/10"
+                              ? "border-pos-primary bg-pos-tint"
+                              : "border-pos-border bg-pos-bg hover:border-pos-primary"
                           }`}
                         >
                           <Icon size={22} className={`mx-auto ${getPaymentMethodColor(method.kind)}`} />
-                          <span className="mt-1.5 block truncate text-xs font-bold">{method.name}</span>
-                          <span className="text-[10px] text-slate-500">{method.kind}</span>
+                          <span className="mt-1.5 block truncate text-xs font-bold text-pos-text">{method.name}</span>
+                          <span className="text-[10px] text-pos-muted">{method.kind}</span>
                         </button>
                       );
                     })}
                   </div>
 
-                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                    <div className="space-y-3">
-                      <div className="rounded-xl border border-white/10 bg-black/20 p-3">
-                        <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-slate-500">
-                          <CircleDollarSign size={14} className="text-emerald-300" />
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <div className="rounded-pos border border-pos-border bg-pos-bg p-2">
+                        <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-pos-muted">
+                          <CircleDollarSign size={14} className="text-pos-action-text" />
                           {isCashSelected ? "Tendered" : "Amount"}
                         </div>
-                        <div className="mt-1 text-2xl font-black text-white" dir="ltr">
+                        <div className="pos-num mt-1 text-2xl font-black text-pos-text">
                           {paymentAmountInput || "0"}
                         </div>
                       </div>
@@ -225,7 +336,7 @@ export function PaymentStep({
                         <button
                           type="button"
                           onClick={() => setPaymentAmountInput(String(remainingAmount))}
-                          className="flex h-11 items-center justify-center gap-1.5 rounded-lg border border-white/10 text-xs font-bold text-slate-300 hover:bg-white/10"
+                          className="pos-control flex items-center justify-center gap-1.5 border border-pos-primary/50 bg-pos-tint text-xs font-bold text-pos-primary-text hover:bg-pos-primary/15"
                         >
                           Exact Amount
                           <ShortcutHint action="pos.exactAmount" />
@@ -235,17 +346,17 @@ export function PaymentStep({
                             key={amount}
                             type="button"
                             onClick={() => setPaymentAmountInput(String(amount))}
-                            className="flex h-11 items-center justify-center rounded-lg border border-white/10 text-xs font-bold text-slate-300 hover:bg-white/10"
+                            className="pos-control flex items-center justify-center border border-pos-border bg-pos-bg text-xs font-bold text-pos-text hover:border-pos-primary"
                           >
-                            {formatMoney(amount, settlementCurrencyCode, settlementMinorUnitDigits)}
+                            <span className="pos-num">{formatMoney(amount, settlementCurrencyCode, settlementMinorUnitDigits)}</span>
                           </button>
                         ))}
                       </div>
 
                       {isCashSelected && changeDueAmount > 0 && (
-                        <div className="rounded-xl border border-emerald-400/25 bg-emerald-500/10 p-3 text-center">
-                          <div className="text-[10px] font-bold uppercase text-emerald-300">Change Due</div>
-                          <div className="mt-1 text-xl font-black text-emerald-200">
+                        <div className="rounded-pos border border-pos-action/40 bg-pos-action-tint p-3 text-center">
+                          <div className="text-[10px] font-bold uppercase text-pos-action-text">Change Due</div>
+                          <div className="pos-num mt-1 text-xl font-black text-pos-action-text">
                             {formatMoney(changeDueAmount, settlementCurrencyCode, settlementMinorUnitDigits)}
                           </div>
                         </div>
@@ -254,7 +365,7 @@ export function PaymentStep({
                       {paymentAmountInput &&
                         (paymentAmount.error ||
                           (!isCashSelected && paymentAmount.amount > remainingAmount)) && (
-                          <p className="text-[10px] text-amber-200">
+                          <p className="text-[10px] text-pos-warning-text">
                             {paymentAmount.error || "Payment amount exceeds remaining balance."}
                           </p>
                         )}
@@ -271,147 +382,34 @@ export function PaymentStep({
                       }}
                     />
                   </div>
+                </div>
+              )}
 
-                  <button
-                    type="button"
-                    disabled={!canReceivePayment}
-                    onClick={receiveCurrentPayment}
-                    className="mt-4 flex h-16 w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 text-lg font-black text-white shadow-lg shadow-emerald-950/30 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <Wallet size={22} />
-                    {receivePaymentMutation.isPending
-                      ? "..."
-                      : `Receive${
-                          paymentAmount.amount !== null
-                            ? ` ${formatMoney(
-                                Math.min(paymentAmount.amount, remainingAmount),
-                                settlementCurrencyCode,
-                                settlementMinorUnitDigits,
-                              )}`
-                            : ""
-                        }`}
-                    <ShortcutHint action="pos.receivePayment" />
-                  </button>
-                </>
+              {!paymentMethodsQuery.isLoading && paymentMethods.length > 0 && (
+                <button
+                  type="button"
+                  disabled={!canReceivePayment}
+                  onClick={receiveCurrentPayment}
+                  className="flex h-16 w-full shrink-0 items-center justify-center gap-2 rounded-pos-lg bg-pos-action text-lg font-black text-pos-on-action shadow-lg transition hover:bg-pos-action-hover disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Wallet size={22} />
+                  {receivePaymentMutation.isPending
+                    ? "..."
+                    : `Receive${
+                        paymentAmount.amount !== null
+                          ? ` ${formatMoney(
+                              Math.min(paymentAmount.amount, remainingAmount),
+                              settlementCurrencyCode,
+                              settlementMinorUnitDigits,
+                            )}`
+                          : ""
+                      }`}
+                  <ShortcutHint action="pos.receivePayment" />
+                </button>
               )}
             </>
           )}
         </div>
-
-        <aside className="flex min-h-[620px] flex-col gap-3 rounded-2xl border border-white/10 bg-[#0d1728]/95 p-3 shadow-xl shadow-black/20 xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto xl:scrollbar-none">
-          <div className="flex items-center justify-between gap-2 text-[10px] text-slate-400">
-            <span>Order status</span>
-            <span className="flex items-center gap-1.5">
-              {draftOrder?.orderNumberFormatted && (
-                <span className="rounded-full bg-white/10 px-2 py-0.5 font-bold text-slate-300">
-                  {draftOrder.orderNumberFormatted}
-                </span>
-              )}
-              <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 font-bold text-emerald-300">
-                {draftOrder?.status}
-              </span>
-            </span>
-          </div>
-
-          {customer && (
-            <div className="rounded-xl bg-blue-500/10 px-3 py-2 text-xs text-blue-100">{customer.name}</div>
-          )}
-
-          <OrderLines
-            draftLines={draftLines}
-            draftOrder={draftOrder}
-            catalogCurrencyCode={catalogCurrencyCode}
-            canEditDraft={false}
-            isLinePending={isLinePending}
-            changeQty={noop}
-            removeDraftLine={noop}
-          />
-
-          <div className="shrink-0 space-y-1 border-t border-white/10 pt-3 text-xs">
-            <div className="flex justify-between text-slate-400">
-              <span>المجموع الفرعي</span>
-              <span>{formatMoney(subtotal, catalogCurrencyCode, 2)}</span>
-            </div>
-            <div className="flex justify-between text-pink-300">
-              <span>الخصم</span>
-              <span>- {formatMoney(discountValue, catalogCurrencyCode, 2)}</span>
-            </div>
-            <div className="flex justify-between text-slate-400">
-              <span>ضريبة القيمة المضافة</span>
-              <span>{formatMoney(vat, catalogCurrencyCode, 2)}</span>
-            </div>
-            <div className="mt-2 flex items-end justify-between border-t border-white/10 pt-2">
-              <span className="font-bold">الإجمالي</span>
-              <span className="text-2xl font-black text-blue-300">
-                {formatMoney(total, catalogCurrencyCode, 2)}
-              </span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 text-[10px]">
-            <div className="rounded-xl border border-emerald-400/20 bg-emerald-500/10 p-2 text-center">
-              <div className="text-emerald-300">Paid</div>
-              <div className="mt-0.5 font-black text-emerald-200">
-                {formatMoney(netPaidAmount, settlementCurrencyCode, settlementMinorUnitDigits)}
-              </div>
-            </div>
-            <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 p-2 text-center">
-              <div className="text-amber-300">Remaining</div>
-              <div className="mt-0.5 font-black text-amber-200">
-                {formatMoney(remainingAmount, settlementCurrencyCode, settlementMinorUnitDigits)}
-              </div>
-            </div>
-          </div>
-
-          {paymentsViewPermissionQuery.hasPermission && (draftOrder?.payments || []).length > 0 && (
-            <div className="space-y-2 border-t border-white/10 pt-3">
-              <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-slate-500">
-                <ReceiptText size={13} />
-                Payment History
-              </div>
-              {(draftOrder?.payments || []).map((payment) => (
-                <div
-                  key={payment.salesOrderPaymentId}
-                  className="rounded-lg border border-white/10 bg-white/[0.025] p-2"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="truncate text-xs font-bold text-slate-100">
-                        {payment.paymentMethod.name}
-                      </div>
-                      <div className="mt-0.5 text-[10px] text-slate-500">
-                        {payment.paymentMethod.code} · {payment.paymentMethod.kind} ·{" "}
-                        {formatPaymentDate(payment.receivedAtUtc)}
-                      </div>
-                    </div>
-                    <div className="text-right text-xs font-black text-emerald-300">
-                      {formatMoney(payment.amount, payment.currencyCode, payment.currencyMinorUnitDigits)}
-                    </div>
-                  </div>
-                  <div className="mt-2 flex items-center justify-between gap-2 text-[10px] text-slate-400">
-                    <span>
-                      Refunded{" "}
-                      {formatMoney(
-                        payment.refundedAmount,
-                        payment.currencyCode,
-                        payment.currencyMinorUnitDigits,
-                      )}
-                    </span>
-                    <button
-                      type="button"
-                      disabled={payment.refundableAmount <= 0 || !canRefundPayments}
-                      onClick={() => openRefundModal(payment)}
-                      className="rounded-lg border border-rose-400/25 px-2 py-1 font-bold text-rose-200 disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                      Refund
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </aside>
       </div>
-    </div>
   );
 }

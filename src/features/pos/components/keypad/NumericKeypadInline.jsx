@@ -37,7 +37,7 @@ export function NumericKeypadInline({
   };
 
   return (
-    <div className="rounded-pos-lg border border-pos-border bg-pos-bg p-3">
+    <div className="rounded-pos-lg border border-pos-border bg-pos-bg p-2">
       <NumericKeypadCore
         value={value ?? ""}
         inputRef={inputRef}
@@ -48,7 +48,7 @@ export function NumericKeypadInline({
         allowDecimal={allowDecimal}
         ariaLabel={ariaLabel}
         unitLabel={unitLabel}
-        inputClassName="h-16 text-3xl"
+        inputClassName="h-12 text-2xl"
       />
     </div>
   );

@@ -52,7 +52,7 @@ export function OrderPrimaryAction({
       <button
         type="button"
         onClick={primaryAction.run}
-        className="pos-fs-base flex h-14 w-full items-center justify-center gap-2 rounded-pos bg-slate-700 font-bold transition hover:bg-slate-600"
+        className="pos-fs-base flex h-12 w-full items-center justify-center gap-2 rounded-pos bg-pos-primary-strong font-bold text-white transition hover:bg-pos-primary-strong-hover"
       >
         {isClosedOrder ? <CircleCheckBig size={18} /> : <Ban size={18} />}
         {isClosedOrder
@@ -62,7 +62,7 @@ export function OrderPrimaryAction({
             : "Cancelled -"}
         <Plus size={16} />
         New Order
-        <ShortcutHint action="pos.confirm" className="mr-1" />
+        <ShortcutHint action="pos.confirm" className="ms-1" />
       </button>
     );
   }
@@ -79,11 +79,11 @@ export function OrderPrimaryAction({
         <button
           type="button"
           onClick={primaryAction.run}
-          className="pos-fs-base flex h-14 w-full items-center justify-center gap-2 rounded-pos bg-pos-action font-bold text-white transition hover:bg-pos-action-hover"
+          className="pos-fs-base flex h-12 w-full items-center justify-center gap-2 rounded-pos bg-pos-action font-bold text-pos-on-action transition hover:bg-pos-action-hover"
         >
           <WalletCards size={19} />
-          Pay Now · {formatMoney(remainingAmount, settlementCurrencyCode, settlementMinorUnitDigits)}
-          <ShortcutHint action="pos.confirm" className="mr-1" />
+          Pay Now · <span className="pos-num">{formatMoney(remainingAmount, settlementCurrencyCode, settlementMinorUnitDigits)}</span>
+          <ShortcutHint action="pos.confirm" className="ms-1" />
         </button>
         {orderType === "DineIn" && onOpenRetrieve && (
           <button
@@ -101,20 +101,20 @@ export function OrderPrimaryAction({
   if (isConfirmedOrder && !kitchenReady) {
     return (
       <div className="space-y-2">
-        <div className="rounded-xl border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-100">
+        <div className="rounded-pos border border-pos-action/40 bg-pos-action-tint px-3 py-2 text-xs text-pos-action-text">
           <div className="font-bold">Payment complete</div>
-          <div className="mt-0.5 text-[10px] text-emerald-200/80">
+          <div className="mt-0.5 text-[10px] text-pos-muted">
             Order sent to kitchen · {readyKitchenTicketCount}/{kitchenTickets.length} ready
           </div>
         </div>
         <button
           type="button"
           onClick={primaryAction.run}
-          className="pos-fs-base flex h-14 w-full items-center justify-center gap-2 rounded-pos bg-pos-primary font-bold text-white transition hover:bg-pos-primary-hover"
+          className="pos-fs-base flex h-12 w-full items-center justify-center gap-2 rounded-pos bg-pos-primary-strong font-bold text-white transition hover:bg-pos-primary-strong-hover"
         >
           <Plus size={18} />
           New Order
-          <ShortcutHint action="pos.confirm" className="mr-1" />
+          <ShortcutHint action="pos.confirm" className="ms-1" />
         </button>
       </div>
     );
@@ -124,7 +124,7 @@ export function OrderPrimaryAction({
     return (
       <div className="space-y-2">
         {closeBlockers.length > 0 && (
-          <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-[10px] leading-4 text-amber-100">
+          <div className="rounded-pos border border-pos-warning bg-pos-warning-tint px-3 py-2 text-[10px] leading-4 text-pos-warning-text">
             {closeBlockers[0]}
           </div>
         )}
@@ -132,11 +132,11 @@ export function OrderPrimaryAction({
           type="button"
           disabled={primaryAction.disabled}
           onClick={primaryAction.run}
-          className="pos-fs-base flex h-14 w-full items-center justify-center gap-2 rounded-pos bg-pos-action font-bold text-white transition hover:bg-pos-action-hover disabled:cursor-not-allowed disabled:opacity-50"
+          className="pos-fs-base flex h-12 w-full items-center justify-center gap-2 rounded-pos bg-pos-action font-bold text-pos-on-action transition hover:bg-pos-action-hover disabled:cursor-not-allowed disabled:opacity-50"
         >
           <CircleCheckBig size={19} />
           Close Order
-          <ShortcutHint action="pos.confirm" className="mr-1" />
+          <ShortcutHint action="pos.confirm" className="ms-1" />
         </button>
       </div>
     );
@@ -156,11 +156,11 @@ export function OrderPrimaryAction({
         type="button"
         disabled={primaryAction.disabled}
         onClick={primaryAction.run}
-        className="pos-fs-base flex h-14 w-full items-center justify-center gap-2 rounded-pos bg-pos-action font-bold text-white transition hover:bg-pos-action-hover disabled:cursor-not-allowed disabled:opacity-50"
+        className="pos-fs-base flex h-12 w-full items-center justify-center gap-2 rounded-pos bg-pos-action font-bold text-pos-on-action transition hover:bg-pos-action-hover disabled:cursor-not-allowed disabled:opacity-50"
       >
         <WalletCards size={19} />
-        Payment · {formatMoney(total, catalogCurrencyCode, 2)}
-        <ShortcutHint action="pos.confirm" className="mr-1" />
+        Payment · <span className="pos-num">{formatMoney(total, catalogCurrencyCode, 2)}</span>
+        <ShortcutHint action="pos.confirm" className="ms-1" />
       </button>
       {orderType === "DineIn" && (
         <button
