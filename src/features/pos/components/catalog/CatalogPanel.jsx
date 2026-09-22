@@ -1,4 +1,4 @@
-import { Package, X } from "lucide-react";
+import { Package, SlidersHorizontal, X } from "lucide-react";
 import { ROUTES } from "../../../../utils/routes";
 import { EmptyState, ErrorState, LoadingState } from "../../../../shared/components/ui";
 import { formatMoney } from "../../../../shared/utils/formatters";
@@ -159,25 +159,35 @@ export function CatalogPanel({
                     disabled={!canEditDraft}
                     className="pos-product-card group flex flex-col overflow-hidden rounded-pos border border-pos-border bg-pos-card text-start disabled:opacity-50"
                   >
-                    <div className="relative grid aspect-[4/3] place-items-center overflow-hidden bg-white">
-                      <Package size={30} className="text-pos-muted" />
+                    <span className="pos-card-brand-strip" aria-hidden="true" />
+                    <div className="pos-product-image relative grid aspect-square place-items-center overflow-hidden border-b border-pos-border">
+                      <span className="pos-product-image-fallback h-11 w-11">
+                        <Package size={22} className="text-pos-muted" />
+                      </span>
                       {product.imageUrl && (
                         <img
                           src={product.imageUrl}
                           alt=""
                           loading="lazy"
-                          className="absolute inset-0 h-full w-full bg-white object-contain p-2"
+                          className="absolute inset-0 h-full w-full object-contain p-2.5"
                           onError={(event) => {
                             event.currentTarget.style.display = "none";
                           }}
                         />
                       )}
-                      <span className="pos-num pos-fs-price absolute end-1.5 top-1.5 rounded-pos bg-pos-primary-strong px-2 py-0.5 leading-snug text-white shadow-sm">
+                      <span className="pos-num pos-fs-price absolute end-1.5 top-1.5 rounded-pos bg-pos-primary-strong px-2 py-0.5 font-bold leading-snug text-white shadow-sm">
                         {formatMoney(product.startingPrice, catalogCurrencyCode, 2)}
                       </span>
                       {hasModifiers && (
-                        <span className="pos-fs-label absolute bottom-1.5 start-1.5 rounded-pos bg-pos-tint px-1.5 py-0.5 font-medium text-pos-primary-text">
-                          Modifiers
+                        // Icon-only, on purpose: a text pill ("Modifiers") was wide enough to spill
+                        // past the tile's own edge and get clipped by its overflow-hidden once the
+                        // card shrank — a fixed-size circle never has that problem at any card width.
+                        <span
+                          className="grid absolute bottom-1.5 start-1.5 h-5 w-5 place-items-center rounded-full bg-pos-warning-tint text-pos-warning-text shadow-sm"
+                          title="Modifiers"
+                          aria-label="Has modifiers"
+                        >
+                          <SlidersHorizontal size={11} />
                         </span>
                       )}
                     </div>

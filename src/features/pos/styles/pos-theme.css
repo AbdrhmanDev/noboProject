@@ -62,7 +62,7 @@
      the paddings between them). The catalog and order panels are 100dvh minus this, so the screen
      fits the viewport and only the product grid and the order lines scroll. */
   --pos-chrome: 9.1rem;
-  --pos-card-min-w: 128px;
+  --pos-card-min-w: 116px;
   --pos-shadow-hover: 0 4px 12px rgb(0 0 0 / 0.1);
 
   font-family: var(--pos-font);
@@ -216,6 +216,41 @@ html[lang="ar"] .pos-root {
   .pos-product-card:active:not(:disabled) {
     transform: none;
   }
+}
+
+/*
+ * The four bars of the NOBO logo, as a signature strip across the top of every product card —
+ * pink / yellow / blue / green, hard-edged blocks (not a blurred gradient), matching the mark
+ * itself. Uses the raw --brand-* constants directly rather than the theme-remapped --pos-* tokens:
+ * a brand mark should read identically in light and dark, not shift with the surrounding theme.
+ * Left-to-right on purpose, in both writing directions — it's a fixed brand mark, not directional
+ * content, so unlike everything else in the POS it does NOT mirror under dir="rtl".
+ */
+.pos-card-brand-strip {
+  display: block;
+  height: 4px;
+  background: linear-gradient(
+    to right,
+    var(--brand-pink) 0 25%,
+    var(--brand-yellow) 25% 50%,
+    var(--brand-blue) 50% 75%,
+    var(--brand-green) 75% 100%
+  );
+}
+
+/* Product image tile: a soft frame instead of a flat white square, and a tinted circle behind the
+   fallback icon when a product has no photo yet, so an empty tile still looks finished. */
+.pos-product-image {
+  background: linear-gradient(180deg, #fbfbfc 0%, #f3f4f6 100%);
+}
+[data-theme="dark"] .pos-product-image {
+  background: linear-gradient(180deg, #20242f 0%, #171a22 100%);
+}
+.pos-product-image-fallback {
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--pos-tint);
 }
 
 /* Touch-height controls (buttons, inputs). */

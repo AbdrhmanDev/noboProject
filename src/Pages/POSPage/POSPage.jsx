@@ -2,12 +2,15 @@ import { Fragment, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowRight,
+  CheckCircle2,
+  CircleAlert,
   History,
   Layers3,
   Package,
   Power,
   Search,
   UserRound,
+  X,
 } from "lucide-react";
 import { ROUTES } from "../../utils/routes";
 import AppLayout from "../../components/AppLayout";
@@ -358,7 +361,7 @@ export default function POSPage() {
   // step; "complete" is the calm success state entered once payment finishes.
   const [phase, setPhase] = useState("order");
   const [retrievingOrderId, setRetrievingOrderId] = useState(null);
-  const [toast, setToast] = useState("");
+  const [toast, setToast] = useState(null);
   const [selectedVariantProduct, setSelectedVariantProduct] = useState(null);
   const [selectedModifierVariant, setSelectedModifierVariant] = useState(null);
   const [modifierSelections, setModifierSelections] = useState({});
@@ -656,9 +659,18 @@ export default function POSPage() {
     !cashMovementAmount.error &&
     cashMovementAmount.amount !== null &&
     cashMovementDraft.reason.trim().length > 0;
-  const notify = (message) => {
-    setToast(message);
-    window.setTimeout(() => setToast(""), 3000);
+  const notify = (message, tone = "error") => {
+    setToast({ message, tone });
+    // Only success confirmations auto-dismiss -- they are nice-to-know, not critical-to-read. Every
+    // other tone (error, the default) stays up until the cashier explicitly closes it, so a real
+    // problem can never vanish before it is read. The functional update guards against a slower
+    // stale timeout clearing a *newer* toast that has since replaced this one.
+    if (tone === "success") {
+      window.setTimeout(
+        () => setToast((current) => (current?.message === message ? null : current)),
+        3500,
+      );
+    }
   };
 
   const mapDraftLinesToRequest = (lines = draftLines) =>
@@ -911,7 +923,7 @@ export default function POSPage() {
       setModifierSelections({});
       await draftDetailsQuery.refetch();
       invalidateRestaurantSeating(currentCompanyId, currentBranchId);
-      notify("Sales order confirmed.");
+      notify("Sales order confirmed.", "success");
     } catch (error) {
       if (
         error?.code === "SalesOrder.DraftVersionConflict" ||
@@ -1018,7 +1030,7 @@ export default function POSPage() {
       await draftDetailsQuery.refetch();
       await openShiftQuery.refetch();
       invalidateRestaurantSeating(currentCompanyId, currentBranchId);
-      notify("Sales order closed.");
+      notify("Sales order closed.", "success");
     } catch (error) {
       handleCloseError(error);
     }
@@ -1039,10 +1051,10 @@ export default function POSPage() {
     try {
       if (lifecycleDraft.action === "preparedVoid") {
         await voidPreparedSalesOrderMutation.mutateAsync({ reason });
-        notify("Prepared order voided.");
+        notify("Prepared order voided.", "success");
       } else {
         await cancelSalesOrderMutation.mutateAsync({ reason });
-        notify("Sales order cancelled.");
+        notify("Sales order cancelled.", "success");
       }
 
       setLifecycleDraft(null);
@@ -1104,7 +1116,7 @@ export default function POSPage() {
         reason: "",
       });
       await openShiftQuery.refetch();
-      notify(`${getCashMovementLabel(cashMovementDraft.type)} recorded.`);
+      notify(`${getCashMovementLabel(cashMovementDraft.type)} recorded.`, "success");
     } catch (error) {
       handleCashMovementError(error);
     }
@@ -1156,7 +1168,7 @@ export default function POSPage() {
       setCashMovementDraft({ type: "CashIn", amount: "", reason: "" });
       startNewOrder();
       await openShiftQuery.refetch();
-      notify("POS shift closed.");
+      notify("POS shift closed.", "success");
     } catch (error) {
       handleCloseShiftError(error);
     }
@@ -1220,7 +1232,7 @@ export default function POSPage() {
         posShiftId: openShiftId,
       });
       setPaymentAmountInput("");
-      notify("Payment received.");
+      notify("Payment received.", "success");
       refreshPaymentState();
       // Mirrors the old PaymentModal's isFullyPaid branch, just promoted to
       // a real phase — driven by the mutation's own authoritative response
@@ -1306,7 +1318,7 @@ export default function POSPage() {
       }
 
       setModal(null);
-      notify("Refund processed.");
+      notify("Refund processed.", "success");
       refreshPaymentState();
     } catch (error) {
       handlePaymentError(error);
@@ -1328,7 +1340,7 @@ export default function POSPage() {
       setManagerPin("");
       setPendingRefundApproval(null);
       setModal(null);
-      notify(t("pos.refundApproval.approvedMessage"));
+      notify(t("pos.refundApproval.approvedMessage"), "success");
       refreshPaymentState();
     } catch (error) {
       // Never leave a PIN attempt sitting in the input after a failed try.
@@ -1455,7 +1467,7 @@ export default function POSPage() {
       setSelectedLineId(null);
       setModal(null);
       setPhase("order");
-      notify(`Order opened — ${details.status}.`);
+      notify(`Order opened — ${details.status}.`, "success");
 
       // Product Grid is the natural workspace for a Draft. A Confirmed order
       // has no editable grid items to land on (every card is disabled), so
@@ -1608,7 +1620,7 @@ export default function POSPage() {
       }
 
       setDiscountApproval(null);
-      notify(t("pos.discount.appliedMessage"));
+      notify(t("pos.discount.appliedMessage"), "success");
       setModal(null);
     } catch (error) {
       const key = DISCOUNT_ERROR_KEYS[error?.code];
@@ -2107,8 +2119,31 @@ export default function POSPage() {
         </PosOperationalGate>
 
         {toast && (
-          <div className="fixed bottom-5 left-1/2 z-[110] -translate-x-1/2 rounded-xl border border-blue-400/25 bg-[#10182a] px-4 py-3 text-xs font-bold text-blue-100 shadow-xl">
-            {toast}
+          // Errors persist until the cashier explicitly closes them (see notify() above) — a
+          // problem that needs their attention can never silently disappear on its own. Success
+          // confirmations still auto-dismiss, but keep the same close button for anyone who wants
+          // it gone sooner. `left-1/2 -translate-x-1/2` is a pure centering trick (not directional
+          // content), so it stays physical rather than logical -- it centers correctly either way.
+          <div
+            role="alert"
+            className={`fixed bottom-5 left-1/2 z-[110] flex w-[calc(100%-2.5rem)] max-w-md -translate-x-1/2 items-start gap-3 rounded-pos-lg border-2 bg-pos-card px-4 py-3 text-pos-text shadow-2xl ${
+              toast.tone === "success" ? "border-pos-action/50" : "border-pos-danger/60"
+            }`}
+          >
+            <span
+              className={`mt-0.5 shrink-0 ${toast.tone === "success" ? "text-pos-action-text" : "text-pos-danger-text"}`}
+            >
+              {toast.tone === "success" ? <CheckCircle2 size={20} /> : <CircleAlert size={20} />}
+            </span>
+            <span className="pos-fs-name min-w-0 flex-1 font-bold leading-snug">{toast.message}</span>
+            <button
+              type="button"
+              onClick={() => setToast(null)}
+              aria-label="Dismiss"
+              className="shrink-0 rounded-pos p-1 text-pos-muted transition hover:bg-pos-tint hover:text-pos-text"
+            >
+              <X size={16} />
+            </button>
           </div>
         )}
 
