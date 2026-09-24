@@ -61,7 +61,7 @@
   /* Everything above and below the workspace on the POS route (app header, POS toolbar, footer, and
      the paddings between them). The catalog and order panels are 100dvh minus this, so the screen
      fits the viewport and only the product grid and the order lines scroll. */
-  --pos-chrome: 9.1rem;
+  --pos-chrome: 6.2rem;
   --pos-card-min-w: 116px;
   --pos-shadow-hover: 0 4px 12px rgb(0 0 0 / 0.1);
 

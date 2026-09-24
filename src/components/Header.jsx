@@ -3,7 +3,7 @@ import { Keyboard, LogOut, Moon, Sun, CalendarDays, Clock } from "lucide-react";
 import { useI18n } from "../i18n/I18nContext";
 import { useShortcutContext } from "../features/shortcuts/useShortcuts";
 
-export default function Header({ onLogout, compact = false }) {
+export default function Header({ onLogout, compact = false, bare = false }) {
   const { t, lang, dir } = useI18n();
   const { openHelp } = useShortcutContext();
   const [isDark, setIsDark] = useState(() => typeof window !== "undefined" ? localStorage.getItem("nobo-theme") !== "light" : true);
@@ -26,6 +26,52 @@ export default function Header({ onLogout, compact = false }) {
   const part = (type) => parts.find((p) => p.type === type)?.value ?? "";
   const time = { hm: `${part("hour")}:${part("minute")}`, ss: part("second"), period: part("dayPeriod") };
   const formattedDate = now.toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+
+  // `bare`: no card, no border, no clock icon box -- just the same tiny muted text/icon items the
+  // footer status row already uses, so this reads as one more line of status info instead of a
+  // big clock widget dropped into a thin strip. Meant to be spread into that row's own flex
+  // children (see Footer's `children`), not rendered as its own block.
+  if (bare) {
+    return (
+      <>
+        <span className="flex items-center gap-1.5 tabular-nums" dir="ltr">
+          <Clock size={12} className="shrink-0" />
+          {time.hm} {time.period}
+        </span>
+        <span className="flex items-center gap-1.5" dir={dir}>
+          <CalendarDays size={12} className="shrink-0" />
+          {formattedDate}
+        </span>
+        <button
+          type="button"
+          onClick={() => setIsDark((prev) => !prev)}
+          aria-label={isDark ? t("header.lightMode") : t("header.darkMode")}
+          title={isDark ? t("header.lightMode") : t("header.darkMode")}
+          className="flex items-center transition hover:text-gray-300"
+        >
+          {isDark ? <Moon size={12} /> : <Sun size={12} />}
+        </button>
+        <button
+          type="button"
+          onClick={openHelp}
+          aria-label={t("header.shortcuts")}
+          title={t("header.shortcuts")}
+          className="flex items-center transition hover:text-blue-400"
+        >
+          <Keyboard size={12} />
+        </button>
+        <button
+          type="button"
+          onClick={onLogout}
+          aria-label={t("header.logout")}
+          title={t("header.logout")}
+          className="flex items-center transition hover:text-red-400"
+        >
+          <LogOut size={12} />
+        </button>
+      </>
+    );
+  }
 
   return (
     <div className={compact ? "mb-2 flex items-center justify-between gap-2" : "mb-4 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-between"}>

@@ -255,10 +255,12 @@ export default function AppLayout({ children, onLogout }) {
 
       {/* main */}
       <main className={`min-w-0 flex-1 overflow-x-hidden ${isPos ? "p-1.5" : "p-3 sm:p-4 md:p-6"}`}>
-        {/* On the POS route the clock/theme/logout/shortcuts row moves down to sit right above the
-            footer instead of taking a row at the top — that row is prime real estate for the actual
+        {/* On the POS route the clock/theme/logout/shortcuts controls move down and merge into the
+            footer's own status line (Header `bare` inside Footer's `children`, below) instead of
+            taking a row of their own at the top — that row is prime real estate for the actual
             workspace (product grid / basket / payment) on a screen where every pixel of vertical
-            space matters for how fast the cashier can work. Every other route keeps it at the top. */}
+            space matters for how fast the cashier can work. Every other route keeps it at the top,
+            in its own full row, exactly as before. */}
         {!isPos && (
           <Header
             onLogout={handleLogout}
@@ -314,17 +316,9 @@ export default function AppLayout({ children, onLogout }) {
           })}
         </nav>
         {children}
-        {isPos && (
-          <Header
-            compact
-            onLogout={handleLogout}
-            companyName={currentCompany ? getCompanyDisplayName(currentCompany) : ""}
-            onSwitchCompany={switchableCompanies.length > 1 ? clearCompany : undefined}
-            branchName={currentBranch ? currentBranch.name : ""}
-            onSwitchBranch={switchableBranches.length > 1 ? clearBranch : undefined}
-          />
-        )}
-        <Footer compact={isPos} />
+        <Footer compact={isPos}>
+          {isPos && <Header bare onLogout={handleLogout} />}
+        </Footer>
       </main>
     </div>
   );

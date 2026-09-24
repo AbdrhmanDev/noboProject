@@ -119,6 +119,8 @@ export const translations = {
     "header.gold": "الذهب",
     "header.silver": "الفضة",
     "header.shortcuts": "اختصارات لوحة المفاتيح",
+    "header.lightMode": "الوضع الفاتح",
+    "header.darkMode": "الوضع الداكن",
     "header.logout": "خروج",
 
     // ---- Footer ----
@@ -1707,6 +1709,8 @@ export const translations = {
     "header.gold": "Gold",
     "header.silver": "Silver",
     "header.shortcuts": "Keyboard Shortcuts",
+    "header.lightMode": "Light mode",
+    "header.darkMode": "Dark mode",
     "header.logout": "Logout",
 
     "footer.allSystems": "All systems running smoothly",
@@ -3264,6 +3268,8 @@ export const translations = {
     "header.gold": "Oro",
     "header.silver": "Plata",
     "header.shortcuts": "Atajos de teclado",
+    "header.lightMode": "Modo claro",
+    "header.darkMode": "Modo oscuro",
     "header.logout": "Cerrar sesión",
 
     "footer.allSystems": "Todos los sistemas funcionando correctamente",
@@ -4527,6 +4533,8 @@ export const translations = {
     "header.gold": "Gold",
     "header.silver": "Silber",
     "header.shortcuts": "Tastenkombinationen",
+    "header.lightMode": "Heller Modus",
+    "header.darkMode": "Dunkler Modus",
     "header.logout": "Abmelden",
 
     "footer.allSystems": "Alle Systeme laufen einwandfrei",

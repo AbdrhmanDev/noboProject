@@ -160,7 +160,7 @@ export function CatalogPanel({
                     className="pos-product-card group flex flex-col overflow-hidden rounded-pos border border-pos-border bg-pos-card text-start disabled:opacity-50"
                   >
                     <span className="pos-card-brand-strip" aria-hidden="true" />
-                    <div className="pos-product-image relative grid aspect-square place-items-center overflow-hidden border-b border-pos-border">
+                    <div className="pos-product-image relative grid aspect-[4/3] place-items-center overflow-hidden border-b border-pos-border">
                       <span className="pos-product-image-fallback h-11 w-11">
                         <Package size={22} className="text-pos-muted" />
                       </span>
@@ -175,9 +175,6 @@ export function CatalogPanel({
                           }}
                         />
                       )}
-                      <span className="pos-num pos-fs-price absolute end-1.5 top-1.5 rounded-pos bg-pos-primary-strong px-2 py-0.5 font-bold leading-snug text-white shadow-sm">
-                        {formatMoney(product.startingPrice, catalogCurrencyCode, 2)}
-                      </span>
                       {hasModifiers && (
                         // Icon-only, on purpose: a text pill ("Modifiers") was wide enough to spill
                         // past the tile's own edge and get clipped by its overflow-hidden once the
@@ -191,7 +188,7 @@ export function CatalogPanel({
                         </span>
                       )}
                     </div>
-                    <div className="px-2 pb-2 pt-1.5">
+                    <div className="px-2 pb-1.5 pt-1">
                       <div className="pos-fs-name line-clamp-2 min-h-[2.7em] text-pos-text">
                         {product.productName}
                       </div>
@@ -200,6 +197,15 @@ export function CatalogPanel({
                           ? `${product.variants.length} variants`
                           : product.variants[0]?.variantName}
                       </div>
+                      {/* Off the photo entirely now (an overlay never looked right at this card
+                          size): full-width and bold, but the solid saturated fill (first blue, then
+                          an even stronger blue) both read as too intense sitting on every single
+                          card in the grid at once. The same soft tint+ink pairing used everywhere
+                          else in the POS for a quieter accent (Modifiers badge, Remaining/Paid
+                          boxes) -- still unmistakably blue, still bold, just not shouting. */}
+                      <span className="pos-num mt-1 flex items-center justify-center rounded-pos-lg border border-pos-primary/25 bg-pos-tint py-1 text-sm font-black text-pos-primary-text">
+                        {formatMoney(product.startingPrice, catalogCurrencyCode, 2)}
+                      </span>
                     </div>
                   </button>
                 );
