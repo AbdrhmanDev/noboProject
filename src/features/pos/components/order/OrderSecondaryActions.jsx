@@ -13,6 +13,8 @@ import {
   Trash2,
 } from "lucide-react";
 import { formatMoney } from "../../../../shared/utils/formatters";
+import { useI18n } from "../../../../i18n/I18nContext";
+
 import { formatPaymentDate } from "../../utils/posFormatters";
 import { PosModal } from "../PosModal";
 
@@ -27,7 +29,7 @@ const isNfcMethod = (method) => /nfc|contactless|tap/i.test(`${method.name} ${me
 const PAYMENT_CHOICES = [
   {
     id: "cash",
-    label: "نقدي",
+    labelKey: "pos.quick.cash",
     icon: Banknote,
     resolve: (methods) =>
       methods.find((method) => method.kind === "Cash") ||
@@ -36,7 +38,7 @@ const PAYMENT_CHOICES = [
   },
   {
     id: "card",
-    label: "كارد",
+    labelKey: "pos.quick.card",
     icon: CreditCard,
     resolve: (methods) =>
       methods.find((method) => method.kind === "Card" && !isNfcMethod(method)) ||
@@ -52,19 +54,19 @@ const PAYMENT_CHOICES = [
   },
 ];
 
-function QuickAction({ icon: Icon, label, active = false, onClick, disabled = false }) {
+function QuickAction({ icon: Icon, label, active = false, onClick, disabled = false, accent = "var(--brand-blue)" }) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`pos-fs-name flex min-h-11 min-w-0 flex-col items-center justify-center gap-0.5 rounded-pos border px-2 py-1 transition disabled:cursor-not-allowed disabled:opacity-45 ${
-        active
-          ? "border-pos-primary bg-pos-tint text-pos-primary-text"
-          : "border-pos-border bg-pos-card text-pos-text hover:border-pos-primary hover:bg-pos-tint"
-      }`}
+      data-active={active}
+      style={{ "--pos-accent": accent }}
+      className="pos-quick pos-fs-name flex min-h-11 min-w-0 flex-col items-center justify-center gap-0.5 rounded-pos border border-pos-border bg-pos-card px-2 py-1 text-pos-text transition disabled:cursor-not-allowed disabled:opacity-45"
     >
-      <Icon size={17} />
+      <span className="pos-chip grid h-6 w-6 place-items-center rounded-full">
+        <Icon size={14} />
+      </span>
       <span className="max-w-full truncate">{label}</span>
     </button>
   );
@@ -97,6 +99,7 @@ export function OrderSecondaryActions({
   kitchenNote = "",
   onKitchenNoteChange,
 }) {
+  const { t } = useI18n();
   const [expanded, setExpanded] = useState(false);
   const [methodOpen, setMethodOpen] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
@@ -123,6 +126,7 @@ export function OrderSecondaryActions({
 
   const paymentChoices = PAYMENT_CHOICES.map((choice) => ({
     ...choice,
+    label: choice.labelKey ? t(choice.labelKey) : choice.label,
     method: choice.resolve(paymentMethods),
   }));
   const selectedMethodId = selectedPaymentMethod?.paymentMethodId;
@@ -146,20 +150,23 @@ export function OrderSecondaryActions({
           <div className="grid min-w-0 flex-1 grid-cols-3 gap-1.5">
             <QuickAction
               icon={Percent}
-              label={hasDiscount ? "تعديل الخصم" : "خصم"}
+              label={hasDiscount ? t("pos.quick.editDiscount") : t("pos.quick.discount")}
+              accent="var(--brand-yellow)"
               active={hasDiscount}
               onClick={onOpenDiscount}
               disabled={!canEditDraft || isDraftMutationPending}
             />
             <QuickAction
               icon={MethodIcon}
-              label="طريقة الدفع"
+              label={t("pos.quick.paymentMethod")}
+              accent="var(--brand-blue)"
               active={Boolean(activeChoice)}
               onClick={() => setMethodOpen(true)}
             />
             <QuickAction
               icon={MessageSquare}
-              label="ملاحظة للمطبخ"
+              label={t("pos.quick.kitchenNote")}
+              accent="var(--brand-green)"
               active={Boolean(kitchenNote)}
               onClick={() => {
                 setNoteDraft(kitchenNote);
@@ -173,8 +180,8 @@ export function OrderSecondaryActions({
           <button
             type="button"
             onClick={() => setExpanded((value) => !value)}
-            aria-label="More actions"
-            title="More actions"
+            aria-label={t("pos.quick.moreActions")}
+            title={t("pos.quick.moreActions")}
             aria-expanded={expanded}
             className={`relative grid w-12 shrink-0 place-items-center rounded-pos border transition ${
               expanded
@@ -316,7 +323,7 @@ export function OrderSecondaryActions({
         </div>
       )}
       {methodOpen && (
-        <PosModal title="طريقة الدفع" onClose={() => setMethodOpen(false)}>
+        <PosModal title={t("pos.quick.paymentMethod")} onClose={() => setMethodOpen(false)}>
           <div className="grid grid-cols-3 gap-2">
             {paymentChoices.map(({ id, label, icon: Icon, method }) => {
               const selected = activeChoice?.id === id;
@@ -340,7 +347,7 @@ export function OrderSecondaryActions({
                   {selected && <Check size={14} className="absolute end-2 top-2" />}
                   <Icon size={26} />
                   {label}
-                  {!method && <span className="text-[10px] font-normal text-pos-muted">غير مفعّل</span>}
+                  {!method && <span className="text-[10px] font-normal text-pos-muted">{t("pos.quick.notEnabled")}</span>}
                 </button>
               );
             })}
@@ -349,14 +356,14 @@ export function OrderSecondaryActions({
       )}
 
       {noteOpen && (
-        <PosModal title="ملاحظة للمطبخ" onClose={() => setNoteOpen(false)}>
+        <PosModal title={t("pos.quick.kitchenNote")} onClose={() => setNoteOpen(false)}>
           <textarea
             autoFocus
             rows={4}
             maxLength={KITCHEN_NOTE_MAX_LENGTH}
             value={noteDraft}
             onChange={(event) => setNoteDraft(event.target.value)}
-            placeholder="اكتب ملاحظة تظهر مع الطلب في شاشة المطبخ..."
+            placeholder={t("pos.quick.notePlaceholder")}
             className="pos-fs-base w-full resize-none rounded-pos border border-pos-border bg-pos-card px-3 py-2 text-pos-text outline-none placeholder:text-subtle focus:border-accent focus:ring-[3px] focus:ring-pos-primary/20"
           />
           <div className="mt-1 text-end text-[10px] text-pos-muted">
@@ -371,7 +378,7 @@ export function OrderSecondaryActions({
               }}
               className="pos-control pos-fs-name border border-pos-border bg-pos-card text-pos-text transition hover:bg-pos-tint"
             >
-              مسح
+              {t("pos.quick.clear")}
             </button>
             <button
               type="button"
@@ -381,7 +388,7 @@ export function OrderSecondaryActions({
               }}
               className="pos-control pos-fs-name bg-pos-primary-strong text-white transition hover:bg-pos-primary-strong-hover"
             >
-              حفظ الملاحظة
+              {t("pos.quick.saveNote")}
             </button>
           </div>
         </PosModal>

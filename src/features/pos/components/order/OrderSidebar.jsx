@@ -1,3 +1,4 @@
+import { useI18n } from "../../../../i18n/I18nContext";
 import { OrderHeader } from "./OrderHeader";
 import { OrderLines } from "./OrderLines";
 import { OrderSummary } from "./OrderSummary";
@@ -82,6 +83,7 @@ export function OrderSidebar({
   goToPayment,
   onOpenShiftReport,
 }) {
+  const { t } = useI18n();
   return (
     // On xl the panel is a *definite* height: 100dvh minus --pos-chrome (pos-theme.css), i.e. exactly
     // the rest of the screen, so nothing but the product grid and OrderLines scrolls. Definite (not
@@ -202,8 +204,8 @@ export function OrderSidebar({
           <button
             type="button"
             onClick={onOpenShiftReport}
-            aria-label="Z Report"
-            title="Z Report"
+            aria-label={t("pos.quick.zReport")}
+            title={t("pos.quick.zReport")}
             className="grid h-12 w-12 shrink-0 place-items-center rounded-pos border border-pos-border bg-pos-card text-pos-text transition hover:border-pos-primary hover:bg-pos-tint"
           >
             <ReceiptText size={18} />

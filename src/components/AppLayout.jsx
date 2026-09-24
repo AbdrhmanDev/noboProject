@@ -192,6 +192,18 @@ export default function AppLayout({ children, onLogout }) {
           </button>
         </div>
 
+        {/* Floating edge handle: pinned to the sidebar's own edge at mid-height, so it is always in reach. Same
+            toggle as the one in the header; the chevron turns to say which way the sidebar will move. */}
+        <button
+          type="button"
+          onClick={toggleCollapsed}
+          aria-label={collapsed ? t("layout.expandSidebar") : t("layout.collapseSidebar")}
+          aria-expanded={!collapsed}
+          className="nobo-sb-edge"
+        >
+          <ChevronsLeft size={16} />
+        </button>
+
         <nav className="nobo-sb-nav scrollbar-none" aria-label={t("layout.home")}>
           <div className="nobo-sb-section" data-accent="blue">
             <div className="nobo-sb-items">

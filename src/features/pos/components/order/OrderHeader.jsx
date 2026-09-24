@@ -1,5 +1,7 @@
 import { useRef } from "react";
 import { Loader2, ShoppingCart, UserRound, X } from "lucide-react";
+import { useI18n } from "../../../../i18n/I18nContext";
+import { labelFor } from "../../utils/brandAccents";
 import { ROUTES } from "../../../../utils/routes";
 import { RestaurantSeatingOnboarding } from "../../../restaurant/components/RestaurantSeatingOnboarding";
 import { ShortcutHint } from "../../../shortcuts/components/ShortcutHint";
@@ -35,6 +37,7 @@ export function OrderHeader({
   currentBranchId,
   invalidateRestaurantSeating,
 }) {
+  const { t } = useI18n();
   const tableGridRef = useRef(null);
   const handleTableGridKeyDown = useGridArrowNav(tableGridRef, ROVING_ITEM_SELECTOR);
 
@@ -46,10 +49,11 @@ export function OrderHeader({
           <h2 className="pos-fs-base shrink-0 font-bold text-pos-text">
             {draftOrder?.orderNumberFormatted ? (
               <>
-                طلب <span className="pos-num">{draftOrder.orderNumberFormatted}</span>
+                {t("pos.cart.orderNo", { number: "" })}
+                <span className="pos-num">{draftOrder.orderNumberFormatted}</span>
               </>
             ) : (
-              "سلة المشتريات"
+              t("pos.cart.title")
             )}
           </h2>
           <span
@@ -61,15 +65,15 @@ export function OrderHeader({
                   : "bg-pos-tint text-pos-primary-text"
             }`}
           >
-            {draftOrder?.status || "New"}
+            {labelFor(t, "pos.status", draftOrder?.status || "New")}
           </span>
           {isDraftMutationPending && (
-            <span className="flex items-center text-pos-primary-text" title="جارٍ الحفظ">
+            <span className="flex items-center text-pos-primary-text" title={t("pos.cart.saving")}>
               <Loader2 size={11} className="animate-spin" />
             </span>
           )}
           <span className="truncate text-[11px] text-pos-muted">
-            · {draftLines.reduce((sum, item) => sum + Number(item.quantity), 0)} صنف
+            · {t("pos.cart.itemsCount", { count: draftLines.reduce((sum, item) => sum + Number(item.quantity), 0) })}
           </span>
         </div>
         <button
@@ -78,7 +82,7 @@ export function OrderHeader({
           disabled={!canEditDraft || !canViewCustomers}
           className="pos-control pos-fs-secondary shrink-0 border border-pos-border bg-pos-card px-3 font-medium !text-pos-primary-text transition hover:border-pos-primary hover:bg-pos-tint disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {customer ? customer.name : "اختيار عميل"}
+          {customer ? customer.name : t("pos.cart.selectCustomer")}
         </button>
       </div>
       {customer && (
@@ -107,7 +111,7 @@ export function OrderHeader({
                   : "text-pos-text hover:bg-pos-tint"
               }`}
             >
-              {type}
+              {t(`pos.type.${type}`)}
               {ORDER_TYPE_SHORTCUT_ACTION[type] && (
                 <ShortcutHint action={ORDER_TYPE_SHORTCUT_ACTION[type]} />
               )}
@@ -117,31 +121,31 @@ export function OrderHeader({
         {orderType === "DineIn" && (
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-2 text-[10px] text-pos-muted">
-              <span>Table</span>
+              <span>{t("pos.table.label")}</span>
               <span className="text-pos-primary-text">
                 {selectedRestaurantTable
                   ? `${selectedRestaurantTable.floorName} · ${selectedRestaurantTable.code}`
-                  : "Required"}
+                  : t("pos.table.required")}
               </span>
             </div>
             {restaurantPermissionQuery.isLoading && (
               <p className="rounded-lg bg-pos-bg px-2 py-2 text-[10px] text-pos-muted">
-                Checking restaurant access...
+                {t("pos.table.checking")}
               </p>
             )}
             {!restaurantPermissionQuery.isLoading && !restaurantPermissionQuery.hasPermission && (
               <p className="rounded-lg border border-amber-400/20 bg-amber-500/10 px-2 py-2 text-[10px] text-amber-100">
-                Restaurant.View permission is required.
+                {t("pos.table.permission")}
               </p>
             )}
             {seatingQuery.isLoading && (
               <p className="rounded-lg bg-pos-bg px-2 py-2 text-[10px] text-pos-muted">
-                Loading tables...
+                {t("pos.table.loading")}
               </p>
             )}
             {seatingQuery.isError && (
               <p className="rounded-lg border border-rose-400/20 bg-rose-500/10 px-2 py-2 text-[10px] text-rose-100">
-                Unable to load restaurant seating.
+                {t("pos.table.loadError")}
               </p>
             )}
             {!seatingQuery.isLoading &&
@@ -159,7 +163,7 @@ export function OrderHeader({
                     onClick={() => navigate(ROUTES.RESTAURANT_ADMIN)}
                     className="block w-full text-[10px] font-semibold text-pos-primary-text hover:underline"
                   >
-                    Manage in Restaurant Admin
+                    {t("pos.table.manage")}
                   </button>
                 </>
               )}
@@ -184,8 +188,8 @@ export function OrderHeader({
                         <span className="block truncate font-bold">{table.code}</span>
                         <span className="block truncate text-[9px] text-pos-muted">
                           {table.isOccupied
-                            ? `${table.openSalesOrderCount} open`
-                            : table.name || "Available"}
+                            ? t("pos.table.open", { count: table.openSalesOrderCount })
+                            : table.name || t("pos.table.available")}
                         </span>
                       </button>
                     ))}

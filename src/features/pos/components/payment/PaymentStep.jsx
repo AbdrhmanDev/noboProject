@@ -1,7 +1,7 @@
 import { useMemo, useRef } from "react";
 import { CircleDollarSign, ReceiptText, Wallet } from "lucide-react";
 import { formatMoney } from "../../../../shared/utils/formatters";
-import { formatPaymentDate, getPaymentMethodColor, getPaymentMethodIcon } from "../../utils/posFormatters";
+import { formatPaymentDate, getPaymentMethodIcon } from "../../utils/posFormatters";
 import { PaymentMethodOnboarding } from "../../../payments/components/PaymentMethodOnboarding";
 import { ROUTES } from "../../../../utils/routes";
 import { SCOPE_PRIORITY, SHORTCUT_SCOPES } from "../../../shortcuts/registry";
@@ -9,6 +9,8 @@ import { useShortcutScope } from "../../../shortcuts/useShortcuts";
 import { ROVING_ITEM_SELECTOR, useAutoFocusFirstItem, useGridArrowNav } from "../../../shortcuts/rovingFocus";
 import { ShortcutHint } from "../../../shortcuts/components/ShortcutHint";
 import { OrderLines } from "../order/OrderLines";
+import { useI18n } from "../../../../i18n/I18nContext";
+import { brandAccentStyle, labelFor } from "../../utils/brandAccents";
 import { NumericKeypadInline } from "../keypad/NumericKeypadInline";
 
 /**
@@ -57,6 +59,7 @@ export function PaymentStep({
   navigate,
   onBack,
 }) {
+  const { t } = useI18n();
   const paymentMethodGridRef = useRef(null);
   const handlePaymentMethodGridKeyDown = useGridArrowNav(paymentMethodGridRef, ROVING_ITEM_SELECTOR);
   const showPaymentMethodGrid =
@@ -112,7 +115,7 @@ export function PaymentStep({
           also sit under, not in a row of its own here, so there's nothing extra to account for). */}
       <aside className="flex min-h-[420px] flex-col gap-2 rounded-pos-lg border border-pos-border bg-pos-card p-3 xl:order-first xl:h-[calc(100dvh-var(--pos-chrome))] xl:min-h-0 xl:overflow-y-auto xl:scrollbar-none">
           <div className="flex shrink-0 items-center justify-between gap-2">
-            <span className="pos-fs-name font-bold text-pos-text">الطلب</span>
+            <span className="pos-fs-name font-bold text-pos-text">{t("pos.pay.order")}</span>
             <span className="flex items-center gap-1.5">
               {draftOrder?.orderNumberFormatted && (
                 <span className="pos-num rounded-full bg-pos-tint px-2 py-0.5 text-[10px] font-bold text-pos-primary-text">
@@ -120,7 +123,7 @@ export function PaymentStep({
                 </span>
               )}
               <span className="rounded-full bg-pos-action-tint px-2 py-0.5 text-[10px] font-bold text-pos-action-text">
-                {draftOrder?.status}
+                {labelFor(t, "pos.status", draftOrder?.status)}
               </span>
             </span>
           </div>
@@ -141,19 +144,28 @@ export function PaymentStep({
 
           <div className="pos-fs-secondary shrink-0 space-y-0.5 border-t border-pos-border pt-2">
             <div className="flex justify-between text-pos-muted">
-              <span>المجموع الفرعي</span>
+              <span className="flex items-center">
+                <i className="pos-dot" style={{ "--pos-accent": "var(--brand-blue)" }} />
+                {t("pos.sum.subtotal")}
+              </span>
               <span className="pos-num">{formatMoney(subtotal, catalogCurrencyCode, 2)}</span>
             </div>
             <div className="flex justify-between text-pos-warning-text">
-              <span>الخصم</span>
+              <span className="flex items-center">
+                <i className="pos-dot" style={{ "--pos-accent": "var(--brand-yellow)" }} />
+                {t("pos.sum.discount")}
+              </span>
               <span className="pos-num">- {formatMoney(discountValue, catalogCurrencyCode, 2)}</span>
             </div>
             <div className="flex justify-between text-pos-muted">
-              <span>ضريبة القيمة المضافة</span>
+              <span className="flex items-center">
+                <i className="pos-dot" style={{ "--pos-accent": "var(--brand-pink)" }} />
+                {t("pos.sum.vat")}
+              </span>
               <span className="pos-num">{formatMoney(vat, catalogCurrencyCode, 2)}</span>
             </div>
-            <div className="mt-1 flex items-end justify-between border-t border-pos-border pt-1">
-              <span className="pos-fs-line font-bold text-pos-text">الإجمالي</span>
+            <div className="mt-1.5 flex items-end justify-between rounded-pos bg-pos-tint px-2 py-1">
+              <span className="pos-fs-line font-bold text-pos-text">{t("pos.sum.total")}</span>
               <span className="pos-num pos-fs-total text-pos-primary-text">
                 {formatMoney(total, catalogCurrencyCode, 2)}
               </span>
@@ -162,13 +174,13 @@ export function PaymentStep({
 
           <div className="grid shrink-0 grid-cols-2 gap-2 text-[10px]">
             <div className="rounded-pos border border-pos-action/30 bg-pos-action-tint p-2 text-center">
-              <div className="font-bold text-pos-action-text">Paid</div>
+              <div className="font-bold text-pos-action-text">{t("pos.sum.paid")}</div>
               <div className="pos-num mt-0.5 font-black text-pos-action-text">
                 {formatMoney(netPaidAmount, settlementCurrencyCode, settlementMinorUnitDigits)}
               </div>
             </div>
             <div className="rounded-pos border border-pos-warning/40 bg-pos-warning-tint p-2 text-center">
-              <div className="font-bold text-pos-warning-text">Remaining</div>
+              <div className="font-bold text-pos-warning-text">{t("pos.sum.remaining")}</div>
               <div className="pos-num mt-0.5 font-black text-pos-warning-text">
                 {formatMoney(remainingAmount, settlementCurrencyCode, settlementMinorUnitDigits)}
               </div>
@@ -179,7 +191,7 @@ export function PaymentStep({
             <div className="min-h-0 shrink-0 space-y-2 border-t border-pos-border pt-2">
               <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-pos-muted">
                 <ReceiptText size={13} />
-                Payment History
+                {t("pos.pay.history")}
               </div>
               {(draftOrder?.payments || []).map((payment) => (
                 <div
@@ -202,12 +214,13 @@ export function PaymentStep({
                   </div>
                   <div className="mt-2 flex items-center justify-between gap-2 text-[10px] text-pos-muted">
                     <span className="pos-num">
-                      Refunded{" "}
-                      {formatMoney(
-                        payment.refundedAmount,
-                        payment.currencyCode,
-                        payment.currencyMinorUnitDigits,
-                      )}
+                      {t("pos.pay.refundedAmount", {
+                        amount: formatMoney(
+                          payment.refundedAmount,
+                          payment.currencyCode,
+                          payment.currencyMinorUnitDigits,
+                        ),
+                      })}
                     </span>
                     <button
                       type="button"
@@ -215,7 +228,7 @@ export function PaymentStep({
                       onClick={() => openRefundModal(payment)}
                       className="rounded-pos border border-pos-danger/40 px-2 py-1 font-bold text-pos-danger-text disabled:cursor-not-allowed disabled:opacity-40"
                     >
-                      Refund
+                      {t("pos.pay.refund")}
                     </button>
                   </div>
                 </div>
@@ -229,18 +242,18 @@ export function PaymentStep({
             payment-method/amount/keypad middle scrolls if it doesn't fit, so Receive is always
             reachable without hunting for it. */}
         <div className="flex min-h-0 flex-col gap-2 rounded-pos-lg border border-pos-border bg-pos-card p-3 xl:h-[calc(100dvh-var(--pos-chrome))]">
-          <div className="shrink-0 rounded-pos border border-pos-primary/30 bg-pos-tint p-3 text-center">
-            <div className="pos-fs-label font-bold uppercase text-pos-muted">
-              {netPaidAmount > 0 ? "Amount Due Now" : "Total Due"}
+          <div className="shrink-0 rounded-pos bg-pos-primary-strong p-3 text-center text-white">
+            <div className="pos-fs-label font-bold uppercase text-white/80">
+              {netPaidAmount > 0 ? t("pos.pay.dueNow") : t("pos.pay.totalDue")}
             </div>
-            <div className="pos-num mt-1 text-4xl font-black text-pos-primary-text">
+            <div className="pos-num mt-1 text-4xl font-black text-white">
               {formatMoney(remainingAmount, settlementCurrencyCode, settlementMinorUnitDigits)}
             </div>
             {netPaidAmount > 0 && (
-              <div className="mt-2 flex items-center justify-center gap-4 text-xs text-pos-muted">
-                <span>Order Total <span className="pos-num">{formatMoney(total, settlementCurrencyCode, settlementMinorUnitDigits)}</span></span>
-                <span className="font-bold text-pos-action-text">
-                  Paid <span className="pos-num">{formatMoney(netPaidAmount, settlementCurrencyCode, settlementMinorUnitDigits)}</span>
+              <div className="mt-2 flex items-center justify-center gap-4 text-xs text-white/80">
+                <span>{t("pos.pay.orderTotal")} <span className="pos-num">{formatMoney(total, settlementCurrencyCode, settlementMinorUnitDigits)}</span></span>
+                <span className="font-bold text-white">
+                  {t("pos.sum.paid")} <span className="pos-num">{formatMoney(netPaidAmount, settlementCurrencyCode, settlementMinorUnitDigits)}</span>
                 </span>
               </div>
             )}
@@ -248,13 +261,13 @@ export function PaymentStep({
 
           {!paymentsReceivePermissionQuery.hasPermission ? (
             <div className="rounded-pos border border-pos-warning/40 bg-pos-warning-tint px-3 py-3 text-xs text-pos-warning-text">
-              Payments.Receive permission is required to collect payment.
+              {t("pos.pay.needPermission")}
             </div>
           ) : (
             <>
               {paymentMethodsQuery.isLoading && (
                 <div className="rounded-pos bg-pos-bg px-3 py-3 text-center text-xs text-pos-muted">
-                  Loading payment methods...
+                  {t("pos.pay.loadingMethods")}
                 </div>
               )}
               {!paymentMethodsQuery.isLoading &&
@@ -268,24 +281,23 @@ export function PaymentStep({
                   />
                 ) : (
                   <div className="rounded-pos border border-pos-warning/40 bg-pos-warning-tint p-4 text-center">
-                    <div className="text-sm font-bold text-pos-warning-text">Payment Setup Required</div>
+                    <div className="text-sm font-bold text-pos-warning-text">{t("pos.pay.setupRequired")}</div>
                     <p className="mt-1 text-xs text-pos-warning-text/80">
-                      No active payment methods are configured for this company. Add at least one
-                      method to accept payments.
+                      {t("pos.pay.setupBody")}
                     </p>
                     <button
                       type="button"
                       onClick={() => setShowAddPaymentMethod(true)}
                       className="pos-control mt-3 inline-flex items-center justify-center gap-2 bg-pos-primary-strong px-4 text-sm font-bold text-white hover:bg-pos-primary-strong-hover"
                     >
-                      Add Payment Method
+                      {t("pos.pay.addMethod")}
                     </button>
                     <button
                       type="button"
                       onClick={() => navigate(ROUTES.PAYMENT_METHODS_ADMIN)}
                       className="mt-3 block w-full text-[11px] font-semibold text-pos-primary-text hover:underline"
                     >
-                      Manage in Payment Methods Admin
+                      {t("pos.pay.manageMethods")}
                     </button>
                   </div>
                 ))}
@@ -297,7 +309,7 @@ export function PaymentStep({
                     onKeyDown={handlePaymentMethodGridKeyDown}
                     className="grid grid-cols-3 gap-1.5 sm:grid-cols-4"
                   >
-                    {paymentMethods.map((method) => {
+                    {paymentMethods.map((method, methodIndex) => {
                       const Icon = getPaymentMethodIcon(method.kind);
                       const active = selectedPaymentMethod?.paymentMethodId === method.paymentMethodId;
                       return (
@@ -306,13 +318,16 @@ export function PaymentStep({
                           key={method.paymentMethodId}
                           data-roving-item=""
                           onClick={() => setSelectedPaymentMethodId(method.paymentMethodId)}
+                          style={brandAccentStyle(methodIndex)}
                           className={`min-h-14 rounded-pos border px-3 py-2 text-center transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-pos-primary ${
                             active
-                              ? "border-pos-primary bg-pos-tint"
+                              ? "border-pos-primary bg-pos-tint shadow-sm"
                               : "border-pos-border bg-pos-bg hover:border-pos-primary"
                           }`}
                         >
-                          <Icon size={22} className={`mx-auto ${getPaymentMethodColor(method.kind)}`} />
+                          <span className="pos-chip mx-auto grid h-9 w-9 place-items-center rounded-full">
+                            <Icon size={20} />
+                          </span>
                           <span className="mt-1.5 block truncate text-xs font-bold text-pos-text">{method.name}</span>
                           <span className="text-[10px] text-pos-muted">{method.kind}</span>
                         </button>
@@ -325,7 +340,7 @@ export function PaymentStep({
                       <div className="rounded-pos border border-pos-border bg-pos-bg p-2">
                         <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-pos-muted">
                           <CircleDollarSign size={14} className="text-pos-action-text" />
-                          {isCashSelected ? "Tendered" : "Amount"}
+                          {isCashSelected ? t("pos.pay.tendered") : t("pos.pay.amount")}
                         </div>
                         <div className="pos-num mt-1 text-2xl font-black text-pos-text">
                           {paymentAmountInput || "0"}
@@ -338,7 +353,7 @@ export function PaymentStep({
                           onClick={() => setPaymentAmountInput(String(remainingAmount))}
                           className="pos-control flex items-center justify-center gap-1.5 border border-pos-primary/50 bg-pos-tint text-xs font-bold text-pos-primary-text hover:bg-pos-primary/15"
                         >
-                          Exact Amount
+                          {t("pos.pay.exact")}
                           <ShortcutHint action="pos.exactAmount" />
                         </button>
                         {quickTenderAmounts.map((amount) => (
@@ -355,7 +370,7 @@ export function PaymentStep({
 
                       {isCashSelected && changeDueAmount > 0 && (
                         <div className="rounded-pos border border-pos-action/40 bg-pos-action-tint p-3 text-center">
-                          <div className="text-[10px] font-bold uppercase text-pos-action-text">Change Due</div>
+                          <div className="text-[10px] font-bold uppercase text-pos-action-text">{t("pos.pay.changeDue")}</div>
                           <div className="pos-num mt-1 text-xl font-black text-pos-action-text">
                             {formatMoney(changeDueAmount, settlementCurrencyCode, settlementMinorUnitDigits)}
                           </div>
@@ -366,7 +381,7 @@ export function PaymentStep({
                         (paymentAmount.error ||
                           (!isCashSelected && paymentAmount.amount > remainingAmount)) && (
                           <p className="text-[10px] text-pos-warning-text">
-                            {paymentAmount.error || "Payment amount exceeds remaining balance."}
+                            {paymentAmount.error || t("pos.pay.exceeds")}
                           </p>
                         )}
                     </div>
@@ -375,7 +390,7 @@ export function PaymentStep({
                       value={paymentAmountInput}
                       onChange={setPaymentAmountInput}
                       maxDecimalPlaces={settlementMinorUnitDigits}
-                      ariaLabel="Payment amount"
+                      ariaLabel={t("pos.pay.amountAria")}
                       unitLabel={settlementCurrencyCode}
                       onEnter={() => {
                         if (canReceivePayment) receiveCurrentPayment();
@@ -395,7 +410,7 @@ export function PaymentStep({
                   <Wallet size={22} />
                   {receivePaymentMutation.isPending
                     ? "..."
-                    : `Receive${
+                    : `${t("pos.pay.receive")}${
                         paymentAmount.amount !== null
                           ? ` ${formatMoney(
                               Math.min(paymentAmount.amount, remainingAmount),

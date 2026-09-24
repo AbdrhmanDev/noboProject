@@ -218,26 +218,6 @@ html[lang="ar"] .pos-root {
   }
 }
 
-/*
- * The four bars of the NOBO logo, as a signature strip across the top of every product card —
- * pink / yellow / blue / green, hard-edged blocks (not a blurred gradient), matching the mark
- * itself. Uses the raw --brand-* constants directly rather than the theme-remapped --pos-* tokens:
- * a brand mark should read identically in light and dark, not shift with the surrounding theme.
- * Left-to-right on purpose, in both writing directions — it's a fixed brand mark, not directional
- * content, so unlike everything else in the POS it does NOT mirror under dir="rtl".
- */
-.pos-card-brand-strip {
-  display: block;
-  height: 4px;
-  background: linear-gradient(
-    to right,
-    var(--brand-pink) 0 25%,
-    var(--brand-yellow) 25% 50%,
-    var(--brand-blue) 50% 75%,
-    var(--brand-green) 75% 100%
-  );
-}
-
 /* Product image tile: a soft frame instead of a flat white square, and a tinted circle behind the
    fallback icon when a product has no photo yet, so an empty tile still looks finished. */
 .pos-product-image {
@@ -257,4 +237,48 @@ html[lang="ar"] .pos-root {
 .pos-control {
   min-height: var(--pos-control-h);
   border-radius: var(--pos-radius);
+}
+
+/* Brand colour INSIDE the cards (not as a border or strip): --pos-accent is set inline from the four
+   logo colours (see utils/brandAccents.js) and used to FILL small parts of the content -- the quantity
+   chip, the price pill, the icon disc. Dark ink on the fill keeps AA contrast on all four colours. */
+.pos-chip {
+  background: var(--pos-accent, var(--brand-blue));
+  color: var(--brand-dark);
+}
+.pos-chip-soft {
+  background: color-mix(in srgb, var(--pos-accent, var(--brand-blue)) 20%, transparent);
+  color: var(--pos-text);
+}
+.pos-dot {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  margin-inline-end: 6px;
+  border-radius: 999px;
+  background: var(--pos-accent, var(--brand-blue));
+}
+.pos-quick {
+  --pos-accent: var(--brand-blue);
+}
+.pos-quick:hover:not(:disabled) {
+  border-color: var(--pos-primary);
+  background: var(--pos-primary-tint);
+}
+.pos-quick[data-active="true"] {
+  border-color: var(--pos-primary);
+  background: var(--pos-primary-tint);
+}
+/* Step indicator (Order -> Payment -> Done). */
+.pos-step {
+  transition:
+    background-color 200ms,
+    color 200ms;
+}
+
+/* Product card: the image tile carries a soft wash of the card's own logo colour, so the colour is part
+   of the card's content (tile, icon disc, price) instead of a border or strip around it. */
+.pos-product-image.pos-product-tint {
+  background: color-mix(in srgb, var(--pos-accent, var(--brand-blue)) 16%, var(--pos-card));
 }

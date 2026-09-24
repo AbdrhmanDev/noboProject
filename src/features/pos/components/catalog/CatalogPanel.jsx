@@ -8,6 +8,9 @@ import { TaxSettingsOnboarding } from "../../../tax/components/TaxSettingsOnboar
 import { CategoryRail } from "./CategoryRail";
 import { ROVING_ITEM_SELECTOR, useGridArrowNav } from "../../../shortcuts/rovingFocus";
 import { ShortcutHint } from "../../../shortcuts/components/ShortcutHint";
+import { brandAccentStyle } from "../../utils/brandAccents";
+
+const hashIndex = (id) => Array.from(String(id)).reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
 
 export const ALL_CATEGORY_ID = "__all__";
 export const UNCATEGORIZED_CATEGORY_ID = "__uncategorized__";
@@ -150,19 +153,21 @@ export function CatalogPanel({
                   (variant) => variant.modifierGroups?.length,
                 );
 
+                const accentStyle = brandAccentStyle(hashIndex(product.productId));
+
                 return (
                   <button
                     type="button"
                     key={product.productId}
+                    style={accentStyle}
                     data-roving-item=""
                     onClick={() => addItem(product)}
                     disabled={!canEditDraft}
                     className="pos-product-card group flex flex-col overflow-hidden rounded-pos border border-pos-border bg-pos-card text-start disabled:opacity-50"
                   >
-                    <span className="pos-card-brand-strip" aria-hidden="true" />
-                    <div className="pos-product-image relative grid aspect-[4/3] place-items-center overflow-hidden border-b border-pos-border">
-                      <span className="pos-product-image-fallback h-11 w-11">
-                        <Package size={22} className="text-pos-muted" />
+                    <div className="pos-product-image pos-product-tint relative grid aspect-[4/3] place-items-center overflow-hidden">
+                      <span className="pos-product-image-fallback pos-chip h-11 w-11">
+                        <Package size={22} />
                       </span>
                       {product.imageUrl && (
                         <img
@@ -203,7 +208,7 @@ export function CatalogPanel({
                           card in the grid at once. The same soft tint+ink pairing used everywhere
                           else in the POS for a quieter accent (Modifiers badge, Remaining/Paid
                           boxes) -- still unmistakably blue, still bold, just not shouting. */}
-                      <span className="pos-num mt-1 flex items-center justify-center rounded-pos-lg border border-pos-primary/25 bg-pos-tint py-1 text-sm font-black text-pos-primary-text">
+                      <span className="pos-num pos-chip mt-1 flex items-center justify-center rounded-pos-lg py-1 text-sm font-black">
                         {formatMoney(product.startingPrice, catalogCurrencyCode, 2)}
                       </span>
                     </div>

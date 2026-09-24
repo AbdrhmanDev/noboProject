@@ -1,5 +1,7 @@
 import { Ban, Check, CircleCheckBig, Plus, WalletCards } from "lucide-react";
 import { formatMoney } from "../../../../shared/utils/formatters";
+import { useI18n } from "../../../../i18n/I18nContext";
+
 import { ShortcutHint } from "../../../shortcuts/components/ShortcutHint";
 import { getOrderPrimaryAction } from "./getOrderPrimaryAction";
 
@@ -29,6 +31,7 @@ export function OrderPrimaryAction({
   catalogCurrencyCode,
   onOpenRetrieve,
 }) {
+  const { t } = useI18n();
   // `getOrderPrimaryAction` decides eligibility (`disabled`) — the branches
   // below only pick a label/icon for the SAME `kind` it returned, they never
   // re-derive whether the action is allowed.
@@ -56,12 +59,12 @@ export function OrderPrimaryAction({
       >
         {isClosedOrder ? <CircleCheckBig size={18} /> : <Ban size={18} />}
         {isClosedOrder
-          ? "Closed -"
+          ? t("pos.action.closedNew")
           : draftOrder?.cancellationKind === "PreparedVoid"
-            ? "Prepared Void -"
-            : "Cancelled -"}
+            ? t("pos.action.preparedVoidNew")
+            : t("pos.action.cancelledNew")}
         <Plus size={16} />
-        New Order
+        {t("pos.action.newOrder")}
         <ShortcutHint action="pos.confirm" className="ms-1" />
       </button>
     );
@@ -82,7 +85,7 @@ export function OrderPrimaryAction({
           className="pos-fs-base flex h-12 w-full items-center justify-center gap-2 rounded-pos bg-pos-action font-bold text-pos-on-action transition hover:bg-pos-action-hover"
         >
           <WalletCards size={19} />
-          Pay Now · <span className="pos-num">{formatMoney(remainingAmount, settlementCurrencyCode, settlementMinorUnitDigits)}</span>
+          {t("pos.action.payNow")} · <span className="pos-num">{formatMoney(remainingAmount, settlementCurrencyCode, settlementMinorUnitDigits)}</span>
           <ShortcutHint action="pos.confirm" className="ms-1" />
         </button>
         {orderType === "DineIn" && onOpenRetrieve && (
@@ -91,7 +94,7 @@ export function OrderPrimaryAction({
             onClick={onOpenRetrieve}
             className="flex h-9 w-full items-center justify-center gap-1.5 rounded-lg text-xs font-bold text-muted transition hover:text-ink"
           >
-            Pay Later — continue service
+            {t("pos.action.payLater")}
           </button>
         )}
       </div>
@@ -102,9 +105,9 @@ export function OrderPrimaryAction({
     return (
       <div className="space-y-2">
         <div className="rounded-pos border border-pos-action/40 bg-pos-action-tint px-3 py-2 text-xs text-pos-action-text">
-          <div className="font-bold">Payment complete</div>
+          <div className="font-bold">{t("pos.action.paymentComplete")}</div>
           <div className="mt-0.5 text-[10px] text-pos-muted">
-            Order sent to kitchen · {readyKitchenTicketCount}/{kitchenTickets.length} ready
+            {t("pos.action.sentToKitchen", { ready: readyKitchenTicketCount, total: kitchenTickets.length })}
           </div>
         </div>
         <button
@@ -113,7 +116,7 @@ export function OrderPrimaryAction({
           className="pos-fs-base flex h-12 w-full items-center justify-center gap-2 rounded-pos bg-pos-primary-strong font-bold text-white transition hover:bg-pos-primary-strong-hover"
         >
           <Plus size={18} />
-          New Order
+          {t("pos.action.newOrder")}
           <ShortcutHint action="pos.confirm" className="ms-1" />
         </button>
       </div>
@@ -135,7 +138,7 @@ export function OrderPrimaryAction({
           className="pos-fs-base flex h-12 w-full items-center justify-center gap-2 rounded-pos bg-pos-action font-bold text-pos-on-action transition hover:bg-pos-action-hover disabled:cursor-not-allowed disabled:opacity-50"
         >
           <CircleCheckBig size={19} />
-          Close Order
+          {t("pos.action.closeOrder")}
           <ShortcutHint action="pos.confirm" className="ms-1" />
         </button>
       </div>
@@ -159,7 +162,7 @@ export function OrderPrimaryAction({
         className="pos-fs-base flex h-12 w-full items-center justify-center gap-2 rounded-pos bg-pos-action font-bold text-pos-on-action transition hover:bg-pos-action-hover disabled:cursor-not-allowed disabled:opacity-50"
       >
         <WalletCards size={19} />
-        Payment · <span className="pos-num">{formatMoney(total, catalogCurrencyCode, 2)}</span>
+        {t("pos.action.payment")} · <span className="pos-num">{formatMoney(total, catalogCurrencyCode, 2)}</span>
         <ShortcutHint action="pos.confirm" className="ms-1" />
       </button>
       {orderType === "DineIn" && (
@@ -170,7 +173,7 @@ export function OrderPrimaryAction({
           className="flex h-9 w-full items-center justify-center gap-1.5 rounded-lg text-xs font-bold text-muted transition hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
         >
           <Check size={13} />
-          Confirm — Pay Later
+          {t("pos.action.confirmPayLater")}
         </button>
       )}
     </div>

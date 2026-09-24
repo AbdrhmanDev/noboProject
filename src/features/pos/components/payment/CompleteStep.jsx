@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { CircleCheckBig, Plus } from "lucide-react";
 import { formatMoney } from "../../../../shared/utils/formatters";
+import { useI18n } from "../../../../i18n/I18nContext";
 import { SCOPE_PRIORITY, SHORTCUT_SCOPES } from "../../../shortcuts/registry";
 import { useShortcutScope } from "../../../shortcuts/useShortcuts";
 
@@ -23,6 +24,7 @@ export function CompleteStep({
   startNewOrder,
   onBack,
 }) {
+  const { t } = useI18n();
   // The old PaymentModal's fully-paid success view lived inside the same
   // MODAL-priority scope as the payment form, so F1-F9 were inert there and
   // Escape closed back to the order without starting a new one. Keep both
@@ -35,23 +37,28 @@ export function CompleteStep({
   });
 
   return (
-    <div className="grid min-h-[60vh] place-items-center">
-      <div className="w-full max-w-sm space-y-5 rounded-2xl border border-white/10 bg-[#0d1728]/95 p-8 text-center shadow-xl shadow-black/20">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-500/15">
-          <CircleCheckBig size={32} className="text-emerald-300" />
+    <div className="relative grid min-h-[60vh] place-items-center">
+      <div className="relative w-full max-w-sm space-y-5 overflow-hidden rounded-pos-lg border border-pos-border bg-pos-card p-8 text-center shadow-xl shadow-black/10">
+        <div className="flex justify-center gap-1.5" aria-hidden="true">
+          {["pink", "yellow", "blue", "green"].map((c) => (
+            <span key={c} className="h-2.5 w-2.5 rounded-full" style={{ background: `var(--brand-${c})` }} />
+          ))}
+        </div>
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-pos-action/40 bg-pos-action-tint">
+          <CircleCheckBig size={32} className="text-pos-action-text" />
         </div>
         <div>
-          <div className="text-lg font-bold text-white">تم الدفع بنجاح</div>
+          <div className="text-lg font-bold text-pos-text">{t("pos.complete.success")}</div>
           {draftOrder?.orderNumberFormatted && (
-            <div className="mt-1 text-xs text-slate-400">رقم الطلب {draftOrder.orderNumberFormatted}</div>
+            <div className="pos-num mt-1 text-xs text-pos-muted">{t("pos.complete.orderNo", { number: draftOrder.orderNumberFormatted })}</div>
           )}
-          <div className="mt-3 text-3xl font-black text-emerald-300">
+          <div className="pos-num mt-3 text-3xl font-black text-pos-action-text">
             {formatMoney(total, settlementCurrencyCode, settlementMinorUnitDigits)}
           </div>
-          <div className="mt-2 text-xs text-slate-400">
+          <div className="mt-2 text-xs text-pos-muted">
             {kitchenTickets.length > 0
-              ? `Order sent to kitchen · ${readyKitchenTicketCount}/${kitchenTickets.length} ready`
-              : "Order confirmed."}
+              ? t("pos.action.sentToKitchen", { ready: readyKitchenTicketCount, total: kitchenTickets.length })
+              : t("pos.complete.confirmed")}
           </div>
         </div>
         <div className="grid gap-2">
@@ -59,19 +66,19 @@ export function CompleteStep({
             <button
               type="button"
               onClick={onOpenCloseOrder}
-              className="flex h-14 w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] text-sm font-bold text-slate-200 hover:border-emerald-400/40 hover:bg-emerald-500/10"
+              className="flex h-14 w-full items-center justify-center gap-2 rounded-pos-lg border border-pos-border bg-pos-bg text-sm font-bold text-pos-text hover:border-pos-action hover:bg-pos-action-tint"
             >
               <CircleCheckBig size={18} />
-              إغلاق الطلب
+              {t("pos.action.closeOrder")}
             </button>
           )}
           <button
             type="button"
             onClick={startNewOrder}
-            className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 text-base font-black text-white shadow-lg shadow-blue-950/30 hover:brightness-110"
+            className="flex h-14 w-full items-center justify-center gap-2 rounded-pos-lg bg-pos-primary-strong text-base font-black text-white shadow-lg transition hover:bg-pos-primary-strong-hover"
           >
             <Plus size={20} />
-            طلب جديد
+            {t("pos.action.newOrder")}
           </button>
         </div>
       </div>

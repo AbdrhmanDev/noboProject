@@ -1,5 +1,8 @@
 import { Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
 import { formatMoney } from "../../../../shared/utils/formatters";
+import { useI18n } from "../../../../i18n/I18nContext";
+import { brandAccentStyle } from "../../utils/brandAccents";
+
 
 export function OrderLines({
   draftLines,
@@ -18,6 +21,7 @@ export function OrderLines({
   // the order is visible at once without scrolling, which matters most exactly here.
   readOnly = false,
 }) {
+  const { t } = useI18n();
   // This list is the one thing in the basket that scrolls: the sidebar has a definite height and
   // everything around this (header, totals, actions, CTA) is fixed-size, so `flex-1` gives the
   // list whatever is left and `overflow-y-auto` scrolls it. `min-h-[170px]` keeps at least a
@@ -36,12 +40,12 @@ export function OrderLines({
         <div className="grid h-full min-h-36 place-items-center rounded-xl border border-dashed border-pos-border text-center">
           <div>
             <ShoppingCart className="mx-auto mb-2 text-pos-muted" size={26} />
-            <p className="text-xs text-pos-muted">السلة فارغة</p>
-            <p className="mt-1 text-[10px] text-pos-muted">اختر المنتجات لإنشاء مسودة بيع حقيقية</p>
+            <p className="text-xs text-pos-muted">{t("pos.lines.empty")}</p>
+            <p className="mt-1 text-[10px] text-pos-muted">{t("pos.lines.emptyHint")}</p>
           </div>
         </div>
       )}
-      {draftLines.map((item) => {
+      {draftLines.map((item, index) => {
         const pending = isLinePending?.(item.salesOrderLineId);
         const selected = selectedLineId === item.salesOrderLineId;
         const lineTotal = formatMoney(
@@ -54,9 +58,10 @@ export function OrderLines({
           return (
             <div
               key={item.salesOrderLineId}
+              style={brandAccentStyle(index)}
               className="flex items-center gap-2 rounded-pos border border-pos-border bg-pos-card px-2 py-1.5"
             >
-              <span className="pos-num shrink-0 rounded-pos bg-pos-tint px-1.5 py-0.5 text-[11px] font-black text-pos-primary-text">
+              <span className="pos-num pos-chip shrink-0 rounded-pos px-1.5 py-0.5 text-[11px] font-black">
                 {Number(item.quantity)}×
               </span>
               <span className="pos-fs-line min-w-0 flex-1 truncate text-pos-text">
@@ -77,6 +82,7 @@ export function OrderLines({
           <div
             key={item.salesOrderLineId}
             onClick={() => onSelectLine?.(item.salesOrderLineId)}
+            style={brandAccentStyle(index)}
             className={`relative cursor-pointer rounded-pos border px-2 py-1 transition ${
               selected
                 ? "border-pos-warning-text/70 bg-pos-warning-tint before:absolute before:inset-y-1.5 before:start-0 before:w-[3px] before:rounded-full before:bg-pos-warning"
@@ -102,7 +108,7 @@ export function OrderLines({
                   removeDraftLine(item.salesOrderLineId);
                 }}
                 disabled={!canEditDraft}
-                aria-label="Remove line"
+                aria-label={t("pos.lines.remove")}
                 className="grid h-7 w-7 shrink-0 place-items-center rounded-pos text-pos-danger-text transition hover:bg-pos-danger/10 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Trash2 size={13} />
@@ -126,7 +132,7 @@ export function OrderLines({
                   type="button"
                   onClick={() => onEditQuantity?.(item.salesOrderLineId, Number(item.quantity))}
                   disabled={!canEditDraft || !onEditQuantity}
-                  aria-label="Edit quantity"
+                  aria-label={t("pos.lines.editQty")}
                   className={`pos-fs-line min-w-9 px-1 text-center font-bold text-pos-text transition-opacity ${pending ? "opacity-60" : ""} ${onEditQuantity ? "hover:text-pos-primary-text" : ""}`}
                 >
                   {Number(item.quantity)}
@@ -141,7 +147,7 @@ export function OrderLines({
                 </button>
               </div>
 
-              <span className="pos-num pos-fs-line truncate font-bold text-pos-text">{lineTotal}</span>
+              <span className="pos-num pos-fs-line pos-chip-soft truncate rounded-pos px-2.5 py-0.5 font-bold">{lineTotal}</span>
             </div>
           </div>
         );
