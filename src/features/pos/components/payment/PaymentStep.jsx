@@ -242,7 +242,7 @@ export function PaymentStep({
             payment-method/amount/keypad middle scrolls if it doesn't fit, so Receive is always
             reachable without hunting for it. */}
         <div className="flex min-h-0 flex-col gap-2 rounded-pos-lg border border-pos-border bg-pos-card p-3 xl:h-[calc(100dvh-var(--pos-chrome))]">
-          <div className="shrink-0 rounded-pos bg-pos-primary-strong p-3 text-center text-white">
+          <div className="shrink-0 pos-hero rounded-pos p-3 text-center">
             <div className="pos-fs-label font-bold uppercase text-white/80">
               {netPaidAmount > 0 ? t("pos.pay.dueNow") : t("pos.pay.totalDue")}
             </div>

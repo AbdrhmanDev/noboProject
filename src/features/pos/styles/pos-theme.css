@@ -242,12 +242,31 @@ html[lang="ar"] .pos-root {
 /* Brand colour INSIDE the cards (not as a border or strip): --pos-accent is set inline from the four
    logo colours (see utils/brandAccents.js) and used to FILL small parts of the content -- the quantity
    chip, the price pill, the icon disc. Dark ink on the fill keeps AA contrast on all four colours. */
+/* Light theme: the logo colours are softened (mixed toward white) so the fills read calm; dark keeps them full. */
 .pos-chip {
-  background: var(--pos-accent, var(--brand-blue));
+  background: color-mix(in srgb, var(--pos-accent, var(--brand-blue)) 58%, #fff);
   color: var(--brand-dark);
 }
+[data-theme="dark"] .pos-root .pos-chip {
+  background: var(--pos-accent, var(--brand-blue));
+}
+/* Payment "amount due" hero: soft blue panel in light, solid blue in dark. */
+.pos-hero {
+  background: color-mix(in srgb, var(--brand-blue) 14%, #fff);
+}
+.pos-hero,
+.pos-hero * {
+  color: var(--brand-blue-ink) !important;
+}
+[data-theme="dark"] .pos-root .pos-hero {
+  background: var(--brand-blue-strong);
+}
+[data-theme="dark"] .pos-root .pos-hero,
+[data-theme="dark"] .pos-root .pos-hero * {
+  color: #fff !important;
+}
 .pos-chip-soft {
-  background: color-mix(in srgb, var(--pos-accent, var(--brand-blue)) 20%, transparent);
+  background: color-mix(in srgb, var(--pos-accent, var(--brand-blue)) 13%, transparent);
   color: var(--pos-text);
 }
 .pos-dot {
@@ -280,5 +299,5 @@ html[lang="ar"] .pos-root {
 /* Product card: the image tile carries a soft wash of the card's own logo colour, so the colour is part
    of the card's content (tile, icon disc, price) instead of a border or strip around it. */
 .pos-product-image.pos-product-tint {
-  background: color-mix(in srgb, var(--pos-accent, var(--brand-blue)) 16%, var(--pos-card));
+  background: color-mix(in srgb, var(--pos-accent, var(--brand-blue)) 10%, var(--pos-card));
 }
