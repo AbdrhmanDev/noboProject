@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ChevronsLeft } from "lucide-react";
+import { ChevronsLeft, FilePlus2 } from "lucide-react";
 import NoboLogo from "./NoboLogo";
 import logoDark from "../assets/nobo-logo-dark.png";
 import Header from "./Header";
@@ -220,6 +220,25 @@ export default function AppLayout({ children, onLogout }) {
                   <span className="nobo-sb-tip">{t("layout.home")}</span>
                 ) : (
                   <span className="nobo-sb-label">{t("layout.home")}</span>
+                )}
+              </button>
+              {/* Deliberately NOT a PermissionNavItem: those all require currentCompanyId truthy,
+                  but the applicant Customer Registration flow is exactly for a user who may have NO
+                  company yet (its route bypasses CompanyGate too -- see AuthenticatedOnlyRoute).
+                  Always visible to any authenticated user; the backend is the real gate. */}
+              <button
+                type="button"
+                onClick={() => navigate(ROUTES.REGISTRATION_NEW)}
+                aria-label={t("nav.myRegistration")}
+                aria-current={activePath === ROUTES.REGISTRATION_NEW ? "page" : undefined}
+                data-active={activePath === ROUTES.REGISTRATION_NEW}
+                className="nobo-sb-item"
+              >
+                <FilePlus2 size={20} className="nobo-sb-icon" />
+                {collapsed ? (
+                  <span className="nobo-sb-tip">{t("nav.myRegistration")}</span>
+                ) : (
+                  <span className="nobo-sb-label">{t("nav.myRegistration")}</span>
                 )}
               </button>
             </div>

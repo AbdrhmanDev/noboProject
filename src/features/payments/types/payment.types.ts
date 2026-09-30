@@ -152,3 +152,53 @@ export type SalesOrderPaymentHistory = {
   isFullyPaid: boolean;
   payments: SalesOrderPaymentHistoryItem[];
 };
+
+// ---- P9.1: receipt printing ----
+// Mirrors Nobo.Api.Sales.SalesOrders.SalesOrderEndpointContracts.CustomerReceiptResponse. Only the
+// top-level fields the print UI actually needs are typed in full; Lines/Payments are the source
+// data for the backend's own rendering pipeline (Invoice -> Effective Template -> RenderedDocument
+// -> PrintJob -> Printer) and are never rendered independently here -- kept as unknown[] on
+// purpose, not omitted, so the shape stays honest about what the response actually contains.
+export type CustomerReceiptResponse = {
+  customerReceiptId: string;
+  receiptNumber: number;
+  receiptNumberFormatted: string;
+  companyId: string;
+  branchId: string;
+  salesOrderId: string;
+  salesOrderNumber: number;
+  salesOrderNumberFormatted: string;
+  customerId: string | null;
+  issuedByUserId: string;
+  issuedAtUtc: string;
+  posShiftId: string | null;
+  posTerminalId: string | null;
+  posTerminalCode: string | null;
+  posTerminalName: string | null;
+  currencyCode: string;
+  currencyMinorUnitDigits: number;
+  payableAmount: number;
+  grossPaidAmount: number;
+  refundedAmount: number;
+  netPaidAmount: number;
+  lines: unknown[];
+  payments: unknown[];
+};
+
+// POST .../sales-orders/receipts/{customerReceiptId}/print -- DeviceId is always explicit; the
+// manual-print endpoint has no "resolve it for me" mode (that only exists internally, for
+// auto-print). The frontend must therefore already know which device to send, typically the
+// branch's single active ReceiptPrinter (see features/devices' branch-routing status).
+export type PrintCustomerReceiptRequest = {
+  deviceId: string;
+};
+
+export type PrintCustomerReceiptResponse = {
+  printJobId: string;
+  customerReceiptId: string;
+  documentId: string;
+  documentType: string;
+  status: string;
+  createdAtUtc: string;
+  wasAlreadyProcessed: boolean;
+};

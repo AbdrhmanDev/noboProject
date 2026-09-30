@@ -2102,6 +2102,9 @@ export default function POSPage() {
 
           {phase === "complete" && draftOrder && (
             <CompleteStep
+              companyId={currentCompanyId}
+              branchId={currentBranchId}
+              salesOrderId={draftSalesOrderId}
               draftOrder={draftOrder}
               total={total}
               settlementCurrencyCode={settlementCurrencyCode}

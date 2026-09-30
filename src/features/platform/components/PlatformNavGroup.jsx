@@ -1,7 +1,7 @@
-import { Building2, LayoutDashboard, ShieldCheck, Users } from "lucide-react";
+import { Building2, ClipboardList, LayoutDashboard, ShieldCheck, Users } from "lucide-react";
 import { useI18n } from "../../../i18n/I18nContext";
 import { useCurrentPlatformAccess } from "../hooks/usePlatform";
-import { PLATFORM_STAFF_VIEW } from "../constants/platformPermissions";
+import { PLATFORM_REGISTRATIONS_VIEW, PLATFORM_STAFF_VIEW } from "../constants/platformPermissions";
 import { ROUTES } from "../../../utils/routes";
 import { NavGroup } from "../../../components/NavGroup";
 
@@ -14,6 +14,7 @@ export function PlatformNavGroup({ activePath, navigate, variant = "desktop", co
   const accessQuery = useCurrentPlatformAccess();
   const isPlatformStaff = Boolean(accessQuery.data?.isPlatformStaff);
   const canViewStaff = (accessQuery.data?.permissions || []).includes(PLATFORM_STAFF_VIEW);
+  const canViewRegistrations = (accessQuery.data?.permissions || []).includes(PLATFORM_REGISTRATIONS_VIEW);
 
   // Overview/Customers use the same PLATFORM_COMPANIES_VIEW-backed data as before -- gated on bare
   // platform staff status, same as the pre-existing Companies item was, not a new permission.
@@ -35,6 +36,12 @@ export function PlatformNavGroup({ activePath, navigate, variant = "desktop", co
       labelKey: "nav.platformStaff",
       icon: Users,
       visible: canViewStaff,
+    },
+    {
+      to: ROUTES.PLATFORM_REGISTRATIONS,
+      labelKey: "nav.platformRegistrations",
+      icon: ClipboardList,
+      visible: canViewRegistrations,
     },
   ];
 

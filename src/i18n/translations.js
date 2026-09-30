@@ -17,6 +17,91 @@ export const translations = {
     "lang.spanish": "Español",
     "lang.german": "Deutsch",
 
+    // ---- Kitchen ticket print status (P9.2) ----
+    "printing.kitchenTicket.label": "طباعة تذكرة المطبخ",
+    "printing.kitchenTicket.unavailable": "لا توجد مهمة طباعة لهذه التذكرة",
+
+    // ---- My Registration nav ----
+    "nav.myRegistration": "تسجيل الشركة",
+
+    // ---- My Registration reopen (Cancelled -> Draft) ----
+    "myRegistration.reopen.button": "إعادة فتح التسجيل",
+    "myRegistration.reopen.confirmTitle": "هل تريد إعادة فتح هذا التسجيل؟",
+    "myRegistration.reopen.confirmBody": "سيتم إرجاع تسجيلك إلى وضع المسودة حتى تتمكن من تعديله ورفع المستندات وإرساله مرة أخرى. لن يُفقد أي شيء أدخلته سابقًا.",
+    "myRegistration.reopen.confirmAction": "تأكيد إعادة الفتح",
+    "myRegistration.reopen.cancelAction": "الإبقاء على الإلغاء",
+    "myRegistration.reopen.pending": "جارٍ إعادة الفتح...",
+    "myRegistration.reopen.success": "تمت إعادة فتح التسجيل. يمكنك الآن متابعة تعديله.",
+    "myRegistration.reopen.error.conflict": "تم تغيير هذا التسجيل للتو بواسطة طلب آخر. يرجى التحديث والمحاولة مرة أخرى.",
+
+    // ---- Platform Registrations nav ----
+    "nav.platformRegistrations": "طلبات التسجيل",
+
+    // ---- Company Profile nav ----
+    "nav.companyProfile": "الملف التعريفي للشركة",
+
+    // ---- Branches / Generation Units nav ----
+    "nav.branches": "الفروع",
+    "nav.generationUnits": "وحدات التوليد",
+
+    // ---- Invoice Templates nav ----
+    "nav.invoiceTemplates": "قوالب الفواتير",
+
+    // ---- Customer Compliance Profile ----
+    "common.cancel": "إلغاء",
+    "common.save": "حفظ",
+    "common.saving": "جارٍ الحفظ...",
+    "common.close": "إغلاق",
+    "cust.status": "الحالة",
+    "cust.classification": "التصنيف",
+    "cust.actions": "إجراءات",
+    "cust.status.Active": "نشط",
+    "cust.status.Suspended": "موقوف",
+    "cust.noPermissionTitle": "لا تملك صلاحية عرض العملاء",
+    "cust.noPermissionBody": "Customers.View مطلوبة لعرض هذه القائمة.",
+    "cust.loading": "جارٍ تحميل العملاء...",
+    "cust.loadErrorTitle": "تعذّر تحميل العملاء",
+    "cust.emptyTitle": "لا يوجد عملاء بعد",
+    "cust.emptyBody": "سيظهر العملاء هنا بمجرد إضافتهم.",
+    "cust.nameRequired": "الاسم مطلوب.",
+    "custCompliance.title": "الملف الضريبي — {name}",
+    "custCompliance.action": "الملف الضريبي",
+    "custCompliance.subtitle": "بيانات إضافية تُستخدم فقط في مستندات الامتثال الضريبي (فواتير إلكترونية)، ولا تُغيّر بيانات العميل الأساسية.",
+    "custCompliance.viewOnly": "Customers.Manage مطلوبة للتعديل — عرض فقط.",
+    "custCompliance.classification.label": "تصنيف العميل",
+    "custCompliance.classification.notSpecified": "غير محدد",
+    "custCompliance.classification.consumer": "مستهلك",
+    "custCompliance.classification.business": "منشأة",
+    "custCompliance.otherIdentifier.label": "معرّف آخر",
+    "custCompliance.otherIdentifier.placeholder": "قيمة المعرّف",
+    "custCompliance.otherIdentifier.schemePlaceholder": "نوع المعرّف",
+    "custCompliance.otherIdentifier.vatHint": "الرقم الضريبي المسجّل: {value} (لا يُنسخ هنا تلقائيًا)",
+    "custCompliance.scheme.TIN": "الرقم الضريبي (TIN)",
+    "custCompliance.scheme.CRN": "السجل التجاري (CRN)",
+    "custCompliance.scheme.MOM": "ترخيص وزارة الشؤون البلدية (MOM)",
+    "custCompliance.scheme.MLS": "ترخيص وزارة الموارد البشرية (MLS)",
+    "custCompliance.scheme.700": "رقم 700",
+    "custCompliance.scheme.SAG": "ترخيص الهيئة العامة للاستثمار (SAG)",
+    "custCompliance.scheme.NAT": "الهوية الوطنية (NAT)",
+    "custCompliance.scheme.GCC": "هوية خليجية (GCC)",
+    "custCompliance.scheme.IQA": "الإقامة (IQA)",
+    "custCompliance.scheme.PAS": "جواز السفر (PAS)",
+    "custCompliance.scheme.OTH": "أخرى (OTH)",
+    "custCompliance.address.title": "العنوان التفصيلي (للامتثال)",
+    "custCompliance.address.hint": "يُستخدم في مستندات الامتثال الضريبي فقط، ومنفصل تمامًا عن العنوان النصي الحالي للعميل. لا يتم استنتاجه من العنوان النصي.",
+    "custCompliance.address.freeTextLabel": "العنوان النصي الحالي",
+    "custCompliance.address.street": "الشارع",
+    "custCompliance.address.buildingNumber": "رقم المبنى",
+    "custCompliance.address.additionalNumber": "الرقم الإضافي",
+    "custCompliance.address.district": "الحي",
+    "custCompliance.address.city": "المدينة",
+    "custCompliance.address.postalCode": "الرمز البريدي",
+    "custCompliance.address.province": "المنطقة",
+    "custCompliance.address.countryCode": "رمز الدولة",
+    "custCompliance.success": "تم حفظ الملف الضريبي بنجاح.",
+    "custCompliance.save": "حفظ الملف الضريبي",
+    "custCompliance.saving": "جارٍ الحفظ...",
+
     // ---- POS cart / payment ----
     "pos.phase.order": "الطلب",
     "pos.phase.payment": "الدفع",
@@ -72,6 +157,18 @@ export const translations = {
     "pos.complete.success": "تم الدفع بنجاح",
     "pos.complete.orderNo": "رقم الطلب {number}",
     "pos.complete.confirmed": "تم تأكيد الطلب.",
+
+    // ---- P9.1: receipt printing ----
+    "pos.receipt.print.title": "طباعة الإيصال",
+    "pos.receipt.print.button": "طباعة",
+    "pos.receipt.reprint.button": "إعادة الطباعة",
+    "pos.receipt.print.pending": "جارٍ الإرسال...",
+    "pos.receipt.print.success": "تم إرسال الإيصال للطباعة.",
+    "pos.receipt.reprint.success": "تم إرسال طلب إعادة الطباعة.",
+    "pos.receipt.print.error.generic": "تعذر إرسال طلب الطباعة.",
+    "pos.receipt.print.status.noPrinter": "لا يوجد طابع إيصالات نشط لهذا الفرع بعد.",
+    "pos.receipt.print.status.ambiguousPrinter": "يوجد أكثر من طابع إيصالات نشط لهذا الفرع؛ يرجى إبقاء طابع واحد فقط نشطًا.",
+
     "pos.quick.cash": "نقدي",
     "pos.quick.card": "كارد",
     "pos.quick.editDiscount": "تعديل الخصم",
@@ -1273,6 +1370,14 @@ export const translations = {
     "devices.loading": "جارٍ التحميل...",
     "devices.retry": "إعادة المحاولة",
     "devices.totalCount": "الإجمالي: {count}",
+
+    // ---- P9.1: branch receipt-printer routing status ----
+    "devices.routing.receiptPrinter.title": "توجيه طابعة الإيصالات",
+    "devices.routing.receiptPrinter.ready": "جاهز — سيتم الطباعة على {name}",
+    "devices.routing.receiptPrinter.unconfigured": "لا يوجد طابع إيصالات نشط؛ لن يتم إنشاء طلب طباعة تلقائي حتى يتم تفعيل واحد.",
+    "devices.routing.receiptPrinter.ambiguous": "{count} طابعات إيصالات نشطة في هذا الفرع؛ التوجيه غامض حتى يبقى طابع واحد فقط نشطًا.",
+    "devices.routing.viewReceiptPrinters": "عرض طابعات الإيصالات",
+
     "devices.companyRequired.title": "يلزم اختيار شركة وفرع",
     "devices.companyRequired.message": "يرجى اختيار شركة وفرع لإدارة الأجهزة والطباعة.",
     "devices.permissionRequired.title": "الصلاحية مطلوبة",
@@ -1697,6 +1802,91 @@ export const translations = {
     "lang.spanish": "Español",
     "lang.german": "Deutsch",
 
+    // ---- Kitchen ticket print status (P9.2) ----
+    "printing.kitchenTicket.label": "Kitchen ticket printing",
+    "printing.kitchenTicket.unavailable": "No print job for this ticket",
+
+    // ---- My Registration nav ----
+    "nav.myRegistration": "My Registration",
+
+    // ---- My Registration reopen (Cancelled -> Draft) ----
+    "myRegistration.reopen.button": "Reopen Registration",
+    "myRegistration.reopen.confirmTitle": "Reopen this registration?",
+    "myRegistration.reopen.confirmBody": "This will move your registration back to Draft so you can edit it, upload documents, and submit it again. Nothing you already entered will be lost.",
+    "myRegistration.reopen.confirmAction": "Confirm reopen",
+    "myRegistration.reopen.cancelAction": "Keep cancelled",
+    "myRegistration.reopen.pending": "Reopening...",
+    "myRegistration.reopen.success": "Registration reopened. You can continue editing it now.",
+    "myRegistration.reopen.error.conflict": "This registration was just changed by another request. Please refresh and try again.",
+
+    // ---- Platform Registrations nav ----
+    "nav.platformRegistrations": "Registrations",
+
+    // ---- Company Profile nav ----
+    "nav.companyProfile": "Company Profile",
+
+    // ---- Branches / Generation Units nav ----
+    "nav.branches": "Branches",
+    "nav.generationUnits": "Generation Units",
+
+    // ---- Invoice Templates nav ----
+    "nav.invoiceTemplates": "Invoice Templates",
+
+    // ---- Customer Compliance Profile ----
+    "common.cancel": "Cancel",
+    "common.save": "Save",
+    "common.saving": "Saving...",
+    "common.close": "Close",
+    "cust.status": "Status",
+    "cust.classification": "Classification",
+    "cust.actions": "Actions",
+    "cust.status.Active": "Active",
+    "cust.status.Suspended": "Suspended",
+    "cust.noPermissionTitle": "You do not have permission to view customers",
+    "cust.noPermissionBody": "Customers.View is required to see this list.",
+    "cust.loading": "Loading customers...",
+    "cust.loadErrorTitle": "Unable to load customers",
+    "cust.emptyTitle": "No customers yet",
+    "cust.emptyBody": "Customers will appear here once added.",
+    "cust.nameRequired": "Name is required.",
+    "custCompliance.title": "Compliance Profile — {name}",
+    "custCompliance.action": "Compliance Profile",
+    "custCompliance.subtitle": "Additional facts used only for e-invoicing compliance documents — they never change the customer's core record.",
+    "custCompliance.viewOnly": "Customers.Manage is required to edit — view only.",
+    "custCompliance.classification.label": "Customer classification",
+    "custCompliance.classification.notSpecified": "Not specified",
+    "custCompliance.classification.consumer": "Consumer",
+    "custCompliance.classification.business": "Business",
+    "custCompliance.otherIdentifier.label": "Other identifier",
+    "custCompliance.otherIdentifier.placeholder": "Identifier value",
+    "custCompliance.otherIdentifier.schemePlaceholder": "Identifier type",
+    "custCompliance.otherIdentifier.vatHint": "Registered VAT number: {value} (never auto-copied here)",
+    "custCompliance.scheme.TIN": "Tax Identification Number (TIN)",
+    "custCompliance.scheme.CRN": "Commercial Registration Number (CRN)",
+    "custCompliance.scheme.MOM": "MOMRA License (MOM)",
+    "custCompliance.scheme.MLS": "MLSD License (MLS)",
+    "custCompliance.scheme.700": "700 Number",
+    "custCompliance.scheme.SAG": "SAGIA License (SAG)",
+    "custCompliance.scheme.NAT": "National ID (NAT)",
+    "custCompliance.scheme.GCC": "GCC ID (GCC)",
+    "custCompliance.scheme.IQA": "Iqama / Resident ID (IQA)",
+    "custCompliance.scheme.PAS": "Passport (PAS)",
+    "custCompliance.scheme.OTH": "Other (OTH)",
+    "custCompliance.address.title": "Structured address (compliance)",
+    "custCompliance.address.hint": "Used only for compliance documents, entirely separate from the customer's existing free-text address. Never derived from it.",
+    "custCompliance.address.freeTextLabel": "Existing free-text address",
+    "custCompliance.address.street": "Street",
+    "custCompliance.address.buildingNumber": "Building number",
+    "custCompliance.address.additionalNumber": "Additional number",
+    "custCompliance.address.district": "District",
+    "custCompliance.address.city": "City",
+    "custCompliance.address.postalCode": "Postal code",
+    "custCompliance.address.province": "Province",
+    "custCompliance.address.countryCode": "Country code",
+    "custCompliance.success": "Compliance profile saved.",
+    "custCompliance.save": "Save compliance profile",
+    "custCompliance.saving": "Saving...",
+
     // ---- POS cart / payment ----
     "pos.phase.order": "Order",
     "pos.phase.payment": "Payment",
@@ -1752,6 +1942,18 @@ export const translations = {
     "pos.complete.success": "Payment successful",
     "pos.complete.orderNo": "Order no. {number}",
     "pos.complete.confirmed": "Order confirmed.",
+
+    // ---- P9.1: receipt printing ----
+    "pos.receipt.print.title": "Receipt printing",
+    "pos.receipt.print.button": "Print",
+    "pos.receipt.reprint.button": "Reprint",
+    "pos.receipt.print.pending": "Sending...",
+    "pos.receipt.print.success": "Receipt sent to print.",
+    "pos.receipt.reprint.success": "Reprint request sent.",
+    "pos.receipt.print.error.generic": "Could not send the print request.",
+    "pos.receipt.print.status.noPrinter": "No active receipt printer for this branch yet.",
+    "pos.receipt.print.status.ambiguousPrinter": "More than one active receipt printer is set up for this branch; keep only one active.",
+
     "pos.quick.cash": "Cash",
     "pos.quick.card": "Card",
     "pos.quick.editDiscount": "Edit discount",
@@ -2924,6 +3126,14 @@ export const translations = {
     "devices.loading": "Loading...",
     "devices.retry": "Retry",
     "devices.totalCount": "Total: {count}",
+
+    // ---- P9.1: branch receipt-printer routing status ----
+    "devices.routing.receiptPrinter.title": "Receipt printer routing",
+    "devices.routing.receiptPrinter.ready": "Ready — will print on {name}",
+    "devices.routing.receiptPrinter.unconfigured": "No active receipt printer; no auto-print job will be created until one is activated.",
+    "devices.routing.receiptPrinter.ambiguous": "{count} active receipt printers in this branch; routing is ambiguous until only one stays active.",
+    "devices.routing.viewReceiptPrinters": "View receipt printers",
+
     "devices.companyRequired.title": "Company and branch required",
     "devices.companyRequired.message": "Select a company and branch to manage devices and printing.",
     "devices.permissionRequired.title": "Permission required",
@@ -3348,6 +3558,91 @@ export const translations = {
     "lang.spanish": "Español",
     "lang.german": "Deutsch",
 
+    // ---- Kitchen ticket print status (P9.2) ----
+    "printing.kitchenTicket.label": "Impresión de la comanda de cocina",
+    "printing.kitchenTicket.unavailable": "No hay trabajo de impresión para esta comanda",
+
+    // ---- My Registration nav ----
+    "nav.myRegistration": "Mi registro",
+
+    // ---- My Registration reopen (Cancelled -> Draft) ----
+    "myRegistration.reopen.button": "Reabrir registro",
+    "myRegistration.reopen.confirmTitle": "¿Reabrir este registro?",
+    "myRegistration.reopen.confirmBody": "Esto devolverá su registro al estado de borrador para que pueda editarlo, subir documentos y enviarlo de nuevo. No se perderá nada de lo que ya haya introducido.",
+    "myRegistration.reopen.confirmAction": "Confirmar reapertura",
+    "myRegistration.reopen.cancelAction": "Mantener cancelado",
+    "myRegistration.reopen.pending": "Reabriendo...",
+    "myRegistration.reopen.success": "Registro reabierto. Ya puede continuar editándolo.",
+    "myRegistration.reopen.error.conflict": "Este registro acaba de ser modificado por otra solicitud. Actualice e inténtelo de nuevo.",
+
+    // ---- Platform Registrations nav ----
+    "nav.platformRegistrations": "Registros",
+
+    // ---- Company Profile nav ----
+    "nav.companyProfile": "Perfil de la empresa",
+
+    // ---- Branches / Generation Units nav ----
+    "nav.branches": "Sucursales",
+    "nav.generationUnits": "Unidades de generación",
+
+    // ---- Invoice Templates nav ----
+    "nav.invoiceTemplates": "Plantillas de factura",
+
+    // ---- Customer Compliance Profile ----
+    "common.cancel": "Cancelar",
+    "common.save": "Guardar",
+    "common.saving": "Guardando...",
+    "common.close": "Cerrar",
+    "cust.status": "Estado",
+    "cust.classification": "Clasificación",
+    "cust.actions": "Acciones",
+    "cust.status.Active": "Activo",
+    "cust.status.Suspended": "Suspendido",
+    "cust.noPermissionTitle": "No tienes permiso para ver clientes",
+    "cust.noPermissionBody": "Se requiere Customers.View para ver esta lista.",
+    "cust.loading": "Cargando clientes...",
+    "cust.loadErrorTitle": "No se pudieron cargar los clientes",
+    "cust.emptyTitle": "Aún no hay clientes",
+    "cust.emptyBody": "Los clientes aparecerán aquí una vez añadidos.",
+    "cust.nameRequired": "El nombre es obligatorio.",
+    "custCompliance.title": "Perfil de cumplimiento — {name}",
+    "custCompliance.action": "Perfil de cumplimiento",
+    "custCompliance.subtitle": "Datos adicionales usados solo en los documentos de cumplimiento de facturación electrónica; nunca cambian el registro principal del cliente.",
+    "custCompliance.viewOnly": "Se requiere Customers.Manage para editar — solo vista.",
+    "custCompliance.classification.label": "Clasificación del cliente",
+    "custCompliance.classification.notSpecified": "No especificado",
+    "custCompliance.classification.consumer": "Consumidor",
+    "custCompliance.classification.business": "Empresa",
+    "custCompliance.otherIdentifier.label": "Otro identificador",
+    "custCompliance.otherIdentifier.placeholder": "Valor del identificador",
+    "custCompliance.otherIdentifier.schemePlaceholder": "Tipo de identificador",
+    "custCompliance.otherIdentifier.vatHint": "Número de IVA registrado: {value} (nunca se copia aquí automáticamente)",
+    "custCompliance.scheme.TIN": "Número de identificación fiscal (TIN)",
+    "custCompliance.scheme.CRN": "Número de registro comercial (CRN)",
+    "custCompliance.scheme.MOM": "Licencia MOMRA (MOM)",
+    "custCompliance.scheme.MLS": "Licencia MLSD (MLS)",
+    "custCompliance.scheme.700": "Número 700",
+    "custCompliance.scheme.SAG": "Licencia SAGIA (SAG)",
+    "custCompliance.scheme.NAT": "Documento nacional de identidad (NAT)",
+    "custCompliance.scheme.GCC": "Identificación del CCG (GCC)",
+    "custCompliance.scheme.IQA": "Iqama / Identificación de residente (IQA)",
+    "custCompliance.scheme.PAS": "Pasaporte (PAS)",
+    "custCompliance.scheme.OTH": "Otro (OTH)",
+    "custCompliance.address.title": "Dirección estructurada (cumplimiento)",
+    "custCompliance.address.hint": "Se usa solo para documentos de cumplimiento, totalmente independiente de la dirección de texto libre existente del cliente. Nunca se deriva de ella.",
+    "custCompliance.address.freeTextLabel": "Dirección de texto libre existente",
+    "custCompliance.address.street": "Calle",
+    "custCompliance.address.buildingNumber": "Número de edificio",
+    "custCompliance.address.additionalNumber": "Número adicional",
+    "custCompliance.address.district": "Distrito",
+    "custCompliance.address.city": "Ciudad",
+    "custCompliance.address.postalCode": "Código postal",
+    "custCompliance.address.province": "Provincia",
+    "custCompliance.address.countryCode": "Código de país",
+    "custCompliance.success": "Perfil de cumplimiento guardado.",
+    "custCompliance.save": "Guardar perfil de cumplimiento",
+    "custCompliance.saving": "Guardando...",
+
     // ---- POS cart / payment ----
     "pos.phase.order": "Pedido",
     "pos.phase.payment": "Pago",
@@ -3403,6 +3698,18 @@ export const translations = {
     "pos.complete.success": "Pago realizado con éxito",
     "pos.complete.orderNo": "Pedido n.º {number}",
     "pos.complete.confirmed": "Pedido confirmado.",
+
+    // ---- P9.1: receipt printing ----
+    "pos.receipt.print.title": "Impresión del recibo",
+    "pos.receipt.print.button": "Imprimir",
+    "pos.receipt.reprint.button": "Reimprimir",
+    "pos.receipt.print.pending": "Enviando...",
+    "pos.receipt.print.success": "Recibo enviado a imprimir.",
+    "pos.receipt.reprint.success": "Solicitud de reimpresión enviada.",
+    "pos.receipt.print.error.generic": "No se pudo enviar la solicitud de impresión.",
+    "pos.receipt.print.status.noPrinter": "Todavía no hay una impresora de recibos activa para esta sucursal.",
+    "pos.receipt.print.status.ambiguousPrinter": "Hay más de una impresora de recibos activa en esta sucursal; deje solo una activa.",
+
     "pos.quick.cash": "Efectivo",
     "pos.quick.card": "Tarjeta",
     "pos.quick.editDiscount": "Editar descuento",
@@ -4304,6 +4611,14 @@ export const translations = {
     "devices.loading": "Cargando...",
     "devices.retry": "Reintentar",
     "devices.totalCount": "Total: {count}",
+
+    // ---- P9.1: branch receipt-printer routing status ----
+    "devices.routing.receiptPrinter.title": "Enrutamiento de la impresora de recibos",
+    "devices.routing.receiptPrinter.ready": "Listo — se imprimirá en {name}",
+    "devices.routing.receiptPrinter.unconfigured": "No hay una impresora de recibos activa; no se creará ningún trabajo de impresión automática hasta activar una.",
+    "devices.routing.receiptPrinter.ambiguous": "Hay {count} impresoras de recibos activas en esta sucursal; el enrutamiento es ambiguo hasta que quede solo una activa.",
+    "devices.routing.viewReceiptPrinters": "Ver impresoras de recibos",
+
     "devices.companyRequired.title": "Se requiere empresa y sucursal",
     "devices.companyRequired.message": "Selecciona una empresa y una sucursal para gestionar dispositivos e impresión.",
     "devices.permissionRequired.title": "Permiso requerido",
@@ -4701,6 +5016,91 @@ export const translations = {
     "lang.spanish": "Español",
     "lang.german": "Deutsch",
 
+    // ---- Kitchen ticket print status (P9.2) ----
+    "printing.kitchenTicket.label": "Küchenbon-Druck",
+    "printing.kitchenTicket.unavailable": "Kein Druckauftrag für diesen Bon",
+
+    // ---- My Registration nav ----
+    "nav.myRegistration": "Meine Registrierung",
+
+    // ---- My Registration reopen (Cancelled -> Draft) ----
+    "myRegistration.reopen.button": "Registrierung wieder öffnen",
+    "myRegistration.reopen.confirmTitle": "Diese Registrierung wieder öffnen?",
+    "myRegistration.reopen.confirmBody": "Dadurch wird Ihre Registrierung wieder in den Entwurfsstatus versetzt, sodass Sie sie bearbeiten, Dokumente hochladen und erneut einreichen können. Nichts von dem, was Sie bereits eingegeben haben, geht verloren.",
+    "myRegistration.reopen.confirmAction": "Wiedereröffnung bestätigen",
+    "myRegistration.reopen.cancelAction": "Storniert lassen",
+    "myRegistration.reopen.pending": "Wird wieder geöffnet...",
+    "myRegistration.reopen.success": "Registrierung wieder geöffnet. Sie können sie jetzt weiter bearbeiten.",
+    "myRegistration.reopen.error.conflict": "Diese Registrierung wurde soeben durch eine andere Anfrage geändert. Bitte aktualisieren und erneut versuchen.",
+
+    // ---- Platform Registrations nav ----
+    "nav.platformRegistrations": "Registrierungen",
+
+    // ---- Company Profile nav ----
+    "nav.companyProfile": "Unternehmensprofil",
+
+    // ---- Branches / Generation Units nav ----
+    "nav.branches": "Filialen",
+    "nav.generationUnits": "Generierungseinheiten",
+
+    // ---- Invoice Templates nav ----
+    "nav.invoiceTemplates": "Rechnungsvorlagen",
+
+    // ---- Customer Compliance Profile ----
+    "common.cancel": "Abbrechen",
+    "common.save": "Speichern",
+    "common.saving": "Wird gespeichert...",
+    "common.close": "Schließen",
+    "cust.status": "Status",
+    "cust.classification": "Klassifizierung",
+    "cust.actions": "Aktionen",
+    "cust.status.Active": "Aktiv",
+    "cust.status.Suspended": "Gesperrt",
+    "cust.noPermissionTitle": "Du hast keine Berechtigung, Kunden anzuzeigen",
+    "cust.noPermissionBody": "Customers.View ist erforderlich, um diese Liste zu sehen.",
+    "cust.loading": "Kunden werden geladen...",
+    "cust.loadErrorTitle": "Kunden konnten nicht geladen werden",
+    "cust.emptyTitle": "Noch keine Kunden",
+    "cust.emptyBody": "Kunden erscheinen hier, sobald sie hinzugefügt wurden.",
+    "cust.nameRequired": "Der Name ist erforderlich.",
+    "custCompliance.title": "Compliance-Profil — {name}",
+    "custCompliance.action": "Compliance-Profil",
+    "custCompliance.subtitle": "Zusätzliche Angaben, die nur für E-Rechnungs-Compliance-Dokumente verwendet werden — sie ändern nie den Kernstammsatz des Kunden.",
+    "custCompliance.viewOnly": "Customers.Manage ist zum Bearbeiten erforderlich — nur Ansicht.",
+    "custCompliance.classification.label": "Kundenklassifizierung",
+    "custCompliance.classification.notSpecified": "Nicht angegeben",
+    "custCompliance.classification.consumer": "Verbraucher",
+    "custCompliance.classification.business": "Unternehmen",
+    "custCompliance.otherIdentifier.label": "Weitere Kennung",
+    "custCompliance.otherIdentifier.placeholder": "Kennungswert",
+    "custCompliance.otherIdentifier.schemePlaceholder": "Kennungstyp",
+    "custCompliance.otherIdentifier.vatHint": "Registrierte USt-IdNr.: {value} (wird hier nie automatisch übernommen)",
+    "custCompliance.scheme.TIN": "Steueridentifikationsnummer (TIN)",
+    "custCompliance.scheme.CRN": "Handelsregisternummer (CRN)",
+    "custCompliance.scheme.MOM": "MOMRA-Lizenz (MOM)",
+    "custCompliance.scheme.MLS": "MLSD-Lizenz (MLS)",
+    "custCompliance.scheme.700": "700-Nummer",
+    "custCompliance.scheme.SAG": "SAGIA-Lizenz (SAG)",
+    "custCompliance.scheme.NAT": "Nationale Ausweisnummer (NAT)",
+    "custCompliance.scheme.GCC": "GCC-Ausweis (GCC)",
+    "custCompliance.scheme.IQA": "Iqama / Aufenthaltsausweis (IQA)",
+    "custCompliance.scheme.PAS": "Reisepass (PAS)",
+    "custCompliance.scheme.OTH": "Sonstiges (OTH)",
+    "custCompliance.address.title": "Strukturierte Adresse (Compliance)",
+    "custCompliance.address.hint": "Wird nur für Compliance-Dokumente verwendet, völlig getrennt von der bestehenden Freitextadresse des Kunden. Wird nie daraus abgeleitet.",
+    "custCompliance.address.freeTextLabel": "Bestehende Freitextadresse",
+    "custCompliance.address.street": "Straße",
+    "custCompliance.address.buildingNumber": "Gebäudenummer",
+    "custCompliance.address.additionalNumber": "Zusatznummer",
+    "custCompliance.address.district": "Stadtteil",
+    "custCompliance.address.city": "Stadt",
+    "custCompliance.address.postalCode": "Postleitzahl",
+    "custCompliance.address.province": "Provinz",
+    "custCompliance.address.countryCode": "Ländercode",
+    "custCompliance.success": "Compliance-Profil gespeichert.",
+    "custCompliance.save": "Compliance-Profil speichern",
+    "custCompliance.saving": "Wird gespeichert...",
+
     // ---- POS cart / payment ----
     "pos.phase.order": "Bestellung",
     "pos.phase.payment": "Zahlung",
@@ -4756,6 +5156,18 @@ export const translations = {
     "pos.complete.success": "Zahlung erfolgreich",
     "pos.complete.orderNo": "Bestellnr. {number}",
     "pos.complete.confirmed": "Bestellung bestätigt.",
+
+    // ---- P9.1: receipt printing ----
+    "pos.receipt.print.title": "Belegdruck",
+    "pos.receipt.print.button": "Drucken",
+    "pos.receipt.reprint.button": "Erneut drucken",
+    "pos.receipt.print.pending": "Wird gesendet...",
+    "pos.receipt.print.success": "Beleg zum Drucken gesendet.",
+    "pos.receipt.reprint.success": "Anfrage zum erneuten Drucken gesendet.",
+    "pos.receipt.print.error.generic": "Die Druckanfrage konnte nicht gesendet werden.",
+    "pos.receipt.print.status.noPrinter": "Für diese Filiale ist noch kein aktiver Bondrucker eingerichtet.",
+    "pos.receipt.print.status.ambiguousPrinter": "In dieser Filiale ist mehr als ein Bondrucker aktiv; lassen Sie nur einen aktiv.",
+
     "pos.quick.cash": "Bargeld",
     "pos.quick.card": "Karte",
     "pos.quick.editDiscount": "Rabatt ändern",
@@ -5657,6 +6069,14 @@ export const translations = {
     "devices.loading": "Wird geladen...",
     "devices.retry": "Erneut versuchen",
     "devices.totalCount": "Gesamt: {count}",
+
+    // ---- P9.1: branch receipt-printer routing status ----
+    "devices.routing.receiptPrinter.title": "Bondrucker-Routing",
+    "devices.routing.receiptPrinter.ready": "Bereit — es wird auf {name} gedruckt",
+    "devices.routing.receiptPrinter.unconfigured": "Kein aktiver Bondrucker; es wird kein automatischer Druckauftrag erstellt, bis einer aktiviert wird.",
+    "devices.routing.receiptPrinter.ambiguous": "{count} aktive Bondrucker in dieser Filiale; das Routing ist mehrdeutig, bis nur noch einer aktiv ist.",
+    "devices.routing.viewReceiptPrinters": "Bondrucker anzeigen",
+
     "devices.companyRequired.title": "Unternehmen und Filiale erforderlich",
     "devices.companyRequired.message": "Wählen Sie ein Unternehmen und eine Filiale, um Geräte und Drucken zu verwalten.",
     "devices.permissionRequired.title": "Berechtigung erforderlich",

@@ -9,7 +9,9 @@ import { useHasPermission } from "../../features/companies/hooks/useCompanies";
 import {
   useAllOpenKitchenTickets,
   useKitchenTicketActions,
+  useKitchenTicketPrintJobs,
   useOperationalKitchenStations,
+  usePrintJobsByDocumentId,
 } from "../../features/kitchen/hooks/useKitchen";
 import { KitchenTicketCard } from "../../features/kitchen/components/KitchenTicketCard";
 import { ROUTES } from "../../utils/routes";
@@ -145,6 +147,15 @@ export default function KitchenPage() {
     viewPermissionQuery.hasPermission;
   const stationsQuery = useOperationalKitchenStations(currentCompanyId, currentBranchId, canLoadKitchen);
   const stations = useMemo(() => stationsQuery.data || [], [stationsQuery.data]);
+
+  // P9.2: kitchen ticket print status is read-only and additive -- GET .../print-jobs itself
+  // requires Devices.View (a DIFFERENT permission from Kitchen.View/Manage), so it is only
+  // requested at all once the viewer is confirmed to hold it; otherwise the whole section is
+  // omitted from every card rather than surfacing a 403.
+  const devicesViewPermissionQuery = useHasPermission(currentCompanyId, "Devices.View");
+  const showPrintStatus = Boolean(devicesViewPermissionQuery.hasPermission);
+  const kitchenPrintJobsQuery = useKitchenTicketPrintJobs(currentCompanyId, currentBranchId, canLoadKitchen && showPrintStatus);
+  const printJobsByTicketId = usePrintJobsByDocumentId(kitchenPrintJobsQuery.data);
 
   // Every active station's open tickets, merged into one queue (oldest first).
   const board = useAllOpenKitchenTickets(currentCompanyId, currentBranchId, stations, canLoadKitchen);
@@ -367,6 +378,8 @@ export default function KitchenPage() {
                         onStart={startTicket}
                         onReady={markReady}
                         onDismiss={dismissTicket}
+                        printJob={printJobsByTicketId.get(ticket.kitchenTicketId)}
+                        showPrintStatus={showPrintStatus}
                       />
                     ))}
                   </div>

@@ -404,6 +404,10 @@ export type PrintJobResponse = {
   edgeAgentCode: string | null;
   edgeAgentName: string | null;
   documentType: PrintJobDocumentType;
+  // P9.1: was already returned by the real backend contract (PrintJobResponse.DocumentId /
+  // PrintJobListItemResponse.DocumentId) but never typed here — added now that a consumer
+  // (features/payments' receipt-print-job lookup) needs to match a job back to its source document.
+  documentId: string | null;
   status: PrintJobStatus;
   documentTitle: string | null;
   createdAtUtc: string;
@@ -425,4 +429,6 @@ export type PrintJobsListFilters = {
   deviceId?: string;
   status?: PrintJobStatus | "";
   documentType?: PrintJobDocumentType | "";
+  // GetPrintJobsQuery.Take (already accepted by the real endpoint; not previously exposed here).
+  take?: number;
 };

@@ -1,13 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { posQueryKeys } from "../../pos/hooks/usePosTerminals";
 import { draftSalesOrderQueryKeys } from "../../sales-orders/hooks/useDraftSalesOrder";
+import { getPrintJobs } from "../../devices/api/printJobsApi";
 import {
   changePaymentMethodStatus,
   createPaymentMethod,
   getActivePaymentMethods,
+  getCustomerReceiptForSalesOrder,
   getPaymentMethodDetails,
   getPaymentMethods,
   getSalesOrderPayments,
+  printCustomerReceipt,
   receiveSalesOrderPayment,
   refundSalesOrderPayment,
   updatePaymentMethod,
@@ -16,6 +19,7 @@ import type {
   ChangePaymentMethodStatusRequest,
   CreatePaymentMethodRequest,
   PaymentMethodAdminFilters,
+  PrintCustomerReceiptRequest,
   ReceiveSalesOrderPaymentRequest,
   RefundSalesOrderPaymentRequest,
   UpdatePaymentMethodRequest,
@@ -34,6 +38,9 @@ export const paymentQueryKeys = {
     branchId: string,
     salesOrderId: string,
   ) => ["payments", companyId, branchId, salesOrderId, "history"] as const,
+  // P9.1
+  customerReceipt: (companyId: string, branchId: string, salesOrderId: string) =>
+    ["payments", companyId, branchId, salesOrderId, "receipt"] as const,
 };
 
 function invalidatePaymentMethodAdmin(
@@ -78,6 +85,13 @@ export function invalidatePaymentState(
   });
   queryClient.invalidateQueries({
     queryKey: draftSalesOrderQueryKeys.details(companyId, branchId, salesOrderId),
+  });
+  // P9.1: the receipt now exists (or was already issued, on a retried request) once payment fully
+  // settles -- the backend already creates the auto-print PrintJob itself; the frontend's only job
+  // is to let the receipt query refetch so a Print/Reprint action can appear. Never call the print
+  // endpoint from here -- that would create a second, duplicate PrintJob alongside the auto-print one.
+  queryClient.invalidateQueries({
+    queryKey: paymentQueryKeys.customerReceipt(companyId, branchId, salesOrderId),
   });
 
   if (posTerminalId) {
@@ -253,5 +267,77 @@ export function useRefundSalesOrderPayment(
         );
       }
     },
+  });
+}
+
+// ---- P9.1: receipt printing ----
+
+// The receipt only exists once the order is fully settled (ReceiveSalesOrderPaymentHandler issues
+// it exactly once, idempotently). `enabled` should be gated on the caller's own knowledge that
+// payment succeeded (e.g. IsFullyPaid on the payment result) so this never renders a spurious error
+// state while the order is still open -- retry is disabled for the same reason: "not found yet" is
+// an expected state here, not a transient failure to retry through.
+export function useCustomerReceiptForSalesOrder(
+  companyId: string | null | undefined,
+  branchId: string | null | undefined,
+  salesOrderId: string | null | undefined,
+  enabled = true,
+) {
+  return useQuery({
+    queryKey: paymentQueryKeys.customerReceipt(companyId || "", branchId || "", salesOrderId || ""),
+    queryFn: () =>
+      getCustomerReceiptForSalesOrder(companyId as string, branchId as string, salesOrderId as string),
+    enabled: Boolean(companyId) && Boolean(branchId) && Boolean(salesOrderId) && enabled,
+    retry: false,
+  });
+}
+
+const IN_FLIGHT_PRINT_JOB_STATUSES = ["Queued", "Claimed", "Printing"];
+const PRINT_JOB_POLL_INTERVAL_MS = 1500;
+
+// The PrintJob(s) already created for this receipt -- either the backend's own auto-print job
+// (created inside ReceiveSalesOrderPaymentHandler, Section 5/6 of P9.1) or a manual reprint. There
+// is no "get print jobs for this document" endpoint, so this reuses the existing branch print-jobs
+// LIST (GetPrintJobs, filtered server-side by documentType) and matches documentId client-side --
+// no new endpoint was added. Polls only while the most recent job is still in flight, same interval
+// convention as features/devices' usePrintJobDetails.
+export function useCustomerReceiptPrintJobs(
+  companyId: string | null | undefined,
+  branchId: string | null | undefined,
+  customerReceiptId: string | null | undefined,
+  enabled = true,
+) {
+  return useQuery({
+    queryKey: ["payments", companyId || "", branchId || "", "receipt-print-jobs", customerReceiptId || ""],
+    queryFn: async () => {
+      const jobs = await getPrintJobs(companyId as string, branchId as string, { documentType: "CustomerReceipt" });
+      return jobs
+        .filter((job) => job.documentId === customerReceiptId)
+        .sort((a, b) => new Date(b.createdAtUtc).getTime() - new Date(a.createdAtUtc).getTime());
+    },
+    enabled: Boolean(companyId) && Boolean(branchId) && Boolean(customerReceiptId) && enabled,
+    refetchInterval: (query) => {
+      const latest = query.state.data?.[0];
+      return latest && IN_FLIGHT_PRINT_JOB_STATUSES.includes(latest.status) ? PRINT_JOB_POLL_INTERVAL_MS : false;
+    },
+  });
+}
+
+// Manual print/reprint (Section 4/7 of P9.1). Never called automatically after a successful
+// payment -- the backend's own auto-print already created that PrintJob; this is only for an
+// explicit user action (the branch had no printer at settlement time, the first print failed, or
+// the cashier wants an intentional extra copy).
+export function usePrintCustomerReceipt(
+  companyId: string | null | undefined,
+  branchId: string | null | undefined,
+) {
+  return useMutation({
+    mutationFn: ({
+      customerReceiptId,
+      payload,
+    }: {
+      customerReceiptId: string;
+      payload: PrintCustomerReceiptRequest;
+    }) => printCustomerReceipt(companyId as string, branchId as string, customerReceiptId, payload),
   });
 }

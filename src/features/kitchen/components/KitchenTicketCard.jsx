@@ -1,9 +1,11 @@
 import {
   CheckCircle2,
   ChefHat,
+  CircleSlash,
   Clock3,
   Coffee,
   CookingPot,
+  Printer,
   ShoppingBag,
   StickyNote,
   Timer,
@@ -11,6 +13,9 @@ import {
   Truck,
   UserRound,
 } from "lucide-react";
+import { useI18n } from "../../../i18n/I18nContext";
+import { PrintJobErrorMessage } from "../../devices/components/PrintJobErrorMessage";
+import { PrintJobStatusBadge } from "../../devices/components/PrintJobStatusBadge";
 
 // Order type shown big at the top of every ticket. DineIn is the in-cafe / at-the-table order.
 const FULFILLMENT_TYPES = {
@@ -52,8 +57,15 @@ function formatTicketTime(value) {
  * item with its modifiers and notes, and the order note. A ready order stays on the board until
  * the trash button removes it. `createdByName`, `kitchenNote` and the
  * per-item `note` are optional — they render only when the API provides them.
+ *
+ * `printJob` (P9.2) is this ticket's own Kitchen PrintJob (documentId === kitchenTicketId),
+ * resolved by the page from GET .../print-jobs?documentType=KitchenTicket and passed in already
+ * matched — this component never fetches print status itself. `showPrintStatus` is false whenever
+ * the viewer lacks Devices.View (the endpoint's own real permission): the whole print-status
+ * section is omitted rather than showing a 403 or a fake state.
  */
-export function KitchenTicketCard({ ticket, canManage, isMutating, onStart, onReady, onDismiss }) {
+export function KitchenTicketCard({ ticket, canManage, isMutating, onStart, onReady, onDismiss, printJob, showPrintStatus = false }) {
+  const { t } = useI18n();
   const type = FULFILLMENT_TYPES[ticket.fulfillmentType] || {
     label: ticket.fulfillmentType,
     icon: ChefHat,
@@ -80,6 +92,30 @@ export function KitchenTicketCard({ ticket, canManage, isMutating, onStart, onRe
           {status.label}
         </span>
       </div>
+
+      {showPrintStatus && (
+        <div className="border-b border-line px-4 py-1.5">
+          <div className="flex items-center gap-1.5 text-[10px] font-semibold text-subtle">
+            {printJob ? (
+              <>
+                <Printer size={12} />
+                {t("printing.kitchenTicket.label")}
+                <PrintJobStatusBadge status={printJob.status} transport={printJob.transport} />
+              </>
+            ) : (
+              <>
+                <CircleSlash size={12} />
+                {t("printing.kitchenTicket.unavailable")}
+              </>
+            )}
+          </div>
+          {printJob?.status === "Failed" && (
+            <div className="mt-1">
+              <PrintJobErrorMessage printJob={printJob} />
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="flex items-start justify-between gap-3 px-4 pt-3">
         <div className="min-w-0">

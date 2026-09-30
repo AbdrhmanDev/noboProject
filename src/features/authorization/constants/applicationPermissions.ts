@@ -48,3 +48,20 @@ export const KITCHEN_VIEW_PERMISSION = "Kitchen.View";
 // ---- Catalog / Pricing (consumed by POS's catalog panel for first-product/first-price onboarding) ----
 export const CATALOG_MANAGE_PERMISSION = "Catalog.Manage";
 export const PRICING_MANAGE_PERMISSION = "Pricing.Manage";
+
+// ---- Invoice Templates (Nobo.Application.Authorization.ApplicationPermissions.InvoiceTemplatesView/Manage) ----
+export const INVOICE_TEMPLATES_VIEW_PERMISSION = "InvoiceTemplates.View";
+export const INVOICE_TEMPLATES_MANAGE_PERMISSION = "InvoiceTemplates.Manage";
+
+// ---- Branches (Nobo.Application.Authorization.ApplicationPermissions.BranchesView/Manage) ----
+export const BRANCHES_VIEW_PERMISSION = "Branches.View";
+export const BRANCHES_MANAGE_PERMISSION = "Branches.Manage";
+
+// ---- Company Profile (Nobo.Application.Authorization.ApplicationPermissions.CompanyProfileView) --
+// gates reading the APPROVED profile only (proposed branches, for materialization); there is no
+// "manage" counterpart -- the profile itself is edited only through the separate amendment flow.
+export const COMPANY_PROFILE_VIEW_PERMISSION = "CompanyProfile.View";
+
+// ---- Compliance / Generation Units (Nobo.Application.Authorization.ApplicationPermissions.ComplianceManage)
+// -- there is no separate "view" permission for generation units; the same one gates both.
+export const COMPLIANCE_MANAGE_PERMISSION = "Compliance.Manage";

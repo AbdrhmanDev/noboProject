@@ -33,6 +33,13 @@ import CatalogAdminPage from "./Pages/CatalogAdminPage/CatalogAdminPage";
 import PaymentMethodsAdminPage from "./Pages/PaymentMethodsAdminPage/PaymentMethodsAdminPage";
 import PricingAdminPage from "./Pages/PricingAdminPage/PricingAdminPage";
 import TaxAdminPage from "./Pages/TaxAdminPage/TaxAdminPage";
+import InvoiceTemplatesAdminPage from "./Pages/InvoiceTemplatesAdminPage/InvoiceTemplatesAdminPage";
+import InvoiceTemplateEditorPage from "./Pages/InvoiceTemplateEditorPage/InvoiceTemplateEditorPage";
+import BranchesAdminPage from "./Pages/BranchesAdminPage/BranchesAdminPage";
+import GenerationUnitsAdminPage from "./Pages/GenerationUnitsAdminPage/GenerationUnitsAdminPage";
+import CompanyProfilePage from "./Pages/CompanyProfilePage/CompanyProfilePage";
+import CompanyProfileAmendmentsPage from "./Pages/CompanyProfileAmendmentsPage/CompanyProfileAmendmentsPage";
+import CompanyProfileAmendmentDetailsPage from "./Pages/CompanyProfileAmendmentDetailsPage/CompanyProfileAmendmentDetailsPage";
 import RestaurantAdminPage from "./Pages/RestaurantAdminPage/RestaurantAdminPage";
 import RestaurantFloorPage from "./Pages/RestaurantFloorPage/RestaurantFloorPage";
 import RestaurantReservationsPage from "./Pages/RestaurantReservationsPage/RestaurantReservationsPage";
@@ -55,6 +62,10 @@ import PlatformCompaniesPage from "./Pages/PlatformCompaniesPage/PlatformCompani
 import PlatformCompanyDetailsPage from "./Pages/PlatformCompanyDetailsPage/PlatformCompanyDetailsPage";
 import PlatformCompanyEntitlementsPage from "./Pages/PlatformCompanyEntitlementsPage/PlatformCompanyEntitlementsPage";
 import PlatformStaffPage from "./Pages/PlatformStaffPage/PlatformStaffPage";
+import RegistrationsListPage from "./Pages/RegistrationsListPage/RegistrationsListPage";
+import RegistrationDetailsPage from "./Pages/RegistrationDetailsPage/RegistrationDetailsPage";
+import NewRegistrationPage from "./Pages/NewRegistrationPage/NewRegistrationPage";
+import { AuthenticatedOnlyRoute } from "./features/auth/components/AuthenticatedOnlyRoute";
 import InventoryPage from "./Pages/InventoryPage/InventoryPage";
 import InventoryAdminPage from "./Pages/InventoryAdminPage/InventoryAdminPage";
 import CustomersPage from "./Pages/CustomersPage/CustomersPage";
@@ -94,6 +105,10 @@ export default function App() {
               <Route path={ROUTES.LOGIN} element={<PublicOnlyRoute><LoginPage /></PublicOnlyRoute>} />
               <Route path={ROUTES.REGISTER} element={<PublicOnlyRoute><RegisterPage /></PublicOnlyRoute>} />
               <Route path={ROUTES.CONFIRM_EMAIL} element={<PublicOnlyRoute><ConfirmEmailPage /></PublicOnlyRoute>} />
+              {/* Applicant Customer Registration flow: authenticated-only, deliberately NOT wrapped
+                  in CompanyGate (see AuthenticatedOnlyRoute's own comment) -- this is exactly the
+                  flow for a user who has no company yet. */}
+              <Route path={ROUTES.REGISTRATION_NEW} element={<AuthenticatedOnlyRoute><NewRegistrationPage /></AuthenticatedOnlyRoute>} />
               <Route path={ROUTES.FORGOT_PASSWORD} element={<PublicOnlyRoute><ForgotPasswordPage /></PublicOnlyRoute>} />
               <Route path={ROUTES.INVITE_ACCEPT} element={<InviteAcceptPage />} />
               <Route
@@ -107,6 +122,13 @@ export default function App() {
               <Route path={ROUTES.PAYMENT_METHODS_ADMIN} element={accessGatedPage(<PaymentMethodsAdminPage />, { permission: "Payments.Configure" })} />
               <Route path={ROUTES.PRICING_ADMIN} element={accessGatedPage(<PricingAdminPage />, { permission: "Pricing.View" })} />
               <Route path={ROUTES.TAX_ADMIN} element={accessGatedPage(<TaxAdminPage />, { permission: "Tax.View" })} />
+              <Route path={ROUTES.INVOICE_TEMPLATES_ADMIN} element={accessGatedPage(<InvoiceTemplatesAdminPage />, { permission: "InvoiceTemplates.View" })} />
+              <Route path={ROUTES.INVOICE_TEMPLATE_DETAILS} element={accessGatedPage(<InvoiceTemplateEditorPage />, { permission: "InvoiceTemplates.View" })} />
+              <Route path={ROUTES.BRANCHES_ADMIN} element={accessGatedPage(<BranchesAdminPage />, { permission: "Branches.View" })} />
+              <Route path={ROUTES.GENERATION_UNITS_ADMIN} element={accessGatedPage(<GenerationUnitsAdminPage />, { permission: "Compliance.Manage" })} />
+              <Route path={ROUTES.COMPANY_PROFILE} element={accessGatedPage(<CompanyProfilePage />, { permission: "CompanyProfile.View" })} />
+              <Route path={ROUTES.COMPANY_PROFILE_AMENDMENTS} element={protectedPage(<CompanyProfileAmendmentsPage />)} />
+              <Route path={ROUTES.COMPANY_PROFILE_AMENDMENT_DETAILS} element={protectedPage(<CompanyProfileAmendmentDetailsPage />)} />
               <Route path={ROUTES.RESTAURANT_ADMIN} element={accessGatedPage(<RestaurantAdminPage />, { permission: "Restaurant.Manage", entitlement: ENTITLEMENT_RESTAURANT })} />
               <Route path={ROUTES.RESTAURANT_FLOOR} element={accessGatedPage(<RestaurantFloorPage />, { permission: RESTAURANT_VIEW_PERMISSION, entitlement: ENTITLEMENT_RESTAURANT })} />
               <Route path={ROUTES.RESTAURANT_RESERVATIONS} element={accessGatedPage(<RestaurantReservationsPage />, { permission: RESTAURANT_VIEW_PERMISSION, entitlement: ENTITLEMENT_RESTAURANT })} />
@@ -132,6 +154,8 @@ export default function App() {
               <Route path={ROUTES.PLATFORM_COMPANY_DETAILS} element={protectedPage(<PlatformCompanyDetailsPage />)} />
               <Route path={ROUTES.PLATFORM_COMPANY_ENTITLEMENTS} element={protectedPage(<PlatformCompanyEntitlementsPage />)} />
               <Route path={ROUTES.PLATFORM_STAFF} element={protectedPage(<PlatformStaffPage />)} />
+              <Route path={ROUTES.PLATFORM_REGISTRATIONS} element={protectedPage(<RegistrationsListPage />)} />
+              <Route path={ROUTES.PLATFORM_REGISTRATION_DETAILS} element={protectedPage(<RegistrationDetailsPage />)} />
               <Route path={ROUTES.INVENTORY} element={accessGatedPage(<InventoryPage />, { permission: "Inventory.View", entitlement: ENTITLEMENT_INVENTORY })} />
               <Route path={ROUTES.INVENTORY_ADMIN} element={accessGatedPage(<InventoryAdminPage />, { permission: "Inventory.Configure", entitlement: ENTITLEMENT_INVENTORY })} />
               <Route path={ROUTES.CUSTOMERS} element={accessGatedPage(<CustomersPage />, { permission: CUSTOMERS_VIEW_PERMISSION })} />

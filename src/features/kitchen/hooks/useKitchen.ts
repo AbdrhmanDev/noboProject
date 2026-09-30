@@ -1,5 +1,8 @@
 import { useMemo } from "react";
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getPrintJobs } from "../../devices/api/printJobsApi";
+import { printJobQueryKeys } from "../../devices/hooks/usePrintJobs";
+import type { PrintJobResponse } from "../../devices/types/devices.types";
 import {
   changeKitchenStationStatus,
   getKitchenStationDetails,
@@ -37,6 +40,47 @@ export const kitchenQueryKeys = {
   openTickets: (companyId: string, branchId: string, kitchenStationId: string) =>
     ["kitchen", companyId, branchId, "stations", kitchenStationId, "tickets", "open"] as const,
 };
+
+// P9.2: read-only. This NEVER creates a PrintJob -- the backend already creates one per kitchen
+// ticket on order confirmation (unchanged, verified server-side); this only reads back its status
+// via the EXISTING GET /api/companies/{companyId}/branches/{branchId}/print-jobs?documentType=
+// KitchenTicket endpoint (Nobo.Api.Devices.PrintJobEndpoints -- the same one the Devices admin page
+// already uses, filtered here). DocumentId on a KitchenTicket PrintJob IS the KitchenTicketId
+// (verified in PrintJob.CreateKitchenTicket), so results key naturally onto open kitchen tickets.
+// That endpoint requires Devices.View -- the caller gates `enabled` on it, never calls it blind.
+// Polls on the same 15s cadence as the kitchen board itself (useAllOpenKitchenTickets) instead of
+// the faster single-job cadence usePrintJobDetails uses elsewhere (this is a board of MANY jobs, not
+// one job being watched closely), and stops entirely when disabled.
+export function useKitchenTicketPrintJobs(
+  companyId: string | null | undefined,
+  branchId: string | null | undefined,
+  enabled: boolean,
+) {
+  return useQuery({
+    queryKey: [...printJobQueryKeys.all, companyId || "", branchId || "", "kitchen-tickets"] as const,
+    queryFn: () =>
+      getPrintJobs(companyId as string, branchId as string, { documentType: "KitchenTicket", take: 200 }),
+    enabled: Boolean(companyId) && Boolean(branchId) && enabled,
+    refetchInterval: enabled ? 15000 : false,
+  });
+}
+
+// documentId (== kitchenTicketId for a KitchenTicket job) -> its print job. When the same ticket
+// somehow has more than one row (should not happen -- CreateKitchenTicket's own idempotency key is
+// derived from the ticket id alone, per its comment), the most recently created one wins.
+export function usePrintJobsByDocumentId(printJobs: PrintJobResponse[] | undefined) {
+  return useMemo(() => {
+    const map = new Map<string, PrintJobResponse>();
+    for (const job of printJobs ?? []) {
+      if (!job.documentId) continue;
+      const existing = map.get(job.documentId);
+      if (!existing || new Date(job.createdAtUtc).getTime() > new Date(existing.createdAtUtc).getTime()) {
+        map.set(job.documentId, job);
+      }
+    }
+    return map;
+  }, [printJobs]);
+}
 
 export function useOperationalKitchenStations(
   companyId: string | null | undefined,

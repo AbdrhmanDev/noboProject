@@ -10,6 +10,7 @@ import {
   updateDraftSalesOrder,
   voidPreparedSalesOrder,
 } from "../api/draftSalesOrdersApi";
+import { printJobQueryKeys } from "../../devices/hooks/usePrintJobs";
 import type {
   CancelSalesOrderRequest,
   CreateDraftSalesOrderRequest,
@@ -146,6 +147,15 @@ export function useConfirmSalesOrder(
           branchId,
           salesOrderId,
         ),
+      });
+
+      // P9.2: confirming a DineIn/Takeaway/Delivery order is what makes the backend create the
+      // Kitchen PrintJob(s) (already done server-side -- this never creates a print request itself,
+      // only refreshes the read side). Scoped to this company+branch so every print-jobs list query
+      // for it (any filter combination, including the Kitchen board's own KitchenTicket-filtered
+      // read) picks up the new job(s) without waiting for its own poll interval.
+      queryClient.invalidateQueries({
+        queryKey: [...printJobQueryKeys.all, companyId, branchId],
       });
     },
   });

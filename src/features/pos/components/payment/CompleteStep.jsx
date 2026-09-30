@@ -2,16 +2,24 @@ import { useMemo } from "react";
 import { CircleCheckBig, Plus } from "lucide-react";
 import { formatMoney } from "../../../../shared/utils/formatters";
 import { useI18n } from "../../../../i18n/I18nContext";
+import { ReceiptPrintPanel } from "../../../payments/components/ReceiptPrintPanel";
 import { SCOPE_PRIORITY, SHORTCUT_SCOPES } from "../../../shortcuts/registry";
 import { useShortcutScope } from "../../../shortcuts/useShortcuts";
 
 /**
- * Calm success state entered automatically once payment finishes. No
- * receipt/print action — the backend has no wired print capability yet
- * (PrintCustomerReceiptHandler exists server-side but nothing on the
- * frontend calls it), and inventing one here would be a fake system state.
+ * Calm success state entered automatically once payment finishes.
+ *
+ * P9.1: the backend now auto-creates the receipt PrintJob itself on full settlement
+ * (ReceiveSalesOrderPaymentHandler) -- this screen never calls the print endpoint on its own; it
+ * only surfaces what already happened (via ReceiptPrintPanel) and offers an explicit Print/Reprint
+ * action for when auto-print couldn't (no printer configured, ambiguous branch routing, or the
+ * first attempt failed). Calling the print endpoint here automatically would create a duplicate
+ * PrintJob alongside the backend's own.
  */
 export function CompleteStep({
+  companyId,
+  branchId,
+  salesOrderId,
   draftOrder,
   total,
   settlementCurrencyCode,
@@ -61,6 +69,7 @@ export function CompleteStep({
               : t("pos.complete.confirmed")}
           </div>
         </div>
+        <ReceiptPrintPanel companyId={companyId} branchId={branchId} salesOrderId={salesOrderId} />
         <div className="grid gap-2">
           {kitchenReady && closePermissionQuery.hasPermission && (
             <button

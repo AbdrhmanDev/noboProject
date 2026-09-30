@@ -11,6 +11,7 @@ import { useDevices } from "../../features/devices/hooks/useDevices";
 import { useEdgeAgents } from "../../features/devices/hooks/useEdgeAgents";
 import { DeviceHealthBadge, DeviceStatusBadge } from "../../features/devices/components/DeviceStatusBadge";
 import { DeviceFormDialog } from "../../features/devices/components/DeviceFormDialog";
+import { ReceiptPrinterRoutingStatus } from "../../features/devices/components/ReceiptPrinterRoutingStatus";
 import { ROUTES, deviceDetailsPath } from "../../utils/routes";
 
 const DEVICES_VIEW_PERMISSION = "Devices.View";
@@ -139,6 +140,15 @@ export default function DevicesListPage() {
           />
         ) : (
           <>
+            <ReceiptPrinterRoutingStatus
+              companyId={currentCompanyId}
+              branchId={currentBranchId}
+              onFilterToReceiptPrinters={() => {
+                setDeviceType("ReceiptPrinter");
+                setStatus("");
+              }}
+            />
+
             <section className="grid gap-2 rounded-2xl border border-white/10 bg-[#0c1424] p-3 md:grid-cols-6">
               <label className="text-[11px] font-semibold text-slate-400 md:col-span-2">
                 {t("devices.filters.search")}
