@@ -1,11 +1,11 @@
-import { Package, SlidersHorizontal, X } from "lucide-react";
+import { X } from "lucide-react";
 import { ROUTES } from "../../../../utils/routes";
 import { EmptyState, ErrorState, LoadingState } from "../../../../shared/components/ui";
-import { formatMoney } from "../../../../shared/utils/formatters";
 import { PriceListOnboarding } from "../../../pricing/components/PriceListOnboarding";
 import { FirstProductOnboarding } from "../../../catalog/components/FirstProductOnboarding";
 import { TaxSettingsOnboarding } from "../../../tax/components/TaxSettingsOnboarding";
-import { CategoryRail } from "./CategoryRail";
+import { CategorySidebar } from "./CategorySidebar";
+import { PosProductCard } from "./PosProductCard";
 import { ROVING_ITEM_SELECTOR, useGridArrowNav } from "../../../shortcuts/rovingFocus";
 import { ShortcutHint } from "../../../shortcuts/components/ShortcutHint";
 import { brandAccentStyle } from "../../utils/brandAccents";
@@ -34,13 +34,19 @@ export function CatalogPanel({
   addItem,
   query,
   productGridRef,
+  // Touch-first redesign: per-product cart state + the card-level add/adjust handlers. All keyed
+  // by productId, sourced from the same draft-order lines OrderLines already renders.
+  draftLinesByProductId,
+  activeProductId,
+  onIncrementProductLine,
+  onDecrementProductLine,
+  onActivateProduct,
 }) {
   const handleProductGridKeyDown = useGridArrowNav(productGridRef, ROVING_ITEM_SELECTOR);
 
   return (
-    <section className="flex min-w-0 flex-col gap-2 rounded-pos-lg border border-pos-border bg-pos-bg p-2 xl:h-[calc(100dvh-var(--pos-chrome))]">
-      <CategoryRail categories={catalogCategories} activeCategoryId={category} onSelect={setCategory} />
-
+    <section className="flex min-w-0 gap-2 rounded-pos-lg border border-pos-border bg-pos-bg p-2 xl:h-[calc(100dvh-var(--pos-chrome))]">
+      <div className="flex min-w-0 flex-1 flex-col gap-2">
       <div className="flex flex-wrap items-baseline gap-x-3">
         <div className="contents">
           <h1 className="pos-fs-line flex flex-wrap items-center gap-2 font-bold text-pos-text">
@@ -83,7 +89,15 @@ export function CatalogPanel({
         </div>
       )}
 
-      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-1 py-1 scrollbar-none">
+      {/* The fixed PosActionBar sits BEHIND this box on screen whenever this section's own
+          xl:h-[calc(100dvh-var(--pos-chrome))] places its bottom edge at the viewport's bottom edge
+          -- so the clearance has to live on THIS internal scroller's own content, not as padding on
+          some ancestor outside it (that would only add blank space at the very end of the page,
+          never change where this box's OWN last row lands once scrolled all the way down). */}
+      <div
+        className="min-h-0 flex-1 space-y-4 overflow-y-auto px-1 py-1 scrollbar-none"
+        style={{ paddingBottom: "calc(var(--pos-action-bar-h) + env(safe-area-inset-bottom) + 0.75rem)" }}
+      >
         {catalogPermissionQuery.isLoading && (
           <LoadingState label="Checking catalog access..." />
         )}
@@ -149,75 +163,44 @@ export function CatalogPanel({
               className="grid grid-cols-[repeat(auto-fill,minmax(var(--pos-card-min-w),1fr))] gap-[var(--pos-gap)]"
             >
               {filteredProducts.map((product) => {
-                const hasModifiers = product.variants.some(
-                  (variant) => variant.modifierGroups?.length,
-                );
-
                 const accentStyle = brandAccentStyle(hashIndex(product.productId));
+                const soleVariant = product.variants.length === 1 ? product.variants[0] : null;
+                // "Quick modifier" = exactly one variant with exactly one modifier group: one-tap
+                // chip shortcuts add that variant with a single option pre-selected. Anything with a
+                // real ambiguity left (multiple variants, and/or more than one modifier group) opens
+                // the Variant/Modifiers picker (addItem -> POSPage, see OrderDialogs).
+                const quickModifierGroup =
+                  soleVariant?.modifierGroups?.length === 1 ? soleVariant.modifierGroups[0] : null;
+                const cartInfo = draftLinesByProductId?.get(product.productId);
+                const isActive = activeProductId === product.productId;
 
                 return (
-                  <button
-                    type="button"
+                  <PosProductCard
                     key={product.productId}
-                    style={accentStyle}
-                    data-roving-item=""
-                    onClick={() => addItem(product)}
+                    product={product}
+                    variant={soleVariant}
+                    quickModifierGroup={quickModifierGroup}
+                    cartInfo={cartInfo}
+                    isActive={isActive}
                     disabled={!canEditDraft}
-                    className="pos-product-card group flex flex-col overflow-hidden rounded-pos border border-pos-border bg-pos-card text-start disabled:opacity-50"
-                  >
-                    <div className="pos-product-image pos-product-tint relative grid aspect-[4/3] place-items-center overflow-hidden">
-                      <span className="pos-product-image-fallback pos-chip h-11 w-11">
-                        <Package size={22} />
-                      </span>
-                      {product.imageUrl && (
-                        <img
-                          src={product.imageUrl}
-                          alt=""
-                          loading="lazy"
-                          className="absolute inset-0 h-full w-full object-contain p-2.5"
-                          onError={(event) => {
-                            event.currentTarget.style.display = "none";
-                          }}
-                        />
-                      )}
-                      {hasModifiers && (
-                        // Icon-only, on purpose: a text pill ("Modifiers") was wide enough to spill
-                        // past the tile's own edge and get clipped by its overflow-hidden once the
-                        // card shrank — a fixed-size circle never has that problem at any card width.
-                        <span
-                          className="grid absolute bottom-1.5 start-1.5 h-5 w-5 place-items-center rounded-full bg-pos-warning-tint text-pos-warning-text shadow-sm"
-                          title="Modifiers"
-                          aria-label="Has modifiers"
-                        >
-                          <SlidersHorizontal size={11} />
-                        </span>
-                      )}
-                    </div>
-                    <div className="px-2 pb-1.5 pt-1">
-                      <div className="pos-fs-name line-clamp-2 min-h-[2.7em] text-pos-text">
-                        {product.productName}
-                      </div>
-                      <div className="pos-fs-label mt-0.5 min-h-[1.5em] truncate text-pos-muted">
-                        {product.variants.length > 1
-                          ? `${product.variants.length} variants`
-                          : product.variants[0]?.variantName}
-                      </div>
-                      {/* Off the photo entirely now (an overlay never looked right at this card
-                          size): full-width and bold, but the solid saturated fill (first blue, then
-                          an even stronger blue) both read as too intense sitting on every single
-                          card in the grid at once. The same soft tint+ink pairing used everywhere
-                          else in the POS for a quieter accent (Modifiers badge, Remaining/Paid
-                          boxes) -- still unmistakably blue, still bold, just not shouting. */}
-                      <span className="pos-num pos-chip mt-1 flex items-center justify-center rounded-pos-lg py-1 text-sm font-black">
-                        {formatMoney(product.startingPrice, catalogCurrencyCode, 2)}
-                      </span>
-                    </div>
-                  </button>
+                    accentStyle={accentStyle}
+                    currencyCode={catalogCurrencyCode}
+                    onAddDefault={() => addItem(product)}
+                    onIncrement={onIncrementProductLine}
+                    onDecrement={onDecrementProductLine}
+                    onActivate={() => onActivateProduct(product)}
+                  />
                 );
               })}
             </div>
           )}
       </div>
+      </div>
+
+      {/* Touch-first redesign (11th pass): moved to the opposite side from the 10th pass -- rendered
+          AFTER the product-grid column here (not before), so in this RTL app it lands on the
+          physical left instead of the right. */}
+      <CategorySidebar categories={catalogCategories} activeCategoryId={category} onSelect={setCategory} />
     </section>
   );
 }

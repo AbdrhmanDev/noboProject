@@ -85,11 +85,10 @@ export function OrderSidebar({
 }) {
   const { t } = useI18n();
   return (
-    // On xl the panel is a *definite* height: 100dvh minus --pos-chrome (pos-theme.css), i.e. exactly
-    // the rest of the screen, so nothing but the product grid and OrderLines scrolls. Definite (not
-    // max-height) because OrderLines' flex-1 only grows into the leftover space of a parent with a
-    // definite height. The aside's own overflow is just a last-resort safety net.
-    <aside className="flex flex-col rounded-pos-lg border border-pos-border bg-pos-card p-3 min-h-[440px] xl:order-first xl:h-[calc(100dvh-var(--pos-chrome))] xl:min-h-0 xl:overflow-y-auto xl:scrollbar-none">
+    // Touch-first redesign: this now renders as the body of OrderBottomSheet instead of a
+    // permanent viewport-height column, so it sizes to its own content (the sheet itself caps and
+    // scrolls the overall height) rather than forcing a definite 100dvh-minus-chrome box.
+    <div className="flex flex-col gap-0 p-3">
       <OrderHeader
         navigate={navigate}
         draftLines={draftLines}
@@ -212,6 +211,6 @@ export function OrderSidebar({
           </button>
         )}
       </div>
-    </aside>
+    </div>
   );
 }

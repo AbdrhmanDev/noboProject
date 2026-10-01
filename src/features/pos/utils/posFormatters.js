@@ -109,3 +109,14 @@ export function getCashMovementTone(type) {
 export function isManualCashMovement(type) {
   return type === "CashIn" || type === "CashOut";
 }
+
+// Short keyboard-shortcut-style label for a modifier option chip (POS touch redesign): single
+// word -> its first letter ("Large" -> "L", "Double" -> "D"), multi-word -> initials ("Extra
+// Cheese" -> "EC"). Purely a display abbreviation of the real modifier option name already
+// returned by the catalog API -- never a separate/invented value.
+export function abbreviateModifierLabel(name) {
+  const words = String(name || "").trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return "";
+  if (words.length === 1) return words[0].charAt(0).toUpperCase();
+  return words.map((word) => word.charAt(0).toUpperCase()).join("").slice(0, 3);
+}

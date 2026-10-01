@@ -56,14 +56,32 @@
   /* ---- shape & spacing ---- */
   --pos-radius: 6px;
   --pos-radius-lg: 8px;
-  --pos-gap: 8px;
+  --pos-gap: 10px;
   --pos-control-h: 44px; /* minimum touch height */
   /* Everything above and below the workspace on the POS route (app header, POS toolbar, footer, and
      the paddings between them). The catalog and order panels are 100dvh minus this, so the screen
      fits the viewport and only the product grid and the order lines scroll. */
   --pos-chrome: 6.2rem;
-  --pos-card-min-w: 116px;
+  /* Touch-first redesign (13th pass): sized up a notch from the 10th pass's clamp(156px,10vw,192px)
+     -- about 7 cards/row on a typical desktop width before, targeting ~6 now -- scales with viewport
+     width so the grid stays reasonably dense without hardcoding an exact count per breakpoint
+     (auto-fill + minmax already does that column math from this one value). Floor kept just above
+     what the always-52px +/- stepper pill (two 52px circles + the qty digit) actually needs so it
+     never overflows the card at the narrowest columns the clamp can produce. */
+  --pos-card-min-w: clamp(182px, 11.5vw, 222px);
+  /* Explicit, stable card height (3rd pass fix for "cards jumping"; sized up in the 13th pass to
+     match the wider card -- see PosProductCard's own h-20 image). PosProductCard uses this for BOTH
+     its front and back face (each `absolute inset-0` inside a box of this height), so every card in
+     the grid is identical regardless of per-product content (modifiers, variant-count label, etc.)
+     -- content that doesn't fit is clamped/truncated, never grows the box. */
+  --pos-card-h: 216px;
   --pos-shadow-hover: 0 4px 12px rgb(0 0 0 / 0.1);
+  /* Fixed bottom PosActionBar's own reserved height (3rd pass): h-14 buttons (56px) + py-2 (16px)
+     + 1px border = 73px, rounded up for breathing room. The scrollable content areas below (the
+     product grid's own internal scroller, and the page itself on narrower screens) add this -- plus
+     env(safe-area-inset-bottom) and a small gap -- as their own bottom padding, so the bar's real
+     height is the only number that needs to stay in sync, instead of separately-guessed paddings. */
+  --pos-action-bar-h: 4.75rem;
 
   font-family: var(--pos-font);
   font-size: calc(var(--pos-fs-base) * var(--pos-font-scale));
@@ -215,6 +233,37 @@ html[lang="ar"] .pos-root {
   .pos-product-card:hover:not(:disabled),
   .pos-product-card:active:not(:disabled) {
     transform: none;
+  }
+}
+
+/* Product card front/back swap (12th pass: a real page-turn-style reveal, replacing the 11th pass's
+   plain scale-fade). Both faces only ever scale along X (never rotateY/backface-visibility, which
+   needs each face to counter-rotate itself to render right-way-round and was the actual cause of a
+   face sometimes rendering mirrored). The leaving face squeezes to a sliver and fades out
+   (pos-card-exit); the arriving face springs open from a sliver with a slight overshoot
+   (pos-card-enter) -- see FlipSwap in PosProductCard.jsx, which keeps both mounted just long enough
+   for this pair to actually play against each other. */
+@keyframes pos-card-exit {
+  0% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleX(0.04);
+  }
+}
+@keyframes pos-card-enter {
+  0% {
+    opacity: 0;
+    transform: scaleX(0.04);
+  }
+  65% {
+    opacity: 1;
+    transform: scaleX(1.05);
+  }
+  100% {
+    transform: scaleX(1);
   }
 }
 

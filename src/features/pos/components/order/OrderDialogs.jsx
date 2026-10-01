@@ -1,9 +1,44 @@
-import { useMemo, useRef } from "react";
-import { AlertTriangle, Ban, CircleCheckBig, RotateCcw, ShieldAlert } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { AlertTriangle, Ban, Check, CircleCheckBig, Package, Plus, RotateCcw, ShieldAlert } from "lucide-react";
 import { formatMoney } from "../../../../shared/utils/formatters";
 import { formatPaymentDate } from "../../utils/posFormatters";
 import { PosModal } from "../PosModal";
 import { Metric } from "../PosPrimitives";
+
+// A large, full-bleed hero banner for the Variant/Modifiers pickers -- the product's own photo AS
+// the picker's background, not a small thumbnail beside the name. `-mx-5 -mt-5` cancels PosModal's
+// own p-5 so the image reaches the dialog's actual edges (and its own rounded top corners).
+// `object-contain` on a neutral tinted backdrop: the ENTIRE image is always visible, never cropped
+// -- a hero banner that crops (object-cover) looks great for a true photo but was cutting off a
+// large chunk of catalog items whose source art isn't shot to the banner's own wide/short aspect
+// ratio. A visible letterboxed gap around a smaller image is a far smaller problem than literally
+// losing half the picture. The name/price sit in a scrim-protected caption at the bottom so they
+// stay legible either way. No image -> the same neutral backdrop with a large centered icon.
+function ModalHeroImage({ imageUrl, title, subtitle }) {
+  const [failed, setFailed] = useState(false);
+  const showImage = Boolean(imageUrl) && !failed;
+
+  return (
+    <div className="pos-product-tint relative -mx-5 -mt-5 mb-4 h-36 overflow-hidden rounded-t-[var(--pos-radius-lg)]">
+      {showImage ? (
+        <img
+          src={imageUrl}
+          alt=""
+          className="absolute inset-0 h-full w-full object-contain p-3"
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <span className="pos-chip absolute inset-0 m-auto grid h-16 w-16 place-items-center rounded-full">
+          <Package size={30} />
+        </span>
+      )}
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent px-5 pb-3 pt-8">
+        <div className="truncate text-lg font-black text-white drop-shadow">{title}</div>
+        {subtitle && <div className="pos-num text-sm font-bold text-white/90 drop-shadow">{subtitle}</div>}
+      </div>
+    </div>
+  );
+}
 import { SCOPE_PRIORITY, SHORTCUT_SCOPES } from "../../../shortcuts/registry";
 import { useShortcutScope } from "../../../shortcuts/useShortcuts";
 import {
@@ -121,13 +156,19 @@ export function OrderDialogs({
     <>
       {modal === "variant" && selectedVariantProduct && (
         <PosModal
-          title="Select Variant"
+          title={t("pos.picker.variantTitle")}
+          size="lg"
           onClose={() => {
             setSelectedVariantProduct(null);
             setModal(null);
           }}
         >
-          <div ref={variantListRef} onKeyDown={handleVariantListKeyDown} className="space-y-2">
+          <ModalHeroImage
+            imageUrl={selectedVariantProduct.imageUrl}
+            title={selectedVariantProduct.productName}
+            subtitle={t("pos.picker.variantHint")}
+          />
+          <div ref={variantListRef} onKeyDown={handleVariantListKeyDown} className="grid gap-2">
             {selectedVariantProduct.variants.map((variant) => (
               <button
                 key={variant.productVariantId}
@@ -136,20 +177,19 @@ export function OrderDialogs({
                 onClick={() => {
                   selectVariantForDraft(variant);
                 }}
-                className="flex w-full items-center justify-between gap-3 rounded-xl border border-white/10 p-3 text-start transition hover:border-blue-400/50 hover:bg-blue-500/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400"
+                className="flex h-14 w-full items-center justify-between gap-3 rounded-pos-lg border border-pos-border bg-pos-card px-3.5 text-start transition hover:border-pos-primary hover:bg-pos-tint active:scale-[0.99]"
               >
                 <span className="min-w-0">
-                  <span className="block truncate text-xs font-bold text-slate-100">
+                  <span className="pos-fs-name block truncate font-bold text-pos-text">
                     {variant.variantName}
                   </span>
-                  <span className="mt-1 block text-[10px] text-slate-500">
-                    {variant.sku}
-                    {variant.modifierGroups.length
-                      ? ` · ${variant.modifierGroups.length} modifier groups`
-                      : ""}
-                  </span>
+                  {variant.modifierGroups.length > 0 && (
+                    <span className="pos-fs-label mt-0.5 block text-pos-muted">
+                      {t("pos.catalog.hasModifiers")}
+                    </span>
+                  )}
                 </span>
-                <span className="shrink-0 text-xs font-black text-blue-300">
+                <span className="pos-num pos-chip shrink-0 rounded-full px-3 py-1.5 text-sm font-black">
                   {formatMoney(variant.price, catalogCurrencyCode, 2)}
                 </span>
               </button>
@@ -160,26 +200,31 @@ export function OrderDialogs({
 
       {modal === "modifiers" && selectedModifierVariant && (
         <PosModal
-          title="Select Modifiers"
+          title={t("pos.picker.modifiersTitle")}
+          size="lg"
           onClose={() => {
             setSelectedModifierVariant(null);
             setModifierSelections({});
             setModal(null);
           }}
         >
+          <ModalHeroImage
+            imageUrl={selectedModifierVariant.productImageUrl}
+            title={selectedModifierVariant.name || selectedModifierVariant.variantName}
+            subtitle={formatMoney(selectedModifierVariant.price, catalogCurrencyCode, 2)}
+          />
           <div ref={modifierOptionsRef} onKeyDown={handleModifierOptionsKeyDown} className="space-y-3">
             {selectedModifierVariant.modifierGroups.map((group) => (
-              <div
-                key={group.modifierGroupId}
-                className="rounded-xl border border-white/10 bg-white/[0.025] p-3"
-              >
-                <div className="mb-2 flex items-center justify-between gap-3">
-                  <div className="text-xs font-bold text-slate-100">{group.name}</div>
-                  <div className="text-[10px] text-slate-500">
-                    {group.minSelections}-{group.maxSelections}
+              <div key={group.modifierGroupId} className="rounded-xl bg-pos-bg p-3">
+                <div className="mb-2 flex items-baseline justify-between gap-3">
+                  <div className="pos-fs-label font-bold text-pos-text">{group.name}</div>
+                  <div className="pos-fs-label text-pos-muted">
+                    {group.minSelections > 0
+                      ? t("pos.catalog.groupRequired", { min: group.minSelections, max: group.maxSelections })
+                      : t("pos.catalog.groupOptional", { max: group.maxSelections })}
                   </div>
                 </div>
-                <div className="grid gap-2">
+                <div className="flex flex-wrap gap-2">
                   {group.options.map((option) => {
                     const checked = (
                       modifierSelections[group.modifierGroupId] || []
@@ -191,16 +236,19 @@ export function OrderDialogs({
                         type="button"
                         data-roving-item=""
                         onClick={() => toggleModifierOption(group, option.modifierOptionId)}
-                        className={`flex items-center justify-between rounded-lg border px-3 py-2 text-xs transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400 ${
+                        className={`flex h-11 items-center gap-1.5 rounded-full px-3.5 text-sm font-bold transition active:scale-95 ${
                           checked
-                            ? "border-blue-400/60 bg-blue-500/15 text-blue-100"
-                            : "border-white/10 bg-black/10 text-slate-300 hover:border-white/20"
+                            ? "pos-chip shadow-sm"
+                            : "border border-pos-border bg-pos-card text-pos-text hover:border-pos-primary"
                         }`}
                       >
-                        <span>{option.name}</span>
-                        <span className="font-bold text-slate-400">
-                          {formatMoney(option.amountAdjustment, catalogCurrencyCode, 2)}
-                        </span>
+                        {checked && <Check size={14} />}
+                        {option.name}
+                        {Number(option.amountAdjustment) !== 0 && (
+                          <span className="pos-num opacity-80">
+                            +{formatMoney(option.amountAdjustment, catalogCurrencyCode, 2)}
+                          </span>
+                        )}
                       </button>
                     );
                   })}
@@ -215,9 +263,10 @@ export function OrderDialogs({
               addSellableVariant(selectedModifierVariant, selectedModifierOptionIds);
               setModal(null);
             }}
-            className="mt-4 w-full rounded-xl bg-blue-600 py-2.5 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-50"
+            className="mt-4 flex h-[52px] w-full items-center justify-center gap-2 rounded-full bg-pos-action font-black text-pos-on-action shadow-sm transition hover:bg-pos-action-hover active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Add to Draft
+            <Plus size={20} />
+            {t("pos.catalog.addToOrder")}
           </button>
         </PosModal>
       )}

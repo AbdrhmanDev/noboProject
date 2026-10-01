@@ -6,12 +6,12 @@ import {
   CircleAlert,
   History,
   Layers3,
-  Package,
   Power,
   Search,
   UserRound,
   X,
 } from "lucide-react";
+import { getCategoryIcon } from "../../features/pos/utils/categoryIcons";
 import { ROUTES } from "../../utils/routes";
 import AppLayout from "../../components/AppLayout";
 import { useI18n } from "../../i18n/I18nContext";
@@ -59,6 +59,9 @@ import {
 } from "../../features/restaurant/hooks/useRestaurantSeating";
 import { ALL_CATEGORY_ID, CatalogPanel, UNCATEGORIZED_CATEGORY_ID } from "../../features/pos/components/catalog/CatalogPanel";
 import { OrderSidebar } from "../../features/pos/components/order/OrderSidebar";
+import { FloatingOrderButton } from "../../features/pos/components/order/FloatingOrderButton";
+import { OrderBottomSheet } from "../../features/pos/components/order/OrderBottomSheet";
+import { PosActionBar } from "../../features/pos/components/order/PosActionBar";
 import { OrderDialogs } from "../../features/pos/components/order/OrderDialogs";
 import { OrderRetrievalModal } from "../../features/pos/components/order/OrderRetrievalModal";
 import { PaymentStep } from "../../features/pos/components/payment/PaymentStep";
@@ -351,6 +354,14 @@ export default function POSPage() {
     reason: "",
   });
   const [modal, setModal] = useState(null);
+  // Touch-first POS redesign: whether the cart Bottom Sheet is open. Purely a view toggle — never
+  // affects the draft order itself, and the fixed PosActionBar's own Payment CTA works identically
+  // whether this is open or closed (spec requirement: payment must never require opening the cart).
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  // Touch-first POS redesign: which product's card is currently the FRONT/active editing target.
+  // Every other product with a quantity in the cart shows its back-face summary instead -- see
+  // addSellableVariant (sets this on every add path) and PosProductCard's isFlipped.
+  const [activeProductId, setActiveProductId] = useState(null);
   const refundApprovalDetailsQuery = useSalesOrderPaymentRefundApproval(
     currentCompanyId,
     pendingRefundApproval?.approvalRequestId,
@@ -453,7 +464,7 @@ export default function POSPage() {
 
     return [
       { id: ALL_CATEGORY_ID, label: "الكل", icon: Layers3 },
-      ...Array.from(seen, ([id, label]) => ({ id, label, icon: Package })),
+      ...Array.from(seen, ([id, label]) => ({ id, label, icon: getCategoryIcon(label) })),
     ];
   }, [catalogItems]);
   const catalogProducts = useMemo(() => {
@@ -1408,6 +1419,8 @@ export default function POSPage() {
     setModifierSelections({});
     setModal(null);
     setSelectedLineId(null);
+    setActiveProductId(null);
+    setIsCartOpen(false);
     setPhase("order");
   };
 
@@ -1465,6 +1478,8 @@ export default function POSPage() {
       setSelectedModifierVariant(null);
       setModifierSelections({});
       setSelectedLineId(null);
+      setActiveProductId(null);
+      setIsCartOpen(false);
       setModal(null);
       setPhase("order");
       notify(`Order opened — ${details.status}.`, "success");
@@ -1496,6 +1511,10 @@ export default function POSPage() {
     setSelectedModifierVariant(null);
     setModifierSelections({});
     setModal(null);
+    // Touch-first redesign: every add funnels through here (direct tap, variant picker, modifier
+    // picker, quick-modifier chip, barcode scan) -- this is the single place that makes this
+    // product the active (front-face) card, flipping whatever was previously active to its summary.
+    setActiveProductId(variant.productId ?? null);
     const modifierKey = modifierOptionIds.slice().sort().join("|");
 
     // Routed through lineEditor's own serialized queue (shared with
@@ -1577,6 +1596,10 @@ export default function POSPage() {
 
     addSellableVariant(variant);
   };
+  // Tapping a product card. "Simple" (one variant, no modifiers) adds instantly. Anything with a
+  // real choice to make (multiple variants and/or any modifier group) opens the Variant/Modifiers
+  // picker (see OrderDialogs) -- selecting there (selectVariantForDraft/addSellableVariant) is what
+  // actually commits the line and makes this product the active (front-face) card.
   const addItem = (product) => {
     if (!canEditDraft) return;
 
@@ -1588,11 +1611,74 @@ export default function POSPage() {
     setSelectedVariantProduct(product);
     setModal("variant");
   };
+  // Tapping a flipped card's own summary face (or its Edit button): a simple product just comes back
+  // to the front so its inline stepper is reachable again (no request). A multi-variant/modifier
+  // product reopens the same picker a fresh tap would -- there's no safe inline way to tell which
+  // existing line a bare re-tap meant to adjust, so this starts a new pick exactly like `addItem`.
+  const activateProduct = (product) => {
+    if (product.variants.length === 1 && !product.variants[0].modifierGroups?.length) {
+      setActiveProductId(product.productId);
+      return;
+    }
+
+    addItem(product);
+  };
   const changeQty = (salesOrderLineId, amount) => {
     lineEditor.changeQuantity(salesOrderLineId, amount);
   };
   const removeDraftLine = (salesOrderLineId) => {
     lineEditor.removeLine(salesOrderLineId);
+  };
+  // Touch-first POS redesign: per-product aggregate of the draft's own display lines (the same
+  // ones OrderLines renders), keyed by productId so each PosProductCard can show its own live
+  // quantity/subtotal without recomputing anything the draft order doesn't already say.
+  const draftLinesByProductId = useMemo(() => {
+    const variantToProductId = new Map();
+    catalogItems.forEach((item) => variantToProductId.set(item.productVariantId, item.productId));
+
+    const map = new Map();
+    displayDraftLines.forEach((line) => {
+      const productId = variantToProductId.get(line.productVariantId);
+      if (!productId) return;
+
+      const existing = map.get(productId) || { quantity: 0, subtotal: 0, lines: [] };
+      existing.quantity += Number(line.quantity);
+      existing.subtotal += Number(line.lineSubtotalAmount);
+      existing.lines.push(line);
+      map.set(productId, existing);
+    });
+
+    return map;
+  }, [catalogItems, displayDraftLines]);
+  // Touch-first redesign: the card-level +/- (whether that's a simple card's own stepper, or the
+  // inline variant/modifier configurator's "Add"/qty controls) all funnel through these two. Adding
+  // reuses the exact same path a plain card tap does (addSellableVariant, which also sets this
+  // product active); decrementing adjusts/removes the one exact matching line (same variant AND
+  // same modifier-option set) the same way OrderLines' own stepper does (changeQty/removeDraftLine)
+  // -- never a new mutation path.
+  const incrementProductLine = (variant, modifierOptionIds = []) => {
+    if (!variant) return;
+    addSellableVariant(variant, modifierOptionIds);
+  };
+  const decrementProductLine = (variant, modifierOptionIds = []) => {
+    if (!variant) return;
+    const key = modifierOptionIds.slice().sort().join("|");
+    const line = displayDraftLines.find(
+      (candidate) =>
+        candidate.productVariantId === variant.productVariantId &&
+        candidate.modifiers
+          .map((modifier) => modifier.modifierOptionId)
+          .slice()
+          .sort()
+          .join("|") === key,
+    );
+    if (!line) return;
+
+    if (Number(line.quantity) <= 1) {
+      removeDraftLine(line.salesOrderLineId);
+    } else {
+      changeQty(line.salesOrderLineId, -1);
+    }
   };
   const submitDiscountRequest = async (value) => {
     if (requestDiscountMutation.isPending) return;
@@ -1910,7 +1996,7 @@ export default function POSPage() {
                   </span>
                   {hasOpenShift && <Power size={15} className="text-pos-muted transition group-hover:text-pos-danger" />}
                 </button>
-                <div className="pos-control flex min-w-0 flex-1 items-center gap-2 border border-pos-border bg-pos-card px-3 transition focus-within:border-pos-primary focus-within:ring-[3px] focus-within:ring-pos-primary/20">
+                <div className="pos-control flex min-w-0 w-full max-w-[240px] items-center gap-2 border border-pos-border bg-pos-card px-3 transition focus-within:border-pos-primary focus-within:ring-[3px] focus-within:ring-pos-primary/20">
                   <Search size={17} className="shrink-0 text-pos-muted" />
                   <input
                     ref={searchInputRef}
@@ -1945,6 +2031,7 @@ export default function POSPage() {
                   />
                   <ShortcutHint action="pos.focusProductSearch" />
                 </div>
+                <div className="flex-1" />
                 <button
                   type="button"
                   onClick={() => navigate(ROUTES.POS_SHIFT_HISTORY)}
@@ -1959,7 +2046,15 @@ export default function POSPage() {
 
           {phase === "order" && (
           <Fragment>
-          <div className="grid items-start gap-2 xl:grid-cols-[380px_minmax(0,1fr)]">
+          {/* Touch-first redesign: the permanent 380px cart column is gone -- the product grid now
+              uses the full width. The cart lives in the FloatingOrderButton + OrderBottomSheet
+              below, and the fixed PosActionBar (Discount/Note/Customer/Clear/Cancel/Payment) stays
+              on screen regardless of whether the sheet is open. Below xl (where CatalogPanel has no
+              fixed height of its own and the page scrolls as a whole), this bottom padding is what
+              keeps the grid's last row clear of the bar; from xl up, CatalogPanel's own internal
+              scroller carries the same reservation itself (see CatalogPanel.jsx), since its fixed
+              xl:h-[calc(100dvh-var(--pos-chrome))] box sits with its edge at the bar either way. */}
+          <div style={{ paddingBottom: "calc(var(--pos-action-bar-h) + env(safe-area-inset-bottom) + 0.75rem)" }}>
             <CatalogPanel
               navigate={navigate}
               catalogCategories={catalogCategories}
@@ -1979,8 +2074,63 @@ export default function POSPage() {
               addItem={addItem}
               query={query}
               productGridRef={productGridRef}
+              draftLinesByProductId={draftLinesByProductId}
+              activeProductId={activeProductId}
+              onIncrementProductLine={incrementProductLine}
+              onDecrementProductLine={decrementProductLine}
+              onActivateProduct={activateProduct}
             />
+          </div>
 
+          <FloatingOrderButton
+            itemCount={displayDraftLines.reduce((sum, line) => sum + Number(line.quantity), 0)}
+            total={total}
+            currencyCode={settlementCurrencyCode}
+            minorUnitDigits={settlementMinorUnitDigits}
+            onClick={() => setIsCartOpen(true)}
+          />
+
+          <PosActionBar
+            onOpenDiscount={() => setModal("discount")}
+            discountDisabled={!canEditDraft || isDraftMutationPending}
+            orderNote={kitchenNote}
+            onOrderNoteChange={setKitchenNote}
+            onOpenCustomer={() => setModal("customer")}
+            customerName={effectiveCustomer?.name}
+            customerDisabled={!canEditDraft || !customersViewPermissionQuery.hasPermission}
+            onClear={startNewOrder}
+            canRequestCancel={canRequestCancel}
+            onCancel={() => openLifecycleModal(preparationStarted ? "preparedVoid" : "cancel")}
+            primaryActionProps={{
+              isClosedOrder,
+              isCancelledOrder,
+              isConfirmedOrder,
+              isFullyPaid,
+              kitchenReady,
+              draftOrder,
+              startNewOrder,
+              onOpenPayment: () => setPhase("payment"),
+              remainingAmount,
+              settlementCurrencyCode,
+              settlementMinorUnitDigits,
+              readyKitchenTicketCount,
+              kitchenTickets,
+              closeBlockers,
+              canCloseOrder,
+              onOpenCloseOrder: () => setModal("closeOrder"),
+              hasOpenShift,
+              canConfirmOrder,
+              confirmCurrentOrder,
+              goToPayment,
+              orderType,
+              total,
+              catalogCurrencyCode,
+              onOpenRetrieve:
+                salesOrdersViewPermissionQuery.hasPermission ? () => setModal("retrieve") : undefined,
+            }}
+          />
+
+          <OrderBottomSheet open={isCartOpen} onClose={() => setIsCartOpen(false)}>
             <OrderSidebar
               navigate={navigate}
               draftLines={displayDraftLines}
@@ -2058,7 +2208,7 @@ export default function POSPage() {
               goToPayment={goToPayment}
               onOpenShiftReport={() => setModal("shiftReport")}
             />
-          </div>
+          </OrderBottomSheet>
           </Fragment>
           )}
 

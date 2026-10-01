@@ -169,7 +169,21 @@ export default function AppLayout({ children, onLogout }) {
   };
 
   return (
-    <div dir={dir} className="bg-space min-h-screen w-full text-white flex flex-col lg:flex-row">
+    <div
+      dir={dir}
+      // --app-sidebar-w: the sidebar's CURRENT real width, exposed as a CSS var on this shared
+      // ancestor (sidebar and <main> are flex siblings, so neither can read the other's own scoped
+      // --sb-w/--sb-w-collapsed directly) so fixed-position POS elements anchored to the physical
+      // right edge (FloatingOrderButton, PosActionBar, OrderBottomSheet -- all deliberately anchored
+      // to the physical side, not the logical one, per their own RTL-vs-chat-widget convention) can
+      // offset themselves past it instead of rendering on top of it. Only set in `rtl`: that's the
+      // only direction where the sidebar (first flex child, so visually at the inline-start side)
+      // actually lands on the physical right where those elements anchor -- in `ltr` the sidebar
+      // would be on the left instead, nowhere near them, so no offset is needed there.
+      className={`bg-space min-h-screen w-full text-white flex flex-col lg:flex-row ${
+        dir === "rtl" ? (collapsed ? "lg:[--app-sidebar-w:64px]" : "lg:[--app-sidebar-w:240px]") : ""
+      }`}
+    >
       {/* sidebar (RTL: sits on the right; the CSS is logical, so it mirrors with dir) */}
       <aside className="nobo-sidebar hidden lg:flex flex-col" data-collapsed={collapsed}>
         <div className="nobo-sb-top">

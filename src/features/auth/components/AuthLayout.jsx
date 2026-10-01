@@ -3,8 +3,10 @@ import "./auth.css";
 import { Lightbulb, PieChart, Cloud as CloudIcon, TrendingUp } from "lucide-react";
 import { useI18n } from "../../../i18n/I18nContext";
 import noboLogo from "../../../assets/nobo-logo-dark.png";
-import earthBall from "../../../assets/earthBall.jpeg";
-import LogoNobo from "../../../assets/LogoNobo.png";
+// Animated (the flag/ray nodes pulse on their own, baked into the GIF's frames) -- replaces the
+// static earthBall.jpeg + the hand-built CSS pulse/spark overlay that used to approximate the same
+// effect on top of it (removed: this asset already does it, for real, more richly).
+import earthBall from "../../../assets/earthBall.gif";
 
 const socialBrands = [
   {
@@ -139,21 +141,18 @@ export default function AuthLayout({ children }) {
         </div>
 
         {/* center image */}
-        <div className="order-1 xl:order-2 flex items-center justify-center relative mx-auto w-full max-w-md xl:max-w-none">
+        <div className="order-1 xl:order-2 flex flex-col items-center justify-center relative mx-auto w-full max-w-md xl:max-w-none">
+          {/* earthBall.gif: now a single combined animation -- the planet (with the Saudi/Egypt
+              flags and ray/node pulses baked in) AND the NOBO wordmark + its reflection underneath,
+              all in one asset's own frames. Replaces the earlier earth-only GIF plus a separate
+              CSS-animated logo element (removed: the logo is already part of this file now, so a
+              second one would just duplicate it). */}
           <img
             src={earthBall}
-            alt=""
-            className="auth-float relative z-20 w-full max-w-[640px] h-auto object-contain rounded-3xl"
+            alt="NOBO"
+            className="auth-float relative z-20 block w-full max-w-[640px] h-auto object-contain rounded-3xl"
             style={{ filter: "brightness(1.05) contrast(1.02) saturate(1.05)" }}
           />
-          <div className="absolute left-1/2 bottom-0 z-30 -translate-x-1/2 translate-y-8 md:translate-y-10 lg:translate-y-12 w-[640px] max-w-full pointer-events-none">
-            <img
-              src={LogoNobo}
-              alt="NOBO Logo"
-              className="w-[130%] h-auto drop-shadow-none"
-              style={{ filter: "drop-shadow(0 0 0 transparent)" }}
-            />
-          </div>
         </div>
 
         {/* right card slot */}
