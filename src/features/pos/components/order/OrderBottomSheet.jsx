@@ -62,10 +62,10 @@ export function OrderBottomSheet({ open, onClose, children }) {
           ${open ? "translate-y-0" : "translate-y-[calc(100%_+_var(--sheet-closed-shift,0px))]"}`}
         style={{
           // --app-sidebar-w (AppLayout.jsx): keeps this drawer from anchoring underneath/over the
-          // app's own nav sidebar, same as FloatingOrderButton/PosActionBar -- 0 unless the sidebar
+          // app's own nav sidebar, same as FloatingOrderButton/PosStatusBar -- 0 unless the sidebar
           // is actually sitting on this same physical right edge.
           "--sheet-right": "calc(var(--app-sidebar-w, 0px) + 1.25rem + env(safe-area-inset-right))",
-          "--sheet-bottom": "calc(var(--pos-action-bar-h) + env(safe-area-inset-bottom) + 0.75rem)",
+          "--sheet-bottom": "calc(var(--pos-bottom-chrome-h) + env(safe-area-inset-bottom) + 0.75rem)",
         }}
         // Keeps the (collapsed) sheet out of the tab/focus order and off-screen readers while
         // closed, without unmounting it -- unmounting would drop OrderSidebar's own local state

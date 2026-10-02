@@ -1,136 +1,64 @@
-import { Crown, StickyNote } from "lucide-react";
 import { useI18n } from "../../../i18n/I18nContext";
-import { formatMoney } from "../../../shared/utils/formatters";
 import {
-  OPERATIONAL_STATE_ICON,
-  OPERATIONAL_STATE_ICON_CLASSES,
   OPERATIONAL_STATE_LABEL_KEYS,
-  OPERATIONAL_STATE_TILE_CLASSES,
-  formatElapsedMinutes,
-  orderNumberDisplay,
+  TABLE_TONE_CHAIR_CLASSES,
+  TABLE_TONE_CLASSES,
+  TABLE_TONE_LABEL_KEYS,
+  TABLE_TONE_TEXT_CLASSES,
+  getTableTone,
 } from "../utils/floorOperationalState";
-import { AttentionIndicator } from "./AttentionIndicator";
 
-function formatTime(value) {
-  return new Date(value).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
-}
+// Chairs drawn around every table -- purely decorative, always the same count so every table on
+// the floor looks identical apart from its number and colour.
+const TOP_CHAIRS = 2;
+const BOTTOM_CHAIRS = 2;
 
-// One restrained tile per operational state, matching the task's exact
-// per-state contextual content — table code/name always lead, then status,
-// then the state-specific context block (never fabricated: every line only
-// renders when the underlying field is actually present).
+// Floor-plan style tile (Odoo-like): a table with chairs above and below it, showing ONLY its
+// number (its configured code, e.g. "T-1"). Everything else is carried by its colour alone
+// (getTableTone): no colour = no open order, yellow = an order taken but not sent to the kitchen
+// yet, green = its order is on the kitchen screen. State, guests, reservation, totals etc. live
+// in RestaurantTableDetailsDrawer, one tap away. The state is still in the accessible name.
 export function RestaurantTableTile({ table, canManage, selected, onSelect }) {
   const { t } = useI18n();
   const state = table.operationalState;
-  const Icon = OPERATIONAL_STATE_ICON[state];
-  const session = table.currentSession;
-  const primaryOrder = table.activeOrders[0] || null;
-  const extraOrderCount = table.activeOrders.length > 1 ? table.activeOrders.length - 1 : 0;
-  const isVip = (session && session.isVip) || (table.nextReservation && table.nextReservation.isVip);
-  const hasNote = Boolean(session?.note);
-  const hasAttention = table.hasAttention;
+  const tone = getTableTone(table);
+  const chairClass = TABLE_TONE_CHAIR_CLASSES[tone];
 
   return (
     <button
       type="button"
       onClick={onSelect}
       disabled={state === "UNAVAILABLE" && !canManage}
-      className={`flex min-h-[124px] w-full flex-col justify-between gap-2 rounded-2xl border p-3 text-start transition disabled:cursor-not-allowed ${
-        OPERATIONAL_STATE_TILE_CLASSES[state]
-      } ${selected ? "ring-2 ring-blue-400/70" : ""} ${hasAttention ? "ring-1 ring-rose-500/60" : ""}`}
+      aria-pressed={selected}
+      aria-label={`${table.code} · ${t(TABLE_TONE_LABEL_KEYS[tone])} · ${t(OPERATIONAL_STATE_LABEL_KEYS[state])}`}
+      title={table.name || undefined}
+      className={`group flex w-full flex-col items-stretch gap-1.5 rounded-2xl p-2 text-start transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:hover:translate-y-0 ${
+        state === "UNAVAILABLE" ? "opacity-50" : ""
+      } ${selected ? "bg-white/[0.06] ring-2 ring-blue-400/70" : "hover:bg-white/[0.03]"}`}
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <div className="flex items-center gap-1.5">
-            <span className="truncate text-sm font-black text-white">{table.code}</span>
-            {isVip && <Crown size={12} className="shrink-0 text-amber-300" />}
-          </div>
-          {table.name && <div className="truncate text-[10px] text-slate-500">{table.name}</div>}
-        </div>
-        <div className="flex shrink-0 items-center gap-1.5">
-          {hasNote && <StickyNote size={13} className="text-slate-500" />}
-          {hasAttention && <AttentionIndicator activeAttentions={table.activeAttentions} />}
-          <Icon size={16} className={OPERATIONAL_STATE_ICON_CLASSES[state]} />
-        </div>
+      <ChairRow count={TOP_CHAIRS} className={chairClass} />
+
+      <div
+        className={`flex h-[var(--floor-table-h)] items-center justify-center overflow-hidden rounded-xl border-2 px-2 transition ${
+          TABLE_TONE_CLASSES[tone]
+        }`}
+      >
+        <span className={`pos-num truncate text-[length:var(--floor-table-fs)] font-black leading-none ${TABLE_TONE_TEXT_CLASSES[tone]}`}>
+          {table.code}
+        </span>
       </div>
 
-      <div>
-        <div className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
-          {t(OPERATIONAL_STATE_LABEL_KEYS[state])}
-        </div>
-
-        {hasAttention && (
-          <div className="mt-1 flex items-center gap-1.5 text-[10px] font-bold text-rose-300">
-            <AttentionIndicator activeAttentions={table.activeAttentions} />
-            {t("restaurantFloor.attention.needsAttention")}
-          </div>
-        )}
-
-        {state === "AVAILABLE" && table.nextReservation && (
-          <div className="mt-1 text-[10px] text-slate-500">
-            {t("restaurantFloor.card.availableNow")}
-            <br />
-            {t("restaurantFloor.card.reservedAt", { time: formatTime(table.nextReservation.startsAtUtc) })}
-          </div>
-        )}
-
-        {state === "RESERVED_SOON" && table.nextReservation && (
-          <div className="mt-1 space-y-0.5 text-[11px] text-slate-300">
-            <div className="font-bold text-violet-200">{formatTime(table.nextReservation.startsAtUtc)}</div>
-            <div className="truncate">{table.nextReservation.guestName}</div>
-            {table.nextReservation.guestCount != null && (
-              <div className="text-slate-500">
-                {t("restaurantFloor.card.guestCount", { count: table.nextReservation.guestCount })}
-              </div>
-            )}
-          </div>
-        )}
-
-        {state === "OCCUPIED" && session && (
-          <div className="mt-1 space-y-0.5 text-[11px] text-slate-300">
-            {session.guestCount != null && (
-              <div>{t("restaurantFloor.card.guestCount", { count: session.guestCount })}</div>
-            )}
-            <div className="text-slate-500">
-              {t("restaurantFloor.card.elapsedMinutes", { minutes: formatElapsedMinutes(session.openedAtUtc) })}
-            </div>
-          </div>
-        )}
-
-        {state === "WAITING_PAYMENT" && primaryOrder && (
-          <div className="mt-1 space-y-0.5 text-[11px]">
-            <div className="font-bold text-slate-100">
-              {orderNumberDisplay(primaryOrder.orderNumber, primaryOrder.orderNumberFormatted)}
-            </div>
-            <div className="text-slate-300">
-              {t("restaurantFloor.card.total")}{" "}
-              {formatMoney(primaryOrder.payableAmount, primaryOrder.currencyCode, primaryOrder.currencyMinorUnitDigits)}
-            </div>
-            <div className="font-bold text-amber-300">
-              {t("restaurantFloor.card.remaining")}{" "}
-              {formatMoney(primaryOrder.remainingAmount, primaryOrder.currencyCode, primaryOrder.currencyMinorUnitDigits)}
-            </div>
-          </div>
-        )}
-
-        {state === "PAID_STILL_SEATED" && primaryOrder && (
-          <div className="mt-1 space-y-0.5 text-[11px]">
-            <div className="font-bold text-slate-100">
-              {orderNumberDisplay(primaryOrder.orderNumber, primaryOrder.orderNumberFormatted)}
-            </div>
-            <div className="font-bold text-teal-300">
-              {t("restaurantFloor.card.paid")}{" "}
-              {formatMoney(primaryOrder.payableAmount, primaryOrder.currencyCode, primaryOrder.currencyMinorUnitDigits)}
-            </div>
-          </div>
-        )}
-
-        {extraOrderCount > 0 && (
-          <div className="mt-1 text-[9px] font-bold text-blue-300">
-            +{extraOrderCount} {t("restaurantFloor.card.moreOrders")}
-          </div>
-        )}
-      </div>
+      <ChairRow count={BOTTOM_CHAIRS} className={chairClass} />
     </button>
+  );
+}
+
+function ChairRow({ count, className }) {
+  return (
+    <div className="flex h-2.5 justify-evenly px-4" aria-hidden="true">
+      {Array.from({ length: count }, (_, index) => (
+        <span key={index} className={`h-2.5 w-[24%] max-w-12 rounded-full ${className}`} />
+      ))}
+    </div>
   );
 }

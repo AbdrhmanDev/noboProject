@@ -6,9 +6,7 @@ import {
   CircleAlert,
   History,
   Layers3,
-  Power,
   Search,
-  UserRound,
   X,
 } from "lucide-react";
 import { getCategoryIcon } from "../../features/pos/utils/categoryIcons";
@@ -61,7 +59,7 @@ import { ALL_CATEGORY_ID, CatalogPanel, UNCATEGORIZED_CATEGORY_ID } from "../../
 import { OrderSidebar } from "../../features/pos/components/order/OrderSidebar";
 import { FloatingOrderButton } from "../../features/pos/components/order/FloatingOrderButton";
 import { OrderBottomSheet } from "../../features/pos/components/order/OrderBottomSheet";
-import { PosActionBar } from "../../features/pos/components/order/PosActionBar";
+import { PosStatusBar } from "../../features/pos/components/order/PosStatusBar";
 import { OrderDialogs } from "../../features/pos/components/order/OrderDialogs";
 import { OrderRetrievalModal } from "../../features/pos/components/order/OrderRetrievalModal";
 import { PaymentStep } from "../../features/pos/components/payment/PaymentStep";
@@ -72,8 +70,10 @@ import { PosMiscDialogs } from "../../features/pos/components/PosMiscDialogs";
 import { NumericKeypadModal } from "../../features/pos/components/keypad/NumericKeypadModal";
 import {
   getCashMovementLabel,
+  getDefaultVariant,
   parseMoneyInput,
   parseNonNegativeMoneyInput,
+  sortVariantsBySize,
 } from "../../features/pos/utils/posFormatters";
 import { getOrderPrimaryAction } from "../../features/pos/components/order/getOrderPrimaryAction";
 import { SCOPE_PRIORITY, SHORTCUT_SCOPES } from "../../features/shortcuts/registry";
@@ -355,8 +355,8 @@ export default function POSPage() {
   });
   const [modal, setModal] = useState(null);
   // Touch-first POS redesign: whether the cart Bottom Sheet is open. Purely a view toggle — never
-  // affects the draft order itself, and the fixed PosActionBar's own Payment CTA works identically
-  // whether this is open or closed (spec requirement: payment must never require opening the cart).
+  // affects the draft order itself. Discount/note/customer/cancel/payment all live inside the cart
+  // (the fixed bottom action bar was removed).
   const [isCartOpen, setIsCartOpen] = useState(false);
   // Touch-first POS redesign: which product's card is currently the FRONT/active editing target.
   // Every other product with a quantity in the cart shows its back-face summary instead -- see
@@ -1504,7 +1504,9 @@ export default function POSPage() {
     }
   };
 
-  const addSellableVariant = async (variant, modifierOptionIds = []) => {
+  // `fromCart`: the add was made inside the open cart (OrderLines' "add another size") -- skip the
+  // focus recovery below so focus isn't pulled out of the cart into the product grid.
+  const addSellableVariant = async (variant, modifierOptionIds = [], { fromCart = false } = {}) => {
     if (!canEditDraft) return;
 
     setSelectedVariantProduct(null);
@@ -1553,6 +1555,7 @@ export default function POSPage() {
     // modifiers: the product card itself never lost focus), leave it alone
     // rather than yanking focus to the first card regardless of which one
     // was actually clicked.
+    if (fromCart) return;
     const items = getFocusableGridItems(productGridRef.current, ROVING_ITEM_SELECTOR);
     if (!items.includes(document.activeElement)) {
       items[0]?.focus();
@@ -1596,33 +1599,113 @@ export default function POSPage() {
 
     addSellableVariant(variant);
   };
-  // Tapping a product card. "Simple" (one variant, no modifiers) adds instantly. Anything with a
-  // real choice to make (multiple variants and/or any modifier group) opens the Variant/Modifiers
-  // picker (see OrderDialogs) -- selecting there (selectVariantForDraft/addSellableVariant) is what
-  // actually commits the line and makes this product the active (front-face) card.
-  const addItem = (product) => {
-    if (!canEditDraft) return;
-
-    if (product.variants.length === 1) {
-      selectVariantForDraft(product.variants[0]);
-      return;
-    }
-
-    setSelectedVariantProduct(product);
-    setModal("variant");
+  // Modifier options a variant's REQUIRED groups (minSelections > 0) must carry: the first
+  // `minSelections` options of each by sortOrder. `keepIds` are already-chosen options, kept when
+  // they belong to the variant -- a required group they already satisfy gets no extra default.
+  const resolveVariantModifierOptionIds = (variant, keepIds = []) =>
+    (variant.modifierGroups ?? []).flatMap((group) => {
+      const groupOptions = group.options.slice().sort((a, b) => a.sortOrder - b.sortOrder);
+      const kept = groupOptions
+        .filter((option) => keepIds.includes(option.modifierOptionId))
+        .map((option) => option.modifierOptionId);
+      if (kept.length >= group.minSelections) return kept;
+      return groupOptions.slice(0, group.minSelections).map((option) => option.modifierOptionId);
+    });
+  // Adds a product directly -- the Variant/Modifiers picker is no longer opened from the product
+  // grid. `variant` defaults to the smallest size (getDefaultVariant: S, else the cheapest). No
+  // optional modifiers are added (the cashier picks extras inline on the cart line -- see
+  // updateDraftLine); required groups get their defaults, so the line stays valid for the server.
+  const addItem = (product, variant = getDefaultVariant(product)) => {
+    if (!canEditDraft || !variant) return;
+    addSellableVariant(variant, resolveVariantModifierOptionIds(variant));
   };
-  // Tapping a flipped card's own summary face (or its Edit button): a simple product just comes back
-  // to the front so its inline stepper is reachable again (no request). A multi-variant/modifier
-  // product reopens the same picker a fresh tap would -- there's no safe inline way to tell which
-  // existing line a bare re-tap meant to adjust, so this starts a new pick exactly like `addItem`.
-  const activateProduct = (product) => {
-    if (product.variants.length === 1 && !product.variants[0].modifierGroups?.length) {
-      setActiveProductId(product.productId);
-      return;
-    }
-
-    addItem(product);
+  // Cart-line size switch (OrderLines, and the card circles above): moves the line to `variant`,
+  // keeping whichever of its modifier options also exist on the new variant.
+  const changeLineVariant = (line, variant) => {
+    if (!variant || line.productVariantId === variant.productVariantId) return;
+    const currentIds = line.modifiers.map((modifier) => modifier.modifierOptionId);
+    updateDraftLine(line, {
+      productVariantId: variant.productVariantId,
+      modifierOptionIds: resolveVariantModifierOptionIds(variant, currentIds),
+    });
   };
+  // Cart line "+ another size" (OrderLines): adds the same product in `variant` as its OWN new line
+  // (quantity 1, required modifiers only), leaving the line it was opened from untouched. If a line
+  // with that exact size + modifiers already exists, it's incremented instead (same as any add).
+  const addLineInSize = (variant) => {
+    if (!canEditDraft || !variant) return;
+    addSellableVariant(variant, resolveVariantModifierOptionIds(variant), { fromCart: true });
+  };
+  // Inline extras editor on a cart line (OrderLines): replaces that line's modifier options.
+  const changeLineModifiers = (line, nextModifierOptionIds) => {
+    updateDraftLine(line, { productVariantId: line.productVariantId, modifierOptionIds: nextModifierOptionIds });
+  };
+  // Rewrites one cart line's variant and/or modifier options. Goes through the same serialized
+  // lineEditor queue as every other line edit. The line is matched by variant + its CURRENT modifier
+  // set (not salesOrderLineId, which may not survive an earlier queued commit). If another line
+  // already has the resulting variant + modifier set, the two are merged into one line, exactly like
+  // addSellableVariant does for adds.
+  const updateDraftLine = (line, { productVariantId, modifierOptionIds }) => {
+    if (!canEditDraft || !line) return;
+
+    const keyOf = (ids) => ids.slice().sort().join("|");
+    const currentKey = keyOf(line.modifiers.map((modifier) => modifier.modifierOptionId));
+    const nextKey = keyOf(modifierOptionIds);
+    if (productVariantId === line.productVariantId && currentKey === nextKey) return;
+
+    lineEditor.enqueue((latestDraft) => {
+      const requestLines = mapDraftLinesToRequest(latestDraft?.lines ?? []);
+      const index = requestLines.findIndex(
+        (candidate) =>
+          candidate.productVariantId === line.productVariantId &&
+          keyOf(candidate.modifierOptionIds) === currentKey,
+      );
+      if (index < 0) return null;
+
+      const mergeIndex = requestLines.findIndex(
+        (candidate, candidateIndex) =>
+          candidateIndex !== index &&
+          candidate.productVariantId === productVariantId &&
+          keyOf(candidate.modifierOptionIds) === nextKey,
+      );
+
+      if (mergeIndex >= 0) {
+        requestLines[mergeIndex] = {
+          ...requestLines[mergeIndex],
+          quantity: Number(requestLines[mergeIndex].quantity) + Number(requestLines[index].quantity),
+        };
+        requestLines.splice(index, 1);
+      } else {
+        requestLines[index] = { ...requestLines[index], productVariantId, modifierOptionIds };
+      }
+
+      return requestLines;
+    });
+  };
+  // For each variant id: ALL of its product's variants in size order (S, M, L, ...), for the cart's
+  // inline size switcher. Only products with more than one variant are included.
+  const sizeVariantsByVariantId = useMemo(() => {
+    const map = new Map();
+    catalogProducts.forEach((product) => {
+      if (product.variants.length < 2) return;
+      const sorted = sortVariantsBySize(product.variants);
+      product.variants.forEach((variant) => map.set(variant.productVariantId, sorted));
+    });
+    return map;
+  }, [catalogProducts]);
+  // Catalog modifier groups per variant, for the cart's inline extras editor.
+  const modifierGroupsByVariantId = useMemo(() => {
+    const map = new Map();
+    catalogItems.forEach((item) => {
+      if (item.modifierGroups?.length) {
+        map.set(
+          item.productVariantId,
+          item.modifierGroups.slice().sort((a, b) => a.sortOrder - b.sortOrder),
+        );
+      }
+    });
+    return map;
+  }, [catalogItems]);
   const changeQty = (salesOrderLineId, amount) => {
     lineEditor.changeQuantity(salesOrderLineId, amount);
   };
@@ -1650,6 +1733,38 @@ export default function POSPage() {
 
     return map;
   }, [catalogItems, displayDraftLines]);
+  // Plain tap on a product card: adds it (default size) only when it isn't in the cart yet. Once it
+  // is, a tap just makes it the active card -- quantity changes ONLY through the card/cart +/-.
+  const tapProduct = (product) => {
+    if (!canEditDraft) return;
+    if (draftLinesByProductId.has(product.productId)) {
+      setActiveProductId(product.productId);
+      return;
+    }
+    addItem(product);
+  };
+  // Size circle on a product card -- one size at a time per card:
+  //  - product not in the cart yet -> add it in that size;
+  //  - tapping the size it already has (its most recently added line) -> remove that line;
+  //  - tapping a different size -> switch that SAME line to the new size (quantity unchanged).
+  // A second line of the same product in another size is made from the cart (see OrderLines).
+  const selectProductSize = (product, variant) => {
+    if (!canEditDraft || !variant) return;
+
+    const lines = draftLinesByProductId.get(product.productId)?.lines ?? [];
+    const line = lines[lines.length - 1];
+    if (!line) {
+      addItem(product, variant);
+      return;
+    }
+
+    setActiveProductId(product.productId);
+    if (line.productVariantId === variant.productVariantId) {
+      removeDraftLine(line.salesOrderLineId);
+      return;
+    }
+    changeLineVariant(line, variant);
+  };
   // Touch-first redesign: the card-level +/- (whether that's a simple card's own stepper, or the
   // inline variant/modifier configurator's "Add"/qty controls) all funnel through these two. Adding
   // reuses the exact same path a plain card tap does (addSellableVariant, which also sets this
@@ -1981,21 +2096,7 @@ export default function POSPage() {
               </>
             ) : (
               <>
-                <button
-                  type="button"
-                  onClick={() => setModal("closeShift")}
-                  disabled={!hasOpenShift}
-                  title="إغلاق الوردية"
-                  className="pos-control group flex shrink-0 items-center gap-3 border border-pos-border bg-pos-card px-3 py-1 text-start transition hover:border-pos-danger/50 hover:bg-pos-danger/10 disabled:cursor-default disabled:hover:border-pos-border disabled:hover:bg-pos-card"
-                >
-                  <span className="flex items-center gap-2">
-                    <span className="pos-fs-label text-pos-muted">الكاشير</span>
-                    <span className="pos-fs-name flex items-center gap-1.5 text-pos-text">
-                      <UserRound size={14} className="text-pos-primary-text" /> {currentCashierName || "..."}
-                    </span>
-                  </span>
-                  {hasOpenShift && <Power size={15} className="text-pos-muted transition group-hover:text-pos-danger" />}
-                </button>
+                {/* Cashier name + the close-shift button moved to the bottom PosStatusBar. */}
                 <div className="pos-control flex min-w-0 w-full max-w-[240px] items-center gap-2 border border-pos-border bg-pos-card px-3 transition focus-within:border-pos-primary focus-within:ring-[3px] focus-within:ring-pos-primary/20">
                   <Search size={17} className="shrink-0 text-pos-muted" />
                   <input
@@ -2048,13 +2149,12 @@ export default function POSPage() {
           <Fragment>
           {/* Touch-first redesign: the permanent 380px cart column is gone -- the product grid now
               uses the full width. The cart lives in the FloatingOrderButton + OrderBottomSheet
-              below, and the fixed PosActionBar (Discount/Note/Customer/Clear/Cancel/Payment) stays
-              on screen regardless of whether the sheet is open. Below xl (where CatalogPanel has no
-              fixed height of its own and the page scrolls as a whole), this bottom padding is what
-              keeps the grid's last row clear of the bar; from xl up, CatalogPanel's own internal
+              below; only the thin PosStatusBar (time/date/cashier) is fixed at the bottom. Below xl
+              (where CatalogPanel has no fixed height of its own and the page scrolls as a whole),
+              this bottom padding is what keeps the grid's last row clear of it; from xl up, CatalogPanel's own internal
               scroller carries the same reservation itself (see CatalogPanel.jsx), since its fixed
               xl:h-[calc(100dvh-var(--pos-chrome))] box sits with its edge at the bar either way. */}
-          <div style={{ paddingBottom: "calc(var(--pos-action-bar-h) + env(safe-area-inset-bottom) + 0.75rem)" }}>
+          <div style={{ paddingBottom: "calc(var(--pos-bottom-chrome-h) + env(safe-area-inset-bottom) + 0.75rem)" }}>
             <CatalogPanel
               navigate={navigate}
               catalogCategories={catalogCategories}
@@ -2071,14 +2171,14 @@ export default function POSPage() {
               taxSettingsQuery={taxSettingsQuery}
               taxSetupRequired={taxSetupRequired}
               canEditDraft={canEditDraft}
-              addItem={addItem}
+              onTapProduct={tapProduct}
+              onSelectProductSize={selectProductSize}
               query={query}
               productGridRef={productGridRef}
               draftLinesByProductId={draftLinesByProductId}
               activeProductId={activeProductId}
               onIncrementProductLine={incrementProductLine}
               onDecrementProductLine={decrementProductLine}
-              onActivateProduct={activateProduct}
             />
           </div>
 
@@ -2090,44 +2190,9 @@ export default function POSPage() {
             onClick={() => setIsCartOpen(true)}
           />
 
-          <PosActionBar
-            onOpenDiscount={() => setModal("discount")}
-            discountDisabled={!canEditDraft || isDraftMutationPending}
-            orderNote={kitchenNote}
-            onOrderNoteChange={setKitchenNote}
-            onOpenCustomer={() => setModal("customer")}
-            customerName={effectiveCustomer?.name}
-            customerDisabled={!canEditDraft || !customersViewPermissionQuery.hasPermission}
-            onClear={startNewOrder}
-            canRequestCancel={canRequestCancel}
-            onCancel={() => openLifecycleModal(preparationStarted ? "preparedVoid" : "cancel")}
-            primaryActionProps={{
-              isClosedOrder,
-              isCancelledOrder,
-              isConfirmedOrder,
-              isFullyPaid,
-              kitchenReady,
-              draftOrder,
-              startNewOrder,
-              onOpenPayment: () => setPhase("payment"),
-              remainingAmount,
-              settlementCurrencyCode,
-              settlementMinorUnitDigits,
-              readyKitchenTicketCount,
-              kitchenTickets,
-              closeBlockers,
-              canCloseOrder,
-              onOpenCloseOrder: () => setModal("closeOrder"),
-              hasOpenShift,
-              canConfirmOrder,
-              confirmCurrentOrder,
-              goToPayment,
-              orderType,
-              total,
-              catalogCurrencyCode,
-              onOpenRetrieve:
-                salesOrdersViewPermissionQuery.hasPermission ? () => setModal("retrieve") : undefined,
-            }}
+          <PosStatusBar
+            cashierName={currentCashierName}
+            onCloseShift={hasOpenShift ? () => setModal("closeShift") : undefined}
           />
 
           <OrderBottomSheet open={isCartOpen} onClose={() => setIsCartOpen(false)}>
@@ -2165,6 +2230,11 @@ export default function POSPage() {
                 setQuantityKeypadTarget({ lineId, initialValue: currentQuantity });
                 setModal("editQuantity");
               }}
+              modifierGroupsByVariantId={modifierGroupsByVariantId}
+              onChangeLineModifiers={changeLineModifiers}
+              sizeVariantsByVariantId={sizeVariantsByVariantId}
+              onChangeLineVariant={changeLineVariant}
+              onAddLineInSize={addLineInSize}
               onOpenDiscount={() => setModal("discount")}
               paymentMethods={paymentMethods}
               selectedPaymentMethod={selectedPaymentMethod}

@@ -5,8 +5,8 @@ import { formatMoney } from "../../../../shared/utils/formatters";
 // Touch-first POS redesign (2nd pass): a circular, chatbot-style floating action button, fixed to
 // the PHYSICAL bottom-right corner of the viewport (intentionally `right`/`bottom`, not the logical
 // `end`/`start` this POS otherwise uses for RTL — the same convention chat-widget buttons use
-// regardless of page direction, per the explicit "bottom-right" requirement). It sits above
-// PosActionBar (which is itself `env(safe-area-inset-bottom)`-aware) and never grows to consume
+// regardless of page direction, per the explicit "bottom-right" requirement). It sits above the
+// fixed bottom chrome (PosStatusBar, `env(safe-area-inset-bottom)`-aware) and never grows to consume
 // meaningful width -- "Open current order", not a panel.
 export function FloatingOrderButton({ itemCount, total, currencyCode, minorUnitDigits, onClick }) {
   const { t } = useI18n();
@@ -15,10 +15,10 @@ export function FloatingOrderButton({ itemCount, total, currencyCode, minorUnitD
     <div
       className="fixed z-[80] flex flex-col items-end gap-1.5"
       style={{
-        // Reads the SAME --pos-action-bar-h token PosActionBar sizes itself with and the scrollable
+        // Reads the SAME --pos-bottom-chrome-h token the fixed bottom strip is sized by and the scrollable
         // content areas reserve as padding, plus a small gap, so this can never end up overlapping
         // the bar no matter how its own height is retuned.
-        bottom: "calc(var(--pos-action-bar-h) + env(safe-area-inset-bottom) + 0.75rem)",
+        bottom: "calc(var(--pos-bottom-chrome-h) + env(safe-area-inset-bottom) + 0.75rem)",
         // --app-sidebar-w (AppLayout.jsx): the app's own nav sidebar's current width -- 0 unless
         // it's actually sitting on this same physical right edge (see that file's own comment).
         // Without this, this button (deliberately anchored to the true viewport edge, not the POS

@@ -39,6 +39,11 @@ export function OrderSidebar({
   selectedLineId,
   onSelectLine,
   onEditQuantity,
+  modifierGroupsByVariantId,
+  onChangeLineModifiers,
+  sizeVariantsByVariantId,
+  onChangeLineVariant,
+  onAddLineInSize,
   // OrderSummary
   onOpenDiscount,
   paymentMethods,
@@ -125,6 +130,11 @@ export function OrderSidebar({
         selectedLineId={selectedLineId}
         onSelectLine={onSelectLine}
         onEditQuantity={onEditQuantity}
+        modifierGroupsByVariantId={modifierGroupsByVariantId}
+        onChangeLineModifiers={onChangeLineModifiers}
+        sizeVariantsByVariantId={sizeVariantsByVariantId}
+        onChangeLineVariant={onChangeLineVariant}
+        onAddLineInSize={onAddLineInSize}
       />
 
       <OrderSummary
