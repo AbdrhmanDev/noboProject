@@ -11,6 +11,7 @@ import {
   createModifierOption,
   createProduct,
   createProductVariant,
+  deleteProductImage,
   getActiveUnitsOfMeasure,
   getBranchProductVariantAvailabilities,
   getBranchProductVariantAvailability,
@@ -33,6 +34,7 @@ import {
   updateModifierOption,
   updateProduct,
   updateProductVariant,
+  uploadProductImage,
 } from "../api/catalogApi";
 import type {
   CatalogStatusFilter,
@@ -541,6 +543,33 @@ export function useChangeProductStatus(
   return useMutation({
     mutationFn: (payload: ChangeCatalogStatusRequest) =>
       changeProductStatus(companyId as string, productId as string, payload),
+    onSuccess: () => invalidateCatalogAdmin(queryClient, companyId, branchId, productId),
+  });
+}
+
+// SelfHosted only: Cloud still sets imageUrl directly through useCreateProduct/useUpdateProduct.
+export function useUploadProductImage(
+  companyId: string | null | undefined,
+  branchId: string | null | undefined,
+  productId: string | null | undefined,
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (file: File) => uploadProductImage(companyId as string, productId as string, file),
+    onSuccess: () => invalidateCatalogAdmin(queryClient, companyId, branchId, productId),
+  });
+}
+
+export function useDeleteProductImage(
+  companyId: string | null | undefined,
+  branchId: string | null | undefined,
+  productId: string | null | undefined,
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => deleteProductImage(companyId as string, productId as string),
     onSuccess: () => invalidateCatalogAdmin(queryClient, companyId, branchId, productId),
   });
 }

@@ -23,6 +23,7 @@ import type {
   ModifierOptionListResponse,
   ProductAdminFilters,
   ProductDetails,
+  ProductImageResponse,
   ProductVariantModifierGroupListResponse,
   ProductListResponse,
   ProductVariantAdmin,
@@ -169,6 +170,34 @@ export async function changeProductStatus(
   );
 
   return response.data;
+}
+
+// SelfHosted-only (Phase 5): uploads replace any existing image for the product. Cloud deployments
+// keep using a plain imageUrl field on create/update instead of this endpoint.
+export async function uploadProductImage(companyId: string, productId: string, file: File) {
+  const form = new FormData();
+  form.append("file", file);
+  const response = await httpClient.post<ProductImageResponse>(
+    `${catalogUrl(companyId)}/products/${productId}/image`,
+    form,
+    { headers: { "Content-Type": "multipart/form-data" } },
+  );
+
+  return response.data;
+}
+
+export async function deleteProductImage(companyId: string, productId: string) {
+  await httpClient.delete(`${catalogUrl(companyId)}/products/${productId}/image`);
+}
+
+// The image endpoint requires authentication like every other catalog route, so it cannot be used
+// directly as an <img src>: callers fetch it as a blob and build an object URL for display.
+export async function downloadProductImage(companyId: string, productId: string) {
+  const response = await httpClient.get(`${catalogUrl(companyId)}/products/${productId}/image`, {
+    responseType: "blob",
+  });
+
+  return response.data as Blob;
 }
 
 export async function getProductVariants(

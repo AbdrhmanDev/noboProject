@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Minus, Package, Plus, Ruler, SlidersHorizontal } from "lucide-react";
 import { formatMoney } from "../../../../shared/utils/formatters";
+import { useResolvedImageSrc } from "../../../../shared/hooks/useResolvedImageSrc";
 import { abbreviateModifierLabel } from "../../utils/posFormatters";
 import { useI18n } from "../../../../i18n/I18nContext";
 
@@ -386,13 +387,17 @@ function BackFace({
 // given, not float inside it with gaps.
 function ProductImage({ imageUrl, className = "", iconSize = 24, children }) {
   const [failed, setFailed] = useState(false);
-  const showImage = Boolean(imageUrl) && !failed;
+  // A SelfHosted-uploaded image is served by an authenticated API route, which a plain <img src>
+  // cannot reach (no custom headers on image requests); this resolves it to a local blob URL first.
+  // A Cloud (pasted-URL) image passes through unchanged.
+  const { src: resolvedSrc, failed: resolveFailed } = useResolvedImageSrc(imageUrl);
+  const showImage = Boolean(resolvedSrc) && !failed && !resolveFailed;
 
   return (
     <div className={`pos-product-image pos-product-tint relative w-full overflow-hidden ${className}`}>
       {showImage ? (
         <img
-          src={imageUrl}
+          src={resolvedSrc}
           alt=""
           loading="lazy"
           className="absolute inset-0 h-full w-full object-cover"

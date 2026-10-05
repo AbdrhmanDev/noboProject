@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import {
   Boxes,
@@ -20,6 +20,7 @@ import {
   Tags,
 } from "lucide-react";
 import AppLayout from "../../components/AppLayout";
+import { env } from "../../app/config/env";
 import {
   EmptyState,
   ErrorState,
@@ -27,6 +28,7 @@ import {
   PageHeader,
   StatusBadge,
 } from "../../shared/components/ui";
+import { useResolvedImageSrc } from "../../shared/hooks/useResolvedImageSrc";
 import { formatDateTime } from "../../shared/utils/formatters";
 import { useBranch } from "../../features/branches/context/BranchContext";
 import { useCurrentBranch } from "../../features/branches/hooks/useCurrentBranch";
@@ -48,6 +50,7 @@ import {
   useCreateModifierOption,
   useCreateProduct,
   useCreateProductVariant,
+  useDeleteProductImage,
   useModifierGroupDetails,
   useModifierGroups,
   useModifierOptionDetails,
@@ -65,6 +68,7 @@ import {
   useUpdateModifierOption,
   useUpdateProduct,
   useUpdateProductVariant,
+  useUploadProductImage,
 } from "../../features/catalog/hooks/useCatalog";
 import { useDevices, usePrintProductVariantLabel } from "../../features/devices/hooks/useDevices";
 
@@ -255,8 +259,23 @@ function ProductForm({
   isPending,
   onSubmit,
   onStatusChange,
+  onUploadImage,
+  onDeleteImage,
+  isImageUploading,
+  isImageDeleting,
 }) {
   const nextStatus = selectedProduct?.status === "Active" ? "Suspended" : "Active";
+  const isSelfHosted = env.deploymentMode === "SelfHosted";
+  const fileInputRef = useRef(null);
+  const { src: imagePreviewSrc, failed: imagePreviewFailed } = useResolvedImageSrc(
+    isSelfHosted ? selectedProduct?.imageUrl : form.imageUrl,
+  );
+
+  const pickImageFile = (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (file) onUploadImage?.(file);
+  };
 
   return (
     <form
@@ -322,35 +341,74 @@ function ProductForm({
           className="mt-1 w-full rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
         />
       </label>
-      <div className="flex items-end gap-3">
-        <label className="flex-1 text-xs font-semibold text-slate-400">
-          Image URL
-          <input
-            value={form.imageUrl}
-            onChange={(event) =>
-              setForm((draft) => ({ ...draft, imageUrl: event.target.value }))
-            }
-            placeholder="/demo-products/burger.svg or https://…"
-            maxLength={2048}
-            disabled={!canManage || isPending}
-            className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
-          />
-        </label>
-        <div className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl border border-white/10 bg-white/[0.025]">
-          {form.imageUrl ? (
-            <img
-              src={form.imageUrl}
-              alt=""
-              className="h-full w-full object-cover"
-              onError={(event) => {
-                event.currentTarget.style.display = "none";
-              }}
-            />
-          ) : (
-            <Package size={18} className="text-slate-500" />
-          )}
+      {isSelfHosted ? (
+        <div className="flex items-end gap-3">
+          <div className="flex-1 text-xs font-semibold text-slate-400">
+            Image
+            <div className="mt-1 flex items-center gap-2">
+              <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={pickImageFile} />
+              <button
+                type="button"
+                disabled={!canManage || !selectedProduct || isImageUploading}
+                onClick={() => fileInputRef.current?.click()}
+                className="flex h-11 items-center gap-1.5 rounded-xl border border-white/10 bg-black/20 px-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isImageUploading ? "Uploading..." : selectedProduct?.imageUrl ? "Replace image" : "Upload image"}
+              </button>
+              {selectedProduct?.imageUrl && (
+                <button
+                  type="button"
+                  disabled={!canManage || isImageDeleting}
+                  onClick={() => onDeleteImage?.()}
+                  className="flex h-11 items-center gap-1.5 rounded-xl border border-white/10 px-3 text-sm font-semibold text-slate-300 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isImageDeleting ? "Removing..." : "Remove"}
+                </button>
+              )}
+              {!selectedProduct && (
+                <span className="text-[11px] text-slate-500">Save the product first, then add an image.</span>
+              )}
+            </div>
+          </div>
+          <div className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl border border-white/10 bg-white/[0.025]">
+            {imagePreviewSrc && !imagePreviewFailed ? (
+              <img src={imagePreviewSrc} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <Package size={18} className="text-slate-500" />
+            )}
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="flex items-end gap-3">
+          <label className="flex-1 text-xs font-semibold text-slate-400">
+            Image URL
+            <input
+              value={form.imageUrl}
+              onChange={(event) =>
+                setForm((draft) => ({ ...draft, imageUrl: event.target.value }))
+              }
+              placeholder="/demo-products/burger.svg or https://…"
+              maxLength={2048}
+              disabled={!canManage || isPending}
+              className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+            />
+          </label>
+          <div className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl border border-white/10 bg-white/[0.025]">
+            {imagePreviewSrc && !imagePreviewFailed ? (
+              <img
+                src={imagePreviewSrc}
+                alt=""
+                className="h-full w-full object-cover"
+                onError={(event) => {
+                  event.currentTarget.style.display = "none";
+                }}
+              />
+            ) : (
+              <Package size={18} className="text-slate-500" />
+            )}
+          </div>
+        </div>
+      )}
       <ActionRow
         mode={mode}
         entity="product"
@@ -1456,6 +1514,16 @@ export default function CatalogAdminPage() {
     currentBranchId,
     selectedProductId,
   );
+  const uploadProductImageMutation = useUploadProductImage(
+    currentCompanyId,
+    currentBranchId,
+    selectedProductId,
+  );
+  const deleteProductImageMutation = useDeleteProductImage(
+    currentCompanyId,
+    currentBranchId,
+    selectedProductId,
+  );
   const createVariantMutation = useCreateProductVariant(
     currentCompanyId,
     currentBranchId,
@@ -1622,6 +1690,24 @@ export default function CatalogAdminPage() {
         imageUrl: result.imageUrl || "",
       });
       showNotice(`Product ${productMode === "create" ? "created" : "updated"}.`);
+    } catch (error) {
+      showNotice(getErrorMessage(error));
+    }
+  };
+
+  const uploadProductImage = async (file) => {
+    try {
+      await uploadProductImageMutation.mutateAsync(file);
+      showNotice("Product image uploaded.");
+    } catch (error) {
+      showNotice(getErrorMessage(error));
+    }
+  };
+
+  const deleteProductImage = async () => {
+    try {
+      await deleteProductImageMutation.mutateAsync();
+      showNotice("Product image removed.");
     } catch (error) {
       showNotice(getErrorMessage(error));
     }
@@ -1969,6 +2055,10 @@ export default function CatalogAdminPage() {
                       isPending={productPending}
                       onSubmit={submitProduct}
                       onStatusChange={(status) => changeStatus(productStatusMutation, status, "Product")}
+                      onUploadImage={uploadProductImage}
+                      onDeleteImage={deleteProductImage}
+                      isImageUploading={uploadProductImageMutation.isPending}
+                      isImageDeleting={deleteProductImageMutation.isPending}
                     />
                     <div className="rounded-xl border border-white/10 bg-white/[0.025] px-3 py-2 text-xs text-slate-400">
                       Pricing, tax assignment, inventory consumption, and modifiers are managed outside this Catalog Core slice.
