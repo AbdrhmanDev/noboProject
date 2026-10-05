@@ -120,3 +120,34 @@ export function abbreviateModifierLabel(name) {
   if (words.length === 1) return words[0].charAt(0).toUpperCase();
   return words.map((word) => word.charAt(0).toUpperCase()).join("").slice(0, 3);
 }
+
+// Size-circle label for a product variant on the POS card: size names (English or Arabic) map to
+// S / M / L; any other variant name falls back to abbreviateModifierLabel. Display only -- the
+// circle always adds the real variant it labels.
+const VARIANT_SIZE_ALIASES = {
+  S: ["s", "small", "صغير", "صغيرة", "سمول"],
+  M: ["m", "medium", "وسط", "متوسط", "متوسطة", "ميديم", "ميديام"],
+  L: ["l", "large", "كبير", "كبيرة", "لارج"],
+};
+
+export function variantSizeLabel(variantName) {
+  const value = String(variantName || "").trim().toLowerCase();
+  const size = Object.keys(VARIANT_SIZE_ALIASES).find((key) => VARIANT_SIZE_ALIASES[key].includes(value));
+  return size ?? abbreviateModifierLabel(variantName);
+}
+
+// Variants in size order for the POS card circles: S, M, L first (by variantSizeLabel), then any
+// other variant by price. The catalog's own order is arbitrary (it can list Large first).
+const SIZE_RANK = { S: 0, M: 1, L: 2 };
+
+export function sortVariantsBySize(variants = []) {
+  const rank = (variant) => SIZE_RANK[variantSizeLabel(variant.variantName)] ?? 3;
+  return variants
+    .slice()
+    .sort((a, b) => rank(a) - rank(b) || Number(a.price ?? a.unitPrice) - Number(b.price ?? b.unitPrice));
+}
+
+// The variant a plain tap on a product card adds: the smallest size (S, else the cheapest variant).
+export function getDefaultVariant(product) {
+  return sortVariantsBySize(product?.variants)[0] ?? null;
+}

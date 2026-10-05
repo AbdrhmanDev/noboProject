@@ -29,13 +29,60 @@ export const OPERATIONAL_STATE_ICON = {
 
 // Restrained, professional per-state palette (color is never the only
 // indicator — every tile also carries an icon + localized text).
-export const OPERATIONAL_STATE_TILE_CLASSES: Record<RestaurantOperationalState, string> = {
-  AVAILABLE: "border-emerald-400/40 bg-emerald-500/[0.07] hover:border-emerald-400/70",
-  RESERVED_SOON: "border-violet-400/40 bg-violet-500/[0.07] hover:border-violet-400/70",
-  OCCUPIED: "border-blue-400/40 bg-blue-500/[0.07] hover:border-blue-400/70",
-  WAITING_PAYMENT: "border-amber-400/40 bg-amber-500/[0.07] hover:border-amber-400/70",
-  PAID_STILL_SEATED: "border-teal-400/40 bg-teal-500/[0.07] hover:border-teal-400/70",
-  UNAVAILABLE: "border-white/10 bg-white/[0.02] opacity-60 hover:border-white/20",
+// Floor-plan table colour (RestaurantTableTile) -- the ONLY thing a table shows besides its number,
+// driven by the table's open orders (not its operational state):
+//   empty     no open order (none at all, or everything already paid)        -> no colour
+//   notSent   an open order is still a Draft: taken, not yet sent (confirmed)
+//             to the kitchen, so it isn't on the kitchen screen yet           -> yellow
+//   inKitchen every open order is Confirmed, i.e. sent to the kitchen screen  -> green
+// "Not sent" wins over "in kitchen": one unsent order on the table is what needs attention.
+export type TableTone = "empty" | "notSent" | "inKitchen";
+
+export function getTableTone(table: {
+  activeOrders: { status: string; isFullyPaid: boolean }[];
+}): TableTone {
+  const openOrders = table.activeOrders.filter(
+    (order) => order.status !== "Closed" && order.status !== "Cancelled" && !order.isFullyPaid,
+  );
+  if (openOrders.length === 0) return "empty";
+  if (openOrders.some((order) => order.status === "Draft")) return "notSent";
+  return "inKitchen";
+}
+
+export const TABLE_TONES: TableTone[] = ["empty", "notSent", "inKitchen"];
+
+export const TABLE_TONE_LABEL_KEYS: Record<TableTone, string> = {
+  empty: "restaurantFloor.tone.empty",
+  notSent: "restaurantFloor.tone.notSent",
+  inKitchen: "restaurantFloor.tone.inKitchen",
+};
+
+// The table top itself...
+export const TABLE_TONE_CLASSES: Record<TableTone, string> = {
+  empty: "border-white/15 bg-white/[0.03] group-hover:border-white/30",
+  notSent: "border-amber-400/80 bg-amber-400/25 group-hover:border-amber-300",
+  inKitchen: "border-emerald-400/70 bg-emerald-500/20 group-hover:border-emerald-400",
+};
+
+// ...the chairs around it...
+export const TABLE_TONE_CHAIR_CLASSES: Record<TableTone, string> = {
+  empty: "bg-white/15",
+  notSent: "bg-amber-400/90",
+  inKitchen: "bg-emerald-400/80",
+};
+
+// ...the number on it...
+export const TABLE_TONE_TEXT_CLASSES: Record<TableTone, string> = {
+  empty: "text-slate-300",
+  notSent: "text-amber-100",
+  inKitchen: "text-emerald-50",
+};
+
+// ...and its legend swatch (RestaurantFloorPage).
+export const TABLE_TONE_SWATCH_CLASSES: Record<TableTone, string> = {
+  empty: "border-white/25 bg-white/[0.03]",
+  notSent: "border-amber-400 bg-amber-400/40",
+  inKitchen: "border-emerald-400 bg-emerald-500/30",
 };
 
 export const OPERATIONAL_STATE_BADGE_CLASSES: Record<RestaurantOperationalState, string> = {

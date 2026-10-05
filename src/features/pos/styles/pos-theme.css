@@ -68,20 +68,24 @@
      (auto-fill + minmax already does that column math from this one value). Floor kept just above
      what the always-52px +/- stepper pill (two 52px circles + the qty digit) actually needs so it
      never overflows the card at the narrowest columns the clamp can produce. */
-  --pos-card-min-w: clamp(182px, 11.5vw, 222px);
+  --pos-card-min-w: clamp(124px, 8vw, 148px);
   /* Explicit, stable card height (3rd pass fix for "cards jumping"; sized up in the 13th pass to
      match the wider card -- see PosProductCard's own h-20 image). PosProductCard uses this for BOTH
      its front and back face (each `absolute inset-0` inside a box of this height), so every card in
      the grid is identical regardless of per-product content (modifiers, variant-count label, etc.)
      -- content that doesn't fit is clamped/truncated, never grows the box. */
-  --pos-card-h: 216px;
+  /* Compact card: image + 2-line name + price + S/M/L row (see PosProductCard.jsx). */
+  --pos-card-h: 168px;
+  --pos-card-img-h: 72px;
+  --pos-fs-card-name: 13px;
+  --pos-fs-card-price: 13px;
   --pos-shadow-hover: 0 4px 12px rgb(0 0 0 / 0.1);
-  /* Fixed bottom PosActionBar's own reserved height (3rd pass): h-14 buttons (56px) + py-2 (16px)
-     + 1px border = 73px, rounded up for breathing room. The scrollable content areas below (the
-     product grid's own internal scroller, and the page itself on narrower screens) add this -- plus
-     env(safe-area-inset-bottom) and a small gap -- as their own bottom padding, so the bar's real
-     height is the only number that needs to stay in sync, instead of separately-guessed paddings. */
-  --pos-action-bar-h: 4.75rem;
+  /* Thin info strip (time, date, cashier) fixed at the very bottom -- see PosStatusBar.jsx. */
+  --pos-status-bar-h: 2.25rem;
+  /* Total fixed chrome at the bottom of the order screen (currently just the info strip). The
+     scrollable content areas and floating elements (cart button, cart sheet) add this -- plus
+     env(safe-area-inset-bottom) and a small gap -- as their bottom clearance. */
+  --pos-bottom-chrome-h: var(--pos-status-bar-h);
 
   font-family: var(--pos-font);
   font-size: calc(var(--pos-fs-base) * var(--pos-font-scale));
@@ -148,6 +152,16 @@ html[lang="ar"] .pos-root {
 .pos-fs-price {
   font-size: calc(var(--pos-fs-price) * var(--pos-font-scale));
   font-weight: 500;
+}
+.pos-fs-card-name {
+  font-size: calc(var(--pos-fs-card-name) * var(--pos-font-scale));
+  font-weight: 500;
+  line-height: 1.3;
+}
+.pos-fs-card-price {
+  font-size: calc(var(--pos-fs-card-price) * var(--pos-font-scale));
+  font-weight: 700;
+  line-height: 1.3;
 }
 .pos-fs-line {
   font-size: calc(var(--pos-fs-line) * var(--pos-font-scale));

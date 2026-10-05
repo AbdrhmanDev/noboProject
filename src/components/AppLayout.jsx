@@ -174,7 +174,7 @@ export default function AppLayout({ children, onLogout }) {
       // --app-sidebar-w: the sidebar's CURRENT real width, exposed as a CSS var on this shared
       // ancestor (sidebar and <main> are flex siblings, so neither can read the other's own scoped
       // --sb-w/--sb-w-collapsed directly) so fixed-position POS elements anchored to the physical
-      // right edge (FloatingOrderButton, PosActionBar, OrderBottomSheet -- all deliberately anchored
+      // right edge (FloatingOrderButton, PosStatusBar, OrderBottomSheet -- all deliberately anchored
       // to the physical side, not the logical one, per their own RTL-vs-chat-widget convention) can
       // offset themselves past it instead of rendering on top of it. Only set in `rtl`: that's the
       // only direction where the sidebar (first flex child, so visually at the inline-start side)

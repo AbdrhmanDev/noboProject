@@ -53,6 +53,94 @@ function parseSortOrder(value) {
   return Number.isInteger(parsed) && parsed >= 0 ? parsed : null;
 }
 
+const BULK_TABLE_PREFIX = "T-";
+const BULK_TABLE_DEFAULT_COUNT = 20;
+const BULK_TABLE_MAX_COUNT = 100;
+
+// Fills the selected floor up to N numbered tables (T-1 ... T-N) in one action. Only the codes
+// that don't exist on the floor yet are created -- existing tables are never touched -- each one
+// through the same create-table call the single-table form uses, one at a time, stopping at the
+// first failure. sortOrder = the table's number, so the floor shows them in order.
+function BulkCreateTables({ existingTables, createTable, disabled, onDone }) {
+  const [count, setCount] = useState(String(BULK_TABLE_DEFAULT_COUNT));
+  const [progress, setProgress] = useState(null);
+
+  const target = Number(count);
+  const isValidTarget = Number.isInteger(target) && target >= 1 && target <= BULK_TABLE_MAX_COUNT;
+  const existingCodes = new Set(existingTables.map((table) => table.code.trim().toUpperCase()));
+  const missingNumbers = isValidTarget
+    ? Array.from({ length: target }, (_, index) => index + 1).filter(
+        (number) => !existingCodes.has(`${BULK_TABLE_PREFIX}${number}`.toUpperCase()),
+      )
+    : [];
+  const isRunning = progress !== null;
+
+  const run = async () => {
+    if (!missingNumbers.length) return;
+    const confirmed = window.confirm(
+      `Create ${missingNumbers.length} table(s): ${BULK_TABLE_PREFIX}${missingNumbers[0]} ... ${BULK_TABLE_PREFIX}${
+        missingNumbers[missingNumbers.length - 1]
+      }?`,
+    );
+    if (!confirmed) return;
+
+    let created = 0;
+    setProgress({ done: 0, total: missingNumbers.length });
+    try {
+      for (const number of missingNumbers) {
+        await createTable({ code: `${BULK_TABLE_PREFIX}${number}`, name: null, sortOrder: number });
+        created += 1;
+        setProgress({ done: created, total: missingNumbers.length });
+      }
+      onDone(`${created} table(s) created.`);
+    } catch (error) {
+      onDone(`${created} table(s) created, then stopped: ${getErrorMessage(error)}`);
+    } finally {
+      setProgress(null);
+    }
+  };
+
+  return (
+    <div className="mb-4 rounded-xl border border-blue-400/20 bg-blue-500/[0.05] p-3">
+      <div className="text-xs font-black text-white">Fill floor with numbered tables</div>
+      <p className="mt-1 text-[11px] leading-5 text-slate-400">
+        Creates {BULK_TABLE_PREFIX}1, {BULK_TABLE_PREFIX}2 ... up to the number below. Tables that already
+        exist are skipped.
+      </p>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <label className="flex items-center gap-2 text-xs text-slate-300">
+          Up to
+          <input
+            type="number"
+            min={1}
+            max={BULK_TABLE_MAX_COUNT}
+            value={count}
+            disabled={disabled || isRunning}
+            onChange={(event) => setCount(event.target.value)}
+            className="h-9 w-20 rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none focus:border-blue-400/60"
+          />
+          tables
+        </label>
+        <button
+          type="button"
+          onClick={run}
+          disabled={disabled || isRunning || missingNumbers.length === 0}
+          className="flex h-9 items-center gap-2 rounded-xl bg-blue-600 px-3 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Plus size={14} />
+          {isRunning
+            ? `Creating ${progress.done}/${progress.total}...`
+            : missingNumbers.length
+              ? `Create ${missingNumbers.length} missing table(s)`
+              : isValidTarget
+                ? "All tables exist"
+                : `Enter 1-${BULK_TABLE_MAX_COUNT}`}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function FloorCard({ floor, selected, onSelect }) {
   return (
     <button
@@ -738,6 +826,15 @@ export default function RestaurantAdminPage() {
                   New table
                 </button>
               </div>
+              {canManage && selectedFloor && (
+                <BulkCreateTables
+                  key={selectedFloor.restaurantFloorId}
+                  existingTables={selectedFloor.tables}
+                  createTable={(payload) => createTableMutation.mutateAsync(payload)}
+                  disabled={isTablePending}
+                  onDone={showNotice}
+                />
+              )}
               {tableMode === "edit" && tableDetailsQuery.isLoading && (
                 <LoadingState label="Loading table details..." />
               )}
