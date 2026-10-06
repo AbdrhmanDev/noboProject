@@ -3,6 +3,20 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import basicSsl from '@vitejs/plugin-basic-ssl'
 
+// Strips the Google Fonts <link>/<preconnect> tags from the built index.html for a SelfHosted
+// build only -- Cloud keeps them exactly as before. No local font files exist in this repo to
+// substitute (checked), and the existing font-family stack in src/index.css already falls back to
+// 'system-ui, sans-serif', so removing the CDN link is enough on its own; nothing was downloaded.
+function stripGoogleFontsForSelfHosted(deploymentMode) {
+  return {
+    name: 'strip-google-fonts-for-selfhosted',
+    transformIndexHtml(html) {
+      if (deploymentMode !== 'SelfHosted') return html
+      return html.replace(/\s*<link[^>]*(?:fonts\.googleapis\.com|fonts\.gstatic\.com)[^>]*>\n?/g, '')
+    },
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
@@ -12,7 +26,7 @@ export default defineConfig(({ mode }) => {
   const apiTarget = env.VITE_API_PROXY_TARGET || 'https://nobo-fjm7.onrender.com'
 
   return {
-    plugins: [react(), tailwindcss(), basicSsl()],
+    plugins: [react(), tailwindcss(), basicSsl(), stripGoogleFontsForSelfHosted(env.VITE_DEPLOYMENT_MODE)],
     server: {
       host: 'localhost',
       port: 5173,

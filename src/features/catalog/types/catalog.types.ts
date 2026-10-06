@@ -114,6 +114,10 @@ export type CreateProductResponse = {
 
 export type UpdateProductRequest = CreateProductRequest;
 
+export type ProductImageResponse = {
+  imageUrl: string;
+};
+
 export type ProductVariantAdmin = {
   productVariantId: string;
   companyId: string;
