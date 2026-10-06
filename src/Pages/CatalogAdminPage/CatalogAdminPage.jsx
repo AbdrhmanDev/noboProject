@@ -1669,12 +1669,20 @@ export default function CatalogAdminPage() {
     if (sortOrder === null) return showNotice("Sort order must be zero or greater.");
 
     try {
+      // SelfHosted: the image is managed entirely by the separate upload/remove endpoints, and
+      // productForm.imageUrl is never kept in sync with them (there's no text field writing to it
+      // in that mode) -- sending it here would silently overwrite a just-uploaded image back to
+      // whatever stale value was loaded when the product was selected. Pass through the server's
+      // own current value instead, so Save never touches the image either way.
       const payload = {
         name: productForm.name,
         description: productForm.description.trim() || null,
         categoryId: productForm.categoryId || null,
         sortOrder,
-        imageUrl: productForm.imageUrl.trim() || null,
+        imageUrl:
+          env.deploymentMode === "SelfHosted"
+            ? (selectedProduct?.imageUrl ?? null)
+            : productForm.imageUrl.trim() || null,
       };
       const result =
         productMode === "create"

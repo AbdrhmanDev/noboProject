@@ -68,15 +68,17 @@
      (auto-fill + minmax already does that column math from this one value). Floor kept just above
      what the always-52px +/- stepper pill (two 52px circles + the qty digit) actually needs so it
      never overflows the card at the narrowest columns the clamp can produce. */
-  --pos-card-min-w: clamp(124px, 8vw, 148px);
+  --pos-card-min-w: clamp(148px, 9.5vw, 176px);
   /* Explicit, stable card height (3rd pass fix for "cards jumping"; sized up in the 13th pass to
      match the wider card -- see PosProductCard's own h-20 image). PosProductCard uses this for BOTH
      its front and back face (each `absolute inset-0` inside a box of this height), so every card in
      the grid is identical regardless of per-product content (modifiers, variant-count label, etc.)
      -- content that doesn't fit is clamped/truncated, never grows the box. */
-  /* Compact card: image + 2-line name + price + S/M/L row (see PosProductCard.jsx). */
-  --pos-card-h: 168px;
-  --pos-card-img-h: 72px;
+  /* Compact card: image + a dedicated always-reserved stepper row (15th pass: moved OFF the image,
+     see PosProductCard's FrontFace) + 2-line name + price + S/M/L row. Sized up again (16th pass)
+     for easier touch targets -- bigger image, more breathing room around the name/price block. */
+  --pos-card-h: 236px;
+  --pos-card-img-h: 96px;
   --pos-fs-card-name: 13px;
   --pos-fs-card-price: 13px;
   --pos-shadow-hover: 0 4px 12px rgb(0 0 0 / 0.1);
