@@ -30,23 +30,28 @@ export const OPERATIONAL_STATE_ICON = {
 // Restrained, professional per-state palette (color is never the only
 // indicator — every tile also carries an icon + localized text).
 // Floor-plan table colour (RestaurantTableTile) -- the ONLY thing a table shows besides its number,
-// driven by the table's open orders (not its operational state):
-//   empty     no open order (none at all, or everything already paid)        -> no colour
+// driven by the table's open orders AND whether a guest is currently seated (not raw
+// operationalState, which stays backend-authoritative text/icon in the details drawer):
+//   empty     no guest seated (no session) and no open order                 -> no colour
 //   notSent   an open order is still a Draft: taken, not yet sent (confirmed)
 //             to the kitchen, so it isn't on the kitchen screen yet           -> yellow
-//   inKitchen every open order is Confirmed, i.e. sent to the kitchen screen  -> green
+//   inKitchen a guest is seated (session open) and either an order is        -> green
+//             Confirmed/sent to the kitchen, or the bill is already paid but
+//             the guest hasn't left yet (PAID_STILL_SEATED) -- the table is
+//             physically occupied either way, so it must never look "free".
 // "Not sent" wins over "in kitchen": one unsent order on the table is what needs attention.
 export type TableTone = "empty" | "notSent" | "inKitchen";
 
 export function getTableTone(table: {
+  currentSession?: { restaurantTableSessionId: string } | null;
   activeOrders: { status: string; isFullyPaid: boolean }[];
 }): TableTone {
   const openOrders = table.activeOrders.filter(
     (order) => order.status !== "Closed" && order.status !== "Cancelled" && !order.isFullyPaid,
   );
-  if (openOrders.length === 0) return "empty";
   if (openOrders.some((order) => order.status === "Draft")) return "notSent";
-  return "inKitchen";
+  if (openOrders.length > 0 || table.currentSession) return "inKitchen";
+  return "empty";
 }
 
 export const TABLE_TONES: TableTone[] = ["empty", "notSent", "inKitchen"];

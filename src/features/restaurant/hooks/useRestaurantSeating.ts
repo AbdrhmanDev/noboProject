@@ -49,6 +49,11 @@ export const restaurantSeatingQueryKeys = {
     ["restaurant", companyId, branchId, "floors", restaurantFloorId, "tables", restaurantTableId] as const,
 };
 
+// Polled every 15s (same interval as the Restaurant Floor page's useFloorState) so the POS table
+// picker's occupied/available state stays live while it's open -- a cashier picking a table for a
+// new dine-in order must never act on a stale snapshot from before this component mounted.
+const SEATING_REFRESH_INTERVAL_MS = 15000;
+
 export function useRestaurantSeating(
   companyId: string | null | undefined,
   branchId: string | null | undefined,
@@ -58,6 +63,7 @@ export function useRestaurantSeating(
     queryKey: restaurantSeatingQueryKeys.list(companyId || "", branchId || ""),
     queryFn: () => getRestaurantSeating(companyId as string, branchId as string),
     enabled: Boolean(companyId) && Boolean(branchId) && enabled,
+    refetchInterval: SEATING_REFRESH_INTERVAL_MS,
   });
 }
 

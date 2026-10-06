@@ -295,16 +295,18 @@ export function OrderHeader({
                           handleTableSelect(table);
                           closePicker();
                         }}
-                        className={`min-h-11 rounded-lg border px-2 py-2 text-[11px] transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400 disabled:cursor-not-allowed disabled:opacity-45 ${
+                        className={`min-h-11 rounded-lg border px-2 py-2 text-[11px] transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400 disabled:cursor-not-allowed ${
                           isMergeMode && mergeCandidate?.restaurantTableId === table.restaurantTableId
                             ? "border-pos-primary bg-pos-tint text-pos-text"
                             : effectiveRestaurantTableId === table.restaurantTableId
                               ? "border-success bg-success-soft text-pos-text"
-                              : "border-pos-border bg-pos-bg text-pos-text hover:bg-pos-tint"
+                              : table.isOccupied
+                                ? "border-pos-danger/60 bg-pos-danger-tint text-pos-danger-text disabled:opacity-60"
+                                : "border-pos-action/60 bg-pos-action-tint text-pos-action-text hover:border-pos-action"
                         }`}
                       >
                         <span className="block truncate font-bold">{table.code}</span>
-                        <span className="block truncate text-[9px] text-pos-muted">
+                        <span className="block truncate text-[9px] opacity-80">
                           {table.isOccupied
                             ? t("pos.table.open", { count: table.openSalesOrderCount })
                             : table.name || t("pos.table.available")}

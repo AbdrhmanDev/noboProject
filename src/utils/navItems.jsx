@@ -1,6 +1,6 @@
 import {
-  Home, ScanLine, ChefHat, ShoppingBag, ShoppingCart, Boxes, Contact,
-  Calculator, BarChart3, Briefcase, UserCog, Settings, MoreHorizontal, Package,
+  Home, ScanLine, ChefHat, ShoppingBag, ShoppingCart, Boxes,
+  Settings, MoreHorizontal, Package,
   Coins, ReceiptText, WalletCards, Armchair, Printer, ShieldCheck, ShieldAlert, UsersRound, FileText,
   Building2, Cpu, ShieldHalf,
 } from "lucide-react";
@@ -30,11 +30,6 @@ export const NAV_ITEMS = [
   { icon: Boxes, labelKey: "nav.inventory", kind: "group", module: "inventory" },
   { icon: ShoppingBag, labelKey: "nav.sales", to: ROUTES.SALES, permission: SALES_ORDERS_VIEW_PERMISSION },
   { icon: ShoppingCart, labelKey: "nav.purchases", kind: "group", module: "procurement" },
-  { icon: Contact, labelKey: "nav.customers", to: ROUTES.CUSTOMERS, comingSoon: true },
-  { icon: Calculator, labelKey: "nav.accounting", to: ROUTES.ACCOUNTING, comingSoon: true },
-  { icon: BarChart3, labelKey: "nav.reports", to: ROUTES.REPORTS, comingSoon: true },
-  { icon: Briefcase, labelKey: "nav.projects", to: ROUTES.PROJECTS, comingSoon: true },
-  { icon: UserCog, labelKey: "nav.hr", to: ROUTES.HR, comingSoon: true },
   // NOBO-internal Control Plane -- NOT a Commercial App and NOT gated by company
   // entitlement/permission at all (see PlatformNavGroup); visible only to platform staff.
   { icon: ShieldCheck, labelKey: "nav.platform", kind: "group", module: "platform" },

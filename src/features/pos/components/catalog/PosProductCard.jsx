@@ -6,6 +6,7 @@ import { useI18n } from "../../../../i18n/I18nContext";
 import { useProductVariantInventoryConsumption } from "../../../inventory/hooks/useInventory";
 import {
   STOCK_LEVELS,
+  abbreviateModifierLabel,
   getStockLevel,
   sortVariantsBySize,
   variantSizeLabel,
@@ -138,6 +139,29 @@ export function PosProductCard({
                   </button>
                 );
               })}
+            </div>
+          )}
+
+          {quantityInCart > 0 && representativeLine && (
+            <div className="pos-chip-soft rounded-pos px-1.5 py-1">
+              {representativeLine.modifiers.length > 0 && (
+                <div className="mb-1 flex flex-wrap items-center gap-1">
+                  {representativeLine.modifiers.map((modifier) => (
+                    <span
+                      key={modifier.modifierOptionId}
+                      className="pos-chip pos-num rounded-full px-1.5 py-0.5 text-[10px] font-bold"
+                    >
+                      {abbreviateModifierLabel(modifier.modifierOptionName)}
+                    </span>
+                  ))}
+                </div>
+              )}
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-pos-muted">{t("pos.catalog.subtotal")}</span>
+                <span className="pos-num font-bold text-pos-text">
+                  {formatMoney(cartInfo.subtotal, currencyCode, 2)}
+                </span>
+              </div>
             </div>
           )}
 
