@@ -79,14 +79,14 @@ function AddressFields({ address, setAddress, disabled }) {
   return (
     <div className="grid gap-2 sm:grid-cols-2">
       {ADDRESS_FIELDS.map(([field, label, required]) => (
-        <label key={field} className="text-xs font-semibold text-slate-400">
+        <label key={field} className="text-sm font-semibold text-muted">
           {label}
           {required && " *"}
           <input
             value={address[field]}
             onChange={(event) => setAddress((current) => ({ ...current, [field]: event.target.value }))}
             disabled={disabled}
-            className="mt-1 h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+            className="mt-1 h-10 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
           />
         </label>
       ))}
@@ -130,49 +130,49 @@ function CreateBranchModal({ companyId, onClose }) {
     <BranchesModal title="New branch" onClose={onClose} size="lg">
       <form onSubmit={submit} className="space-y-3">
         <div className="grid gap-2 sm:grid-cols-3">
-          <label className="text-xs font-semibold text-slate-400">
+          <label className="text-sm font-semibold text-muted">
             Name
             <input
               value={name}
               onChange={(event) => setName(event.target.value)}
               disabled={createMutation.isPending}
-              className="mt-1 h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+              className="mt-1 h-10 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
             />
           </label>
-          <label className="text-xs font-semibold text-slate-400">
+          <label className="text-sm font-semibold text-muted">
             Code
             <input
               value={code}
               onChange={(event) => setCode(event.target.value)}
               disabled={createMutation.isPending}
-              className="mt-1 h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+              className="mt-1 h-10 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
             />
           </label>
-          <label className="text-xs font-semibold text-slate-400">
+          <label className="text-sm font-semibold text-muted">
             Phone
             <input
               value={phone}
               onChange={(event) => setPhone(event.target.value)}
               disabled={createMutation.isPending}
-              className="mt-1 h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+              className="mt-1 h-10 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
             />
           </label>
         </div>
         <AddressFields address={address} setAddress={setAddress} disabled={createMutation.isPending} />
-        {error && <div className="rounded-xl border border-red-400/20 bg-red-500/10 p-2 text-xs text-red-200">{error}</div>}
+        {error && <div className="rounded-xl border border-danger bg-danger-soft p-2 text-sm text-danger">{error}</div>}
         <div className="flex gap-2 pt-1">
           <button
             type="button"
             onClick={onClose}
             disabled={createMutation.isPending}
-            className="h-10 flex-1 rounded-xl border border-white/10 text-xs font-bold text-slate-300 disabled:opacity-50"
+            className="h-10 flex-1 rounded-xl border border-line text-sm font-bold text-muted disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={createMutation.isPending}
-            className="h-10 flex-1 rounded-xl bg-blue-600 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+            className="h-10 flex-1 rounded-xl bg-accent text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             {createMutation.isPending ? "Creating..." : "Create"}
           </button>
@@ -207,26 +207,26 @@ function GenerationUnitAssignmentRow({ companyId, branchId, canManage }) {
   };
 
   return (
-    <div className="space-y-2 rounded-xl border border-white/10 bg-white/[0.02] p-3">
-      <div className="text-xs font-bold text-slate-400">Generation unit (ZATCA compliance)</div>
+    <div className="space-y-2 rounded-xl border border-line bg-raised p-3">
+      <div className="text-sm font-bold text-muted">Generation unit (ZATCA compliance)</div>
       {assignment.isAssigned ? (
-        <div className="flex items-center justify-between gap-2 text-xs">
+        <div className="flex items-center justify-between gap-2 text-sm">
           <div>
-            <div className="font-bold text-white">{assignment.generationUnitName}</div>
-            <div className="text-[10px] text-slate-500">
+            <div className="font-bold text-ink">{assignment.generationUnitName}</div>
+            <div className="text-xs text-subtle">
               Status: {assignment.generationUnitStatus} · assigned {formatDateTime(assignment.assignedAtUtc)}
             </div>
           </div>
         </div>
       ) : (
-        <p className="text-xs text-amber-300">No generation unit assigned yet.</p>
+        <p className="text-sm text-warning">No generation unit assigned yet.</p>
       )}
       {canManage && (
         <div className="flex gap-2">
           <select
             value={selected}
             onChange={(event) => setSelected(event.target.value)}
-            className="h-9 flex-1 rounded-lg border border-white/10 bg-black/20 px-2 text-xs text-white outline-none"
+            className="h-9 flex-1 rounded-lg border border-line bg-canvas px-2 text-sm text-ink outline-none"
           >
             <option value="">{assignment.isAssigned ? "Reassign to..." : "Assign to..."}</option>
             {activeUnits
@@ -242,13 +242,13 @@ function GenerationUnitAssignmentRow({ companyId, branchId, canManage }) {
             type="button"
             disabled={!selected || assignMutation.isPending}
             onClick={assign}
-            className="rounded-lg bg-blue-600 px-3 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-lg bg-accent px-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             {assignMutation.isPending ? "..." : "Set"}
           </button>
         </div>
       )}
-      {error && <div className="rounded-xl border border-red-400/20 bg-red-500/10 p-2 text-[11px] text-red-200">{error}</div>}
+      {error && <div className="rounded-xl border border-danger bg-danger-soft p-2 text-xs text-danger">{error}</div>}
     </div>
   );
 }
@@ -316,12 +316,12 @@ function BranchDetailsPanel({ companyId, branchId, canManage, canManageComplianc
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2 text-xs text-slate-400">
-            <Building2 size={15} className="text-blue-300" /> Branch details
+          <div className="flex items-center gap-2 text-sm text-muted">
+            <Building2 size={15} className="text-accent" /> Branch details
           </div>
-          <h2 className="mt-1 text-xl font-black text-white">{branch.name}</h2>
+          <h2 className="mt-1 text-xl font-black text-ink">{branch.name}</h2>
           {provenance && (
-            <p className="mt-1 text-[11px] text-slate-500">
+            <p className="mt-1 text-xs text-subtle">
               Sourced from approved profile, proposal #{provenance.ordinal} -- read-only, cannot be changed here.
             </p>
           )}
@@ -332,7 +332,7 @@ function BranchDetailsPanel({ companyId, branchId, canManage, canManageComplianc
             <button
               type="button"
               onClick={() => setConfirmStatus(nextStatus)}
-              className="flex items-center gap-1.5 rounded-lg border border-white/10 px-2 py-1 text-[11px] font-bold text-slate-200 hover:border-blue-400/40"
+              className="flex items-center gap-1.5 rounded-lg border border-line px-2 py-1 text-xs font-bold text-ink hover:border-accent-line"
             >
               {nextStatus === "Suspended" ? <CirclePause size={13} /> : <CirclePlay size={13} />}
               {nextStatus === "Suspended" ? "Suspend" : "Activate"}
@@ -341,36 +341,36 @@ function BranchDetailsPanel({ companyId, branchId, canManage, canManageComplianc
         </div>
       </div>
 
-      {notice && <div className="rounded-xl border border-blue-400/25 bg-blue-500/10 px-3 py-2 text-xs text-blue-100">{notice}</div>}
-      {error && <div className="rounded-xl border border-red-400/20 bg-red-500/10 px-3 py-2 text-xs text-red-200">{error}</div>}
+      {notice && <div className="rounded-xl border border-accent-line bg-accent-soft px-3 py-2 text-sm text-accent">{notice}</div>}
+      {error && <div className="rounded-xl border border-danger bg-danger-soft px-3 py-2 text-sm text-danger">{error}</div>}
 
       <form onSubmit={submit} className="space-y-3">
         <div className="grid gap-2 sm:grid-cols-3">
-          <label className="text-xs font-semibold text-slate-400">
+          <label className="text-sm font-semibold text-muted">
             Name
             <input
               value={form.name}
               onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
               disabled={!canManage || updateMutation.isPending}
-              className="mt-1 h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+              className="mt-1 h-10 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
             />
           </label>
-          <label className="text-xs font-semibold text-slate-400">
+          <label className="text-sm font-semibold text-muted">
             Code
             <input
               value={form.code}
               onChange={(event) => setForm((current) => ({ ...current, code: event.target.value }))}
               disabled={!canManage || updateMutation.isPending}
-              className="mt-1 h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+              className="mt-1 h-10 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
             />
           </label>
-          <label className="text-xs font-semibold text-slate-400">
+          <label className="text-sm font-semibold text-muted">
             Phone
             <input
               value={form.phoneNumber}
               onChange={(event) => setForm((current) => ({ ...current, phoneNumber: event.target.value }))}
               disabled={!canManage || updateMutation.isPending}
-              className="mt-1 h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+              className="mt-1 h-10 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
             />
           </label>
         </div>
@@ -379,7 +379,7 @@ function BranchDetailsPanel({ companyId, branchId, canManage, canManageComplianc
           <button
             type="submit"
             disabled={updateMutation.isPending}
-            className="flex h-10 items-center gap-2 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex h-10 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Save size={14} /> {updateMutation.isPending ? "Saving..." : "Save changes"}
           </button>
@@ -431,7 +431,7 @@ export function BranchesPage() {
 
   return (
     <AppLayout>
-      <main className="space-y-4" dir="rtl">
+      <main className="odoo-root space-y-3" dir="rtl">
         <PageHeader
           title="Branches"
           actions={
@@ -439,7 +439,7 @@ export function BranchesPage() {
               <button
                 type="button"
                 onClick={() => branchesQuery.refetch()}
-                className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold text-slate-100"
+                className="flex items-center gap-2 rounded-xl border border-line bg-raised px-3 py-2 text-sm font-bold text-ink"
               >
                 <RefreshCw size={14} /> Refresh
               </button>
@@ -447,7 +447,7 @@ export function BranchesPage() {
                 <button
                   type="button"
                   onClick={() => setShowCreate(true)}
-                  className="flex items-center gap-2 rounded-xl bg-blue-600 px-3 py-2 text-xs font-bold text-white"
+                  className="flex items-center gap-2 rounded-xl bg-accent px-3 py-2 text-sm font-bold text-white"
                 >
                   <Plus size={14} /> New branch
                 </button>
@@ -465,7 +465,7 @@ export function BranchesPage() {
         ) : (
           <div className="grid gap-4 xl:grid-cols-[380px_1fr]">
             <section className="space-y-3">
-              <div className="rounded-2xl border border-white/10 bg-[#0c1424] p-3">
+              <div className="rounded-xl border border-line bg-surface p-3">
                 {branchesQuery.isLoading && <LoadingState label="Loading branches..." />}
                 {branchesQuery.isError && (
                   <ErrorState title="Unable to load branches" message={getErrorMessage(branchesQuery.error)} />
@@ -482,19 +482,19 @@ export function BranchesPage() {
                           type="button"
                           key={branch.branchId}
                           onClick={() => setSelectedBranchId(branch.branchId)}
-                          className={`w-full rounded-xl border p-3 text-start transition hover:border-blue-400/40 hover:bg-blue-500/10 ${
-                            selectedBranchId === branch.branchId ? "border-blue-400/60 bg-blue-500/15" : "border-white/10 bg-[#0d1728]"
+                          className={`w-full rounded-xl border p-3 text-start transition hover:border-accent-line hover:bg-accent-soft ${
+                            selectedBranchId === branch.branchId ? "border-accent-line bg-accent-soft" : "border-line bg-raised"
                           }`}
                         >
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
-                              <div className="truncate text-sm font-black text-white">{branch.name}</div>
-                              <div className="text-[11px] text-slate-400">{branch.code}</div>
+                              <div className="truncate text-sm font-black text-ink">{branch.name}</div>
+                              <div className="text-xs text-muted">{branch.code}</div>
                             </div>
                             <StatusBadge tone={statusTone(branch.status)}>{branch.status}</StatusBadge>
                           </div>
                           {provenance && (
-                            <div className="mt-1.5 text-[10px] text-slate-500">From approved profile</div>
+                            <div className="mt-1.5 text-xs text-subtle">From approved profile</div>
                           )}
                         </button>
                       );
@@ -510,7 +510,7 @@ export function BranchesPage() {
               />
             </section>
 
-            <section className="rounded-2xl border border-white/10 bg-[#0c1424] p-4">
+            <section className="rounded-xl border border-line bg-surface p-4">
               {!selectedBranchId ? (
                 <EmptyState title="Select a branch" message="Choose a branch on the left to see its details." />
               ) : (

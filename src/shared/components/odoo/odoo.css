@@ -1,0 +1,123 @@
+/* Odoo-style status bar steps (StatusBar.jsx): chevron-shaped, each one notched into the next.
+   Logical direction: the point faces the reading direction's end, so the shape mirrors in RTL. */
+.odoo-stage {
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 0 100%, 10px 50%);
+  padding-inline: 1.25rem 1rem;
+}
+.odoo-stage:first-child {
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 0 100%);
+  border-start-start-radius: 6px;
+  border-end-start-radius: 6px;
+}
+[dir="rtl"] .odoo-stage {
+  clip-path: polygon(100% 0, 10px 0, 0 50%, 10px 100%, 100% 100%, calc(100% - 10px) 50%);
+}
+[dir="rtl"] .odoo-stage:first-child {
+  clip-path: polygon(100% 0, 10px 0, 0 50%, 10px 100%, 100% 100%);
+}
+
+/*
+ * Odoo look for the back-office modules (Sales, Inventory): put `odoo-root` on a page's <main>.
+ * Everything below is scoped to it, so the POS and the rest of the app keep their own design.
+ * It only redefines the app's semantic colour tokens (--nobo-*, read by bg-surface, text-ink,
+ * border-line, text-accent, ...), so every component on the page picks the Odoo colours up without
+ * class changes. Fonts and sizes are app-wide (src/index.css). Tune the module colours from here.
+ *
+ * Roles:  accent = neutral: white on dark, near-black on light (active tab, selection, accent
+ *         text, focus) -- no purple; filled buttons are black (see "buttons" below)
+ *         --odoo-link = Odoo teal (breadcrumb links)
+ *         --odoo-title = section / KPI titles: the main text colour (white on dark, near-black
+ *         on light) -- titles never take the accent.
+ * Default (no data-theme) is the app's dark theme, so the dark values come first and the light
+ * ones are under [data-theme="light"].
+ */
+.odoo-root {
+  /* Font and type scale come from the app-wide typography in src/index.css. */
+
+  /* ---- colour: Odoo 17 dark ---- */
+  --nobo-canvas: #1b1d26;
+  --nobo-surface: #262a36;
+  --nobo-raised: #2b2f3c;
+  --nobo-hover: #313646;
+  --nobo-inset: rgb(255 255 255 / 0.04);
+  --nobo-line: #3a3f4f;
+  --nobo-line-strong: #4a5063;
+  --nobo-text: #dee2e6;
+  --nobo-muted: #adb5bd;
+  --nobo-subtle: #868e96;
+  --nobo-accent: #ffffff;
+  --nobo-accent-strong: #e9ecef;
+  --nobo-accent-soft: rgb(255 255 255 / 0.1);
+  --nobo-accent-line: rgb(255 255 255 / 0.45);
+  --nobo-success: #49b47a;
+  --nobo-success-soft: rgb(73 180 122 / 0.16);
+  --nobo-warning: #e4a23b;
+  --nobo-warning-soft: rgb(228 162 59 / 0.16);
+  --nobo-danger: #e06c75;
+  --nobo-danger-soft: rgb(224 108 117 / 0.16);
+  --odoo-link: #3fb0a9;
+  --odoo-title: #ffffff;
+  --shadow-surface: 0 1px 2px rgb(0 0 0 / 0.3);
+
+  color: var(--nobo-text);
+}
+
+[data-theme="light"] .odoo-root {
+  /* ---- colour: Odoo 17 light ---- */
+  --nobo-canvas: #f3f4f6;
+  --nobo-surface: #ffffff;
+  --nobo-raised: #f8f9fa;
+  --nobo-hover: #f1f3f5;
+  --nobo-inset: rgb(33 37 41 / 0.04);
+  --nobo-line: #dee2e6;
+  --nobo-line-strong: #ced4da;
+  --nobo-text: #212529;
+  --nobo-muted: #495057;
+  --nobo-subtle: #6c757d;
+  --nobo-accent: #111111;
+  --nobo-accent-strong: #343a40;
+  --nobo-accent-soft: rgb(17 17 17 / 0.07);
+  --nobo-accent-line: rgb(17 17 17 / 0.4);
+  --nobo-success: #28a745;
+  --nobo-success-soft: rgb(40 167 69 / 0.12);
+  --nobo-warning: #b8730a;
+  --nobo-warning-soft: rgb(255 172 0 / 0.16);
+  --nobo-danger: #d23f3a;
+  --nobo-danger-soft: rgb(210 63 58 / 0.1);
+  --odoo-link: #017e84;
+  --odoo-title: #212529;
+  --shadow-surface: 0 1px 2px rgb(33 37 41 / 0.06);
+}
+
+/* Teal links (Odoo breadcrumbs) and section / KPI titles. */
+.odoo-root .odoo-link {
+  color: var(--odoo-link);
+}
+.odoo-root .odoo-title {
+  color: var(--odoo-title);
+  font-weight: 700;
+}
+
+/* ---- buttons: black with white text in both themes ----
+   Filled buttons (bg-accent / hover:bg-accent-strong, always paired with text-white) are black
+   in both themes -- the accent itself is white on dark, so it can't double as the button fill.
+   In dark mode a hairline keeps the black button visible against the dark surface. */
+.odoo-root {
+  --odoo-button: #000000;
+  --odoo-button-hover: #2b2d33;
+  --odoo-button-text: #ffffff;
+  --odoo-button-edge: rgb(255 255 255 / 0.16);
+}
+[data-theme="light"] .odoo-root {
+  --odoo-button-hover: #343a40;
+  --odoo-button-edge: transparent;
+}
+.odoo-root .bg-accent,
+.odoo-root .bg-accent-strong {
+  background-color: var(--odoo-button);
+  color: var(--odoo-button-text);
+  box-shadow: inset 0 0 0 1px var(--odoo-button-edge);
+}
+.odoo-root .hover\:bg-accent-strong:hover:not(:disabled) {
+  background-color: var(--odoo-button-hover);
+}

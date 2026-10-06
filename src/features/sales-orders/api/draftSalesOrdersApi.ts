@@ -8,6 +8,8 @@ import type {
   RequestSalesOrderDiscountRequest,
   RequestSalesOrderDiscountResponse,
   DraftSalesOrder,
+  MergeSalesOrdersRequest,
+  MergeSalesOrdersResponse,
   RetrievableSalesOrdersFilters,
   RetrievableSalesOrdersResponse,
   UpdateDraftSalesOrderRequest,
@@ -99,6 +101,23 @@ export async function confirmSalesOrder(
 ) {
   const response = await httpClient.post<ConfirmSalesOrderResponse>(
     `${salesOrdersBaseUrl(companyId, branchId)}/${salesOrderId}/confirm`,
+  );
+
+  return response.data;
+}
+
+// Merges `sourceSalesOrderId` (another table's open DineIn order) INTO `targetSalesOrderId`, server
+// side in one transaction. Contract per the table transfer/merge API spec -- NOT available on the
+// backend yet; only called when env.features.tableMerge is on.
+export async function mergeSalesOrders(
+  companyId: string,
+  branchId: string,
+  targetSalesOrderId: string,
+  payload: MergeSalesOrdersRequest,
+) {
+  const response = await httpClient.post<MergeSalesOrdersResponse>(
+    `${salesOrdersBaseUrl(companyId, branchId)}/${targetSalesOrderId}/merge`,
+    payload,
   );
 
   return response.data;

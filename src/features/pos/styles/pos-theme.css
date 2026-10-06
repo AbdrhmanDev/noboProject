@@ -74,9 +74,9 @@
      its front and back face (each `absolute inset-0` inside a box of this height), so every card in
      the grid is identical regardless of per-product content (modifiers, variant-count label, etc.)
      -- content that doesn't fit is clamped/truncated, never grows the box. */
-  /* Compact card: image + 2-line name + price + S/M/L row (see PosProductCard.jsx). */
-  --pos-card-h: 168px;
-  --pos-card-img-h: 72px;
+  /* Flip card: full-photo front; back holds name + price, S/M/L, the +/- stepper and stock (see
+     PosProductCard.jsx). */
+  --pos-card-h: 176px;
   --pos-fs-card-name: 13px;
   --pos-fs-card-price: 13px;
   --pos-shadow-hover: 0 4px 12px rgb(0 0 0 / 0.1);
@@ -86,6 +86,9 @@
      scrollable content areas and floating elements (cart button, cart sheet) add this -- plus
      env(safe-area-inset-bottom) and a small gap -- as their bottom clearance. */
   --pos-bottom-chrome-h: var(--pos-status-bar-h);
+  /* Extra bottom room the scrollable product areas keep so the floating cart button (68px circle +
+     its total pill, see FloatingOrderButton.jsx) never covers the last row of cards. */
+  --pos-fab-clearance: 6.5rem;
 
   font-family: var(--pos-font);
   font-size: calc(var(--pos-fs-base) * var(--pos-font-scale));
@@ -279,6 +282,41 @@ html[lang="ar"] .pos-root {
   100% {
     transform: scaleX(1);
   }
+}
+
+/* Product card 3D flip (PosProductCard): the front (full image) and back (sizes / stepper / stock)
+   are both absolutely stacked inside .pos-flip-inner, each with backface-visibility hidden; the
+   back is pre-rotated 180deg so it reads the right way round once the inner turns. Off under
+   prefers-reduced-motion (the faces swap instantly). */
+.pos-flip {
+  perspective: 900px;
+}
+.pos-flip-inner {
+  position: relative;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 420ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.pos-flip[data-flipped="true"] .pos-flip-inner {
+  transform: rotateY(180deg);
+}
+.pos-flip-face {
+  position: absolute;
+  inset: 0;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+.pos-flip-back {
+  transform: rotateY(180deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .pos-flip-inner {
+    transition: none;
+  }
+}
+/* Keeps a full-bleed product photo's name legible on any image. */
+.pos-photo-scrim {
+  background: linear-gradient(to top, rgb(0 0 0 / 0.72), rgb(0 0 0 / 0.35) 60%, transparent);
 }
 
 /* Product image tile: a soft frame instead of a flat white square, and a tinted circle behind the

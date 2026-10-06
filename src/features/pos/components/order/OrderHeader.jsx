@@ -1,5 +1,5 @@
-import { useRef } from "react";
-import { Loader2, ShoppingCart, UserRound, X } from "lucide-react";
+import { useRef, useState } from "react";
+import { ArrowLeftRight, Combine, Loader2, ShoppingCart, UserRound, X } from "lucide-react";
 import { useI18n } from "../../../../i18n/I18nContext";
 import { labelFor } from "../../utils/brandAccents";
 import { ROUTES } from "../../../../utils/routes";
@@ -33,6 +33,10 @@ export function OrderHeader({
   seatingQuery,
   effectiveRestaurantTableId,
   handleTableSelect,
+  mergeFeatureEnabled = false,
+  canMergeTables = false,
+  isMergePending = false,
+  onMergeTable,
   currentCompanyId,
   currentBranchId,
   invalidateRestaurantSeating,
@@ -40,6 +44,23 @@ export function OrderHeader({
   const { t } = useI18n();
   const tableGridRef = useRef(null);
   const handleTableGridKeyDown = useGridArrowNav(tableGridRef, ROVING_ITEM_SELECTOR);
+  // Once the order has a table, the table grid collapses to a summary row with two actions that
+  // reopen it in a mode:
+  //  - "transfer": pick a FREE table; moves the order through the same handleTableSelect ->
+  //    updateDraftContext path as the first pick. The backend only allows this while the order is
+  //    still a Draft (canEditDraft) -- after Confirm it's locked.
+  //  - "merge": pick an OCCUPIED table, confirm, and its order is merged into this one by the
+  //    backend (onMergeTable -> POSPage's mergeWithTable). Disabled until the merge endpoint ships
+  //    (mergeFeatureEnabled / canMergeTables).
+  const [pickerMode, setPickerMode] = useState(null);
+  const [mergeCandidate, setMergeCandidate] = useState(null);
+  const showTableGrid = !selectedRestaurantTable || pickerMode !== null;
+  const isMergeMode = pickerMode === "merge";
+  const canTransferTable = canEditDraft && !isDraftMutationPending;
+  const closePicker = () => {
+    setPickerMode(null);
+    setMergeCandidate(null);
+  };
 
   return (
     <>
@@ -120,14 +141,95 @@ export function OrderHeader({
         </div>
         {orderType === "DineIn" && (
           <div className="space-y-2">
-            <div className="flex items-center justify-between gap-2 text-[10px] text-pos-muted">
-              <span>{t("pos.table.label")}</span>
-              <span className="text-pos-primary-text">
-                {selectedRestaurantTable
-                  ? `${selectedRestaurantTable.floorName} · ${selectedRestaurantTable.code}`
-                  : t("pos.table.required")}
-              </span>
-            </div>
+            {selectedRestaurantTable ? (
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-pos border border-pos-border bg-pos-bg px-2.5 py-1.5">
+                <div className="min-w-0">
+                  <div className="text-[10px] text-pos-muted">{t("pos.table.label")}</div>
+                  <div className="truncate text-sm font-bold text-pos-text">
+                    <span className="pos-num">{selectedRestaurantTable.code}</span>
+                    <span className="ms-1 text-[11px] font-normal text-pos-muted">· {selectedRestaurantTable.floorName}</span>
+                  </div>
+                </div>
+                {pickerMode ? (
+                  <button
+                    type="button"
+                    onClick={closePicker}
+                    className="pos-control pos-fs-label flex shrink-0 items-center gap-1 border border-pos-border bg-pos-card px-3 font-bold text-pos-text transition hover:bg-pos-tint"
+                  >
+                    <X size={14} />
+                    {t("pos.table.transferCancel")}
+                  </button>
+                ) : (
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setPickerMode("transfer")}
+                      disabled={!canTransferTable}
+                      title={canEditDraft ? undefined : t("pos.table.transferLocked")}
+                      className="pos-control pos-fs-label flex items-center gap-1.5 border border-pos-primary bg-pos-card px-3 font-bold text-pos-primary-text transition hover:bg-pos-tint disabled:cursor-not-allowed disabled:border-pos-border disabled:text-pos-muted disabled:opacity-60"
+                    >
+                      <ArrowLeftRight size={14} />
+                      {t("pos.table.transfer")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPickerMode("merge")}
+                      disabled={!canMergeTables}
+                      title={mergeFeatureEnabled ? undefined : t("pos.merge.notAvailable")}
+                      className="pos-control pos-fs-label flex items-center gap-1.5 border border-pos-primary bg-pos-card px-3 font-bold text-pos-primary-text transition hover:bg-pos-tint disabled:cursor-not-allowed disabled:border-pos-border disabled:text-pos-muted disabled:opacity-60"
+                    >
+                      <Combine size={14} />
+                      {t("pos.merge.button")}
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center justify-between gap-2 text-[10px] text-pos-muted">
+                <span>{t("pos.table.label")}</span>
+                <span className="text-pos-primary-text">{t("pos.table.required")}</span>
+              </div>
+            )}
+            {selectedRestaurantTable && !canEditDraft && (
+              <p className="text-[10px] text-pos-muted">{t("pos.table.transferLocked")}</p>
+            )}
+            {selectedRestaurantTable && !mergeFeatureEnabled && (
+              <p className="text-[10px] text-pos-muted">{t("pos.merge.notAvailable")}</p>
+            )}
+            {pickerMode && (
+              <p className="text-[11px] font-bold text-pos-primary-text">
+                {isMergeMode ? t("pos.merge.pick") : t("pos.table.transferPick")}
+              </p>
+            )}
+            {isMergeMode && mergeCandidate && (
+              <div className="space-y-2 rounded-pos border border-pos-primary bg-pos-tint p-2.5">
+                <p className="text-xs font-bold text-pos-text">
+                  {t("pos.merge.confirm", { table: mergeCandidate.code, current: selectedRestaurantTable?.code })}
+                </p>
+                <div className="flex gap-1.5">
+                  <button
+                    type="button"
+                    disabled={isMergePending}
+                    onClick={async () => {
+                      await onMergeTable(mergeCandidate);
+                      closePicker();
+                    }}
+                    className="pos-control pos-fs-label flex flex-1 items-center justify-center gap-1.5 bg-pos-primary-strong px-3 font-bold text-white transition hover:bg-pos-primary-strong-hover disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isMergePending ? <Loader2 size={14} className="animate-spin" /> : <Combine size={14} />}
+                    {t("pos.merge.confirmButton")}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isMergePending}
+                    onClick={() => setMergeCandidate(null)}
+                    className="pos-control pos-fs-label border border-pos-border bg-pos-card px-3 font-bold text-pos-text transition hover:bg-pos-bg disabled:opacity-60"
+                  >
+                    {t("pos.table.transferCancel")}
+                  </button>
+                </div>
+              </div>
+            )}
             {restaurantPermissionQuery.isLoading && (
               <p className="rounded-lg bg-pos-bg px-2 py-2 text-[10px] text-pos-muted">
                 {t("pos.table.checking")}
@@ -167,6 +269,7 @@ export function OrderHeader({
                   </button>
                 </>
               )}
+            {showTableGrid && (
             <div ref={tableGridRef} onKeyDown={handleTableGridKeyDown}>
               {seatingQuery.data?.map((floor) => (
                 <div key={floor.restaurantFloorId}>
@@ -177,12 +280,27 @@ export function OrderHeader({
                         key={table.restaurantTableId}
                         type="button"
                         data-roving-item=""
-                        disabled={!canEditDraft || isDraftMutationPending || table.isOccupied}
-                        onClick={() => handleTableSelect(table)}
+                        disabled={
+                          isMergeMode
+                            ? !table.isOccupied ||
+                              table.restaurantTableId === effectiveRestaurantTableId ||
+                              isMergePending
+                            : !canEditDraft || isDraftMutationPending || table.isOccupied
+                        }
+                        onClick={() => {
+                          if (isMergeMode) {
+                            setMergeCandidate(table);
+                            return;
+                          }
+                          handleTableSelect(table);
+                          closePicker();
+                        }}
                         className={`min-h-11 rounded-lg border px-2 py-2 text-[11px] transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400 disabled:cursor-not-allowed disabled:opacity-45 ${
-                          effectiveRestaurantTableId === table.restaurantTableId
-                            ? "border-success bg-success-soft text-pos-text"
-                            : "border-pos-border bg-pos-bg text-pos-text hover:bg-pos-tint"
+                          isMergeMode && mergeCandidate?.restaurantTableId === table.restaurantTableId
+                            ? "border-pos-primary bg-pos-tint text-pos-text"
+                            : effectiveRestaurantTableId === table.restaurantTableId
+                              ? "border-success bg-success-soft text-pos-text"
+                              : "border-pos-border bg-pos-bg text-pos-text hover:bg-pos-tint"
                         }`}
                       >
                         <span className="block truncate font-bold">{table.code}</span>
@@ -197,6 +315,7 @@ export function OrderHeader({
                 </div>
               ))}
             </div>
+            )}
           </div>
         )}
       </div>

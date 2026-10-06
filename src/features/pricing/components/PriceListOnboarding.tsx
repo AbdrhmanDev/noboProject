@@ -47,7 +47,7 @@ function mapCreatePriceListError(error: ApiError) {
 }
 
 const inputClass =
-  "mt-2 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-blue-400/60 disabled:cursor-not-allowed disabled:opacity-60";
+  "mt-2 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none transition placeholder:text-subtle focus:border-accent-line disabled:cursor-not-allowed disabled:opacity-60";
 
 type PriceListOnboardingProps = {
   onCreated?: () => void;
@@ -110,12 +110,12 @@ export function PriceListOnboarding({ onCreated }: PriceListOnboardingProps) {
     return (
       <section className="panel rounded-2xl p-5">
         <div className="flex items-center gap-3">
-          <div className="grid h-11 w-11 place-items-center rounded-xl bg-yellow-500/15 text-yellow-300">
+          <div className="grid h-11 w-11 place-items-center rounded-xl bg-warning-soft text-warning">
             <LockKeyhole size={20} />
           </div>
           <div>
             <h1 className="brand-text text-xl font-black">Pricing setup required</h1>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-muted">
               This company has no active default price list yet, and your role cannot
               configure pricing. Ask an owner or manager to set it up.
             </p>
@@ -128,12 +128,12 @@ export function PriceListOnboarding({ onCreated }: PriceListOnboardingProps) {
   return (
     <section className="panel rounded-2xl p-5">
       <div className="flex items-center gap-3">
-        <div className="grid h-11 w-11 place-items-center rounded-xl bg-blue-500/15 text-blue-300">
+        <div className="grid h-11 w-11 place-items-center rounded-xl bg-accent-soft text-accent">
           <Tags size={20} />
         </div>
         <div>
           <h1 className="brand-text text-xl font-black">Pricing Setup Required</h1>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-muted">
             This company does not have an active default price list yet. Create your
             first default price list to continue setting up POS.
           </p>
@@ -142,7 +142,7 @@ export function PriceListOnboarding({ onCreated }: PriceListOnboardingProps) {
 
       <form onSubmit={handleSubmit(onSubmit)} className="mt-5 grid gap-4 sm:grid-cols-2">
         <label className="block">
-          <span className="text-xs font-bold text-slate-300">Price List Name</span>
+          <span className="text-xs font-bold text-muted">Price List Name</span>
           <input
             type="text"
             maxLength={200}
@@ -151,33 +151,33 @@ export function PriceListOnboarding({ onCreated }: PriceListOnboardingProps) {
             className={inputClass}
           />
           {fieldMessage(errors.name?.message) && (
-            <span className="mt-1.5 block text-xs text-rose-300">
+            <span className="mt-1.5 block text-xs text-danger">
               {fieldMessage(errors.name?.message)}
             </span>
           )}
         </label>
 
         <label className="block">
-          <span className="text-xs font-bold text-slate-300">Tax Mode</span>
+          <span className="text-xs font-bold text-muted">Tax Mode</span>
           <select disabled={isSubmitting} {...register("taxMode")} className={inputClass}>
             <option value="">Select tax mode</option>
             <option value="Inclusive">Inclusive</option>
             <option value="Exclusive">Exclusive</option>
           </select>
           {fieldMessage(errors.taxMode?.message) && (
-            <span className="mt-1.5 block text-xs text-rose-300">
+            <span className="mt-1.5 block text-xs text-danger">
               {fieldMessage(errors.taxMode?.message)}
             </span>
           )}
         </label>
 
-        <label className="flex items-center gap-2 text-xs text-slate-400 sm:col-span-2">
+        <label className="flex items-center gap-2 text-xs text-muted sm:col-span-2">
           <input type="checkbox" checked disabled className="h-4 w-4 accent-blue-500" />
           Set as the default price list for this company (required for POS)
         </label>
 
         {formError && (
-          <div className="rounded-xl border border-rose-400/25 bg-rose-500/10 px-3 py-2 text-xs text-rose-100 sm:col-span-2">
+          <div className="rounded-xl border border-danger bg-danger-soft px-3 py-2 text-sm text-danger sm:col-span-2">
             {formError}
           </div>
         )}
@@ -185,7 +185,7 @@ export function PriceListOnboarding({ onCreated }: PriceListOnboardingProps) {
         <button
           type="submit"
           disabled={isSubmitting || mutation.isPending}
-          className="flex h-12 items-center justify-center gap-2 rounded-xl bg-gradient-to-l from-blue-600 to-[#0A84FF] text-sm font-black text-white shadow-lg shadow-blue-950/40 transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-300 disabled:cursor-not-allowed disabled:opacity-55 sm:col-span-2"
+          className="flex h-12 items-center justify-center gap-2 rounded-xl bg-accent text-sm font-bold text-white shadow-sm transition hover:bg-accent-strong focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-55 sm:col-span-2"
         >
           {mutation.isPending ? <RefreshCw size={17} className="animate-spin" /> : null}
           Set Up Pricing
@@ -194,7 +194,7 @@ export function PriceListOnboarding({ onCreated }: PriceListOnboardingProps) {
         <button
           type="button"
           onClick={() => navigate(ROUTES.PRICING_ADMIN)}
-          className="text-start text-xs font-semibold text-blue-300 hover:text-blue-200 sm:col-span-2"
+          className="text-start text-xs font-semibold text-accent hover:text-accent sm:col-span-2"
         >
           Manage all price lists in Pricing Admin
         </button>

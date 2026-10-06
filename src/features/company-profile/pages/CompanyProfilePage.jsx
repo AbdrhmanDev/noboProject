@@ -21,9 +21,9 @@ function getErrorMessage(error) {
 
 function FieldRow({ label, value }) {
   return (
-    <div className="rounded-lg bg-white/[0.025] px-3 py-2">
-      <div className="text-[10px] text-slate-500">{label}</div>
-      <div className="mt-0.5 text-sm font-semibold text-slate-100">{value ?? "-"}</div>
+    <div className="rounded-lg bg-raised px-3 py-2">
+      <div className="text-xs text-subtle">{label}</div>
+      <div className="mt-0.5 text-sm font-semibold text-ink">{value ?? "-"}</div>
     </div>
   );
 }
@@ -33,7 +33,7 @@ function ProfileContent({ profile }) {
   return (
     <div className="space-y-4">
       <div>
-        <div className="mb-2 text-xs font-bold text-slate-400">Legal identity</div>
+        <div className="mb-2 text-sm font-bold text-muted">Legal identity</div>
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           <FieldRow label="Legal name" value={identity.legalName} />
           <FieldRow label="Trade name" value={identity.tradeName} />
@@ -42,7 +42,7 @@ function ProfileContent({ profile }) {
         </div>
       </div>
       <div>
-        <div className="mb-2 text-xs font-bold text-slate-400">Registered address</div>
+        <div className="mb-2 text-sm font-bold text-muted">Registered address</div>
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           <FieldRow label="Country" value={address.countryCode} />
           <FieldRow label="City" value={address.city} />
@@ -56,7 +56,7 @@ function ProfileContent({ profile }) {
         </div>
       </div>
       <div>
-        <div className="mb-2 text-xs font-bold text-slate-400">Financial</div>
+        <div className="mb-2 text-sm font-bold text-muted">Financial</div>
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           <FieldRow label="Bank name" value={financial.bankName} />
           <FieldRow label="IBAN" value={financial.iban} />
@@ -67,7 +67,7 @@ function ProfileContent({ profile }) {
         </div>
       </div>
       <div>
-        <div className="mb-2 text-xs font-bold text-slate-400">Representative</div>
+        <div className="mb-2 text-sm font-bold text-muted">Representative</div>
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           <FieldRow label="Name" value={representative.fullName} />
           <FieldRow label="ID number" value={representative.identificationNumber} />
@@ -78,7 +78,7 @@ function ProfileContent({ profile }) {
         </div>
       </div>
       <div>
-        <div className="mb-2 text-xs font-bold text-slate-400">Contacts</div>
+        <div className="mb-2 text-sm font-bold text-muted">Contacts</div>
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           <FieldRow label="Primary phone" value={contacts.primaryPhone} />
           <FieldRow label="Primary email" value={contacts.primaryEmail} />
@@ -86,17 +86,17 @@ function ProfileContent({ profile }) {
       </div>
       {profile.proposedBranches.length > 0 && (
         <div>
-          <div className="mb-2 text-xs font-bold text-slate-400">Proposed branches (from registration)</div>
+          <div className="mb-2 text-sm font-bold text-muted">Proposed branches (from registration)</div>
           <div className="space-y-1.5">
             {profile.proposedBranches.map((branch) => (
-              <div key={branch.ordinal} className="rounded-lg bg-white/[0.025] px-3 py-2 text-xs text-slate-300">
-                <span className="font-bold text-white">{branch.name}</span> — {branch.city}
+              <div key={branch.ordinal} className="rounded-lg bg-raised px-3 py-2 text-sm text-muted">
+                <span className="font-bold text-ink">{branch.name}</span> — {branch.city}
                 {branch.materializedBranchId ? (
-                  <span className="ms-2 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
+                  <span className="ms-2 rounded-full bg-success-soft px-2 py-0.5 text-xs font-bold text-success">
                     Applied ({branch.materializedBranchStatus})
                   </span>
                 ) : (
-                  <span className="ms-2 text-[10px] text-slate-500">Not applied yet -- see Branches</span>
+                  <span className="ms-2 text-xs text-subtle">Not applied yet -- see Branches</span>
                 )}
               </div>
             ))}
@@ -119,32 +119,32 @@ function VersionHistoryPanel({ companyId }) {
   return (
     <div className="space-y-2">
       {versionsQuery.data.map((version) => (
-        <div key={version.versionId} className="rounded-xl border border-white/10 bg-[#0d1728] p-3">
+        <div key={version.versionId} className="rounded-xl border border-line bg-raised p-3">
           <button
             type="button"
             onClick={() => setOpenVersion(openVersion === version.versionNumber ? null : version.versionNumber)}
             className="flex w-full items-center justify-between gap-2 text-start"
           >
             <div>
-              <div className="flex items-center gap-2 text-sm font-black text-white">
+              <div className="flex items-center gap-2 text-sm font-black text-ink">
                 v{version.versionNumber}
                 {version.supersedesVersionNumber != null && (
-                  <span className="text-[10px] font-normal text-slate-500">(supersedes v{version.supersedesVersionNumber})</span>
+                  <span className="text-xs font-normal text-subtle">(supersedes v{version.supersedesVersionNumber})</span>
                 )}
               </div>
-              <div className="text-[10px] text-slate-500">Approved {formatDateTime(version.approvedAtUtc)}</div>
+              <div className="text-xs text-subtle">Approved {formatDateTime(version.approvedAtUtc)}</div>
             </div>
-            <History size={14} className="text-slate-500" />
+            <History size={14} className="text-subtle" />
           </button>
           {openVersion === version.versionNumber && (
-            <div className="mt-3 border-t border-white/10 pt-3">
+            <div className="mt-3 border-t border-line pt-3">
               {versionDetailQuery.isLoading && <LoadingState label="Loading this version..." />}
               {versionDetailQuery.isError && (
                 <ErrorState title="Unable to load version" message={getErrorMessage(versionDetailQuery.error)} />
               )}
               {versionDetailQuery.data && (
                 <>
-                  <p className="mb-2 text-[11px] text-slate-500">
+                  <p className="mb-2 text-xs text-subtle">
                     A historical, read-only snapshot -- the backend has no endpoint to edit a past version. To
                     change the current profile, start an amendment.
                   </p>
@@ -177,7 +177,7 @@ export function CompanyProfilePage() {
 
   return (
     <AppLayout>
-      <main className="space-y-4" dir="rtl">
+      <main className="odoo-root space-y-3" dir="rtl">
         <PageHeader
           title="Company Profile"
           actions={
@@ -185,7 +185,7 @@ export function CompanyProfilePage() {
               <button
                 type="button"
                 onClick={() => navigate(ROUTES.COMPANY_PROFILE_AMENDMENTS)}
-                className="flex items-center gap-2 rounded-xl bg-blue-600 px-3 py-2 text-xs font-bold text-white"
+                className="flex items-center gap-2 rounded-xl bg-accent px-3 py-2 text-sm font-bold text-white"
               >
                 <FilePenLine size={14} /> {openAmendment ? "Continue amendment" : "Amendments"}
               </button>
@@ -205,8 +205,8 @@ export function CompanyProfilePage() {
               <button
                 type="button"
                 onClick={() => setTab("profile")}
-                className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold ${
-                  tab === "profile" ? "bg-blue-600 text-white" : "border border-white/10 text-slate-300"
+                className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-bold ${
+                  tab === "profile" ? "bg-accent text-white" : "border border-line text-muted"
                 }`}
               >
                 <ShieldCheck size={13} /> Current profile
@@ -214,15 +214,15 @@ export function CompanyProfilePage() {
               <button
                 type="button"
                 onClick={() => setTab("history")}
-                className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold ${
-                  tab === "history" ? "bg-blue-600 text-white" : "border border-white/10 text-slate-300"
+                className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-bold ${
+                  tab === "history" ? "bg-accent text-white" : "border border-line text-muted"
                 }`}
               >
                 <FileClock size={13} /> Version history
               </button>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-[#0c1424] p-4">
+            <div className="rounded-xl border border-line bg-surface p-4">
               {tab === "profile" ? (
                 profileQuery.isLoading ? (
                   <LoadingState label="Loading company profile..." />
@@ -232,7 +232,7 @@ export function CompanyProfilePage() {
                   <>
                     <div className="mb-4 flex flex-wrap items-center gap-2">
                       <StatusBadge tone="success">Approved</StatusBadge>
-                      <span className="text-xs text-slate-400">
+                      <span className="text-sm text-muted">
                         Current version v{profileQuery.data.version.versionNumber} · approved{" "}
                         {formatDateTime(profileQuery.data.version.approvedAtUtc)}
                       </span>

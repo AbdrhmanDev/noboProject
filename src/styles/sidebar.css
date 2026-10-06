@@ -1,14 +1,17 @@
 /*
- * NOBO app sidebar: dark (--brand-dark, the logo's own background), Odoo-inspired but distinctive:
- * each section takes ONE of the logo's four bar colours for its icons and active indicator.
+ * NOBO app sidebar, Odoo-inspired but distinctive: each section takes ONE of the logo's four bar
+ * colours for its icons and active indicator. Theme-aware: dark (--brand-dark, the logo's own
+ * background) by default and in the dark theme; white in the light theme (the
+ * `[data-theme="light"] .nobo-sidebar` block below redefines only the --sb-* tokens).
  *
  * Built from its own .nobo-sb-* classes instead of Tailwind colour utilities on purpose:
  * GlobalStyle's light-theme overrides remap every `aside` background and many Tailwind colour
- * classes, which would turn a dark sidebar light. The [data-theme] prefix + !important below keep
- * it dark in both themes. Everything uses logical properties, so it mirrors with `dir`.
+ * classes; the [data-theme] prefix + !important below make the sidebar take ITS OWN tokens in both
+ * themes instead. Everything uses logical properties, so it mirrors with `dir`.
  *
  * Contrast on --brand-dark: text 15.6:1, muted 8.7:1, section titles 6.2:1, and the four brand
- * accents 4.9 to 12.1:1, all AA.
+ * accents 4.9 to 12.1:1. On white: text 15.9:1, muted 7.6:1, titles 4.8:1, and the four accents
+ * use their "-ink" shades (5.5 to 7.4:1) -- the raw yellow/green are unreadable on white. All AA.
  */
 
 .nobo-sidebar {
@@ -21,7 +24,20 @@
   --sb-title: #8b93a3;
   --sb-hover: rgb(255 255 255 / 0.06);
   --sb-line: rgb(255 255 255 / 0.09);
-  --sb-accent: var(--brand-blue);
+  --sb-line-strong: rgb(255 255 255 / 0.18);
+  --sb-strong: #fff; /* active item / hovered control text */
+  --sb-inset: rgb(255 255 255 / 0.08); /* badges, keycaps */
+  --sb-edge-bg: rgb(255 255 255 / 0.1);
+  --sb-edge-bg-hover: rgb(255 255 255 / 0.18);
+  --sb-avatar-text: #cfe0ff;
+  --sb-status-text: var(--brand-green);
+  --sb-shadow: 0 0 40px rgb(0 0 0 / 0.45);
+  /* Section accents (icons + active indicator). */
+  --sb-blue: var(--brand-blue);
+  --sb-yellow: var(--brand-yellow);
+  --sb-green: var(--brand-green);
+  --sb-pink: var(--brand-pink);
+  --sb-accent: var(--sb-blue);
 
   /* Anything inside that reads the app's theme tokens (badges, hints) gets the dark values,
      whatever the current theme is. */
@@ -63,16 +79,44 @@
 /* ---- section accents: the four bars of the logo ---- */
 .nobo-sidebar .nobo-sb-section[data-accent="blue"],
 .nobo-sidebar .nobo-sb-item[data-accent="blue"] {
-  --sb-accent: var(--brand-blue);
+  --sb-accent: var(--sb-blue);
 }
 .nobo-sidebar .nobo-sb-section[data-accent="yellow"] {
-  --sb-accent: var(--brand-yellow);
+  --sb-accent: var(--sb-yellow);
 }
 .nobo-sidebar .nobo-sb-section[data-accent="green"] {
-  --sb-accent: var(--brand-green);
+  --sb-accent: var(--sb-green);
 }
 .nobo-sidebar .nobo-sb-section[data-accent="pink"] {
-  --sb-accent: var(--brand-pink);
+  --sb-accent: var(--sb-pink);
+}
+
+/* ---- light theme: same structure, light tokens only ---- */
+[data-theme="light"] .nobo-sidebar {
+  --sb-bg: #ffffff;
+  --sb-text: #161a22;
+  --sb-muted: #4a5261;
+  --sb-title: #6b7280;
+  --sb-hover: rgb(14 15 19 / 0.05);
+  --sb-line: rgb(14 15 19 / 0.1);
+  --sb-line-strong: rgb(14 15 19 / 0.2);
+  --sb-strong: var(--brand-dark);
+  --sb-inset: rgb(14 15 19 / 0.06);
+  --sb-edge-bg: rgb(14 15 19 / 0.06);
+  --sb-edge-bg-hover: rgb(14 15 19 / 0.12);
+  --sb-avatar-text: var(--brand-blue-ink);
+  --sb-status-text: var(--brand-green-ink);
+  --sb-shadow: 0 0 40px rgb(14 15 19 / 0.18);
+  --sb-blue: var(--brand-blue-ink);
+  --sb-yellow: var(--brand-yellow-ink);
+  --sb-green: var(--brand-green-ink);
+  --sb-pink: var(--brand-pink-ink);
+
+  --nobo-text: #161a22;
+  --nobo-muted: #4a5261;
+  --nobo-subtle: #6b7280;
+  --nobo-inset: rgb(14 15 19 / 0.05);
+  --nobo-line: rgb(14 15 19 / 0.12);
 }
 .nobo-sidebar .nobo-sb-section[data-accent="muted"] {
   --sb-accent: var(--sb-title);
@@ -104,13 +148,20 @@
   max-width: 100%;
   object-fit: contain;
 }
-/* Both logo files are in the DOM (GlobalStyle shows one per theme). The sidebar is always dark, so
-   it always wants the light-on-dark one. */
+/* Both logo files are in the DOM (GlobalStyle shows one per theme). The sidebar picks the one that
+   matches ITS OWN background: the light-on-dark logo on the dark sidebar, the dark-on-light logo
+   on the white one. */
 .nobo-sidebar .nobo-logo-dark {
   display: block !important;
 }
 .nobo-sidebar .nobo-logo-light {
   display: none !important;
+}
+[data-theme="light"] .nobo-sidebar .nobo-logo-dark {
+  display: none !important;
+}
+[data-theme="light"] .nobo-sidebar .nobo-logo-light {
+  display: block !important;
 }
 .nobo-sidebar .nobo-sb-mark {
   position: relative;
@@ -146,8 +197,8 @@
 }
 .nobo-sidebar .nobo-sb-toggle:hover {
   background: var(--sb-hover);
-  border-color: rgb(255 255 255 / 0.18);
-  color: #fff;
+  border-color: var(--sb-line-strong);
+  color: var(--sb-strong);
 }
 /* One chevron, points toward the sidebar's own edge to collapse; rotates to point inward to expand.
    Mirrored in RTL (the sidebar is on the right there). */
@@ -182,7 +233,7 @@
   padding-inline-end: 4px;
   border: 0;
   border-radius: 12px 0 0 12px;
-  background: rgb(255 255 255 / 0.1);
+  background: var(--sb-edge-bg);
   color: var(--sb-text);
   cursor: pointer;
   transform: translateY(-50%);
@@ -213,7 +264,7 @@
 .nobo-sidebar .nobo-sb-edge:hover,
 .nobo-sidebar .nobo-sb-edge:focus-visible {
   width: 28px;
-  background: rgb(255 255 255 / 0.18);
+  background: var(--sb-edge-bg-hover);
   outline: none;
 }
 .nobo-sidebar .nobo-sb-edge:hover::after,
@@ -348,7 +399,7 @@ html:not([lang="ar"]) .nobo-sidebar .nobo-sb-title {
 }
 .nobo-sidebar .nobo-sb-item[data-active="true"] {
   background: color-mix(in srgb, var(--sb-accent) 16%, transparent);
-  color: #fff;
+  color: var(--sb-strong);
 }
 /* 3px rounded indicator on the inline-start edge, flush with the sidebar's own edge. */
 .nobo-sidebar .nobo-sb-item[data-active="true"]::before {
@@ -381,7 +432,7 @@ html:not([lang="ar"]) .nobo-sidebar .nobo-sb-title {
   flex-shrink: 0;
   padding: 2px 8px;
   border-radius: 999px;
-  background: rgb(255 255 255 / 0.08);
+  background: var(--sb-inset);
   color: var(--sb-muted);
   font-size: 11px;
   font-weight: 500;
@@ -399,7 +450,7 @@ html:not([lang="ar"]) .nobo-sidebar .nobo-sb-title {
 .nobo-sidebar kbd {
   color: var(--sb-title) !important;
   border-color: var(--sb-line) !important;
-  background: rgb(255 255 255 / 0.05) !important;
+  background: var(--sb-inset) !important;
 }
 
 /* group children */
@@ -497,7 +548,7 @@ html:not([lang="ar"]) .nobo-sidebar .nobo-sb-title {
   height: 36px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--brand-blue) 22%, transparent);
-  color: #cfe0ff;
+  color: var(--sb-avatar-text);
   font-size: 14px;
   font-weight: 700;
 }
@@ -534,7 +585,7 @@ html:not([lang="ar"]) .nobo-sidebar .nobo-sb-title {
 .nobo-sidebar .nobo-sb-status strong {
   display: block;
   font-weight: 500;
-  color: var(--brand-green);
+  color: var(--sb-status-text);
 }
 .nobo-sidebar .nobo-sb-dot {
   flex-shrink: 0;
@@ -553,5 +604,57 @@ html:not([lang="ar"]) .nobo-sidebar .nobo-sb-title {
   .nobo-sidebar .nobo-sb-chevron,
   .nobo-sidebar .nobo-sb-profile {
     transition: none;
+  }
+}
+
+/* ---- mobile drawer (below lg) ----
+   The same sidebar markup (AppLayout's renderSidebarBody), taken out of the flex row and slid in
+   from the inline-start edge (right in RTL, left in LTR) over a backdrop. Always expanded. */
+.nobo-sidebar.nobo-sidebar-drawer {
+  position: fixed;
+  z-index: 130;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: min(280px, 86vw);
+  height: 100dvh;
+  padding-top: calc(12px + env(safe-area-inset-top, 0px));
+  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-100%);
+  transition: transform 240ms cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--sb-shadow);
+}
+[dir="rtl"] .nobo-sidebar.nobo-sidebar-drawer {
+  transform: translateX(100%);
+}
+.nobo-sidebar.nobo-sidebar-drawer[data-open="true"] {
+  transform: translateX(0);
+}
+.nobo-sidebar.nobo-sidebar-drawer:not([data-open="true"]) {
+  visibility: hidden;
+  transition: transform 240ms cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 240ms;
+}
+.nobo-sidebar-backdrop {
+  position: fixed;
+  z-index: 125;
+  inset: 0;
+  background: rgb(0 0 0 / 0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 240ms ease;
+}
+.nobo-sidebar-backdrop[data-open="true"] {
+  opacity: 1;
+  pointer-events: auto;
+}
+@media (prefers-reduced-motion: reduce) {
+  .nobo-sidebar.nobo-sidebar-drawer,
+  .nobo-sidebar-backdrop {
+    transition: none;
+  }
+}
+@media (min-width: 1024px) {
+  .nobo-sidebar.nobo-sidebar-drawer,
+  .nobo-sidebar-backdrop {
+    display: none;
   }
 }

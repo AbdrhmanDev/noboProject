@@ -29,13 +29,13 @@ const OVERVIEW_PAGE_SIZE = PLATFORM_COMPANY_LIST_MAX_PAGE_SIZE;
 
 function MetricCard({ label, value, sub, partial }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-[#0c1424] p-4">
-      <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+    <div className="rounded-xl border border-line bg-surface p-4">
+      <div className="text-xs font-semibold uppercase tracking-wide text-subtle">
         {label}
-        {partial && <span className="ms-1 text-amber-300/80">*</span>}
+        {partial && <span className="ms-1 text-warning/80">*</span>}
       </div>
-      <div className="mt-1 text-2xl font-black text-white">{value}</div>
-      {sub && <div className="mt-1 text-[11px] text-slate-500">{sub}</div>}
+      <div className="mt-1 text-2xl font-black text-ink">{value}</div>
+      {sub && <div className="mt-1 text-xs text-subtle">{sub}</div>}
     </div>
   );
 }
@@ -97,22 +97,22 @@ function PlatformOverviewContent() {
         : salesEntries.map(([currency, amount]) => formatMoney(amount, currency)).join(" · ");
 
   return (
-    <main className="space-y-4" dir="rtl">
-      <header className="rounded-2xl border border-white/10 bg-[#0c1424]/85 p-4 shadow-xl shadow-black/20">
-        <div className="flex items-center gap-2 text-xs text-slate-400">
-          <ShieldCheck size={16} className="text-blue-300" />
+    <main className="odoo-root space-y-3" dir="rtl">
+      <header className="rounded-xl border border-line bg-surface p-4 shadow-xl shadow-black/20">
+        <div className="flex items-center gap-2 text-sm text-muted">
+          <ShieldCheck size={16} className="text-accent" />
           {t("nav.platform")}
         </div>
-        <h1 className="mt-1 text-2xl font-black text-white">{t("platform.overview.title")}</h1>
-        <p className="mt-0.5 text-[11px] text-slate-500">{t("platform.overview.subtitle")}</p>
+        <h1 className="mt-1 text-2xl font-black text-ink">{t("platform.overview.title")}</h1>
+        <p className="mt-0.5 text-xs text-subtle">{t("platform.overview.subtitle")}</p>
       </header>
 
-      <section className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-[#0c1424] p-3">
+      <section className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-surface p-3">
         <PlatformDateRangeSelector preset={datePreset} onPresetChange={setDatePreset} onRangeChange={setDateRange} />
         <button
           type="button"
           onClick={() => navigate(ROUTES.PLATFORM_COMPANIES)}
-          className="text-xs font-bold text-blue-300 hover:text-blue-200"
+          className="text-sm font-bold text-accent hover:text-accent"
         >
           {t("platform.overview.viewCustomers")}
         </button>
@@ -134,7 +134,7 @@ function PlatformOverviewContent() {
             <MetricCard label={salesLabel} value={salesValue} partial={isPartial} />
           </div>
           {isPartial && (
-            <p className="text-[11px] text-amber-300/80">
+            <p className="text-xs text-warning/80">
               * {t("platform.overview.partialNote", { count: items.length, total: totalCustomers })}
             </p>
           )}

@@ -36,18 +36,18 @@ function ItemCard({ item, selected, onSelect }) {
     <button
       type="button"
       onClick={onSelect}
-      className={`w-full rounded-xl border p-3 text-start transition hover:border-blue-400/40 hover:bg-blue-500/10 ${
-        selected ? "border-blue-400/60 bg-blue-500/15" : "border-white/10 bg-[#0d1728]"
+      className={`w-full rounded-xl border p-3 text-start transition hover:border-accent-line hover:bg-accent-soft ${
+        selected ? "border-accent-line bg-accent-soft" : "border-line bg-raised"
       }`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <Boxes size={16} className="shrink-0 text-blue-300" />
-            <div className="truncate text-sm font-black text-white">{item.name}</div>
+            <Boxes size={16} className="shrink-0 text-accent" />
+            <div className="truncate text-sm font-black text-ink">{item.name}</div>
           </div>
-          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-400">
-            <span className="font-semibold text-slate-300">{item.code}</span>
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted">
+            <span className="font-semibold text-muted">{item.code}</span>
             <span>
               {item.baseUnitOfMeasure.name} ({item.baseUnitOfMeasure.symbol})
             </span>
@@ -71,27 +71,27 @@ function ItemForm({ mode, form, setForm, unitsOfMeasureQuery, selectedItem, canM
       className="space-y-3"
     >
       <div className="grid gap-3 sm:grid-cols-[1fr_1fr_1fr]">
-        <label className="text-xs font-semibold text-slate-400">
+        <label className="text-sm font-semibold text-muted">
           Code
           <input
             value={form.code}
             onChange={(event) => setForm((draft) => ({ ...draft, code: event.target.value }))}
             maxLength={50}
             disabled={!canManage || isPending}
-            className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+            className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
           />
         </label>
-        <label className="text-xs font-semibold text-slate-400">
+        <label className="text-sm font-semibold text-muted">
           Name
           <input
             value={form.name}
             onChange={(event) => setForm((draft) => ({ ...draft, name: event.target.value }))}
             maxLength={200}
             disabled={!canManage || isPending}
-            className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+            className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
           />
         </label>
-        <label className="text-xs font-semibold text-slate-400">
+        <label className="text-sm font-semibold text-muted">
           Base unit of measure
           {mode === "create" ? (
             <select
@@ -100,7 +100,7 @@ function ItemForm({ mode, form, setForm, unitsOfMeasureQuery, selectedItem, canM
                 setForm((draft) => ({ ...draft, baseUnitOfMeasureId: event.target.value }))
               }
               disabled={!canManage || isPending || unitsOfMeasureQuery.isLoading}
-              className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+              className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
             >
               <option value="">Select unit...</option>
               {(unitsOfMeasureQuery.data || []).map((uom) => (
@@ -110,7 +110,7 @@ function ItemForm({ mode, form, setForm, unitsOfMeasureQuery, selectedItem, canM
               ))}
             </select>
           ) : (
-            <div className="mt-1 flex h-11 items-center rounded-xl border border-white/10 bg-white/[0.025] px-3 text-sm text-slate-200">
+            <div className="mt-1 flex h-11 items-center rounded-xl border border-line bg-raised px-3 text-sm text-ink">
               {selectedItem
                 ? `${selectedItem.baseUnitOfMeasure.name} (${selectedItem.baseUnitOfMeasure.symbol})`
                 : "-"}
@@ -118,11 +118,11 @@ function ItemForm({ mode, form, setForm, unitsOfMeasureQuery, selectedItem, canM
           )}
         </label>
       </div>
-      <div className="rounded-xl border border-white/10 bg-white/[0.025] px-3 py-2 text-xs text-slate-400">
+      <div className="rounded-xl border border-line bg-raised px-3 py-2 text-sm text-muted">
         Base unit of measure is selected on create and is read-only after creation.
       </div>
       {!canManage && (
-        <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+        <div className="rounded-xl border border-warning bg-warning-soft px-3 py-2 text-sm text-warning">
           Inventory.Configure permission is required for inventory item changes.
         </div>
       )}
@@ -130,7 +130,7 @@ function ItemForm({ mode, form, setForm, unitsOfMeasureQuery, selectedItem, canM
         <button
           type="submit"
           disabled={!canManage || isPending}
-          className="flex h-10 items-center gap-2 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex h-10 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {mode === "edit" ? <Pencil size={15} /> : <Plus size={15} />}
           {isPending ? "Saving..." : mode === "edit" ? "Save item" : "Create item"}
@@ -140,7 +140,7 @@ function ItemForm({ mode, form, setForm, unitsOfMeasureQuery, selectedItem, canM
             type="button"
             disabled={!canManage || isPending}
             onClick={() => onStatusChange(nextStatus)}
-            className="flex h-10 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-4 text-xs font-bold text-slate-100 transition hover:border-blue-400/40 hover:bg-blue-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex h-10 items-center gap-2 rounded-xl border border-line bg-raised px-4 text-sm font-bold text-ink transition hover:border-accent-line hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-50"
           >
             {nextStatus === "Active" ? <CircleCheck size={15} /> : <CirclePause size={15} />}
             {nextStatus === "Active" ? "Activate" : "Suspend"}
@@ -250,12 +250,12 @@ export function InventoryItemsPanel({ companyId, canView, canConfigure }) {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-sm font-bold text-white">Inventory Items</h2>
+        <h2 className="text-sm font-bold text-ink">Inventory Items</h2>
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
             onClick={() => itemsQuery.refetch()}
-            className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold text-slate-100"
+            className="flex items-center gap-2 rounded-xl border border-line bg-raised px-3 py-2 text-sm font-bold text-ink"
           >
             <RefreshCw size={14} />
             Refresh
@@ -263,7 +263,7 @@ export function InventoryItemsPanel({ companyId, canView, canConfigure }) {
           <button
             type="button"
             onClick={startCreate}
-            className="flex items-center gap-2 rounded-xl bg-blue-600 px-3 py-2 text-xs font-bold text-white"
+            className="flex items-center gap-2 rounded-xl bg-accent px-3 py-2 text-sm font-bold text-white"
           >
             <Plus size={14} />
             New item
@@ -272,18 +272,18 @@ export function InventoryItemsPanel({ companyId, canView, canConfigure }) {
       </div>
 
       {notice && (
-        <div className="rounded-xl border border-blue-400/25 bg-blue-500/10 px-3 py-2 text-xs text-blue-100">
+        <div className="rounded-xl border border-accent-line bg-accent-soft px-3 py-2 text-sm text-accent">
           {notice}
         </div>
       )}
 
       <div className="grid gap-4 xl:grid-cols-[420px_1fr]">
-        <section className="rounded-2xl border border-white/10 bg-[#0c1424] p-3">
+        <section className="rounded-xl border border-line bg-surface p-3">
           <div className="mb-3 grid gap-2 sm:grid-cols-[1fr_130px]">
             <label className="relative block">
               <Search
                 size={14}
-                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500"
+                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-subtle"
               />
               <input
                 value={search}
@@ -293,7 +293,7 @@ export function InventoryItemsPanel({ companyId, canView, canConfigure }) {
                 }}
                 maxLength={100}
                 placeholder="Search code or name"
-                className="h-10 w-full rounded-xl border border-white/10 bg-black/20 pr-9 pl-3 text-xs text-white outline-none focus:border-blue-400/60"
+                className="h-10 w-full rounded-xl border border-line bg-canvas pr-9 pl-3 text-sm text-ink outline-none focus:border-accent-line"
               />
             </label>
             <select
@@ -302,7 +302,7 @@ export function InventoryItemsPanel({ companyId, canView, canConfigure }) {
                 setStatus(event.target.value);
                 setPageNumber(1);
               }}
-              className="h-10 rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none focus:border-blue-400/60"
+              className="h-10 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line"
             >
               <option value="">All status</option>
               <option value="Active">Active</option>
@@ -335,7 +335,7 @@ export function InventoryItemsPanel({ companyId, canView, canConfigure }) {
                   />
                 ))}
               </div>
-              <div className="mt-3 flex items-center justify-between text-xs text-slate-400">
+              <div className="mt-3 flex items-center justify-between text-sm text-muted">
                 <span>
                   Page {page.pageNumber} of {page.totalPages || 1} · {page.totalCount} items
                 </span>
@@ -344,7 +344,7 @@ export function InventoryItemsPanel({ companyId, canView, canConfigure }) {
                     type="button"
                     disabled={page.pageNumber <= 1}
                     onClick={() => setPageNumber((value) => Math.max(1, value - 1))}
-                    className="rounded-lg border border-white/10 p-1.5 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="rounded-lg border border-line p-1.5 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <ChevronRight size={14} />
                   </button>
@@ -352,7 +352,7 @@ export function InventoryItemsPanel({ companyId, canView, canConfigure }) {
                     type="button"
                     disabled={page.pageNumber >= page.totalPages}
                     onClick={() => setPageNumber((value) => value + 1)}
-                    className="rounded-lg border border-white/10 p-1.5 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="rounded-lg border border-line p-1.5 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <ChevronLeft size={14} />
                   </button>
@@ -362,14 +362,14 @@ export function InventoryItemsPanel({ companyId, canView, canConfigure }) {
           )}
         </section>
 
-        <section className="rounded-2xl border border-white/10 bg-[#0c1424] p-4">
+        <section className="rounded-xl border border-line bg-surface p-4">
           <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
             <div>
-              <div className="flex items-center gap-2 text-xs text-slate-400">
-                <Boxes size={15} className="text-blue-300" />
+              <div className="flex items-center gap-2 text-sm text-muted">
+                <Boxes size={15} className="text-accent" />
                 {mode === "create" ? "Create item" : "Item details"}
               </div>
-              <h2 className="mt-1 text-xl font-black text-white">
+              <h2 className="mt-1 text-xl font-black text-ink">
                 {mode === "create" ? "New inventory item" : selectedItem?.name || "Loading item"}
               </h2>
             </div>
@@ -391,21 +391,21 @@ export function InventoryItemsPanel({ companyId, canView, canConfigure }) {
             <div className="space-y-4">
               {selectedItem && (
                 <div className="grid gap-2 sm:grid-cols-3">
-                  <div className="rounded-xl border border-white/10 bg-white/[0.025] p-3">
-                    <div className="text-[11px] text-slate-500">Unit of measure</div>
-                    <div className="mt-1 text-sm font-black text-white">
+                  <div className="rounded-xl border border-line bg-raised p-3">
+                    <div className="text-xs text-subtle">Unit of measure</div>
+                    <div className="mt-1 text-sm font-black text-ink">
                       {selectedItem.baseUnitOfMeasure.code}
                     </div>
                   </div>
-                  <div className="rounded-xl border border-white/10 bg-white/[0.025] p-3">
-                    <div className="text-[11px] text-slate-500">Symbol</div>
-                    <div className="mt-1 text-sm font-black text-white">
+                  <div className="rounded-xl border border-line bg-raised p-3">
+                    <div className="text-xs text-subtle">Symbol</div>
+                    <div className="mt-1 text-sm font-black text-ink">
                       {selectedItem.baseUnitOfMeasure.symbol}
                     </div>
                   </div>
-                  <div className="rounded-xl border border-white/10 bg-white/[0.025] p-3">
-                    <div className="text-[11px] text-slate-500">Created</div>
-                    <div className="mt-1 text-sm font-black text-white">
+                  <div className="rounded-xl border border-line bg-raised p-3">
+                    <div className="text-xs text-subtle">Created</div>
+                    <div className="mt-1 text-sm font-black text-ink">
                       {selectedItem.createdAtUtc ? formatDateTime(selectedItem.createdAtUtc) : "-"}
                     </div>
                   </div>

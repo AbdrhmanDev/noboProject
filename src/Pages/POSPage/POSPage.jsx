@@ -19,6 +19,10 @@ import { useCurrentUserProfile } from "../../features/auth/hooks/useCurrentUserP
 import { useBranch } from "../../features/branches/context/BranchContext";
 import { useCompany } from "../../features/companies/context/CompanyContext";
 import { useHasPermission } from "../../features/companies/hooks/useCompanies";
+import {
+  useInventoryLocationStock,
+  useOperationalInventoryLocations,
+} from "../../features/inventory/hooks/useInventory";
 import { PosOperationalGate } from "../../features/pos/components/PosOperationalGate";
 import { useCompanyTaxSettings } from "../../features/tax/hooks/useTax";
 import { usePos } from "../../features/pos/context/PosContext";
@@ -36,11 +40,16 @@ import {
   useCloseSalesOrder,
   useCancelSalesOrder,
   useDraftSalesOrderDetails,
+  useMergeSalesOrders,
   useRequestSalesOrderDiscount,
   useVoidPreparedSalesOrder,
   useUpdateDraftSalesOrder,
 } from "../../features/sales-orders/hooks/useDraftSalesOrder";
-import { getSalesOrderDetails } from "../../features/sales-orders/api/draftSalesOrdersApi";
+import {
+  getRetrievableSalesOrders,
+  getSalesOrderDetails,
+} from "../../features/sales-orders/api/draftSalesOrdersApi";
+import { env } from "../../app/config/env";
 import { useDraftLineEditor } from "../../features/pos/hooks/useDraftLineEditor";
 import {
   useActivePaymentMethods,
@@ -183,6 +192,48 @@ export default function POSPage() {
     currentCompanyId,
     POS_ADJUST_CASH_DRAWER_PERMISSION,
   );
+  // Product stock on the flipped product card (read-only): on-hand quantities at the branch's
+  // default inventory location (or its first active one). Each card fetches its own variant's
+  // recipe only when flipped (PosProductCard's StockLine). Skipped without Inventory.View.
+  const inventoryViewPermissionQuery = useHasPermission(currentCompanyId, "Inventory.View");
+  const canViewInventory =
+    !inventoryViewPermissionQuery.isLoading && inventoryViewPermissionQuery.hasPermission;
+  const inventoryLocationsQuery = useOperationalInventoryLocations(
+    currentCompanyId,
+    currentBranchId,
+    canViewInventory,
+  );
+  const stockLocation =
+    inventoryLocationsQuery.data?.find((location) => location.isDefault) ??
+    inventoryLocationsQuery.data?.[0] ??
+    null;
+  const locationStockQuery = useInventoryLocationStock(
+    currentCompanyId,
+    currentBranchId,
+    stockLocation?.inventoryLocationId,
+    canViewInventory,
+  );
+  const productInventory = useMemo(
+    () => ({
+      enabled: canViewInventory && Boolean(stockLocation),
+      companyId: currentCompanyId,
+      stockByItemId: new Map(
+        (locationStockQuery.data?.items ?? []).map((item) => [item.inventoryItemId, item.quantityOnHand]),
+      ),
+      isLoading: inventoryLocationsQuery.isLoading || locationStockQuery.isLoading,
+      isError: inventoryLocationsQuery.isError || locationStockQuery.isError,
+    }),
+    [
+      canViewInventory,
+      stockLocation,
+      currentCompanyId,
+      locationStockQuery.data,
+      locationStockQuery.isLoading,
+      locationStockQuery.isError,
+      inventoryLocationsQuery.isLoading,
+      inventoryLocationsQuery.isError,
+    ],
+  );
   const closeShiftPermissionQuery = useHasPermission(
     currentCompanyId,
     POS_CLOSE_SHIFT_PERMISSION,
@@ -277,6 +328,11 @@ export default function POSPage() {
     draftSalesOrderId,
   );
   const confirmSalesOrderMutation = useConfirmSalesOrder(
+    currentCompanyId,
+    currentBranchId,
+    draftSalesOrderId,
+  );
+  const mergeSalesOrdersMutation = useMergeSalesOrders(
     currentCompanyId,
     currentBranchId,
     draftSalesOrderId,
@@ -908,6 +964,68 @@ export default function POSPage() {
     setOrderType("DineIn");
     setSelectedRestaurantTableId(table.restaurantTableId);
     updateDraftContext("DineIn", table.restaurantTableId);
+  };
+  // Cart "merge tables": pulls the open DineIn order(s) of another (occupied) table INTO the current
+  // order, via the backend merge endpoint -- one server-side transaction per source order, nothing
+  // is stitched together client-side. Gated by env.features.tableMerge until that endpoint ships.
+  const MERGE_ERROR_MESSAGE_KEYS = {
+    "SalesOrder.InvalidStatusForMerge": "pos.merge.error.invalidStatus",
+    "SalesOrder.MergeSourceHasPayments": "pos.merge.error.sourceHasPayments",
+    "SalesOrder.MergeSourceHasDiscount": "pos.merge.error.sourceHasDiscount",
+    "SalesOrder.MergeSameTable": "pos.merge.error.sameTable",
+    "SalesOrder.VersionConflict": "pos.merge.error.conflict",
+  };
+  const canMergeTables =
+    env.features.tableMerge &&
+    Boolean(draftSalesOrderId) &&
+    orderType === "DineIn" &&
+    Boolean(effectiveRestaurantTableId) &&
+    !isClosedOrder &&
+    !isCancelledOrder &&
+    !mergeSalesOrdersMutation.isPending;
+  const mergeWithTable = async (sourceTable) => {
+    if (!canMergeTables || !sourceTable || sourceTable.restaurantTableId === effectiveRestaurantTableId) return;
+
+    if (lineEditor.hasPendingEdits()) {
+      notify(t("pos.merge.pendingEdits"));
+      return;
+    }
+
+    try {
+      const { items = [] } = await getRetrievableSalesOrders(currentCompanyId, currentBranchId, {
+        restaurantTableId: sourceTable.restaurantTableId,
+        fulfillmentType: "DineIn",
+        pageSize: 20,
+      });
+      const sourceOrders = items.filter(
+        (order) => order.salesOrderId !== draftSalesOrderId && order.restaurantTableId === sourceTable.restaurantTableId,
+      );
+      if (!sourceOrders.length) {
+        notify(t("pos.merge.noSourceOrder", { table: sourceTable.code }));
+        return;
+      }
+
+      for (const sourceOrder of sourceOrders) {
+        await mergeSalesOrdersMutation.mutateAsync({
+          sourceSalesOrderId: sourceOrder.salesOrderId,
+          expectedTargetVersion: draftOrder?.draftVersion,
+          expectedSourceVersion: sourceOrder.draftVersion,
+        });
+      }
+
+      await draftDetailsQuery.refetch();
+      invalidateRestaurantSeating(currentCompanyId, currentBranchId);
+      notify(t("pos.merge.success", { table: sourceTable.code }), "success");
+    } catch (error) {
+      draftDetailsQuery.refetch();
+      invalidateRestaurantSeating(currentCompanyId, currentBranchId);
+      if (error?.status === 404 || error?.status === 405) {
+        notify(t("pos.merge.notAvailable"));
+        return;
+      }
+      const key = MERGE_ERROR_MESSAGE_KEYS[error?.code];
+      notify(key ? t(key) : error?.message || t("pos.merge.failed"));
+    }
   };
   const confirmCurrentOrder = async () => {
     if (!draftSalesOrderId || !draftOrder || !draftLines.length) return;
@@ -2077,7 +2195,7 @@ export default function POSPage() {
       <main className="pos-root min-w-0 flex-1">
         <PosOperationalGate>
           <div className="mx-auto w-full max-w-[2200px] space-y-2">
-          <header className="flex flex-col gap-2 rounded-pos-lg border border-pos-border bg-pos-card p-1.5 md:flex-row md:items-center">
+          <header className="flex items-center gap-2 rounded-pos-lg border border-pos-border bg-pos-card p-1.5">
             {phase === "payment" ? (
               // Same toolbar row the Order phase uses (already part of --pos-chrome's budget), so
               // the Payment step needs no header row of its own — one less thing competing for
@@ -2097,7 +2215,9 @@ export default function POSPage() {
             ) : (
               <>
                 {/* Cashier name + the close-shift button moved to the bottom PosStatusBar. */}
-                <div className="pos-control flex min-w-0 w-full max-w-[240px] items-center gap-2 border border-pos-border bg-pos-card px-3 transition focus-within:border-pos-primary focus-within:ring-[3px] focus-within:ring-pos-primary/20">
+                {/* Responsive: one row at every width -- search takes the free space (capped on wide
+                    screens), Transactions keeps its own size and drops to an icon on phones. */}
+                <div className="pos-control flex min-w-0 flex-1 items-center gap-2 border border-pos-border bg-pos-card px-3 transition focus-within:border-pos-primary focus-within:ring-[3px] focus-within:ring-pos-primary/20 md:max-w-[320px]">
                   <Search size={17} className="shrink-0 text-pos-muted" />
                   <input
                     ref={searchInputRef}
@@ -2132,14 +2252,16 @@ export default function POSPage() {
                   />
                   <ShortcutHint action="pos.focusProductSearch" />
                 </div>
-                <div className="flex-1" />
+                <div className="hidden flex-1 md:block" />
                 <button
                   type="button"
                   onClick={() => navigate(ROUTES.POS_SHIFT_HISTORY)}
-                  className="pos-control pos-fs-name flex items-center gap-2 border border-pos-border bg-pos-card px-4 text-pos-text transition hover:border-pos-primary hover:bg-pos-tint"
+                  aria-label="Transactions"
+                  title="Transactions"
+                  className="pos-control pos-fs-name flex shrink-0 items-center gap-2 border border-pos-border bg-pos-card px-3 text-pos-text transition hover:border-pos-primary hover:bg-pos-tint sm:px-4"
                 >
-                  <History size={14} />
-                  Transactions
+                  <History size={16} />
+                  <span className="hidden sm:inline">Transactions</span>
                 </button>
               </>
             )}
@@ -2179,6 +2301,7 @@ export default function POSPage() {
               activeProductId={activeProductId}
               onIncrementProductLine={incrementProductLine}
               onDecrementProductLine={decrementProductLine}
+              inventory={productInventory}
             />
           </div>
 
@@ -2217,6 +2340,10 @@ export default function POSPage() {
               seatingQuery={seatingQuery}
               effectiveRestaurantTableId={effectiveRestaurantTableId}
               handleTableSelect={handleTableSelect}
+              mergeFeatureEnabled={env.features.tableMerge}
+              canMergeTables={canMergeTables}
+              isMergePending={mergeSalesOrdersMutation.isPending}
+              onMergeTable={mergeWithTable}
               currentCompanyId={currentCompanyId}
               currentBranchId={currentBranchId}
               invalidateRestaurantSeating={invalidateRestaurantSeating}

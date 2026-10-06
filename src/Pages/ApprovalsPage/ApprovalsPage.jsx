@@ -93,9 +93,9 @@ function PinApproveBlock({ pin, onPinChange, pending, onApprove }) {
   const { t } = useI18n();
 
   return (
-    <div className="mt-4 border-t border-white/10 pt-4">
-      <label className="block text-xs font-semibold text-slate-400">{t("approvals.pin.label")}</label>
-      <p className="mb-2 mt-1 text-[10px] leading-4 text-slate-500">{t("approvals.pin.disclaimer")}</p>
+    <div className="mt-4 border-t border-line pt-4">
+      <label className="block text-sm font-semibold text-muted">{t("approvals.pin.label")}</label>
+      <p className="mb-2 mt-1 text-xs leading-4 text-subtle">{t("approvals.pin.disclaimer")}</p>
       <input
         type="password"
         inputMode="numeric"
@@ -104,13 +104,13 @@ function PinApproveBlock({ pin, onPinChange, pending, onApprove }) {
         onChange={(event) => onPinChange(event.target.value)}
         placeholder={t("approvals.pin.placeholder")}
         disabled={pending}
-        className="h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none disabled:opacity-50"
+        className="h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none disabled:opacity-50"
       />
       <button
         type="button"
         onClick={onApprove}
         disabled={pending || !pin.trim()}
-        className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-2.5 text-xs font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-success py-2.5 text-sm font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <CheckCircle2 size={15} />
         {pending ? t("approvals.approving") : t("approvals.approveButton")}
@@ -178,16 +178,16 @@ function ApprovalDetailPanel({ companyId, approvalRequestId, onClose, onApproved
   };
 
   return (
-    <aside className="h-fit rounded-2xl border border-white/10 bg-[#0c1424] p-5">
+    <aside className="h-fit rounded-xl border border-line bg-surface p-5">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <ShieldAlert size={18} className="text-blue-300" />
-          <h2 className="text-sm font-bold text-slate-100">{t("approvals.detail.title")}</h2>
+          <ShieldAlert size={18} className="text-accent" />
+          <h2 className="text-sm font-bold text-ink">{t("approvals.detail.title")}</h2>
         </div>
         <button
           type="button"
           onClick={onClose}
-          className="rounded-lg px-2 py-1 text-xs font-bold text-slate-400 hover:bg-white/10 hover:text-white"
+          className="rounded-lg px-2 py-1 text-sm font-bold text-muted hover:bg-hover hover:text-ink"
         >
           {t("approvals.detail.close")}
         </button>
@@ -209,41 +209,41 @@ function ApprovalDetailPanel({ companyId, approvalRequestId, onClose, onApproved
           <>
             <div className="mb-3 flex items-center justify-between gap-3">
               <StatusBadge tone={statusTone(detail.status)}>{detail.status}</StatusBadge>
-              <span className="text-lg font-black text-blue-300">
+              <span className="text-lg font-black text-accent">
                 {formatMoney(detail.amount, detail.currencyCode)}
               </span>
             </div>
 
-            <dl className="grid grid-cols-2 gap-3 text-xs">
+            <dl className="grid grid-cols-2 gap-3 text-sm">
               <div>
-                <dt className="text-slate-500">{t("approvals.detail.branch")}</dt>
-                <dd className="mt-0.5 truncate font-bold text-slate-100">{detail.branchId}</dd>
+                <dt className="text-subtle">{t("approvals.detail.branch")}</dt>
+                <dd className="mt-0.5 truncate font-bold text-ink">{detail.branchId}</dd>
               </div>
               <div>
-                <dt className="text-slate-500">{t("approvals.detail.order")}</dt>
-                <dd className="mt-0.5 truncate font-bold text-slate-100">{detail.salesOrderId}</dd>
+                <dt className="text-subtle">{t("approvals.detail.order")}</dt>
+                <dd className="mt-0.5 truncate font-bold text-ink">{detail.salesOrderId}</dd>
               </div>
               <div>
-                <dt className="text-slate-500">{t("approvals.detail.requester")}</dt>
-                <dd className="mt-0.5 truncate font-bold text-slate-100">{detail.requestedByUserId}</dd>
+                <dt className="text-subtle">{t("approvals.detail.requester")}</dt>
+                <dd className="mt-0.5 truncate font-bold text-ink">{detail.requestedByUserId}</dd>
               </div>
               <div>
-                <dt className="text-slate-500">{t("approvals.detail.createdAt")}</dt>
-                <dd className="mt-0.5 font-bold text-slate-100">{formatPaymentDate(detail.createdAtUtc)}</dd>
+                <dt className="text-subtle">{t("approvals.detail.createdAt")}</dt>
+                <dd className="mt-0.5 font-bold text-ink">{formatPaymentDate(detail.createdAtUtc)}</dd>
               </div>
               <div className="col-span-2">
-                <dt className="text-slate-500">{t("approvals.detail.expiresAt")}</dt>
-                <dd className="mt-0.5 font-bold text-slate-100">{formatPaymentDate(detail.expiresAtUtc)}</dd>
+                <dt className="text-subtle">{t("approvals.detail.expiresAt")}</dt>
+                <dd className="mt-0.5 font-bold text-ink">{formatPaymentDate(detail.expiresAtUtc)}</dd>
               </div>
             </dl>
 
-            <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.025] p-3">
-              <div className="text-[10px] font-semibold text-slate-500">{t("approvals.detail.reason")}</div>
-              <p className="mt-1 text-xs text-slate-200">{detail.reason || "—"}</p>
+            <div className="mt-3 rounded-xl border border-line bg-raised p-3">
+              <div className="text-xs font-semibold text-subtle">{t("approvals.detail.reason")}</div>
+              <p className="mt-1 text-sm text-ink">{detail.reason || "—"}</p>
             </div>
 
             {notice && (
-              <div className="mt-3 rounded-xl border border-blue-400/25 bg-blue-500/10 px-3 py-2 text-xs text-blue-100">
+              <div className="mt-3 rounded-xl border border-accent-line bg-accent-soft px-3 py-2 text-sm text-accent">
                 {notice}
               </div>
             )}
@@ -256,7 +256,7 @@ function ApprovalDetailPanel({ companyId, approvalRequestId, onClose, onApproved
                 onApprove={handleApprove}
               />
             ) : (
-              <p className="mt-4 border-t border-white/10 pt-3 text-[11px] text-slate-500">
+              <p className="mt-4 border-t border-line pt-3 text-xs text-subtle">
                 {t("approvals.detail.notActionable")}
               </p>
             )}
@@ -317,16 +317,16 @@ function DiscountApprovalDetailPanel({ companyId, approvalRequestId, onClose, on
   };
 
   return (
-    <aside className="h-fit rounded-2xl border border-white/10 bg-[#0c1424] p-5">
+    <aside className="h-fit rounded-xl border border-line bg-surface p-5">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <ShieldAlert size={18} className="text-blue-300" />
-          <h2 className="text-sm font-bold text-slate-100">{t("approvals.detail.title")}</h2>
+          <ShieldAlert size={18} className="text-accent" />
+          <h2 className="text-sm font-bold text-ink">{t("approvals.detail.title")}</h2>
         </div>
         <button
           type="button"
           onClick={onClose}
-          className="rounded-lg px-2 py-1 text-xs font-bold text-slate-400 hover:bg-white/10 hover:text-white"
+          className="rounded-lg px-2 py-1 text-sm font-bold text-muted hover:bg-hover hover:text-ink"
         >
           {t("approvals.detail.close")}
         </button>
@@ -348,64 +348,64 @@ function DiscountApprovalDetailPanel({ companyId, approvalRequestId, onClose, on
           <>
             <div className="mb-3 flex items-center justify-between gap-3">
               <StatusBadge tone={statusTone(detail.status)}>{detail.status}</StatusBadge>
-              <span className="text-lg font-black text-blue-300">
+              <span className="text-lg font-black text-accent">
                 {formatDiscountValue(detail.discountType, detail.requestedValue)}
               </span>
             </div>
 
-            <dl className="grid grid-cols-2 gap-3 text-xs">
+            <dl className="grid grid-cols-2 gap-3 text-sm">
               <div>
-                <dt className="text-slate-500">{t("approvals.discount.type")}</dt>
-                <dd className="mt-0.5 font-bold text-slate-100">
+                <dt className="text-subtle">{t("approvals.discount.type")}</dt>
+                <dd className="mt-0.5 font-bold text-ink">
                   {detail.discountType === "Percentage"
                     ? t("approvals.discount.typePercentage")
                     : t("approvals.discount.typeFixedAmount")}
                 </dd>
               </div>
               <div>
-                <dt className="text-slate-500">{t("approvals.discount.requestedValue")}</dt>
-                <dd className="mt-0.5 font-bold text-slate-100">
+                <dt className="text-subtle">{t("approvals.discount.requestedValue")}</dt>
+                <dd className="mt-0.5 font-bold text-ink">
                   {formatDiscountValue(detail.discountType, detail.requestedValue)}
                 </dd>
               </div>
               <div>
-                <dt className="text-slate-500">{t("approvals.discount.estimatedAmount")}</dt>
-                <dd className="mt-0.5 font-bold text-slate-100">{formatMoney(detail.estimatedAppliedAmount, "")}</dd>
+                <dt className="text-subtle">{t("approvals.discount.estimatedAmount")}</dt>
+                <dd className="mt-0.5 font-bold text-ink">{formatMoney(detail.estimatedAppliedAmount, "")}</dd>
               </div>
               <div>
-                <dt className="text-slate-500">{t("approvals.discount.effectivePercent")}</dt>
-                <dd className="mt-0.5 font-bold text-slate-100">{Number(detail.estimatedEffectivePercent)}%</dd>
+                <dt className="text-subtle">{t("approvals.discount.effectivePercent")}</dt>
+                <dd className="mt-0.5 font-bold text-ink">{Number(detail.estimatedEffectivePercent)}%</dd>
               </div>
               <div>
-                <dt className="text-slate-500">{t("approvals.detail.branch")}</dt>
-                <dd className="mt-0.5 truncate font-bold text-slate-100">{detail.branchId}</dd>
+                <dt className="text-subtle">{t("approvals.detail.branch")}</dt>
+                <dd className="mt-0.5 truncate font-bold text-ink">{detail.branchId}</dd>
               </div>
               <div>
-                <dt className="text-slate-500">{t("approvals.detail.order")}</dt>
-                <dd className="mt-0.5 truncate font-bold text-slate-100">{detail.salesOrderId}</dd>
+                <dt className="text-subtle">{t("approvals.detail.order")}</dt>
+                <dd className="mt-0.5 truncate font-bold text-ink">{detail.salesOrderId}</dd>
               </div>
               <div>
-                <dt className="text-slate-500">{t("approvals.detail.requester")}</dt>
-                <dd className="mt-0.5 truncate font-bold text-slate-100">{detail.requestedByUserId}</dd>
+                <dt className="text-subtle">{t("approvals.detail.requester")}</dt>
+                <dd className="mt-0.5 truncate font-bold text-ink">{detail.requestedByUserId}</dd>
               </div>
               <div>
-                <dt className="text-slate-500">{t("approvals.detail.createdAt")}</dt>
-                <dd className="mt-0.5 font-bold text-slate-100">{formatPaymentDate(detail.createdAtUtc)}</dd>
+                <dt className="text-subtle">{t("approvals.detail.createdAt")}</dt>
+                <dd className="mt-0.5 font-bold text-ink">{formatPaymentDate(detail.createdAtUtc)}</dd>
               </div>
               <div className="col-span-2">
-                <dt className="text-slate-500">{t("approvals.detail.expiresAt")}</dt>
-                <dd className="mt-0.5 font-bold text-slate-100">{formatPaymentDate(detail.expiresAtUtc)}</dd>
+                <dt className="text-subtle">{t("approvals.detail.expiresAt")}</dt>
+                <dd className="mt-0.5 font-bold text-ink">{formatPaymentDate(detail.expiresAtUtc)}</dd>
               </div>
             </dl>
 
-            <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.025] p-3">
-              <div className="text-[10px] font-semibold text-slate-500">{t("approvals.detail.reason")}</div>
-              <p className="mt-1 text-xs text-slate-200">{detail.reason || "—"}</p>
+            <div className="mt-3 rounded-xl border border-line bg-raised p-3">
+              <div className="text-xs font-semibold text-subtle">{t("approvals.detail.reason")}</div>
+              <p className="mt-1 text-sm text-ink">{detail.reason || "—"}</p>
             </div>
-            <p className="mt-2 text-[10px] leading-4 text-slate-500">{t("approvals.discount.estimateNote")}</p>
+            <p className="mt-2 text-xs leading-4 text-subtle">{t("approvals.discount.estimateNote")}</p>
 
             {notice && (
-              <div className="mt-3 rounded-xl border border-blue-400/25 bg-blue-500/10 px-3 py-2 text-xs text-blue-100">
+              <div className="mt-3 rounded-xl border border-accent-line bg-accent-soft px-3 py-2 text-sm text-accent">
                 {notice}
               </div>
             )}
@@ -418,7 +418,7 @@ function DiscountApprovalDetailPanel({ companyId, approvalRequestId, onClose, on
                 onApprove={handleApprove}
               />
             ) : (
-              <p className="mt-4 border-t border-white/10 pt-3 text-[11px] text-slate-500">
+              <p className="mt-4 border-t border-line pt-3 text-xs text-subtle">
                 {t("approvals.detail.notActionable")}
               </p>
             )}
@@ -437,18 +437,18 @@ function DiscountRowMetrics({ companyId, approvalRequestId }) {
   const detail = query.data;
 
   return (
-    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10px] text-slate-400">
+    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted">
       <span>
         {t("approvals.discount.requestedValue")}:{" "}
-        <b className="text-slate-200">{detail ? formatDiscountValue(detail.discountType, detail.requestedValue) : "—"}</b>
+        <b className="text-ink">{detail ? formatDiscountValue(detail.discountType, detail.requestedValue) : "—"}</b>
       </span>
       <span>
         {t("approvals.discount.estimatedAmount")}:{" "}
-        <b className="text-slate-200">{detail ? formatMoney(detail.estimatedAppliedAmount, "") : "—"}</b>
+        <b className="text-ink">{detail ? formatMoney(detail.estimatedAppliedAmount, "") : "—"}</b>
       </span>
       <span>
         {t("approvals.discount.effectivePercent")}:{" "}
-        <b className="text-slate-200">{detail ? `${Number(detail.estimatedEffectivePercent)}%` : "—"}</b>
+        <b className="text-ink">{detail ? `${Number(detail.estimatedEffectivePercent)}%` : "—"}</b>
       </span>
     </div>
   );
@@ -496,14 +496,14 @@ function ApprovalsInbox({ companyId, actionCode }) {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-xs text-slate-500">
+        <p className="text-sm text-subtle">
           {t("approvals.inbox.totalCount", { count: totalCount })}
         </p>
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => setOpenByIdVisible((visible) => !visible)}
-            className="text-[11px] font-bold text-slate-500 underline-offset-2 hover:text-slate-300 hover:underline"
+            className="text-xs font-bold text-subtle underline-offset-2 hover:text-muted hover:underline"
           >
             {t("approvals.lookup.toggle")}
           </button>
@@ -511,7 +511,7 @@ function ApprovalsInbox({ companyId, actionCode }) {
             type="button"
             onClick={() => listQuery.refetch()}
             disabled={listQuery.isFetching}
-            className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold text-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex items-center gap-2 rounded-xl border border-line bg-raised px-3 py-2 text-sm font-bold text-ink disabled:cursor-not-allowed disabled:opacity-50"
           >
             <RefreshCw size={14} />
             {t("approvals.refresh")}
@@ -522,7 +522,7 @@ function ApprovalsInbox({ companyId, actionCode }) {
       {openByIdVisible && (
         <form onSubmit={handleOpenById} className="flex flex-wrap items-end gap-2">
           <label className="min-w-[240px] flex-1">
-            <span className="mb-1 block text-xs font-semibold text-slate-400">
+            <span className="mb-1 block text-sm font-semibold text-muted">
               {t("approvals.lookup.label")}
             </span>
             <input
@@ -530,13 +530,13 @@ function ApprovalsInbox({ companyId, actionCode }) {
               value={openByIdInput}
               onChange={(event) => setOpenByIdInput(event.target.value)}
               placeholder={t("approvals.lookup.placeholder")}
-              className="h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60"
+              className="h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line"
             />
           </label>
           <button
             type="submit"
             disabled={!openByIdInput.trim()}
-            className="flex h-11 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-4 text-xs font-bold text-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex h-11 items-center gap-2 rounded-xl border border-line bg-raised px-4 text-sm font-bold text-ink disabled:cursor-not-allowed disabled:opacity-50"
           >
             {t("approvals.lookup.button")}
           </button>
@@ -544,7 +544,7 @@ function ApprovalsInbox({ companyId, actionCode }) {
       )}
 
       {listNotice && (
-        <div className="rounded-xl border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-100">
+        <div className="rounded-xl border border-success bg-success-soft px-3 py-2 text-sm text-success">
           {listNotice}
         </div>
       )}
@@ -559,7 +559,7 @@ function ApprovalsInbox({ companyId, actionCode }) {
               <button
                 type="button"
                 onClick={() => listQuery.refetch()}
-                className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold text-slate-100"
+                className="flex items-center gap-2 rounded-xl border border-line bg-raised px-3 py-2 text-sm font-bold text-ink"
               >
                 <RefreshCw size={14} />
                 {t("approvals.refresh")}
@@ -577,18 +577,18 @@ function ApprovalsInbox({ companyId, actionCode }) {
                       onClick={() => setSelectedId(item.approvalRequestId)}
                       className={`w-full rounded-xl border p-3 text-left transition ${
                         selectedId === item.approvalRequestId
-                          ? "border-blue-400/60 bg-blue-500/10"
-                          : "border-white/10 bg-white/[0.025] hover:border-white/20"
+                          ? "border-accent-line bg-accent-soft"
+                          : "border-line bg-raised hover:border-line-strong"
                       }`}
                     >
                       <div className="flex items-center justify-between gap-3">
-                        <span className="text-xs font-bold text-slate-100">
+                        <span className="text-sm font-bold text-ink">
                           {item.orderReference || `#${item.approvalRequestId.slice(-8)}`}
                         </span>
                         {isDiscount ? (
                           <StatusBadge tone={statusTone(item.status)}>{item.status}</StatusBadge>
                         ) : (
-                          <span className="text-sm font-black text-blue-300">
+                          <span className="text-sm font-black text-accent">
                             {formatMoney(item.amount ?? 0, item.currencyCode ?? "")}
                           </span>
                         )}
@@ -596,14 +596,14 @@ function ApprovalsInbox({ companyId, actionCode }) {
                       {isDiscount && (
                         <DiscountRowMetrics companyId={companyId} approvalRequestId={item.approvalRequestId} />
                       )}
-                      <div className="mt-1 flex items-center justify-between gap-3 text-[10px] text-slate-400">
+                      <div className="mt-1 flex items-center justify-between gap-3 text-xs text-muted">
                         <span className="truncate">{item.requesterDisplayName || item.requesterId}</span>
                         <span className="shrink-0">{item.branchName || item.branchId}</span>
                       </div>
                       {item.reason && (
-                        <p className="mt-1 truncate text-[10px] text-slate-500">{item.reason}</p>
+                        <p className="mt-1 truncate text-xs text-subtle">{item.reason}</p>
                       )}
-                      <div className="mt-1 flex items-center justify-between gap-3 text-[10px] text-slate-500">
+                      <div className="mt-1 flex items-center justify-between gap-3 text-xs text-subtle">
                         <span>{formatPaymentDate(item.createdAtUtc)}</span>
                         <span>{t("approvals.inbox.expiresAt", { time: formatPaymentDate(item.expiresAtUtc) })}</span>
                       </div>
@@ -617,19 +617,19 @@ function ApprovalsInbox({ companyId, actionCode }) {
                   type="button"
                   onClick={() => setPage((current) => Math.max(1, current - 1))}
                   disabled={page <= 1 || listQuery.isFetching}
-                  className="flex items-center gap-1 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold text-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="flex items-center gap-1 rounded-xl border border-line bg-raised px-3 py-2 text-sm font-bold text-ink disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <ChevronLeft size={14} />
                   {t("approvals.inbox.previous")}
                 </button>
-                <span className="text-[10px] font-semibold text-slate-500">
+                <span className="text-xs font-semibold text-subtle">
                   {t("approvals.inbox.pageOf", { page, totalPages: Math.max(totalPages, 1) })}
                 </span>
                 <button
                   type="button"
                   onClick={() => setPage((current) => current + 1)}
                   disabled={page >= totalPages || listQuery.isFetching}
-                  className="flex items-center gap-1 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold text-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="flex items-center gap-1 rounded-xl border border-line bg-raised px-3 py-2 text-sm font-bold text-ink disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {t("approvals.inbox.next")}
                   <ChevronRight size={14} />
@@ -692,7 +692,7 @@ export default function ApprovalsPage() {
     <AppLayout>
       <main className="space-y-4" dir={dir}>
         <PageHeader title={t("approvals.title")} />
-        <p className="text-sm text-slate-400">{t("approvals.subtitle")}</p>
+        <p className="text-sm text-muted">{t("approvals.subtitle")}</p>
 
         {!currentCompanyId ? (
           <EmptyState title={t("approvals.title")} message={t("approvals.companyRequired")} />
@@ -715,10 +715,10 @@ export default function ApprovalsPage() {
                     role="tab"
                     aria-selected={activeCode === tab.code}
                     onClick={() => setTabState({ companyId: currentCompanyId, code: tab.code })}
-                    className={`rounded-xl border px-4 py-2 text-xs font-bold transition ${
+                    className={`rounded-xl border px-4 py-2 text-sm font-bold transition ${
                       activeCode === tab.code
-                        ? "border-blue-400/60 bg-blue-500/10 text-blue-100"
-                        : "border-white/10 bg-white/[0.035] text-slate-300 hover:border-white/20"
+                        ? "border-accent-line bg-accent-soft text-accent"
+                        : "border-line bg-raised text-muted hover:border-line-strong"
                     }`}
                   >
                     {t(tab.labelKey)}

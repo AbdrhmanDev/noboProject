@@ -58,15 +58,15 @@ function InformationRequestCard({ registration, request, companyId }) {
   };
 
   return (
-    <div className="rounded-xl border border-amber-400/25 bg-amber-500/10 p-3">
+    <div className="rounded-xl border border-warning bg-warning-soft p-3">
       <div className="flex items-start gap-2">
-        <MessageSquareWarning size={16} className="mt-0.5 shrink-0 text-amber-300" />
+        <MessageSquareWarning size={16} className="mt-0.5 shrink-0 text-warning" />
         <div className="min-w-0">
-          <div className="text-xs font-bold text-amber-100">
+          <div className="text-sm font-bold text-warning">
             {request.requestedFieldKey ? fieldLabel(request.requestedFieldKey) : request.requestedItem || "General"}
           </div>
-          <p className="mt-1 text-xs text-amber-100/90">{request.message}</p>
-          <div className="mt-1 text-[10px] text-amber-200/70">
+          <p className="mt-1 text-sm text-warning/90">{request.message}</p>
+          <div className="mt-1 text-xs text-warning">
             {request.status} · {formatDateTime(request.createdAtUtc)}
           </div>
         </div>
@@ -79,21 +79,21 @@ function InformationRequestCard({ registration, request, companyId }) {
             rows={2}
             placeholder="Your response..."
             disabled={respondMutation.isPending}
-            className="w-full rounded-lg border border-white/10 bg-black/20 px-2 py-1.5 text-xs text-white outline-none disabled:opacity-50"
+            className="w-full rounded-lg border border-line bg-canvas px-2 py-1.5 text-sm text-ink outline-none disabled:opacity-50"
           />
-          {error && <div className="text-[11px] text-red-300">{error}</div>}
+          {error && <div className="text-xs text-danger">{error}</div>}
           <button
             type="button"
             disabled={respondMutation.isPending}
             onClick={respond}
-            className="rounded-lg bg-blue-600 px-2 py-1 text-[11px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-lg bg-accent px-2 py-1 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             {respondMutation.isPending ? "Sending..." : "Send response"}
           </button>
         </div>
       )}
       {request.status !== "Open" && request.responseMessage && (
-        <div className="mt-2 rounded-lg bg-black/20 p-2 text-[11px] text-slate-300">
+        <div className="mt-2 rounded-lg bg-canvas p-2 text-xs text-muted">
           Your response: {request.responseMessage}
         </div>
       )}
@@ -189,58 +189,58 @@ export function CompanyProfileAmendmentDetailsPage() {
 
   return (
     <AppLayout>
-      <main className="space-y-4" dir="rtl">
+      <main className="odoo-root space-y-3" dir="rtl">
         <PageHeader
           title={amendment.reference}
           actions={
             <button
               type="button"
               onClick={() => navigate(ROUTES.COMPANY_PROFILE_AMENDMENTS)}
-              className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold text-slate-100"
+              className="flex items-center gap-2 rounded-xl border border-line bg-raised px-3 py-2 text-sm font-bold text-ink"
             >
               <ArrowRight size={14} /> Back
             </button>
           }
         />
 
-        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-white/[0.02] px-3 py-2 text-xs text-slate-300">
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-line bg-raised px-3 py-2 text-sm text-muted">
           <RegistrationStatusBadge status={registration.status} />
-          <span className="text-slate-500">Based on approved v{amendment.baseProfileVersionNumber}</span>
-          <span className="text-slate-500">Created {formatDateTime(registration.createdAtUtc)}</span>
-          {registration.submittedAtUtc && <span className="text-slate-500">Submitted {formatDateTime(registration.submittedAtUtc)}</span>}
-          {registration.decidedAtUtc && <span className="text-slate-500">Decided {formatDateTime(registration.decidedAtUtc)}</span>}
+          <span className="text-subtle">Based on approved v{amendment.baseProfileVersionNumber}</span>
+          <span className="text-subtle">Created {formatDateTime(registration.createdAtUtc)}</span>
+          {registration.submittedAtUtc && <span className="text-subtle">Submitted {formatDateTime(registration.submittedAtUtc)}</span>}
+          {registration.decidedAtUtc && <span className="text-subtle">Decided {formatDateTime(registration.decidedAtUtc)}</span>}
         </div>
         {registration.decisionReason && (
-          <div className="rounded-xl border border-red-400/20 bg-red-500/10 p-3 text-xs text-red-200">
+          <div className="rounded-xl border border-danger bg-danger-soft p-3 text-sm text-danger">
             Reviewer note: {registration.decisionReason}
           </div>
         )}
 
-        {notice && <div className="rounded-xl border border-blue-400/25 bg-blue-500/10 px-3 py-2 text-xs text-blue-100">{notice}</div>}
-        {error && <div className="rounded-xl border border-red-400/20 bg-red-500/10 px-3 py-2 text-xs text-red-200">{error}</div>}
+        {notice && <div className="rounded-xl border border-accent-line bg-accent-soft px-3 py-2 text-sm text-accent">{notice}</div>}
+        {error && <div className="rounded-xl border border-danger bg-danger-soft px-3 py-2 text-sm text-danger">{error}</div>}
 
         {registration.informationRequests.length > 0 && (
           <div className="space-y-2">
-            <h2 className="text-xs font-bold text-slate-400">Information requests</h2>
+            <h2 className="text-sm font-bold text-muted">Information requests</h2>
             {registration.informationRequests.map((request) => (
               <InformationRequestCard key={request.id} registration={registration} request={request} companyId={currentCompanyId} />
             ))}
           </div>
         )}
 
-        <div className="rounded-2xl border border-white/10 bg-[#0c1424] p-4">
+        <div className="rounded-xl border border-line bg-surface p-4">
           {!isDraft && (
-            <div className="mb-3 rounded-xl border border-white/10 bg-white/[0.02] p-2 text-[11px] text-slate-500">
+            <div className="mb-3 rounded-xl border border-line bg-raised p-2 text-xs text-subtle">
               Read-only: fields can only be edited while the amendment is Draft (currently {registration.status}).
             </div>
           )}
           <div className="space-y-4">
             {[...groups.entries()].map(([group, fields]) => (
               <div key={group}>
-                <div className="mb-2 text-xs font-bold text-slate-400">{GROUP_LABEL[group] || group}</div>
+                <div className="mb-2 text-sm font-bold text-muted">{GROUP_LABEL[group] || group}</div>
                 <div className="grid gap-2 sm:grid-cols-2">
                   {fields.map((field) => (
-                    <label key={field.key} className="text-xs font-semibold text-slate-400">
+                    <label key={field.key} className="text-sm font-semibold text-muted">
                       <span className="flex items-center gap-1.5">
                         {fieldLabel(field.key)}
                         {field.requiredForApproval && " *"}
@@ -249,9 +249,9 @@ export function CompanyProfileAmendmentDetailsPage() {
                         value={values[field.key] ?? ""}
                         onChange={(event) => setValues((current) => ({ ...current, [field.key]: event.target.value }))}
                         disabled={!isDraft}
-                        className="mt-1 h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+                        className="mt-1 h-10 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
                       />
-                      <span className="mt-0.5 block text-[10px] font-normal text-slate-500">{field.status}</span>
+                      <span className="mt-0.5 block text-xs font-normal text-subtle">{field.status}</span>
                     </label>
                   ))}
                 </div>
@@ -266,7 +266,7 @@ export function CompanyProfileAmendmentDetailsPage() {
                   type="button"
                   disabled={isPending}
                   onClick={save}
-                  className="flex h-10 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-4 text-xs font-bold text-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex h-10 items-center gap-2 rounded-xl border border-line bg-raised px-4 text-sm font-bold text-ink disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <Save size={14} /> {updateMutation.isPending ? "Saving..." : "Save draft"}
                 </button>
@@ -274,7 +274,7 @@ export function CompanyProfileAmendmentDetailsPage() {
                   type="button"
                   disabled={isPending}
                   onClick={submit}
-                  className="flex h-10 items-center gap-2 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex h-10 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <Send size={14} /> {submitMutation.isPending ? "Submitting..." : "Submit for review"}
                 </button>
@@ -285,7 +285,7 @@ export function CompanyProfileAmendmentDetailsPage() {
                 type="button"
                 disabled={isPending}
                 onClick={cancel}
-                className="flex h-10 items-center gap-2 rounded-xl border border-red-400/30 px-4 text-xs font-bold text-red-200 hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-10 items-center gap-2 rounded-xl border border-danger px-4 text-sm font-bold text-danger hover:bg-danger-soft disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <X size={14} /> {cancelMutation.isPending ? "Cancelling..." : "Cancel amendment"}
               </button>

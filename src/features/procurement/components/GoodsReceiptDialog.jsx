@@ -102,34 +102,34 @@ export function GoodsReceiptDialog({ companyId, branchId, purchaseOrder, onClose
   return (
     <ProcurementModal title={t("procurement.receipt.title")} onClose={onClose} size="lg">
       <form onSubmit={submit} className="space-y-4">
-        <div className="rounded-xl border border-white/10 bg-white/[0.025] p-3 text-xs">
+        <div className="rounded-xl border border-line bg-raised p-3 text-sm">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-slate-500">{t("procurement.po.title")}</span>
-            <span className="font-bold text-slate-100">
+            <span className="text-subtle">{t("procurement.po.title")}</span>
+            <span className="font-bold text-ink">
               {purchaseOrderNumberDisplay(purchaseOrder.purchaseOrderNumber, purchaseOrder.purchaseOrderNumberFormatted)}
             </span>
           </div>
           <div className="mt-1 flex items-center justify-between gap-2">
-            <span className="text-slate-500">{t("procurement.po.form.supplier")}</span>
-            <span className="font-bold text-slate-100">{purchaseOrder.supplierName}</span>
+            <span className="text-subtle">{t("procurement.po.form.supplier")}</span>
+            <span className="font-bold text-ink">{purchaseOrder.supplierName}</span>
           </div>
         </div>
 
         {formError && (
-          <div className="rounded-xl border border-rose-400/25 bg-rose-500/10 px-3 py-2 text-xs text-rose-100">
+          <div className="rounded-xl border border-danger bg-danger-soft px-3 py-2 text-sm text-danger">
             {formError}
           </div>
         )}
 
         <div className={`grid gap-3 ${companyOwnsInventory ? "sm:grid-cols-2" : ""}`}>
           {companyOwnsInventory && (
-            <label className="block text-xs font-semibold text-slate-400">
+            <label className="block text-sm font-semibold text-muted">
               {t("procurement.receipt.destinationLocation")}
               <select
                 value={inventoryLocationId}
                 onChange={(event) => setInventoryLocationId(event.target.value)}
                 disabled={locationsQuery.isLoading}
-                className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+                className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
               >
                 <option value="">{t("procurement.receipt.locationSelectPlaceholder")}</option>
                 {locations.map((location) => (
@@ -140,20 +140,20 @@ export function GoodsReceiptDialog({ companyId, branchId, purchaseOrder, onClose
               </select>
             </label>
           )}
-          <label className="block text-xs font-semibold text-slate-400">
+          <label className="block text-sm font-semibold text-muted">
             {t("procurement.po.form.note")}
             <input
               type="text"
               value={note}
               onChange={(event) => setNote(event.target.value)}
               maxLength={500}
-              className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60"
+              className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line"
             />
           </label>
         </div>
 
         <div className="space-y-2">
-          <div className="hidden grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-2 px-1 text-[10px] font-bold uppercase tracking-wide text-slate-500 lg:grid">
+          <div className="hidden grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-2 px-1 text-xs font-bold uppercase tracking-wide text-subtle lg:grid">
             <span>{t("procurement.po.form.item")}</span>
             <span>{t("procurement.receipt.ordered")}</span>
             <span>{t("procurement.receipt.previouslyReceived")}</span>
@@ -163,22 +163,22 @@ export function GoodsReceiptDialog({ companyId, branchId, purchaseOrder, onClose
           {receivableLines.map((line) => (
             <div
               key={line.purchaseOrderLineId}
-              className="grid grid-cols-2 gap-2 rounded-xl border border-white/10 bg-white/[0.025] p-2.5 lg:grid-cols-[2fr_1fr_1fr_1fr_1fr] lg:items-center"
+              className="grid grid-cols-2 gap-2 rounded-xl border border-line bg-raised p-2.5 lg:grid-cols-[2fr_1fr_1fr_1fr_1fr] lg:items-center"
             >
-              <div className="col-span-2 text-xs font-bold text-slate-100 lg:col-span-1">
+              <div className="col-span-2 text-sm font-bold text-ink lg:col-span-1">
                 {line.inventoryItemName}
-                <span className="ms-1 text-[10px] text-slate-500">({line.inventoryItemCode})</span>
+                <span className="ms-1 text-xs text-subtle">({line.inventoryItemCode})</span>
               </div>
-              <div className="text-xs text-slate-300">{line.orderedQuantity}</div>
-              <div className="text-xs text-slate-300">{line.receivedQuantity}</div>
-              <div className="text-xs font-bold text-amber-300">{line.remainingQuantity}</div>
+              <div className="text-sm text-muted">{line.orderedQuantity}</div>
+              <div className="text-sm text-muted">{line.receivedQuantity}</div>
+              <div className="text-sm font-bold text-warning">{line.remainingQuantity}</div>
               <input
                 type="text"
                 inputMode="decimal"
                 value={quantities[line.purchaseOrderLineId] ?? ""}
                 onChange={(event) => setLineQuantity(line.purchaseOrderLineId, event.target.value)}
                 placeholder="0"
-                className="h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm font-bold text-white outline-none focus:border-emerald-400/60"
+                className="h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm font-bold text-ink outline-none focus:border-accent-line"
               />
             </div>
           ))}
@@ -187,7 +187,7 @@ export function GoodsReceiptDialog({ companyId, branchId, purchaseOrder, onClose
         <button
           type="submit"
           disabled={receiptMutation.isPending || (companyOwnsInventory && !inventoryLocationId)}
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 text-sm font-black text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-success text-sm font-black text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {receiptMutation.isPending ? t("procurement.actions.saving") : t("procurement.actions.receiveGoods")}
         </button>

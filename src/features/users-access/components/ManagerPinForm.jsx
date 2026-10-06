@@ -69,17 +69,17 @@ export function ManagerPinForm({ companyId, membershipId, disabled = false, onSu
 
   return (
     <div className="space-y-2">
-      <p className="text-[11px] leading-4 text-slate-500">{t("usersAccess.pin.explanation")}</p>
+      <p className="text-xs leading-4 text-subtle">{t("usersAccess.pin.explanation")}</p>
 
       {confirmedAtUtc && (
-        <div className="rounded-xl border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-100">
+        <div className="rounded-xl border border-success bg-success-soft px-3 py-2 text-sm text-success">
           {t("usersAccess.pin.confirmedNotice")}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="grid gap-2 sm:grid-cols-2">
         <label className="block">
-          <span className="mb-1 block text-xs font-semibold text-slate-400">
+          <span className="mb-1 block text-sm font-semibold text-muted">
             {t("usersAccess.pin.newLabel")}
           </span>
           <input
@@ -93,11 +93,11 @@ export function ManagerPinForm({ companyId, membershipId, disabled = false, onSu
             }}
             disabled={disabled || mutation.isPending}
             placeholder={t("usersAccess.pin.placeholder")}
-            className="h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+            className="h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
           />
         </label>
         <label className="block">
-          <span className="mb-1 block text-xs font-semibold text-slate-400">
+          <span className="mb-1 block text-sm font-semibold text-muted">
             {t("usersAccess.pin.confirmLabel")}
           </span>
           <input
@@ -111,12 +111,12 @@ export function ManagerPinForm({ companyId, membershipId, disabled = false, onSu
             }}
             disabled={disabled || mutation.isPending}
             placeholder={t("usersAccess.pin.placeholder")}
-            className="h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+            className="h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
           />
         </label>
 
         {error && (
-          <div className="sm:col-span-2 rounded-xl border border-red-400/20 bg-red-500/10 px-3 py-2 text-xs text-red-100">
+          <div className="sm:col-span-2 rounded-xl border border-danger bg-danger-soft px-3 py-2 text-sm text-danger">
             {error}
           </div>
         )}
@@ -124,7 +124,7 @@ export function ManagerPinForm({ companyId, membershipId, disabled = false, onSu
         <button
           type="submit"
           disabled={disabled || mutation.isPending || !pin || !confirmPin}
-          className="flex h-10 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50 sm:col-span-2"
+          className="flex h-10 items-center justify-center gap-2 rounded-xl bg-accent px-4 text-sm font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50 sm:col-span-2"
         >
           <KeyRound size={14} />
           {mutation.isPending ? t("usersAccess.pin.saving") : t("usersAccess.pin.saveButton")}

@@ -23,13 +23,13 @@ function getErrorMessage(error) {
 
 function ManageModifiersEmptyState({ title, message, onManageModifiers }) {
   return (
-    <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.015] p-5 text-center">
-      <h3 className="text-sm font-bold text-slate-200">{title}</h3>
-      <p className="mx-auto mt-1 max-w-md text-xs leading-5 text-slate-500">{message}</p>
+    <div className="rounded-xl border border-dashed border-line bg-raised p-5 text-center">
+      <h3 className="text-sm font-bold text-ink">{title}</h3>
+      <p className="mx-auto mt-1 max-w-md text-sm leading-5 text-subtle">{message}</p>
       <button
         type="button"
         onClick={onManageModifiers}
-        className="mt-3 inline-flex items-center gap-2 rounded-xl border border-blue-400/30 bg-blue-500/10 px-4 py-2 text-xs font-bold text-blue-200 transition hover:bg-blue-500/20"
+        className="mt-3 inline-flex items-center gap-2 rounded-xl border border-accent-line bg-accent-soft px-4 py-2 text-sm font-bold text-accent transition hover:bg-accent-strong/20"
       >
         <ExternalLink size={14} />
         Manage Modifiers
@@ -172,12 +172,12 @@ export function ModifierAdjustmentPanel({ companyId, canView, canConfigure }) {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-sm font-bold text-white">Modifier Inventory Adjustments</h2>
+        <h2 className="text-sm font-bold text-ink">Modifier Inventory Adjustments</h2>
         {modifierOptionId && (
           <button
             type="button"
             onClick={() => adjustmentsQuery.refetch()}
-            className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold text-slate-100"
+            className="flex items-center gap-2 rounded-xl border border-line bg-raised px-3 py-2 text-sm font-bold text-ink"
           >
             <RefreshCw size={14} />
             Refresh
@@ -186,12 +186,12 @@ export function ModifierAdjustmentPanel({ companyId, canView, canConfigure }) {
       </div>
 
       {notice && (
-        <div className="rounded-xl border border-blue-400/25 bg-blue-500/10 px-3 py-2 text-xs text-blue-100">
+        <div className="rounded-xl border border-accent-line bg-accent-soft px-3 py-2 text-sm text-accent">
           {notice}
         </div>
       )}
 
-      <section className="rounded-2xl border border-white/10 bg-[#0c1424] p-4 space-y-3">
+      <section className="rounded-xl border border-line bg-surface p-4 space-y-3">
         <ProductVariantPicker
           companyId={companyId}
           enabled={canView}
@@ -201,13 +201,13 @@ export function ModifierAdjustmentPanel({ companyId, canView, canConfigure }) {
           onVariantChange={selectVariant}
         />
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="text-xs font-semibold text-slate-400">
+          <label className="text-sm font-semibold text-muted">
             Modifier group
             <select
               value={modifierGroupId || ""}
               onChange={(event) => selectModifierGroup(event.target.value)}
               disabled={!productVariantId || variantModifierGroupsQuery.isLoading}
-              className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+              className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
             >
               <option value="">Select modifier group...</option>
               {enabledModifierGroups.map((group) => (
@@ -217,16 +217,16 @@ export function ModifierAdjustmentPanel({ companyId, canView, canConfigure }) {
               ))}
             </select>
             {!productVariantId && (
-              <p className="mt-1 text-[11px] text-slate-500">Select a variant first</p>
+              <p className="mt-1 text-xs text-subtle">Select a variant first</p>
             )}
           </label>
-          <label className="text-xs font-semibold text-slate-400">
+          <label className="text-sm font-semibold text-muted">
             Modifier option
             <select
               value={modifierOptionId || ""}
               onChange={(event) => selectModifierOption(event.target.value)}
               disabled={!modifierGroupId || modifierGroupDetailsQuery.isLoading}
-              className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+              className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
             >
               <option value="">Select modifier option...</option>
               {modifierOptions.map((option) => (
@@ -236,7 +236,7 @@ export function ModifierAdjustmentPanel({ companyId, canView, canConfigure }) {
               ))}
             </select>
             {!modifierGroupId && productVariantId && (
-              <p className="mt-1 text-[11px] text-slate-500">Select a modifier group first</p>
+              <p className="mt-1 text-xs text-subtle">Select a modifier group first</p>
             )}
           </label>
         </div>
@@ -268,9 +268,9 @@ export function ModifierAdjustmentPanel({ companyId, canView, canConfigure }) {
           message="Choose a product, variant, modifier group, and option to view its inventory adjustments."
         />
       ) : (
-        <section className="rounded-2xl border border-white/10 bg-[#0c1424] p-4">
-          <div className="mb-3 flex items-center gap-2 text-xs text-slate-400">
-            <SlidersHorizontal size={15} className="text-blue-300" />
+        <section className="rounded-xl border border-line bg-surface p-4">
+          <div className="mb-3 flex items-center gap-2 text-sm text-muted">
+            <SlidersHorizontal size={15} className="text-accent" />
             Adjustment applied on top of the variant&apos;s base consumption when this option is
             selected (positive adds, negative reduces)
           </div>
@@ -286,20 +286,20 @@ export function ModifierAdjustmentPanel({ companyId, canView, canConfigure }) {
           {!adjustmentsQuery.isLoading && !adjustmentsQuery.isError && (
             <div className="space-y-2">
               {adjustments.length === 0 && (
-                <div className="rounded-xl border border-dashed border-white/10 p-4 text-center text-xs text-slate-500">
+                <div className="rounded-xl border border-dashed border-line p-4 text-center text-sm text-subtle">
                   No inventory adjustments configured for this modifier option yet.
                 </div>
               )}
               {adjustments.map((adjustment) => (
                 <div
                   key={adjustment.inventoryItemId}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.025] p-3"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-raised p-3"
                 >
                   <div className="min-w-0">
-                    <div className="truncate text-sm font-bold text-white">
+                    <div className="truncate text-sm font-bold text-ink">
                       {adjustment.inventoryItemName}
                     </div>
-                    <div className="text-xs text-slate-400">{adjustment.inventoryItemCode}</div>
+                    <div className="text-sm text-muted">{adjustment.inventoryItemCode}</div>
                   </div>
                   <div className="flex items-center gap-2">
                     <input
@@ -311,20 +311,20 @@ export function ModifierAdjustmentPanel({ companyId, canView, canConfigure }) {
                         if (event.target.value === String(adjustment.quantityDelta)) return;
                         submitAdjustment(adjustment.inventoryItemId, event.target.value);
                       }}
-                      className={`h-9 w-28 rounded-lg border bg-black/20 px-2 text-right text-xs outline-none focus:border-blue-400/60 disabled:opacity-50 ${
+                      className={`h-9 w-28 rounded-lg border bg-canvas px-2 text-right text-sm outline-none focus:border-accent-line disabled:opacity-50 ${
                         adjustment.quantityDelta < 0
-                          ? "border-rose-400/30 text-rose-200"
-                          : "border-white/10 text-white"
+                          ? "border-danger text-danger"
+                          : "border-line text-ink"
                       }`}
                     />
-                    <span className="text-xs text-slate-500">
+                    <span className="text-sm text-subtle">
                       {adjustment.baseUnitOfMeasure.symbol}
                     </span>
                     <button
                       type="button"
                       disabled={!canConfigure || removeAdjustmentMutation.isPending}
                       onClick={() => removeAdjustment(adjustment.inventoryItemId)}
-                      className="rounded-lg border border-rose-400/25 p-2 text-rose-200 disabled:cursor-not-allowed disabled:opacity-40"
+                      className="rounded-lg border border-danger p-2 text-danger disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -335,14 +335,14 @@ export function ModifierAdjustmentPanel({ companyId, canView, canConfigure }) {
           )}
 
           {canConfigure && (
-            <div className="mt-4 flex flex-wrap items-end gap-2 border-t border-white/10 pt-4">
-              <label className="text-xs font-semibold text-slate-400">
+            <div className="mt-4 flex flex-wrap items-end gap-2 border-t border-line pt-4">
+              <label className="text-sm font-semibold text-muted">
                 Add inventory item
                 <select
                   value={selectedInventoryItemId}
                   onChange={(event) => setSelectedInventoryItemId(event.target.value)}
                   disabled={activeItemsQuery.isLoading}
-                  className="mt-1 h-10 w-56 rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+                  className="mt-1 h-10 w-56 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
                 >
                   <option value="">Select item...</option>
                   {availableItemsToAdd.map((item) => (
@@ -352,14 +352,14 @@ export function ModifierAdjustmentPanel({ companyId, canView, canConfigure }) {
                   ))}
                 </select>
               </label>
-              <label className="text-xs font-semibold text-slate-400">
+              <label className="text-sm font-semibold text-muted">
                 Quantity delta (+/-)
                 <input
                   type="text"
                   inputMode="decimal"
                   value={quantityInput}
                   onChange={(event) => setQuantityInput(event.target.value)}
-                  className="mt-1 h-10 w-40 rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none focus:border-blue-400/60"
+                  className="mt-1 h-10 w-40 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line"
                   placeholder="e.g. 0.5 or -0.5"
                 />
               </label>
@@ -367,7 +367,7 @@ export function ModifierAdjustmentPanel({ companyId, canView, canConfigure }) {
                 type="button"
                 disabled={setAdjustmentMutation.isPending}
                 onClick={() => submitAdjustment(selectedInventoryItemId, quantityInput)}
-                className="flex h-10 items-center gap-2 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-10 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Plus size={15} />
                 Add adjustment
@@ -375,7 +375,7 @@ export function ModifierAdjustmentPanel({ companyId, canView, canConfigure }) {
             </div>
           )}
           {!canConfigure && (
-            <div className="mt-4 rounded-xl border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+            <div className="mt-4 rounded-xl border border-warning bg-warning-soft px-3 py-2 text-sm text-warning">
               Inventory.Configure permission is required to change modifier adjustments.
             </div>
           )}

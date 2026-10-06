@@ -17,12 +17,12 @@ export function SalesFulfillmentBreakdown({ breakdown, currencyCode }) {
         const label = labelKey ? t(labelKey) : item.fulfillmentType || "—";
 
         return (
-          <div key={item.fulfillmentType || "none"} className="rounded-xl bg-white/[0.025] p-3">
-            <div className="text-[11px] font-bold text-slate-300">{label}</div>
-            <div className="mt-1 text-base font-black text-white">
+          <div key={item.fulfillmentType || "none"} className="rounded-xl bg-raised p-3">
+            <div className="text-[11px] font-bold text-muted">{label}</div>
+            <div className="mt-1 text-base font-black text-ink">
               {currencyCode ? formatMoney(item.salesAmount, currencyCode, 2) : item.salesAmount}
             </div>
-            <div className="mt-0.5 text-[10px] text-slate-500">
+            <div className="mt-0.5 text-[10px] text-subtle">
               {item.orderCount} {t("salesOrders.overview.kpi.orders")}
             </div>
           </div>

@@ -8,10 +8,10 @@ export function getTransactionTypeLabel(type) {
 }
 
 export function getTransactionTypeTone(type) {
-  if (type === "ManualAdjustment") return "text-blue-300";
-  if (type === "SalesConsumption") return "text-amber-300";
-  if (type === "SalesReversal") return "text-emerald-300";
-  return "text-slate-300";
+  if (type === "ManualAdjustment") return "text-accent";
+  if (type === "SalesConsumption") return "text-warning";
+  if (type === "SalesReversal") return "text-success";
+  return "text-muted";
 }
 
 export function shortId(value) {

@@ -35,10 +35,11 @@ function referenceLabel(transaction) {
   return "-";
 }
 
-export function InventoryLedgerPanel({ companyId, branchId, canView }) {
+// `initialTransactionType`: opens pre-filtered on one movement type (Inventory Overview cards).
+export function InventoryLedgerPanel({ companyId, branchId, canView, initialTransactionType = "" }) {
   const [locationId, setLocationId] = useState("");
   const [itemId, setItemId] = useState("");
-  const [transactionType, setTransactionType] = useState("");
+  const [transactionType, setTransactionType] = useState(initialTransactionType);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [pageNumber, setPageNumber] = useState(1);
@@ -67,19 +68,19 @@ export function InventoryLedgerPanel({ companyId, branchId, canView }) {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-sm font-bold text-white">Inventory Ledger</h2>
+        <h2 className="text-sm font-bold text-ink">Inventory Ledger</h2>
         <button
           type="button"
           onClick={() => transactionsQuery.refetch()}
-          className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold text-slate-100"
+          className="flex items-center gap-2 rounded-xl border border-line bg-raised px-3 py-2 text-sm font-bold text-ink"
         >
           <RefreshCw size={14} />
           Refresh
         </button>
       </div>
 
-      <div className="grid gap-2 rounded-2xl border border-white/10 bg-[#0c1424] p-3 sm:grid-cols-5">
-        <label className="text-[11px] font-semibold text-slate-400">
+      <div className="grid gap-2 rounded-xl border border-line bg-surface p-3 sm:grid-cols-5">
+        <label className="text-xs font-semibold text-muted">
           Location
           <select
             value={locationId}
@@ -87,7 +88,7 @@ export function InventoryLedgerPanel({ companyId, branchId, canView }) {
               setLocationId(event.target.value);
               resetPage();
             }}
-            className="mt-1 h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none"
+            className="mt-1 h-10 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none"
           >
             <option value="">All locations</option>
             {(locationsQuery.data || []).map((location) => (
@@ -97,7 +98,7 @@ export function InventoryLedgerPanel({ companyId, branchId, canView }) {
             ))}
           </select>
         </label>
-        <label className="text-[11px] font-semibold text-slate-400">
+        <label className="text-xs font-semibold text-muted">
           Item
           <select
             value={itemId}
@@ -105,7 +106,7 @@ export function InventoryLedgerPanel({ companyId, branchId, canView }) {
               setItemId(event.target.value);
               resetPage();
             }}
-            className="mt-1 h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none"
+            className="mt-1 h-10 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none"
           >
             <option value="">All items</option>
             {(activeItemsQuery.data || []).map((item) => (
@@ -115,7 +116,7 @@ export function InventoryLedgerPanel({ companyId, branchId, canView }) {
             ))}
           </select>
         </label>
-        <label className="text-[11px] font-semibold text-slate-400">
+        <label className="text-xs font-semibold text-muted">
           Type
           <select
             value={transactionType}
@@ -123,7 +124,7 @@ export function InventoryLedgerPanel({ companyId, branchId, canView }) {
               setTransactionType(event.target.value);
               resetPage();
             }}
-            className="mt-1 h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none"
+            className="mt-1 h-10 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none"
           >
             <option value="">All types</option>
             {INVENTORY_TRANSACTION_TYPES.map((type) => (
@@ -133,7 +134,7 @@ export function InventoryLedgerPanel({ companyId, branchId, canView }) {
             ))}
           </select>
         </label>
-        <label className="text-[11px] font-semibold text-slate-400">
+        <label className="text-xs font-semibold text-muted">
           From
           <input
             type="date"
@@ -142,10 +143,10 @@ export function InventoryLedgerPanel({ companyId, branchId, canView }) {
               setDateFrom(event.target.value);
               resetPage();
             }}
-            className="mt-1 h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none"
+            className="mt-1 h-10 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none"
           />
         </label>
-        <label className="text-[11px] font-semibold text-slate-400">
+        <label className="text-xs font-semibold text-muted">
           To
           <input
             type="date"
@@ -154,12 +155,12 @@ export function InventoryLedgerPanel({ companyId, branchId, canView }) {
               setDateTo(event.target.value);
               resetPage();
             }}
-            className="mt-1 h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none"
+            className="mt-1 h-10 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none"
           />
         </label>
       </div>
 
-      <section className="rounded-2xl border border-white/10 bg-[#0c1424] p-3">
+      <section className="rounded-xl border border-line bg-surface p-3">
         {transactionsQuery.isLoading && <LoadingState label="Loading ledger..." />}
         {transactionsQuery.isError && (
           <ErrorState
@@ -176,9 +177,9 @@ export function InventoryLedgerPanel({ companyId, branchId, canView }) {
         {!transactionsQuery.isLoading && !transactionsQuery.isError && Boolean(page?.items.length) && (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full text-xs">
+              <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-white/10 text-right text-slate-500">
+                  <tr className="border-b border-line text-right text-subtle">
                     <th className="pb-2 font-medium">Date/time</th>
                     <th className="pb-2 font-medium">Type</th>
                     <th className="pb-2 font-medium">Location</th>
@@ -194,20 +195,20 @@ export function InventoryLedgerPanel({ companyId, branchId, canView }) {
                       onClick={() =>
                         setSelectedTransactionId(transaction.inventoryStockTransactionId)
                       }
-                      className="cursor-pointer border-b border-white/5 hover:bg-white/[0.03]"
+                      className="cursor-pointer border-b border-line hover:bg-hover"
                     >
-                      <td className="py-2.5 text-slate-300">
+                      <td className="py-2.5 text-muted">
                         {formatDateTime(transaction.createdAtUtc)}
                       </td>
                       <td className={`py-2.5 font-bold ${getTransactionTypeTone(transaction.transactionType)}`}>
                         {getTransactionTypeLabel(transaction.transactionType)}
                       </td>
-                      <td className="py-2.5 text-slate-300">
+                      <td className="py-2.5 text-muted">
                         {transaction.inventoryLocationName} ({transaction.inventoryLocationCode})
                       </td>
-                      <td className="py-2.5 text-slate-400">{transaction.lineCount}</td>
-                      <td className="py-2.5 text-slate-400">{referenceLabel(transaction)}</td>
-                      <td className="max-w-[220px] truncate py-2.5 text-slate-400">
+                      <td className="py-2.5 text-muted">{transaction.lineCount}</td>
+                      <td className="py-2.5 text-muted">{referenceLabel(transaction)}</td>
+                      <td className="max-w-[220px] truncate py-2.5 text-muted">
                         {transaction.reason || "-"}
                       </td>
                     </tr>
@@ -215,7 +216,7 @@ export function InventoryLedgerPanel({ companyId, branchId, canView }) {
                 </tbody>
               </table>
             </div>
-            <div className="mt-3 flex items-center justify-between text-xs text-slate-400">
+            <div className="mt-3 flex items-center justify-between text-sm text-muted">
               <span>
                 Page {page.pageNumber} of {page.totalPages || 1} · {page.totalCount} transactions
               </span>
@@ -224,7 +225,7 @@ export function InventoryLedgerPanel({ companyId, branchId, canView }) {
                   type="button"
                   disabled={page.pageNumber <= 1}
                   onClick={() => setPageNumber((value) => Math.max(1, value - 1))}
-                  className="rounded-lg border border-white/10 p-1.5 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="rounded-lg border border-line p-1.5 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <ChevronRight size={14} />
                 </button>
@@ -232,7 +233,7 @@ export function InventoryLedgerPanel({ companyId, branchId, canView }) {
                   type="button"
                   disabled={page.pageNumber >= page.totalPages}
                   onClick={() => setPageNumber((value) => value + 1)}
-                  className="rounded-lg border border-white/10 p-1.5 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="rounded-lg border border-line p-1.5 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <ChevronLeft size={14} />
                 </button>
@@ -242,7 +243,7 @@ export function InventoryLedgerPanel({ companyId, branchId, canView }) {
         )}
       </section>
 
-      <div className="flex items-center gap-2 text-[11px] text-slate-600">
+      <div className="flex items-center gap-2 text-xs text-subtle">
         <History size={13} />
         The ledger is an immutable history. Corrections require a new manual adjustment.
       </div>

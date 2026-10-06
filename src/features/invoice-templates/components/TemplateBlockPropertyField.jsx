@@ -10,7 +10,7 @@ export function TemplateBlockPropertyField({ property, value, onChange, disabled
 
   if (property.kind === "boolean") {
     return (
-      <label className="flex items-center gap-2 text-xs font-semibold text-slate-300">
+      <label className="flex items-center gap-2 text-sm font-semibold text-muted">
         <input
           type="checkbox"
           checked={Boolean(value)}
@@ -24,10 +24,10 @@ export function TemplateBlockPropertyField({ property, value, onChange, disabled
 
   if (property.kind === "integer") {
     return (
-      <label className="block text-xs font-semibold text-slate-400">
+      <label className="block text-sm font-semibold text-muted">
         {label}
         {property.min != null && property.max != null && (
-          <span className="ms-1 font-normal text-slate-500">
+          <span className="ms-1 font-normal text-subtle">
             ({property.min}-{property.max})
           </span>
         )}
@@ -38,7 +38,7 @@ export function TemplateBlockPropertyField({ property, value, onChange, disabled
           value={value ?? ""}
           onChange={(event) => onChange(event.target.value === "" ? 0 : Number(event.target.value))}
           disabled={disabled}
-          className="mt-1 h-9 w-full rounded-lg border border-white/10 bg-black/20 px-2 text-xs text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+          className="mt-1 h-9 w-full rounded-lg border border-line bg-canvas px-2 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
         />
       </label>
     );
@@ -46,13 +46,13 @@ export function TemplateBlockPropertyField({ property, value, onChange, disabled
 
   if (property.kind === "enum") {
     return (
-      <label className="block text-xs font-semibold text-slate-400">
+      <label className="block text-sm font-semibold text-muted">
         {label}
         <select
           value={value ?? ""}
           onChange={(event) => onChange(event.target.value)}
           disabled={disabled}
-          className="mt-1 h-9 w-full rounded-lg border border-white/10 bg-black/20 px-2 text-xs text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+          className="mt-1 h-9 w-full rounded-lg border border-line bg-canvas px-2 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
         >
           {(property.enumValues || []).map((option) => (
             <option key={option} value={option}>
@@ -75,13 +75,13 @@ export function TemplateBlockPropertyField({ property, value, onChange, disabled
     };
 
     return (
-      <div className="text-xs font-semibold text-slate-400">
+      <div className="text-sm font-semibold text-muted">
         {label}
-        <div className="mt-1 grid grid-cols-2 gap-1 rounded-lg border border-white/10 bg-black/10 p-2 sm:grid-cols-4">
+        <div className="mt-1 grid grid-cols-2 gap-1 rounded-lg border border-line bg-canvas p-2 sm:grid-cols-4">
           {(property.enumValues || []).map((option) => {
             const isMandatory = mandatoryEnumListValues?.includes(option);
             return (
-              <label key={option} className="flex items-center gap-1.5 text-[11px] font-medium text-slate-300">
+              <label key={option} className="flex items-center gap-1.5 text-xs font-medium text-muted">
                 <input
                   type="checkbox"
                   checked={selected.includes(option) || Boolean(isMandatory)}
@@ -89,7 +89,7 @@ export function TemplateBlockPropertyField({ property, value, onChange, disabled
                   onChange={(event) => toggle(option, event.target.checked)}
                 />
                 {option}
-                {isMandatory && <span className="text-slate-500">*</span>}
+                {isMandatory && <span className="text-subtle">*</span>}
               </label>
             );
           })}
@@ -107,13 +107,13 @@ export function TemplateBlockPropertyField({ property, value, onChange, disabled
     maxLength: property.maxLength ?? undefined,
     disabled,
     className:
-      "mt-1 w-full rounded-lg border border-white/10 bg-black/20 px-2 text-xs text-white outline-none focus:border-blue-400/60 disabled:opacity-50",
+      "mt-1 w-full rounded-lg border border-line bg-canvas px-2 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50",
   };
 
   return (
-    <label className="block text-xs font-semibold text-slate-400">
+    <label className="block text-sm font-semibold text-muted">
       {label}
-      {property.kind === "guid" && <span className="ms-1 font-normal text-slate-500">(GUID)</span>}
+      {property.kind === "guid" && <span className="ms-1 font-normal text-subtle">(GUID)</span>}
       {isLongText ? (
         <textarea rows={2} {...commonProps} className={`${commonProps.className} h-auto py-1.5`} />
       ) : (

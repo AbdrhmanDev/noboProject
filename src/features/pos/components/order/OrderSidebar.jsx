@@ -28,6 +28,10 @@ export function OrderSidebar({
   seatingQuery,
   effectiveRestaurantTableId,
   handleTableSelect,
+  mergeFeatureEnabled,
+  canMergeTables,
+  isMergePending,
+  onMergeTable,
   currentCompanyId,
   currentBranchId,
   invalidateRestaurantSeating,
@@ -114,6 +118,10 @@ export function OrderSidebar({
         seatingQuery={seatingQuery}
         effectiveRestaurantTableId={effectiveRestaurantTableId}
         handleTableSelect={handleTableSelect}
+        mergeFeatureEnabled={mergeFeatureEnabled}
+        canMergeTables={canMergeTables}
+        isMergePending={isMergePending}
+        onMergeTable={onMergeTable}
         currentCompanyId={currentCompanyId}
         currentBranchId={currentBranchId}
         invalidateRestaurantSeating={invalidateRestaurantSeating}

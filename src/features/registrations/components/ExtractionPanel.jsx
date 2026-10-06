@@ -71,18 +71,18 @@ function ExtractedValueRow({ registrationId, documentId, runId, value, canReview
   };
 
   return (
-    <div className="rounded-xl border border-white/10 bg-[#0d1728] p-3 text-xs">
+    <div className="rounded-xl border border-line bg-raised p-3 text-sm">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <div className="font-bold text-white">{fieldLabel(value.fieldKey)}</div>
-          <div className="mt-0.5 text-slate-300">
-            Suggested: <span className="font-mono text-slate-100">{value.normalizedValue ?? value.rawText}</span>
+          <div className="font-bold text-ink">{fieldLabel(value.fieldKey)}</div>
+          <div className="mt-0.5 text-muted">
+            Suggested: <span className="font-mono text-ink">{value.normalizedValue ?? value.rawText}</span>
           </div>
-          <div className="mt-0.5 text-[10px] text-slate-500">
+          <div className="mt-0.5 text-xs text-subtle">
             Confidence {(Number(value.confidence) * 100).toFixed(0)}% · {formatDateTime(value.createdAtUtc)}
           </div>
           {value.warnings.length > 0 && (
-            <div className="mt-1 text-[10px] text-amber-300">{value.warnings.join(", ")}</div>
+            <div className="mt-1 text-xs text-warning">{value.warnings.join(", ")}</div>
           )}
         </div>
         <ExtractedValueDecisionBadge decision={value.reviewDecision} />
@@ -95,7 +95,7 @@ function ExtractedValueRow({ registrationId, documentId, runId, value, canReview
               type="button"
               disabled={confirmMutation.isPending}
               onClick={confirm}
-              className="flex items-center gap-1 rounded-lg border border-emerald-400/30 px-2 py-1 font-bold text-emerald-300 hover:bg-emerald-500/10"
+              className="flex items-center gap-1 rounded-lg border border-success px-2 py-1 font-bold text-success hover:bg-success-soft"
             >
               <CircleCheck size={11} /> Confirm as-is
             </button>
@@ -104,7 +104,7 @@ function ExtractedValueRow({ registrationId, documentId, runId, value, canReview
             <button
               type="button"
               onClick={() => setCorrecting(correcting === true ? false : true)}
-              className="flex items-center gap-1 rounded-lg border border-white/10 px-2 py-1 font-bold text-slate-200 hover:border-blue-400/40"
+              className="flex items-center gap-1 rounded-lg border border-line px-2 py-1 font-bold text-ink hover:border-accent-line"
             >
               <Pencil size={11} /> Correct
             </button>
@@ -114,7 +114,7 @@ function ExtractedValueRow({ registrationId, documentId, runId, value, canReview
               type="button"
               disabled={rejectMutation.isPending}
               onClick={() => setCorrecting("reject")}
-              className="flex items-center gap-1 rounded-lg border border-red-400/30 px-2 py-1 font-bold text-red-300 hover:bg-red-500/10"
+              className="flex items-center gap-1 rounded-lg border border-danger px-2 py-1 font-bold text-danger hover:bg-danger-soft"
             >
               <XCircle size={11} /> Reject
             </button>
@@ -128,18 +128,18 @@ function ExtractedValueRow({ registrationId, documentId, runId, value, canReview
             value={reason}
             onChange={(event) => setReason(event.target.value)}
             placeholder="Rejection reason (required)"
-            className="h-9 w-full rounded-lg border border-white/10 bg-black/20 px-2 text-xs text-white outline-none"
+            className="h-9 w-full rounded-lg border border-line bg-canvas px-2 text-sm text-ink outline-none"
           />
           <div className="flex gap-1.5">
             <button
               type="button"
               disabled={rejectMutation.isPending}
               onClick={reject}
-              className="rounded-lg bg-rose-600 px-2 py-1 text-[11px] font-bold text-white disabled:opacity-50"
+              className="rounded-lg bg-danger px-2 py-1 text-xs font-bold text-white disabled:opacity-50"
             >
               {rejectMutation.isPending ? "..." : "Confirm reject"}
             </button>
-            <button type="button" onClick={() => setCorrecting(false)} className="rounded-lg border border-white/10 px-2 py-1 text-[11px] font-bold text-slate-300">
+            <button type="button" onClick={() => setCorrecting(false)} className="rounded-lg border border-line px-2 py-1 text-xs font-bold text-muted">
               Cancel
             </button>
           </div>
@@ -152,31 +152,31 @@ function ExtractedValueRow({ registrationId, documentId, runId, value, canReview
             value={correctedValue}
             onChange={(event) => setCorrectedValue(event.target.value)}
             placeholder="Corrected value"
-            className="h-9 w-full rounded-lg border border-white/10 bg-black/20 px-2 text-xs text-white outline-none"
+            className="h-9 w-full rounded-lg border border-line bg-canvas px-2 text-sm text-ink outline-none"
           />
           <input
             value={reason}
             onChange={(event) => setReason(event.target.value)}
             placeholder="Reason (required)"
-            className="h-9 w-full rounded-lg border border-white/10 bg-black/20 px-2 text-xs text-white outline-none"
+            className="h-9 w-full rounded-lg border border-line bg-canvas px-2 text-sm text-ink outline-none"
           />
           <div className="flex gap-1.5">
             <button
               type="button"
               disabled={correctMutation.isPending}
               onClick={correct}
-              className="rounded-lg bg-blue-600 px-2 py-1 text-[11px] font-bold text-white disabled:opacity-50"
+              className="rounded-lg bg-accent px-2 py-1 text-xs font-bold text-white disabled:opacity-50"
             >
               {correctMutation.isPending ? "..." : "Save correction"}
             </button>
-            <button type="button" onClick={() => setCorrecting(false)} className="rounded-lg border border-white/10 px-2 py-1 text-[11px] font-bold text-slate-300">
+            <button type="button" onClick={() => setCorrecting(false)} className="rounded-lg border border-line px-2 py-1 text-xs font-bold text-muted">
               Cancel
             </button>
           </div>
         </div>
       )}
 
-      {error && <div className="mt-2 text-[11px] text-red-300">{error}</div>}
+      {error && <div className="mt-2 text-xs text-danger">{error}</div>}
     </div>
   );
 }
@@ -215,7 +215,7 @@ export function ExtractionPanel({ registrationId, documentId, permissions }) {
             type="button"
             disabled={triggerMutation.isPending}
             onClick={() => trigger(false)}
-            className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             <PlayCircle size={13} /> {triggerMutation.isPending ? "Queuing..." : "Run extraction"}
           </button>
@@ -225,14 +225,14 @@ export function ExtractionPanel({ registrationId, documentId, permissions }) {
               disabled={triggerMutation.isPending}
               onClick={() => trigger(true)}
               title="Starts a new run even if an identical one already exists"
-              className="flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 text-xs font-bold text-slate-200 hover:border-blue-400/40"
+              className="flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-sm font-bold text-ink hover:border-accent-line"
             >
               Force new run
             </button>
           )}
         </div>
       )}
-      {error && <div className="rounded-xl border border-red-400/20 bg-red-500/10 p-2 text-xs text-red-200">{error}</div>}
+      {error && <div className="rounded-xl border border-danger bg-danger-soft p-2 text-sm text-danger">{error}</div>}
 
       {runsQuery.isLoading && <LoadingState label="Loading extraction runs..." />}
       {runsQuery.isError && <ErrorState title="Unable to load extraction runs" message={getErrorMessage(runsQuery.error)} />}
@@ -245,25 +245,25 @@ export function ExtractionPanel({ registrationId, documentId, permissions }) {
             <div
               key={run.id}
               onClick={() => setSelectedRunId(run.id)}
-              className={`cursor-pointer rounded-xl border p-2.5 text-xs transition ${
-                selectedRunId === run.id ? "border-blue-400/60 bg-blue-500/10" : "border-white/10 bg-[#0d1728] hover:border-blue-400/30"
+              className={`cursor-pointer rounded-xl border p-2.5 text-sm transition ${
+                selectedRunId === run.id ? "border-accent-line bg-accent-soft" : "border-line bg-raised hover:border-accent-line"
               }`}
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <span className="font-bold text-white">{run.providerName}</span>{" "}
-                  <span className="text-slate-500">v{run.providerVersion}</span>
-                  <span className="ms-2 text-[10px] text-slate-500">{formatDateTime(run.createdAtUtc)}</span>
+                  <span className="font-bold text-ink">{run.providerName}</span>{" "}
+                  <span className="text-subtle">v{run.providerVersion}</span>
+                  <span className="ms-2 text-xs text-subtle">{formatDateTime(run.createdAtUtc)}</span>
                 </div>
                 <ExtractionRunStatusBadge status={run.status} />
               </div>
               {run.status === "Failed" && run.failureCategory && (
-                <div className="mt-1 text-[10px] text-red-300">
+                <div className="mt-1 text-xs text-danger">
                   Failure: {run.failureCategory} {run.failureCode ? `(${run.failureCode})` : ""}
                 </div>
               )}
               {run.status === "Succeeded" && (
-                <div className="mt-1 text-[10px] text-slate-500">
+                <div className="mt-1 text-xs text-subtle">
                   {run.valueCount} suggestion(s), {run.problemCount} problem(s)
                 </div>
               )}
@@ -273,8 +273,8 @@ export function ExtractionPanel({ registrationId, documentId, permissions }) {
       )}
 
       {selectedRunId && (
-        <div className="space-y-2 border-t border-white/10 pt-3">
-          <h3 className="text-xs font-bold text-slate-400">Suggested values</h3>
+        <div className="space-y-2 border-t border-line pt-3">
+          <h3 className="text-sm font-bold text-muted">Suggested values</h3>
           {valuesQuery.isLoading && <LoadingState label="Loading suggested values..." />}
           {valuesQuery.isError && <ErrorState title="Unable to load suggested values" message={getErrorMessage(valuesQuery.error)} />}
           {!valuesQuery.isLoading && !valuesQuery.isError && (valuesQuery.data || []).length === 0 && (

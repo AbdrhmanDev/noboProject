@@ -16,7 +16,7 @@ import { Image, QrCode } from "lucide-react";
 //     resolves or fetches it").
 
 const ALIGNMENT_CLASS = { start: "text-start", center: "text-center", end: "text-end" };
-const SIZE_CLASS = { small: "text-[10px]", normal: "text-xs", large: "text-sm" };
+const SIZE_CLASS = { small: "text-xs", normal: "text-sm", large: "text-sm" };
 const WEIGHT_CLASS = { bold: "font-black", normal: "font-normal" };
 
 function dirProps(direction) {
@@ -37,9 +37,9 @@ function RenderedTextNode({ node }) {
 
 function RenderedLabeledValueNode({ node }) {
   return (
-    <div className={`flex items-baseline justify-between gap-2 text-xs ${ALIGNMENT_CLASS[node.alignment] || ""}`}>
-      <span className="text-slate-400">{node.label}</span>
-      <span {...dirProps(node.valueDirection)} className="font-semibold text-white">
+    <div className={`flex items-baseline justify-between gap-2 text-sm ${ALIGNMENT_CLASS[node.alignment] || ""}`}>
+      <span className="text-muted">{node.label}</span>
+      <span {...dirProps(node.valueDirection)} className="font-semibold text-ink">
         {node.valueLines.join(" ")}
       </span>
     </div>
@@ -68,12 +68,12 @@ function RenderedTableNode({ node }) {
     return (
       <div className="space-y-2">
         {node.rows.map((row, rowIndex) => (
-          <div key={rowIndex} className="rounded-lg border border-white/10 p-2 text-[11px]">
-            {row.heading && <div className="mb-1 font-bold text-white">{row.heading.lines.join(" ")}</div>}
+          <div key={rowIndex} className="rounded-lg border border-line p-2 text-xs">
+            {row.heading && <div className="mb-1 font-bold text-ink">{row.heading.lines.join(" ")}</div>}
             <div className="grid grid-cols-2 gap-1">
               {row.cells.map((cell, cellIndex) => (
                 <div key={cellIndex} className={ALIGNMENT_CLASS[cell.alignment] || ""}>
-                  <span className="text-slate-500">{node.columns[cellIndex]?.label}: </span>
+                  <span className="text-subtle">{node.columns[cellIndex]?.label}: </span>
                   <RenderedCellSpan cell={cell} />
                 </div>
               ))}
@@ -85,9 +85,9 @@ function RenderedTableNode({ node }) {
   }
 
   return (
-    <table className="w-full border-collapse text-[11px]">
+    <table className="w-full border-collapse text-xs">
       <thead>
-        <tr className="border-b border-white/10 text-slate-400">
+        <tr className="border-b border-line text-muted">
           {node.columns.map((column) => (
             <th key={column.key} className={`py-1 font-semibold ${ALIGNMENT_CLASS[column.alignment] || ""}`}>
               {column.label}
@@ -97,7 +97,7 @@ function RenderedTableNode({ node }) {
       </thead>
       <tbody>
         {node.rows.map((row, rowIndex) => (
-          <tr key={rowIndex} className="border-b border-white/5">
+          <tr key={rowIndex} className="border-b border-line">
             {row.cells.map((cell, cellIndex) => (
               <td key={cellIndex} className={`py-1 ${ALIGNMENT_CLASS[cell.alignment] || ""}`}>
                 <RenderedCellSpan cell={cell} />
@@ -112,7 +112,7 @@ function RenderedTableNode({ node }) {
 
 function RenderedImageNode() {
   return (
-    <div className="flex items-center justify-center gap-2 rounded-lg border border-dashed border-white/15 py-3 text-[11px] text-slate-500">
+    <div className="flex items-center justify-center gap-2 rounded-lg border border-dashed border-line py-3 text-xs text-subtle">
       <Image size={14} /> Image (asset not resolvable in this preview)
     </div>
   );
@@ -120,10 +120,10 @@ function RenderedImageNode() {
 
 function RenderedQrNode({ node }) {
   return (
-    <div className="flex flex-col items-center gap-1 rounded-lg border border-dashed border-white/15 p-3 text-[11px] text-slate-400">
+    <div className="flex flex-col items-center gap-1 rounded-lg border border-dashed border-line p-3 text-xs text-muted">
       <QrCode size={18} />
       {node.state === "available" && node.payload ? (
-        <span className="break-all font-mono text-[10px] text-slate-300">{node.payload}</span>
+        <span className="break-all font-mono text-xs text-muted">{node.payload}</span>
       ) : (
         <span>QR not available</span>
       )}
@@ -133,9 +133,9 @@ function RenderedQrNode({ node }) {
 
 function RenderedBarcodeNode({ node }) {
   return (
-    <div className="rounded-lg border border-dashed border-white/15 p-2 text-center text-[11px] text-slate-400">
+    <div className="rounded-lg border border-dashed border-line p-2 text-center text-xs text-muted">
       {node.state === "available" && node.value ? (
-        <span className="font-mono text-slate-200">{node.value}</span>
+        <span className="font-mono text-ink">{node.value}</span>
       ) : (
         <span>Barcode not available</span>
       )}
@@ -145,7 +145,7 @@ function RenderedBarcodeNode({ node }) {
 
 function RenderedDividerNode({ node }) {
   const borderStyle = node.style === "dashed" ? "dashed" : node.style === "dotted" ? "dotted" : "solid";
-  return <hr style={{ borderTopStyle: borderStyle, borderTopWidth: node.thickness }} className="border-white/20" />;
+  return <hr style={{ borderTopStyle: borderStyle, borderTopWidth: node.thickness }} className="border-line-strong" />;
 }
 
 function RenderedSpacerNode({ node }) {
@@ -170,7 +170,7 @@ export function RenderedDocumentPreview({ document }) {
   return (
     <div
       dir={document.direction}
-      className="mx-auto space-y-1.5 rounded-xl border border-white/10 bg-white p-3 text-black shadow-inner"
+      className="mx-auto space-y-1.5 rounded-xl border border-line bg-white p-3 text-black shadow-inner"
       style={{ maxWidth: document.page.columns * 8 + 32 }}
     >
       {document.nodes.map((node, index) => {

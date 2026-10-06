@@ -99,13 +99,13 @@ function canActorGrantRole(actorPermissions, role) {
 function Dialog({ title, children, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-      <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-white/10 bg-[#08111f] p-5 shadow-2xl">
+      <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-xl border border-line bg-surface p-5 shadow-2xl">
         <div className="mb-4 flex items-center justify-between gap-3">
-          <h2 className="text-lg font-black text-white">{title}</h2>
+          <h2 className="text-lg font-black text-ink">{title}</h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl border border-white/10 px-3 py-2 text-xs font-bold text-slate-200"
+            className="rounded-xl border border-line px-3 py-2 text-sm font-bold text-ink"
           >
             Close
           </button>
@@ -130,7 +130,7 @@ function RolePicker({
         return (
           <label
             key={role.roleId}
-            className={`flex items-start gap-2 rounded-xl border border-white/10 bg-white/[0.025] p-3 text-sm ${grantable ? "text-slate-200" : "text-slate-500"}`}
+            className={`flex items-start gap-2 rounded-xl border border-line bg-raised p-3 text-sm ${grantable ? "text-ink" : "text-subtle"}`}
           >
             <input
               type="checkbox"
@@ -147,18 +147,18 @@ function RolePicker({
             />
             <span>
               <span
-                className={`font-bold ${grantable ? "text-white" : "text-slate-400"}`}
+                className={`font-bold ${grantable ? "text-ink" : "text-muted"}`}
               >
                 {role.name}
               </span>
-              <span className="ms-2 text-xs text-slate-500">{role.code}</span>
+              <span className="ms-2 text-sm text-subtle">{role.code}</span>
               {role.isSystem && (
-                <span className="ms-2 rounded-full bg-blue-500/15 px-2 py-0.5 text-[10px] font-bold text-blue-200">
+                <span className="ms-2 rounded-full bg-accent-soft px-2 py-0.5 text-xs font-bold text-accent">
                   System Role
                 </span>
               )}
               {!grantable && (
-                <span className="ms-2 text-[11px] text-amber-300">
+                <span className="ms-2 text-xs text-warning">
                   Requires permissions you don't have
                 </span>
               )}
@@ -181,7 +181,7 @@ function BranchAccessPicker({
 }) {
   if (owner) {
     return (
-      <div className="rounded-xl border border-blue-400/20 bg-blue-500/10 p-3 text-sm text-blue-100">
+      <div className="rounded-xl border border-accent-line bg-accent-soft p-3 text-sm text-accent">
         Company Owners always have access to all branches.
       </div>
     );
@@ -196,7 +196,7 @@ function BranchAccessPicker({
             type="button"
             disabled={disabled}
             onClick={() => setMode(value)}
-            className={`rounded-xl border px-3 py-2 text-xs font-bold ${mode === value ? "border-blue-400/60 bg-blue-500/20 text-white" : "border-white/10 bg-white/[0.03] text-slate-300"}`}
+            className={`rounded-xl border px-3 py-2 text-sm font-bold ${mode === value ? "border-accent-line bg-accent-soft text-ink" : "border-line bg-raised text-muted"}`}
           >
             {value === "AllBranches" ? "All Branches" : "Selected Branches"}
           </button>
@@ -207,7 +207,7 @@ function BranchAccessPicker({
           {branches.map((branch) => (
             <label
               key={branch.branchId}
-              className="flex gap-2 rounded-xl border border-white/10 bg-white/[0.025] p-3 text-sm text-slate-200"
+              className="flex gap-2 rounded-xl border border-line bg-raised p-3 text-sm text-ink"
             >
               <input
                 type="checkbox"
@@ -222,8 +222,8 @@ function BranchAccessPicker({
                 }
               />
               <span>
-                <span className="font-bold text-white">{branch.name}</span>
-                <span className="ms-2 text-xs text-slate-500">
+                <span className="font-bold text-ink">{branch.name}</span>
+                <span className="ms-2 text-sm text-subtle">
                   {branch.code}
                 </span>
               </span>
@@ -244,7 +244,7 @@ function SalesScopePicker({ scope, setScope, disabled, owner }) {
 
   if (owner) {
     return (
-      <div className="rounded-xl border border-blue-400/20 bg-blue-500/10 p-3 text-sm text-blue-100">
+      <div className="rounded-xl border border-accent-line bg-accent-soft p-3 text-sm text-accent">
         {t("usersAccess.salesScope.ownerNotice")}
       </div>
     );
@@ -271,10 +271,10 @@ function SalesScopePicker({ scope, setScope, disabled, owner }) {
           type="button"
           disabled={disabled}
           onClick={() => setScope(option.value)}
-          className={`block w-full rounded-xl border p-3 text-start text-xs font-bold ${scope === option.value ? "border-blue-400/60 bg-blue-500/20 text-white" : "border-white/10 bg-white/[0.03] text-slate-300"}`}
+          className={`block w-full rounded-xl border p-3 text-start text-sm font-bold ${scope === option.value ? "border-accent-line bg-accent-soft text-ink" : "border-line bg-raised text-muted"}`}
         >
           <div>{t(option.labelKey)}</div>
-          <div className="mt-0.5 text-[11px] font-normal text-slate-400">
+          <div className="mt-0.5 text-xs font-normal text-muted">
             {t(option.descriptionKey)}
           </div>
         </button>
@@ -324,50 +324,50 @@ function MemberAccessSummary({ member, roles: allRoles }) {
   const { isOwner, groups } = summarizeMemberAccess(member, allRoles);
 
   return (
-    <section className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
-      <h3 className="mb-2 text-sm font-black text-white">{t("usersAccess.accessSummary.title")}</h3>
+    <section className="rounded-xl border border-line bg-raised p-3">
+      <h3 className="mb-2 text-sm font-black text-ink">{t("usersAccess.accessSummary.title")}</h3>
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
-          <div className="text-[11px] font-bold text-slate-500">{t("usersAccess.accessSummary.role")}</div>
+          <div className="text-xs font-bold text-subtle">{t("usersAccess.accessSummary.role")}</div>
           <div className="mt-1 flex flex-wrap gap-1.5">
             {member.roles.length === 0 && !isOwner && (
-              <span className="text-xs text-slate-500">{t("usersAccess.accessSummary.noRoles")}</span>
+              <span className="text-sm text-subtle">{t("usersAccess.accessSummary.noRoles")}</span>
             )}
             {member.roles.map((role) => (
-              <span key={role.roleId} className="rounded-full bg-blue-500/15 px-2 py-0.5 text-[11px] font-bold text-blue-200">
+              <span key={role.roleId} className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-bold text-accent">
                 {role.name}
               </span>
             ))}
           </div>
         </div>
         <div>
-          <div className="text-[11px] font-bold text-slate-500">{t("usersAccess.accessSummary.permissions")}</div>
+          <div className="text-xs font-bold text-subtle">{t("usersAccess.accessSummary.permissions")}</div>
           <div className="mt-1 flex flex-wrap gap-1.5">
             {isOwner && (
-              <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-bold text-emerald-300">
+              <span className="rounded-full bg-success-soft px-2 py-0.5 text-xs font-bold text-success">
                 {t("usersAccess.accessSummary.ownerFullAccess")}
               </span>
             )}
             {!isOwner && groups.length === 0 && (
-              <span className="text-xs text-slate-500">{t("usersAccess.accessSummary.noPermissions")}</span>
+              <span className="text-sm text-subtle">{t("usersAccess.accessSummary.noPermissions")}</span>
             )}
             {!isOwner &&
               groups.map((group) => (
-                <span key={group} className="rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-bold text-slate-200">
+                <span key={group} className="rounded-full bg-inset px-2 py-0.5 text-xs font-bold text-ink">
                   {group}
                 </span>
               ))}
           </div>
         </div>
         <div>
-          <div className="text-[11px] font-bold text-slate-500">{t("usersAccess.accessSummary.branchAccess")}</div>
-          <div className="mt-1 text-xs text-slate-300">
+          <div className="text-xs font-bold text-subtle">{t("usersAccess.accessSummary.branchAccess")}</div>
+          <div className="mt-1 text-sm text-muted">
             {summarizeBranches(member.branchAccessMode, member.selectedBranches)}
           </div>
         </div>
         <div>
-          <div className="text-[11px] font-bold text-slate-500">{t("usersAccess.accessSummary.salesHistory")}</div>
-          <div className="mt-1 text-xs text-slate-300">
+          <div className="text-xs font-bold text-subtle">{t("usersAccess.accessSummary.salesHistory")}</div>
+          <div className="mt-1 text-sm text-muted">
             {isOwner
               ? t("usersAccess.accessSummary.ownerFullAccess")
               : salesScopeSummaryLabel(t, member.salesOrderVisibilityScope)}
@@ -441,16 +441,16 @@ function AccessDialog({
       <div className="space-y-5">
         {/* Section 13: a clean identity/status summary, not just an editable roles/branches form. */}
         {member && (
-          <section className="grid gap-3 rounded-xl border border-white/10 bg-white/[0.02] p-3 sm:grid-cols-2">
+          <section className="grid gap-3 rounded-xl border border-line bg-raised p-3 sm:grid-cols-2">
             <div>
-              <div className="text-[11px] font-bold text-slate-500">
+              <div className="text-xs font-bold text-subtle">
                 Identity
               </div>
-              <div className="font-bold text-white">{member.displayName}</div>
-              <div className="text-xs text-slate-400">{member.email}</div>
+              <div className="font-bold text-ink">{member.displayName}</div>
+              <div className="text-sm text-muted">{member.email}</div>
             </div>
             <div>
-              <div className="text-[11px] font-bold text-slate-500">Status</div>
+              <div className="text-xs font-bold text-subtle">Status</div>
               <div className="mt-1 flex flex-wrap gap-2">
                 <StatusBadge tone={statusTone(member.status)}>
                   {member.status}
@@ -462,7 +462,7 @@ function AccessDialog({
         )}
         {member && <MemberAccessSummary member={member} roles={roles} />}
         <section>
-          <h3 className="mb-2 text-sm font-black text-white">Roles</h3>
+          <h3 className="mb-2 text-sm font-black text-ink">Roles</h3>
           <RolePicker
             roles={roles}
             selectedIds={roleIds}
@@ -472,7 +472,7 @@ function AccessDialog({
           />
         </section>
         <section>
-          <h3 className="mb-2 text-sm font-black text-white">Branch Access</h3>
+          <h3 className="mb-2 text-sm font-black text-ink">Branch Access</h3>
           <BranchAccessPicker
             branches={branches}
             mode={branchAccessMode}
@@ -488,7 +488,7 @@ function AccessDialog({
             invitation dialog (which reuses AccessDialog without a `member`). */}
         {member && (
           <section>
-            <h3 className="mb-2 text-sm font-black text-white">
+            <h3 className="mb-2 text-sm font-black text-ink">
               {t("usersAccess.salesScope.title")}
             </h3>
             <SalesScopePicker
@@ -501,7 +501,7 @@ function AccessDialog({
               owner={isOwner}
             />
             {!isOwner && initial.salesScope == null && (
-              <p className="mt-1.5 text-[11px] text-slate-500">
+              <p className="mt-1.5 text-xs text-subtle">
                 {t("usersAccess.salesScope.defaultNote")}
               </p>
             )}
@@ -514,9 +514,9 @@ function AccessDialog({
             after a successful update in this session (see ManagerPinForm). */}
         {member && (canSave || isSelfMember) && (
           <section>
-            <h3 className="mb-2 text-sm font-black text-white">{t("usersAccess.pin.title")}</h3>
+            <h3 className="mb-2 text-sm font-black text-ink">{t("usersAccess.pin.title")}</h3>
             {member.status !== "Active" ? (
-              <p className="rounded-xl border border-amber-400/20 bg-amber-500/10 p-3 text-xs text-amber-100">
+              <p className="rounded-xl border border-warning bg-warning-soft p-3 text-sm text-warning">
                 {t("usersAccess.pin.inactiveNotice")}
               </p>
             ) : (
@@ -531,12 +531,12 @@ function AccessDialog({
           </section>
         )}
         {error && (
-          <div className="rounded-xl border border-red-400/20 bg-red-500/10 p-3 text-sm text-red-100">
+          <div className="rounded-xl border border-danger bg-danger-soft p-3 text-sm text-danger">
             {error}
           </div>
         )}
         {!canSave && (
-          <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 p-3 text-sm text-amber-100">
+          <div className="rounded-xl border border-warning bg-warning-soft p-3 text-sm text-warning">
             Manage permission is required.
           </div>
         )}
@@ -544,7 +544,7 @@ function AccessDialog({
           type="button"
           disabled={!canSave || pending}
           onClick={submit}
-          className="h-11 rounded-xl bg-blue-600 px-5 text-sm font-black text-white disabled:opacity-50"
+          className="h-11 rounded-xl bg-accent px-5 text-sm font-black text-white disabled:opacity-50"
         >
           {pending ? "Saving..." : "Save access"}
         </button>
@@ -584,16 +584,16 @@ function InviteDialog({
   return (
     <Dialog title="Invite User" onClose={onClose}>
       <div className="space-y-5">
-        <label className="block text-xs font-bold text-slate-400">
+        <label className="block text-sm font-bold text-muted">
           Email
           <input
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400"
+            className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line"
           />
         </label>
         <section>
-          <h3 className="mb-2 text-sm font-black text-white">Roles</h3>
+          <h3 className="mb-2 text-sm font-black text-ink">Roles</h3>
           <RolePicker
             roles={roles}
             selectedIds={access.roleIds}
@@ -605,7 +605,7 @@ function InviteDialog({
           />
         </section>
         <section>
-          <h3 className="mb-2 text-sm font-black text-white">Branch Access</h3>
+          <h3 className="mb-2 text-sm font-black text-ink">Branch Access</h3>
           <BranchAccessPicker
             branches={branches}
             mode={access.branchAccessMode}
@@ -620,7 +620,7 @@ function InviteDialog({
           />
         </section>
         {error && (
-          <div className="rounded-xl border border-red-400/20 bg-red-500/10 p-3 text-sm text-red-100">
+          <div className="rounded-xl border border-danger bg-danger-soft p-3 text-sm text-danger">
             {error}
           </div>
         )}
@@ -628,7 +628,7 @@ function InviteDialog({
           type="button"
           disabled={!canManage || pending}
           onClick={submit}
-          className="h-11 rounded-xl bg-blue-600 px-5 text-sm font-black text-white disabled:opacity-50"
+          className="h-11 rounded-xl bg-accent px-5 text-sm font-black text-white disabled:opacity-50"
         >
           {pending ? "Sending..." : "Send invitation"}
         </button>
@@ -679,31 +679,31 @@ function RoleDialog({
     >
       <div className="space-y-5">
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="text-xs font-bold text-slate-400">
+          <label className="text-sm font-bold text-muted">
             Name
             <input
               value={name}
               onChange={(event) => setName(event.target.value)}
               disabled={!canManage || pending || role?.isSystem}
-              className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400 disabled:opacity-50"
+              className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
             />
           </label>
-          <label className="text-xs font-bold text-slate-400">
+          <label className="text-sm font-bold text-muted">
             Code
             <input
               value={code}
               onChange={(event) => setCode(event.target.value)}
               disabled={!canManage || pending || isEdit}
-              className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400 disabled:opacity-50"
+              className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
             />
           </label>
         </div>
         {[...grouped.entries()].map(([group, items]) => (
           <section
             key={group}
-            className="rounded-xl border border-white/10 bg-white/[0.025] p-3"
+            className="rounded-xl border border-line bg-raised p-3"
           >
-            <h3 className="mb-2 text-sm font-black text-white">{group}</h3>
+            <h3 className="mb-2 text-sm font-black text-ink">{group}</h3>
             <div className="grid gap-2 sm:grid-cols-2">
               {items.map((permission) => {
                 const entitlement = getPermissionEntitlement(permission.code);
@@ -716,7 +716,7 @@ function RoleDialog({
                 return (
                   <label
                     key={permission.code}
-                    className={`flex gap-2 text-sm ${unavailable || notGrantable ? "text-slate-500" : "text-slate-200"}`}
+                    className={`flex gap-2 text-sm ${unavailable || notGrantable ? "text-subtle" : "text-ink"}`}
                   >
                     <input
                       type="checkbox"
@@ -741,12 +741,12 @@ function RoleDialog({
                     <span>
                       {permission.label}
                       {unavailable && (
-                        <span className="ms-2 text-[11px] text-amber-300">
+                        <span className="ms-2 text-xs text-warning">
                           Unavailable
                         </span>
                       )}
                       {!unavailable && notGrantable && (
-                        <span className="ms-2 text-[11px] text-amber-300">
+                        <span className="ms-2 text-xs text-warning">
                           You don't have this permission
                         </span>
                       )}
@@ -758,12 +758,12 @@ function RoleDialog({
           </section>
         ))}
         {role?.isSystem && (
-          <div className="rounded-xl border border-blue-400/20 bg-blue-500/10 p-3 text-sm text-blue-100">
+          <div className="rounded-xl border border-accent-line bg-accent-soft p-3 text-sm text-accent">
             System roles are assignable and readable, but not editable.
           </div>
         )}
         {error && (
-          <div className="rounded-xl border border-red-400/20 bg-red-500/10 p-3 text-sm text-red-100">
+          <div className="rounded-xl border border-danger bg-danger-soft p-3 text-sm text-danger">
             {error}
           </div>
         )}
@@ -771,7 +771,7 @@ function RoleDialog({
           type="button"
           disabled={!canManage || pending || role?.isSystem}
           onClick={submit}
-          className="h-11 rounded-xl bg-blue-600 px-5 text-sm font-black text-white disabled:opacity-50"
+          className="h-11 rounded-xl bg-accent px-5 text-sm font-black text-white disabled:opacity-50"
         >
           {pending ? "Saving..." : isEdit ? "Save role" : "Create role"}
         </button>
@@ -945,7 +945,7 @@ export default function UsersAccessPage() {
             {canManageUsers && (
               <button
                 onClick={() => setDialog({ type: "invite" })}
-                className="flex h-10 items-center gap-2 rounded-xl bg-blue-600 px-4 text-xs font-black text-white"
+                className="flex h-10 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-black text-white"
               >
                 <UserPlus size={15} />
                 Invite User
@@ -954,7 +954,7 @@ export default function UsersAccessPage() {
             {canManageRoles && (
               <button
                 onClick={() => setDialog({ type: "role" })}
-                className="flex h-10 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 text-xs font-black text-white"
+                className="flex h-10 items-center gap-2 rounded-xl border border-line bg-raised px-4 text-sm font-black text-ink"
               >
                 <ShieldCheck size={15} />
                 Create Role
@@ -963,11 +963,11 @@ export default function UsersAccessPage() {
           </>
         }
       />
-      <p className="mb-4 text-sm text-slate-400">
+      <p className="mb-4 text-sm text-muted">
         Manage members, roles, permissions, and branch access.
       </p>
       {notice && (
-        <div className="mb-4 rounded-xl border border-emerald-400/20 bg-emerald-500/10 p-3 text-sm text-emerald-100">
+        <div className="mb-4 rounded-xl border border-success bg-success-soft p-3 text-sm text-success">
           {notice}
         </div>
       )}
@@ -983,7 +983,7 @@ export default function UsersAccessPage() {
           <button
             key={item.key}
             onClick={() => setTab(item.key)}
-            className={`rounded-xl border px-4 py-2 text-sm font-bold ${tab === item.key ? "border-blue-400/60 bg-blue-500/20 text-white" : "border-white/10 bg-white/[0.03] text-slate-300"}`}
+            className={`rounded-xl border px-4 py-2 text-sm font-bold ${tab === item.key ? "border-accent-line bg-accent-soft text-ink" : "border-line bg-raised text-muted"}`}
           >
             {item.label}
           </button>
@@ -993,19 +993,19 @@ export default function UsersAccessPage() {
       {tab === "members" && canViewUsers && (
         <section className="space-y-3">
           <div className="flex flex-wrap gap-2">
-            <div className="flex h-10 min-w-[240px] items-center gap-2 rounded-xl border border-white/10 bg-black/20 px-3 text-slate-400">
+            <div className="flex h-10 min-w-[240px] items-center gap-2 rounded-xl border border-line bg-canvas px-3 text-muted">
               <Search size={15} />
               <input
                 value={memberSearch}
                 onChange={(e) => setMemberSearch(e.target.value)}
                 placeholder="Search name or email"
-                className="w-full bg-transparent text-sm text-white outline-none"
+                className="w-full bg-transparent text-sm text-ink outline-none"
               />
             </div>
             <select
               value={memberStatus}
               onChange={(e) => setMemberStatus(e.target.value)}
-              className="h-10 rounded-xl border border-white/10 bg-[#0b1424] px-3 text-sm text-white"
+              className="h-10 rounded-xl border border-line bg-canvas px-3 text-sm text-ink"
             >
               <option value="">All statuses</option>
               <option>Active</option>
@@ -1016,17 +1016,17 @@ export default function UsersAccessPage() {
           {membershipsQuery.isLoading ? (
             <LoadingState label="Loading members..." />
           ) : membershipsQuery.data?.items.length ? (
-            <div className="overflow-hidden rounded-xl border border-white/10">
+            <div className="overflow-hidden rounded-xl border border-line">
               {membershipsQuery.data.items.map((member) => (
                 <div
                   key={member.membershipId}
-                  className="grid gap-3 border-b border-white/10 bg-[#0b1424]/80 p-4 last:border-b-0 lg:grid-cols-[1.4fr_.8fr_1fr_1fr_auto]"
+                  className="grid gap-3 border-b border-line bg-raised p-4 last:border-b-0 lg:grid-cols-[1.4fr_.8fr_1fr_1fr_auto]"
                 >
                   <div>
-                    <div className="font-black text-white">
+                    <div className="font-black text-ink">
                       {member.displayName}
                     </div>
-                    <div className="text-xs text-slate-400">{member.email}</div>
+                    <div className="text-sm text-muted">{member.email}</div>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <StatusBadge tone={statusTone(member.status)}>
@@ -1036,11 +1036,11 @@ export default function UsersAccessPage() {
                       <StatusBadge tone="info">Owner</StatusBadge>
                     )}
                   </div>
-                  <div className="text-sm text-slate-300">
+                  <div className="text-sm text-muted">
                     {member.roles.map((role) => role.name).join(", ") ||
                       "No roles"}
                   </div>
-                  <div className="text-sm text-slate-300">
+                  <div className="text-sm text-muted">
                     {summarizeBranches(
                       member.branchAccessMode,
                       member.selectedBranches,
@@ -1049,7 +1049,7 @@ export default function UsersAccessPage() {
                   <div className="flex flex-wrap gap-2">
                     <button
                       onClick={() => setDialog({ type: "member", member })}
-                      className="rounded-lg border border-white/10 px-3 py-2 text-xs font-bold text-white"
+                      className="rounded-lg border border-line px-3 py-2 text-sm font-bold text-ink"
                     >
                       <Edit3 size={14} />
                     </button>
@@ -1073,7 +1073,7 @@ export default function UsersAccessPage() {
                             action: "suspend",
                           })
                         }
-                        className="rounded-lg border border-amber-400/20 px-3 py-2 text-xs font-bold text-amber-100"
+                        className="rounded-lg border border-warning px-3 py-2 text-sm font-bold text-warning"
                       >
                         <Ban size={14} />
                       </button>
@@ -1086,7 +1086,7 @@ export default function UsersAccessPage() {
                             action: "activate",
                           })
                         }
-                        className="rounded-lg border border-emerald-400/20 px-3 py-2 text-xs font-bold text-emerald-100"
+                        className="rounded-lg border border-success px-3 py-2 text-sm font-bold text-success"
                       >
                         <CheckCircle2 size={14} />
                       </button>
@@ -1104,7 +1104,7 @@ export default function UsersAccessPage() {
                             action: "revoke",
                           })
                         }
-                        className="rounded-lg border border-red-400/20 px-3 py-2 text-xs font-bold text-red-100"
+                        className="rounded-lg border border-danger px-3 py-2 text-sm font-bold text-danger"
                       >
                         <XCircle size={14} />
                       </button>
@@ -1125,19 +1125,19 @@ export default function UsersAccessPage() {
       {tab === "invitations" && canViewUsers && (
         <section className="space-y-3">
           <div className="flex flex-wrap gap-2">
-            <div className="flex h-10 min-w-[240px] items-center gap-2 rounded-xl border border-white/10 bg-black/20 px-3 text-slate-400">
+            <div className="flex h-10 min-w-[240px] items-center gap-2 rounded-xl border border-line bg-canvas px-3 text-muted">
               <Search size={15} />
               <input
                 value={inviteSearch}
                 onChange={(e) => setInviteSearch(e.target.value)}
                 placeholder="Search email"
-                className="w-full bg-transparent text-sm text-white outline-none"
+                className="w-full bg-transparent text-sm text-ink outline-none"
               />
             </div>
             <select
               value={inviteStatus}
               onChange={(e) => setInviteStatus(e.target.value)}
-              className="h-10 rounded-xl border border-white/10 bg-[#0b1424] px-3 text-sm text-white"
+              className="h-10 rounded-xl border border-line bg-canvas px-3 text-sm text-ink"
             >
               <option value="">All statuses</option>
               <option>Pending</option>
@@ -1153,14 +1153,14 @@ export default function UsersAccessPage() {
               {invitationsQuery.data.items.map((invite) => (
                 <div
                   key={invite.invitationId}
-                  className="rounded-xl border border-white/10 bg-[#0b1424]/80 p-4"
+                  className="rounded-xl border border-line bg-raised p-4"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <div className="font-black text-white">
+                      <div className="font-black text-ink">
                         {invite.email}
                       </div>
-                      <div className="text-xs text-slate-500">
+                      <div className="text-sm text-subtle">
                         Invited {formatDateTime(invite.createdAtUtc)} · Expires{" "}
                         {formatDateTime(invite.expiresAtUtc)}
                       </div>
@@ -1169,7 +1169,7 @@ export default function UsersAccessPage() {
                       {invite.effectiveStatus}
                     </StatusBadge>
                   </div>
-                  <div className="mt-3 grid gap-2 text-sm text-slate-300 md:grid-cols-2">
+                  <div className="mt-3 grid gap-2 text-sm text-muted md:grid-cols-2">
                     <div>
                       Roles:{" "}
                       {invite.roles.map((role) => role.name).join(", ") ||
@@ -1189,7 +1189,7 @@ export default function UsersAccessPage() {
                         onClick={() =>
                           setDialog({ type: "invitation", invitation: invite })
                         }
-                        className="rounded-lg border border-white/10 px-3 py-2 text-xs font-bold text-white"
+                        className="rounded-lg border border-line px-3 py-2 text-sm font-bold text-ink"
                       >
                         <Edit3 size={14} />
                       </button>
@@ -1208,7 +1208,7 @@ export default function UsersAccessPage() {
                             /* surfaced via showError above (resendInvite.isError) */
                           }
                         }}
-                        className="rounded-lg border border-blue-400/20 px-3 py-2 text-xs font-bold text-blue-100"
+                        className="rounded-lg border border-accent-line px-3 py-2 text-sm font-bold text-accent"
                       >
                         <RefreshCw size={14} />
                       </button>
@@ -1218,7 +1218,7 @@ export default function UsersAccessPage() {
                             "Cancel this invitation? This invalidates the link and does not affect memberships.",
                           ) && cancelInvite.mutate(invite.invitationId)
                         }
-                        className="rounded-lg border border-red-400/20 px-3 py-2 text-xs font-bold text-red-100"
+                        className="rounded-lg border border-danger px-3 py-2 text-sm font-bold text-danger"
                       >
                         <XCircle size={14} />
                       </button>
@@ -1238,13 +1238,13 @@ export default function UsersAccessPage() {
 
       {tab === "roles" && canViewRoles && (
         <section className="space-y-3">
-          <div className="flex h-10 max-w-md items-center gap-2 rounded-xl border border-white/10 bg-black/20 px-3 text-slate-400">
+          <div className="flex h-10 max-w-md items-center gap-2 rounded-xl border border-line bg-canvas px-3 text-muted">
             <Search size={15} />
             <input
               value={roleSearch}
               onChange={(e) => setRoleSearch(e.target.value)}
               placeholder="Search roles"
-              className="w-full bg-transparent text-sm text-white outline-none"
+              className="w-full bg-transparent text-sm text-ink outline-none"
             />
           </div>
           {rolesQuery.isLoading ? (
@@ -1260,12 +1260,12 @@ export default function UsersAccessPage() {
                     canManageRoles &&
                     setDialog({ type: "role", role })
                   }
-                  className="rounded-xl border border-white/10 bg-[#0b1424]/80 p-4 text-start transition hover:border-blue-400/40"
+                  className="rounded-xl border border-line bg-raised p-4 text-start transition hover:border-accent-line"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <div className="font-black text-white">{role.name}</div>
-                      <div className="text-xs text-slate-500">{role.code}</div>
+                      <div className="font-black text-ink">{role.name}</div>
+                      <div className="text-sm text-subtle">{role.code}</div>
                     </div>
                     <div className="flex gap-2">
                       {role.isSystem && (
@@ -1276,11 +1276,11 @@ export default function UsersAccessPage() {
                       </StatusBadge>
                     </div>
                   </div>
-                  <div className="mt-3 text-sm text-slate-300">
+                  <div className="mt-3 text-sm text-muted">
                     {role.permissions.length} permissions
                   </div>
                   {role.isSystem && (
-                    <div className="mt-2 text-xs text-slate-500">
+                    <div className="mt-2 text-sm text-subtle">
                       Assignable and readable; not editable.
                     </div>
                   )}

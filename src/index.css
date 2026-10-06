@@ -17,10 +17,55 @@ body,
   min-height: 100vh;
 }
 
+/* ---------- typography (Odoo backend style), one place for the whole app ----------
+   Roboto for Latin, Noto Sans Arabic for Arabic (both loaded in index.html at 400/500/700), 14px
+   body text. The type scale below redefines Tailwind's own --text-* tokens, so every text-xs /
+   text-sm / text-lg ... utility in the app follows it. The POS (.pos-root) keeps Tailwind's
+   default scale -- it has its own touch-first sizes in features/pos/styles/pos-theme.css. */
+:root {
+  --app-font: "Roboto", "Noto Sans Arabic", -apple-system, "Segoe UI", Arial, sans-serif;
+}
+
+.nobo-root {
+  --text-xs: 12px; /* small labels, captions */
+  --text-xs--line-height: 1.4;
+  --text-sm: 14px; /* body, table cells, fields, menu items */
+  --text-sm--line-height: 1.5;
+  --text-base: 15px; /* section titles */
+  --text-base--line-height: 1.45;
+  --text-lg: 18px; /* breadcrumbs / app name */
+  --text-lg--line-height: 1.35;
+  --text-xl: 20px; /* page titles */
+  --text-xl--line-height: 1.3;
+  --text-2xl: 26px; /* KPI values */
+  --text-2xl--line-height: 1.2;
+  --text-3xl: 28px; /* record titles */
+  --text-3xl--line-height: 1.2;
+}
+
+.nobo-root .pos-root {
+  --text-xs: 0.75rem;
+  --text-xs--line-height: calc(1 / 0.75);
+  --text-sm: 0.875rem;
+  --text-sm--line-height: calc(1.25 / 0.875);
+  --text-base: 1rem;
+  --text-base--line-height: calc(1.5 / 1);
+  --text-lg: 1.125rem;
+  --text-lg--line-height: calc(1.75 / 1.125);
+  --text-xl: 1.25rem;
+  --text-xl--line-height: calc(1.75 / 1.25);
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: calc(2 / 1.5);
+  --text-3xl: 1.875rem;
+  --text-3xl--line-height: calc(2.25 / 1.875);
+}
+
 body {
   background: #000;
   color: #fff;
-  font-family: 'Cairo', 'Tajawal', system-ui, sans-serif;
+  font-family: var(--app-font);
+  font-size: 14px;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

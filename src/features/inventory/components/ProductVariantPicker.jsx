@@ -16,13 +16,13 @@ export function ProductVariantPicker({
 
   return (
     <div className="grid gap-3 sm:grid-cols-2">
-      <label className="text-xs font-semibold text-slate-400">
+      <label className="text-sm font-semibold text-muted">
         Product
         <select
           value={productId || ""}
           onChange={(event) => onProductChange(event.target.value || null)}
           disabled={!enabled || productsQuery.isLoading}
-          className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+          className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
         >
           <option value="">Select product...</option>
           {(productsQuery.data?.items || []).map((product) => (
@@ -32,13 +32,13 @@ export function ProductVariantPicker({
           ))}
         </select>
       </label>
-      <label className="text-xs font-semibold text-slate-400">
+      <label className="text-sm font-semibold text-muted">
         Variant
         <select
           value={productVariantId || ""}
           onChange={(event) => onVariantChange(event.target.value || null)}
           disabled={!enabled || !productId || productDetailsQuery.isLoading}
-          className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+          className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
         >
           <option value="">Select variant...</option>
           {variants.map((variant) => (
@@ -48,7 +48,7 @@ export function ProductVariantPicker({
             </option>
           ))}
         </select>
-        {!productId && <p className="mt-1 text-[11px] text-slate-500">Select a product first</p>}
+        {!productId && <p className="mt-1 text-xs text-subtle">Select a product first</p>}
       </label>
     </div>
   );

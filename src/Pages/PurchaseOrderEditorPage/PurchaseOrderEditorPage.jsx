@@ -184,22 +184,22 @@ export default function PurchaseOrderEditorPage() {
 
   return (
     <AppLayout activePath={ROUTES.PURCHASES}>
-      <main className="space-y-4" dir="rtl">
-        <header className="rounded-2xl border border-white/10 bg-[#0c1424]/85 p-4 shadow-xl shadow-black/20">
+      <main className="odoo-root space-y-3" dir="rtl">
+        <header className="rounded-xl border border-line bg-surface p-4 shadow-xl shadow-black/20">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <div className="flex items-center gap-2 text-xs text-slate-400">
-                <FileText size={16} className="text-blue-300" />
+              <div className="flex items-center gap-2 text-sm text-muted">
+                <FileText size={16} className="text-accent" />
                 {t("nav.purchases")}
               </div>
-              <h1 className="mt-1 text-2xl font-black text-white">
+              <h1 className="mt-1 text-2xl font-black text-ink">
                 {isEdit ? t("procurement.po.edit") : t("procurement.po.new")}
               </h1>
             </div>
             <button
               type="button"
               onClick={() => navigate(isEdit ? purchaseOrderDetailsPath(purchaseOrderId) : ROUTES.PURCHASES)}
-              className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold text-slate-100 hover:bg-white/10"
+              className="flex items-center gap-2 rounded-xl border border-line bg-raised px-3 py-2 text-sm font-bold text-ink hover:bg-hover"
             >
               <ArrowRight size={14} />
               {t("procurement.actions.back")}
@@ -231,23 +231,23 @@ export default function PurchaseOrderEditorPage() {
         ) : (
           <form onSubmit={submit} className="space-y-4">
             {formError && (
-              <div className="rounded-xl border border-rose-400/25 bg-rose-500/10 px-3 py-2 text-xs text-rose-100">
+              <div className="rounded-xl border border-danger bg-danger-soft px-3 py-2 text-sm text-danger">
                 {formError}
               </div>
             )}
 
-            <section className="rounded-2xl border border-white/10 bg-[#0c1424] p-4">
-              <h2 className="mb-3 text-xs font-black uppercase tracking-wide text-slate-500">
+            <section className="rounded-xl border border-line bg-surface p-4">
+              <h2 className="mb-3 text-sm font-black uppercase tracking-wide text-subtle">
                 {t("procurement.po.form.header")}
               </h2>
               <div className="grid gap-3 sm:grid-cols-3">
-                <label className="block text-xs font-semibold text-slate-400">
+                <label className="block text-sm font-semibold text-muted">
                   {t("procurement.po.form.supplier")}
                   <select
                     value={supplierId}
                     onChange={(event) => setSupplierId(event.target.value)}
                     disabled={suppliersQuery.isLoading}
-                    className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+                    className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
                   >
                     <option value="">{t("procurement.po.form.supplierSelectPlaceholder")}</option>
                     {suppliers.map((supplier) => (
@@ -257,30 +257,30 @@ export default function PurchaseOrderEditorPage() {
                     ))}
                   </select>
                 </label>
-                <label className="block text-xs font-semibold text-slate-400">
+                <label className="block text-sm font-semibold text-muted">
                   {t("procurement.po.form.expectedDelivery")}
                   <input
                     type="date"
                     value={expectedDeliveryDate}
                     onChange={(event) => setExpectedDeliveryDate(event.target.value)}
-                    className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60"
+                    className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line"
                   />
                 </label>
-                <label className="block text-xs font-semibold text-slate-400 sm:col-span-1">
+                <label className="block text-sm font-semibold text-muted sm:col-span-1">
                   {t("procurement.po.form.note")}
                   <input
                     type="text"
                     value={note}
                     onChange={(event) => setNote(event.target.value)}
                     maxLength={500}
-                    className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60"
+                    className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line"
                   />
                 </label>
               </div>
             </section>
 
-            <section className="rounded-2xl border border-white/10 bg-[#0c1424] p-4">
-              <h2 className="mb-3 text-xs font-black uppercase tracking-wide text-slate-500">
+            <section className="rounded-xl border border-line bg-surface p-4">
+              <h2 className="mb-3 text-sm font-black uppercase tracking-wide text-subtle">
                 {t("procurement.po.form.lines")}
               </h2>
               {activeItemsQuery.isLoading ? (
@@ -296,11 +296,11 @@ export default function PurchaseOrderEditorPage() {
               )}
             </section>
 
-            <section className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#0c1424] p-4">
-              <span className="text-xs font-bold uppercase tracking-wide text-slate-500">
+            <section className="flex items-center justify-between rounded-xl border border-line bg-surface p-4">
+              <span className="text-sm font-bold uppercase tracking-wide text-subtle">
                 {t("procurement.po.total")}
               </span>
-              <span className="text-lg font-black text-white">
+              <span className="text-lg font-black text-ink">
                 {previewCurrencyCode
                   ? formatMoney(previewTotal, previewCurrencyCode, previewCurrencyMinorUnitDigits ?? undefined)
                   : formatPurchaseAmount(previewTotal)}
@@ -310,7 +310,7 @@ export default function PurchaseOrderEditorPage() {
             <button
               type="submit"
               disabled={isPending}
-              className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 text-sm font-black text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-accent text-sm font-black text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isPending ? t("procurement.actions.saving") : t("procurement.po.form.saveDraft")}
             </button>

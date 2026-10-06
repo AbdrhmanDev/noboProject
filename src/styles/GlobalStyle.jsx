@@ -15,7 +15,7 @@ const GlobalStyle = () => (
       --shadow-panel: 0 10px 30px rgba(0,0,0,.45), 0 0 25px rgba(43,140,255,.08);
     }
 
-    .nobo-root { font-family: 'Cairo', 'Tajawal', sans-serif; }
+    .nobo-root { font-family: var(--app-font); }
     .nobo-root, .nobo-root * { box-sizing: border-box; }
 
     .font-tajawal { font-family: 'Tajawal', 'Cairo', sans-serif; }

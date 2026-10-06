@@ -31,14 +31,14 @@ export function BranchSelector() {
   const hasActiveBranch = branches.some(isBranchEnterable);
 
   return (
-    <div className="panel w-full max-w-3xl rounded-2xl p-5">
+    <div className="panel w-full max-w-3xl rounded-xl p-5">
       <div className="mb-4 flex items-center gap-3">
-        <div className="grid h-11 w-11 place-items-center rounded-xl bg-blue-500/15 text-blue-300">
+        <div className="grid h-11 w-11 place-items-center rounded-xl bg-accent-soft text-accent">
           <MapPin size={20} />
         </div>
         <div>
           <h1 className="brand-text text-xl font-black">Select Branch</h1>
-          <p className="text-xs text-gray-400">
+          <p className="text-sm text-muted">
             {hasActiveBranch
               ? "Choose an active branch for this company."
               : "No active branch is currently available."}
@@ -59,21 +59,21 @@ export function BranchSelector() {
               type="button"
               disabled={!enterable}
               onClick={() => selectBranch(branch.branchId)}
-              className="rounded-2xl border border-white/10 bg-white/[0.035] p-4 text-start transition hover:border-blue-400/45 hover:bg-blue-500/10 disabled:cursor-not-allowed disabled:opacity-55"
+              className="rounded-xl border border-line bg-raised p-4 text-start transition hover:border-accent-line hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-55"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <div className="font-bold text-white">{branch.name}</div>
-                  <div className="mt-1 text-xs text-gray-400">
+                  <div className="font-bold text-ink">{branch.name}</div>
+                  <div className="mt-1 text-sm text-muted">
                     {branch.code}
                     {location ? ` · ${location}` : ""}
                   </div>
                 </div>
                 <span
-                  className={`rounded-full px-2 py-1 text-[10px] font-bold ${
+                  className={`rounded-full px-2 py-1 text-xs font-bold ${
                     branch.status === "Active"
-                      ? "bg-green-500/15 text-green-400"
-                      : "bg-yellow-500/15 text-yellow-400"
+                      ? "bg-success-soft text-success"
+                      : "bg-warning-soft text-warning"
                   }`}
                 >
                   {branch.status}

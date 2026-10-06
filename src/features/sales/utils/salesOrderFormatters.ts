@@ -77,3 +77,11 @@ export const PAYMENT_STATUS_TONE: Record<PaymentStatus, "success" | "warning" | 
   partiallyPaid: "warning",
   unpaid: "neutral",
 };
+
+// StatusPill tone per sales order status (Odoo-style list / form views).
+export const SALES_STATUS_PILL_TONE: Record<string, "info" | "success" | "neutral" | "danger"> = {
+  Draft: "info",
+  Confirmed: "success",
+  Closed: "neutral",
+  Cancelled: "danger",
+};

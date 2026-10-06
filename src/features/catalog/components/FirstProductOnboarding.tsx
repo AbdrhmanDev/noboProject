@@ -117,11 +117,11 @@ function mapStepError(error: ApiError) {
 }
 
 const inputClass =
-  "mt-2 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-blue-400/60 disabled:cursor-not-allowed disabled:opacity-60";
+  "mt-2 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none transition placeholder:text-subtle focus:border-accent-line disabled:cursor-not-allowed disabled:opacity-60";
 
 function ErrorBanner({ message }: { message: string }) {
   return (
-    <div className="rounded-xl border border-rose-400/25 bg-rose-500/10 px-3 py-2 text-xs text-rose-100">
+    <div className="rounded-xl border border-danger bg-danger-soft px-3 py-2 text-sm text-danger">
       {message}
     </div>
   );
@@ -145,7 +145,7 @@ function StepButton({
       type={type}
       onClick={onClick}
       disabled={disabled || pending}
-      className="flex h-11 items-center justify-center gap-2 rounded-xl bg-gradient-to-l from-blue-600 to-[#0A84FF] text-sm font-black text-white shadow-lg shadow-blue-950/40 transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-300 disabled:cursor-not-allowed disabled:opacity-55"
+      className="flex h-11 items-center justify-center gap-2 rounded-xl bg-accent text-sm font-bold text-white shadow-sm transition hover:bg-accent-strong focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-55"
     >
       {pending ? <RefreshCw size={16} className="animate-spin" /> : null}
       {label}
@@ -203,7 +203,7 @@ function CategoryStep({ companyId, branchId, onDone }: CategoryStepProps) {
   return (
     <div className="grid gap-3">
       <label className="block">
-        <span className="text-xs font-bold text-slate-300">Category (optional)</span>
+        <span className="text-xs font-bold text-muted">Category (optional)</span>
         <select
           value={selection}
           onChange={(event) => setSelection(event.target.value)}
@@ -222,7 +222,7 @@ function CategoryStep({ companyId, branchId, onDone }: CategoryStepProps) {
       {selection === "new" ? (
         <form onSubmit={handleSubmit(onCreate)} className="grid gap-3">
           <label className="block">
-            <span className="text-xs font-bold text-slate-300">New Category Name</span>
+            <span className="text-xs font-bold text-muted">New Category Name</span>
             <input
               type="text"
               disabled={isSubmitting}
@@ -230,7 +230,7 @@ function CategoryStep({ companyId, branchId, onDone }: CategoryStepProps) {
               className={inputClass}
             />
             {fieldMessage(errors.name?.message) && (
-              <span className="mt-1.5 block text-xs text-rose-300">
+              <span className="mt-1.5 block text-xs text-danger">
                 {fieldMessage(errors.name?.message)}
               </span>
             )}
@@ -286,11 +286,11 @@ function ProductStep({ companyId, branchId, categoryId, categoryLabel, onDone }:
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="grid gap-3">
-      <p className="text-xs text-gray-500">
-        Category: <span className="text-gray-300">{categoryLabel}</span>
+      <p className="text-xs text-subtle">
+        Category: <span className="text-ink">{categoryLabel}</span>
       </p>
       <label className="block">
-        <span className="text-xs font-bold text-slate-300">Product Name</span>
+        <span className="text-xs font-bold text-muted">Product Name</span>
         <input
           type="text"
           disabled={isSubmitting}
@@ -298,7 +298,7 @@ function ProductStep({ companyId, branchId, categoryId, categoryLabel, onDone }:
           className={inputClass}
         />
         {fieldMessage(errors.name?.message) && (
-          <span className="mt-1.5 block text-xs text-rose-300">
+          <span className="mt-1.5 block text-xs text-danger">
             {fieldMessage(errors.name?.message)}
           </span>
         )}
@@ -364,11 +364,11 @@ function VariantStep({ companyId, branchId, productId, productName, onDone }: Va
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="grid gap-3">
-      <p className="text-xs text-gray-500">
-        Product: <span className="text-gray-300">{productName}</span>
+      <p className="text-xs text-subtle">
+        Product: <span className="text-ink">{productName}</span>
       </p>
       <label className="block">
-        <span className="text-xs font-bold text-slate-300">Variant Name</span>
+        <span className="text-xs font-bold text-muted">Variant Name</span>
         <input
           type="text"
           disabled={isSubmitting}
@@ -376,13 +376,13 @@ function VariantStep({ companyId, branchId, productId, productName, onDone }: Va
           className={inputClass}
         />
         {fieldMessage(errors.name?.message) && (
-          <span className="mt-1.5 block text-xs text-rose-300">
+          <span className="mt-1.5 block text-xs text-danger">
             {fieldMessage(errors.name?.message)}
           </span>
         )}
       </label>
       <label className="block">
-        <span className="text-xs font-bold text-slate-300">SKU (optional)</span>
+        <span className="text-xs font-bold text-muted">SKU (optional)</span>
         <input
           type="text"
           disabled={isSubmitting}
@@ -390,13 +390,13 @@ function VariantStep({ companyId, branchId, productId, productName, onDone }: Va
           className={inputClass}
         />
         {fieldMessage(errors.sku?.message) && (
-          <span className="mt-1.5 block text-xs text-rose-300">
+          <span className="mt-1.5 block text-xs text-danger">
             {fieldMessage(errors.sku?.message)}
           </span>
         )}
       </label>
       <label className="block">
-        <span className="text-xs font-bold text-slate-300">Sales Unit of Measure</span>
+        <span className="text-xs font-bold text-muted">Sales Unit of Measure</span>
         <select disabled={isSubmitting} {...register("salesUnitOfMeasureId")} className={inputClass}>
           <option value="">Select unit</option>
           {units.map((unit) => (
@@ -406,7 +406,7 @@ function VariantStep({ companyId, branchId, productId, productName, onDone }: Va
           ))}
         </select>
         {fieldMessage(errors.salesUnitOfMeasureId?.message) && (
-          <span className="mt-1.5 block text-xs text-rose-300">
+          <span className="mt-1.5 block text-xs text-danger">
             {fieldMessage(errors.salesUnitOfMeasureId?.message)}
           </span>
         )}
@@ -468,15 +468,15 @@ function PriceStep({ companyId, branchId, productVariantId, variantName, onDone 
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="grid gap-3">
-      <p className="text-xs text-gray-500">
-        Variant: <span className="text-gray-300">{variantName}</span>
+      <p className="text-xs text-subtle">
+        Variant: <span className="text-ink">{variantName}</span>
       </p>
-      <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-gray-300">
-        Price List: <span className="font-bold text-white">{defaultPriceList.name}</span>
-        {" · "}Currency: <span className="font-bold text-white">{defaultPriceList.currencyCode}</span>
+      <div className="rounded-xl border border-line bg-inset px-3 py-2 text-xs text-ink">
+        Price List: <span className="font-bold text-ink">{defaultPriceList.name}</span>
+        {" · "}Currency: <span className="font-bold text-ink">{defaultPriceList.currencyCode}</span>
       </div>
       <label className="block">
-        <span className="text-xs font-bold text-slate-300">
+        <span className="text-xs font-bold text-muted">
           Amount ({defaultPriceList.currencyCode})
         </span>
         <input
@@ -488,7 +488,7 @@ function PriceStep({ companyId, branchId, productVariantId, variantName, onDone 
           className={inputClass}
         />
         {fieldMessage(errors.amount?.message) && (
-          <span className="mt-1.5 block text-xs text-rose-300">
+          <span className="mt-1.5 block text-xs text-danger">
             {fieldMessage(errors.amount?.message)}
           </span>
         )}
@@ -529,8 +529,8 @@ function AvailabilityStep({
 
   return (
     <div className="grid gap-3">
-      <p className="text-xs text-gray-500">
-        Make <span className="font-bold text-white">{variantName}</span> available for sale
+      <p className="text-xs text-subtle">
+        Make <span className="font-bold text-ink">{variantName}</span> available for sale
         in the current branch.
       </p>
       {formError && <ErrorBanner message={formError} />}
@@ -610,11 +610,11 @@ function TaxCategoryStep({
 
   return (
     <div className="grid gap-3">
-      <p className="text-xs text-gray-500">
-        Product: <span className="text-gray-300">{productName}</span>
+      <p className="text-xs text-subtle">
+        Product: <span className="text-ink">{productName}</span>
       </p>
       <label className="block">
-        <span className="text-xs font-bold text-slate-300">Tax Category</span>
+        <span className="text-xs font-bold text-muted">Tax Category</span>
         <select
           value={selection}
           onChange={(event) => setSelection(event.target.value)}
@@ -633,7 +633,7 @@ function TaxCategoryStep({
         <form onSubmit={handleSubmit(onCreate)} className="grid gap-3">
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="block">
-              <span className="text-xs font-bold text-slate-300">Code</span>
+              <span className="text-xs font-bold text-muted">Code</span>
               <input
                 type="text"
                 disabled={isSubmitting}
@@ -641,13 +641,13 @@ function TaxCategoryStep({
                 className={inputClass}
               />
               {fieldMessage(errors.code?.message) && (
-                <span className="mt-1.5 block text-xs text-rose-300">
+                <span className="mt-1.5 block text-xs text-danger">
                   {fieldMessage(errors.code?.message)}
                 </span>
               )}
             </label>
             <label className="block">
-              <span className="text-xs font-bold text-slate-300">Name</span>
+              <span className="text-xs font-bold text-muted">Name</span>
               <input
                 type="text"
                 disabled={isSubmitting}
@@ -655,13 +655,13 @@ function TaxCategoryStep({
                 className={inputClass}
               />
               {fieldMessage(errors.name?.message) && (
-                <span className="mt-1.5 block text-xs text-rose-300">
+                <span className="mt-1.5 block text-xs text-danger">
                   {fieldMessage(errors.name?.message)}
                 </span>
               )}
             </label>
             <label className="block">
-              <span className="text-xs font-bold text-slate-300">Treatment</span>
+              <span className="text-xs font-bold text-muted">Treatment</span>
               <select disabled={isSubmitting} {...register("treatment")} className={inputClass}>
                 <option value="StandardRated">StandardRated</option>
                 <option value="ZeroRated">ZeroRated</option>
@@ -669,7 +669,7 @@ function TaxCategoryStep({
               </select>
             </label>
             <label className="block">
-              <span className="text-xs font-bold text-slate-300">Rate Percent</span>
+              <span className="text-xs font-bold text-muted">Rate Percent</span>
               <input
                 type="text"
                 inputMode="decimal"
@@ -678,7 +678,7 @@ function TaxCategoryStep({
                 className={inputClass}
               />
               {fieldMessage(errors.ratePercent?.message) && (
-                <span className="mt-1.5 block text-xs text-rose-300">
+                <span className="mt-1.5 block text-xs text-danger">
                   {fieldMessage(errors.ratePercent?.message)}
                 </span>
               )}
@@ -722,7 +722,7 @@ function DoneStep({ companyId, branchId, productVariantId, productName, onReturn
   if (!isPresent) {
     return (
       <div className="grid gap-3 text-center">
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-muted">
           Setup is complete, but the product has not appeared in the sellable catalog yet.
         </p>
         <StepButton onClick={() => catalogQuery.refetch()} label="Check again" />
@@ -732,11 +732,11 @@ function DoneStep({ companyId, branchId, productVariantId, productName, onReturn
 
   return (
     <div className="grid gap-3 text-center">
-      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/15 border border-emerald-500/30">
-        <CheckCircle2 size={26} className="text-emerald-300" />
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-success-soft border border-success">
+        <CheckCircle2 size={26} className="text-success" />
       </div>
-      <h2 className="text-lg font-bold text-white">Your first product is ready for sale.</h2>
-      <p className="text-xs text-gray-400">{productName} is now available in POS.</p>
+      <h2 className="text-lg font-bold text-ink">Your first product is ready for sale.</h2>
+      <p className="text-xs text-muted">{productName} is now available in POS.</p>
       <StepButton onClick={onReturn} label="Return to POS" />
     </div>
   );
@@ -796,12 +796,12 @@ export function FirstProductOnboarding({ onCompleted }: FirstProductOnboardingPr
   return (
     <section className="panel rounded-2xl p-5">
       <div className="flex items-center gap-3">
-        <div className="grid h-11 w-11 place-items-center rounded-xl bg-blue-500/15 text-blue-300">
+        <div className="grid h-11 w-11 place-items-center rounded-xl bg-accent-soft text-accent">
           <Boxes size={20} />
         </div>
         <div>
           <h1 className="brand-text text-xl font-black">Catalog Setup</h1>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-muted">
             There are no products ready for sale in this branch yet. Add your first
             sellable product to start using POS.
           </p>
@@ -812,11 +812,11 @@ export function FirstProductOnboarding({ onCompleted }: FirstProductOnboardingPr
         {stepOrder.map((wizardStep, index) => (
           <div
             key={wizardStep}
-            className={`h-1.5 flex-1 rounded-full ${index <= stepIndex ? "bg-blue-500" : "bg-white/10"}`}
+            className={`h-1.5 flex-1 rounded-full ${index <= stepIndex ? "bg-accent" : "bg-inset"}`}
           />
         ))}
       </div>
-      <p className="mt-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-gray-500">
+      <p className="mt-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-subtle">
         <StepIcon size={13} />
         Step {stepIndex + 1} of {stepOrder.length} · {STEP_LABELS[step]}
       </p>

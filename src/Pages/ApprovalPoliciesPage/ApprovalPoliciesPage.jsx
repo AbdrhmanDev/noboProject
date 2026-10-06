@@ -199,28 +199,28 @@ function ApprovalPolicyForm({ companyId, actionCode, titleKey, descriptionKey, c
   };
 
   return (
-    <section className="max-w-2xl rounded-2xl border border-white/10 bg-[#0c1424] p-5">
+    <section className="max-w-2xl rounded-xl border border-line bg-surface p-5">
       <div className="mb-3 flex items-start gap-3">
-        <ShieldCheck size={18} className="mt-0.5 shrink-0 text-blue-300" />
+        <ShieldCheck size={18} className="mt-0.5 shrink-0 text-accent" />
         <div>
-          <h2 className="text-sm font-bold text-slate-100">{t(titleKey)}</h2>
-          <p className="mt-1 text-xs text-slate-400">{t(descriptionKey)}</p>
+          <h2 className="text-sm font-bold text-ink">{t(titleKey)}</h2>
+          <p className="mt-1 text-sm text-muted">{t(descriptionKey)}</p>
         </div>
       </div>
 
       {notice && (
-        <div className="mb-4 rounded-xl border border-blue-400/25 bg-blue-500/10 px-3 py-2 text-xs text-blue-100">
+        <div className="mb-4 rounded-xl border border-accent-line bg-accent-soft px-3 py-2 text-sm text-accent">
           {notice}
         </div>
       )}
 
       {!hasExplicitPolicy && (
-        <div className="mb-4 rounded-xl border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+        <div className="mb-4 rounded-xl border border-warning bg-warning-soft px-3 py-2 text-sm text-warning">
           {t("approvalPolicies.defaultNotice")}
         </div>
       )}
 
-      <label className="mb-2 block text-xs font-semibold text-slate-400">
+      <label className="mb-2 block text-sm font-semibold text-muted">
         {t("approvalPolicies.mode.label")}
       </label>
       <div className="mb-3 grid gap-2 sm:grid-cols-3">
@@ -231,10 +231,10 @@ function ApprovalPolicyForm({ companyId, actionCode, titleKey, descriptionKey, c
             onClick={() => handleModeChange(candidateMode)}
             disabled={saveMutation.isPending}
             aria-pressed={mode === candidateMode}
-            className={`rounded-xl border px-3 py-2.5 text-xs font-bold transition disabled:cursor-not-allowed disabled:opacity-50 ${
+            className={`rounded-xl border px-3 py-2.5 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-50 ${
               mode === candidateMode
-                ? "border-blue-400/60 bg-blue-500/15 text-blue-100"
-                : "border-white/10 bg-black/10 text-slate-300 hover:border-white/20"
+                ? "border-accent-line bg-accent-soft text-accent"
+                : "border-line bg-canvas text-muted hover:border-line-strong"
             }`}
           >
             {t(`approvalPolicies.mode.${modeKey(candidateMode)}`)}
@@ -242,16 +242,16 @@ function ApprovalPolicyForm({ companyId, actionCode, titleKey, descriptionKey, c
         ))}
       </div>
 
-      <p className="mb-4 rounded-xl border border-white/10 bg-white/[0.025] px-3 py-2 text-[11px] leading-5 text-slate-300">
+      <p className="mb-4 rounded-xl border border-line bg-raised px-3 py-2 text-xs leading-5 text-muted">
         {t(`${config.hintPrefix}.${modeKey(mode)}.hint`)}
       </p>
 
       {mode === "AboveThreshold" && (
         <div className="mb-4">
-          <label className="block text-xs font-semibold text-slate-400">
+          <label className="block text-sm font-semibold text-muted">
             {t(config.thresholdLabelKey)}
           </label>
-          <div className="mt-1 flex items-center gap-2 rounded-xl border border-white/10 bg-black/20 px-3">
+          <div className="mt-1 flex items-center gap-2 rounded-xl border border-line bg-canvas px-3">
             <input
               type="text"
               inputMode="decimal"
@@ -262,11 +262,11 @@ function ApprovalPolicyForm({ companyId, actionCode, titleKey, descriptionKey, c
               }}
               disabled={saveMutation.isPending}
               placeholder={t(config.thresholdPlaceholderKey)}
-              className="h-11 min-w-0 flex-1 bg-transparent text-sm text-white outline-none disabled:opacity-50"
+              className="h-11 min-w-0 flex-1 bg-transparent text-sm text-ink outline-none disabled:opacity-50"
             />
-            <span className="text-xs font-bold text-slate-400">{isPercent ? "%" : currencyCode}</span>
+            <span className="text-sm font-bold text-muted">{isPercent ? "%" : currencyCode}</span>
           </div>
-          {thresholdError && <p className="mt-1 text-[11px] text-rose-300">{thresholdError}</p>}
+          {thresholdError && <p className="mt-1 text-xs text-danger">{thresholdError}</p>}
         </div>
       )}
 
@@ -274,7 +274,7 @@ function ApprovalPolicyForm({ companyId, actionCode, titleKey, descriptionKey, c
         type="button"
         onClick={handleSave}
         disabled={saveMutation.isPending}
-        className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {saveMutation.isPending ? t("approvalPolicies.saving") : t("approvalPolicies.save")}
       </button>
@@ -282,7 +282,7 @@ function ApprovalPolicyForm({ companyId, actionCode, titleKey, descriptionKey, c
       {/* Requirement 11: the policy only ever governs whether an approval workflow is offered to
           a user who lacks direct refund permission -- it never itself allows or denies a specific
           refund, and this screen must never claim otherwise. */}
-      <p className="mt-4 border-t border-white/10 pt-3 text-[11px] leading-5 text-slate-500">
+      <p className="mt-4 border-t border-line pt-3 text-xs leading-5 text-subtle">
         {t(config.disclaimerKey)}
       </p>
     </section>
@@ -304,7 +304,7 @@ export default function ApprovalPoliciesPage() {
     <AppLayout>
       <main className="space-y-4" dir={dir}>
         <PageHeader title={t("approvalPolicies.title")} />
-        <p className="text-sm text-slate-400">{t("approvalPolicies.subtitle")}</p>
+        <p className="text-sm text-muted">{t("approvalPolicies.subtitle")}</p>
 
         {!currentCompanyId ? (
           <EmptyState

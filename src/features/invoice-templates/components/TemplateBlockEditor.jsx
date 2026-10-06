@@ -21,13 +21,13 @@ export function TemplateBlockEditor({
   const setProperty = (name, value) => onChange({ ...block, [name]: value });
 
   return (
-    <div className="rounded-xl border border-white/10 bg-[#0d1728] p-3">
+    <div className="rounded-xl border border-line bg-raised p-3">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className="rounded-full bg-blue-500/15 px-2 py-0.5 text-[10px] font-bold text-blue-300">
+          <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-bold text-accent">
             {schemaBlockType?.control || "?"}
           </span>
-          <span className="text-sm font-black text-white">{block.type}</span>
+          <span className="text-sm font-black text-ink">{block.type}</span>
         </div>
         <div className="flex items-center gap-1">
           <button
@@ -35,7 +35,7 @@ export function TemplateBlockEditor({
             onClick={onMoveUp}
             disabled={disabled || !canMoveUp}
             aria-label="Move up"
-            className="grid h-7 w-7 place-items-center rounded-lg text-slate-400 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-30"
+            className="grid h-7 w-7 place-items-center rounded-lg text-muted hover:bg-hover disabled:cursor-not-allowed disabled:opacity-30"
           >
             <ChevronUp size={14} />
           </button>
@@ -44,7 +44,7 @@ export function TemplateBlockEditor({
             onClick={onMoveDown}
             disabled={disabled || !canMoveDown}
             aria-label="Move down"
-            className="grid h-7 w-7 place-items-center rounded-lg text-slate-400 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-30"
+            className="grid h-7 w-7 place-items-center rounded-lg text-muted hover:bg-hover disabled:cursor-not-allowed disabled:opacity-30"
           >
             <ChevronDown size={14} />
           </button>
@@ -53,7 +53,7 @@ export function TemplateBlockEditor({
             onClick={onRemove}
             disabled={disabled}
             aria-label="Remove block"
-            className="grid h-7 w-7 place-items-center rounded-lg text-red-300 hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-30"
+            className="grid h-7 w-7 place-items-center rounded-lg text-danger hover:bg-danger-soft disabled:cursor-not-allowed disabled:opacity-30"
           >
             <Trash2 size={14} />
           </button>

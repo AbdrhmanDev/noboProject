@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ChevronsLeft, FilePlus2 } from "lucide-react";
+import { ChevronsLeft, FilePlus2, Menu, X } from "lucide-react";
 import NoboLogo from "./NoboLogo";
 import logoDark from "../assets/nobo-logo-dark.png";
+import logoLight from "../assets/nobo-logo-light.png";
 import Header from "./Header";
 import Footer from "./Footer";
+import "../shared/components/odoo/odoo.css";
 import { useI18n } from "../i18n/I18nContext";
 import { useAuth } from "../features/auth/hooks/useAuth";
 import { useCurrentUserProfile } from "../features/auth/hooks/useCurrentUserProfile";
@@ -112,9 +114,32 @@ export default function AppLayout({ children, onLogout }) {
 
   const HomeIcon = NAV_ITEMS[0].icon;
 
-  const renderNavItem = (item) => {
+  // Mobile (below lg): the same sidebar as a slide-in drawer, opened from the top bar's menu
+  // button. Any navigation from inside it closes it first.
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const navigateFromDrawer = (to) => {
+    setMobileNavOpen(false);
+    navigate(to);
+  };
+  useEffect(() => {
+    if (!mobileNavOpen) return undefined;
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") setMobileNavOpen(false);
+    };
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [mobileNavOpen]);
+
+  // `isCollapsed` / `go`: the desktop sidebar passes its own collapsed state and plain navigate;
+  // the mobile drawer is always expanded and navigates through navigateFromDrawer.
+  const renderNavItem = (item, isCollapsed, go) => {
     if (item.comingSoon) {
-      return <ComingSoonNavItem key={item.labelKey} icon={item.icon} labelKey={item.labelKey} collapsed={collapsed} />;
+      return <ComingSoonNavItem key={item.labelKey} icon={item.icon} labelKey={item.labelKey} collapsed={isCollapsed} />;
     }
 
     if (item.kind === "group") {
@@ -123,8 +148,8 @@ export default function AppLayout({ children, onLogout }) {
         <GroupComponent
           key={item.module}
           activePath={activePath}
-          navigate={navigate}
-          collapsed={collapsed}
+          navigate={go}
+          collapsed={isCollapsed}
         />
       );
     }
@@ -140,9 +165,9 @@ export default function AppLayout({ children, onLogout }) {
           permissions={item.permissions}
           entitlement={item.entitlement}
           activePath={activePath}
-          navigate={navigate}
+          navigate={go}
           shortcutAction={item.shortcutAction}
-          collapsed={collapsed}
+          collapsed={isCollapsed}
         />
       );
     }
@@ -152,14 +177,14 @@ export default function AppLayout({ children, onLogout }) {
       <button
         key={item.labelKey}
         type="button"
-        onClick={() => navigate(item.to)}
+        onClick={() => go(item.to)}
         aria-label={t(item.labelKey)}
         aria-current={isActive ? "page" : undefined}
         data-active={isActive}
         className="nobo-sb-item"
       >
         <item.icon size={20} className="nobo-sb-icon" />
-        {collapsed ? (
+        {isCollapsed ? (
           <span className="nobo-sb-tip">{t(item.labelKey)}</span>
         ) : (
           <span className="nobo-sb-label">{t(item.labelKey)}</span>
@@ -167,6 +192,90 @@ export default function AppLayout({ children, onLogout }) {
       </button>
     );
   };
+
+  // Navigation + profile footer, shared by the desktop sidebar and the mobile drawer.
+  const renderSidebarNav = (isCollapsed, go) => (
+    <>
+      <nav className="nobo-sb-nav scrollbar-none" aria-label={t("layout.home")}>
+        <div className="nobo-sb-section" data-accent="blue">
+          <div className="nobo-sb-items">
+            <button
+              type="button"
+              onClick={() => go(ROUTES.DASHBOARD)}
+              aria-label={t("layout.home")}
+              aria-current={activePath === ROUTES.DASHBOARD ? "page" : undefined}
+              data-active={activePath === ROUTES.DASHBOARD}
+              className="nobo-sb-item"
+            >
+              <HomeIcon size={20} className="nobo-sb-icon" />
+              {isCollapsed ? (
+                <span className="nobo-sb-tip">{t("layout.home")}</span>
+              ) : (
+                <span className="nobo-sb-label">{t("layout.home")}</span>
+              )}
+            </button>
+            {/* Deliberately NOT a PermissionNavItem: those all require currentCompanyId truthy,
+                but the applicant Customer Registration flow is exactly for a user who may have NO
+                company yet (its route bypasses CompanyGate too -- see AuthenticatedOnlyRoute).
+                Always visible to any authenticated user; the backend is the real gate. */}
+            <button
+              type="button"
+              onClick={() => go(ROUTES.REGISTRATION_NEW)}
+              aria-label={t("nav.myRegistration")}
+              aria-current={activePath === ROUTES.REGISTRATION_NEW ? "page" : undefined}
+              data-active={activePath === ROUTES.REGISTRATION_NEW}
+              className="nobo-sb-item"
+            >
+              <FilePlus2 size={20} className="nobo-sb-icon" />
+              {isCollapsed ? (
+                <span className="nobo-sb-tip">{t("nav.myRegistration")}</span>
+              ) : (
+                <span className="nobo-sb-label">{t("nav.myRegistration")}</span>
+              )}
+            </button>
+          </div>
+        </div>
+        {NAV_SECTIONS.map((section) => (
+          <div key={section.id} className="nobo-sb-section" data-accent={section.accent}>
+            <div className="nobo-sb-title">{t(section.titleKey)}</div>
+            <div className="nobo-sb-items">{section.items.map((item) => renderNavItem(item, isCollapsed, go))}</div>
+          </div>
+        ))}
+      </nav>
+
+      <div className="nobo-sb-footer">
+        <button
+          type="button"
+          onClick={() => go(ROUTES.PROFILE)}
+          aria-label={displayName}
+          className="nobo-sb-profile"
+        >
+          {/* Real identity only -- no fake seeded avatar image (Cashier Real Identity task).
+              A plain initials circle needs no backend "avatar" concept that doesn't exist. */}
+          <span className="nobo-sb-avatar">{initial}</span>
+          {isCollapsed ? (
+            <span className="nobo-sb-tip">{displayName}</span>
+          ) : (
+            <span className="nobo-sb-who">
+              <div className="nobo-sb-who-name">{displayName}</div>
+              {session?.email && session.email !== displayName && (
+                <div className="nobo-sb-who-mail">{session.email}</div>
+              )}
+            </span>
+          )}
+        </button>
+        {!isCollapsed && (
+          <div className="nobo-sb-status">
+            <div>
+              <strong>{t("layout.systemStatus")}</strong>
+              {t("layout.allServices")}
+            </div>
+            <span className="nobo-sb-dot" />
+          </div>
+        )}
+      </div>
+    </>
+  );
 
   return (
     <div
@@ -189,7 +298,9 @@ export default function AppLayout({ children, onLogout }) {
         <div className="nobo-sb-top">
           {collapsed ? (
             <span className="nobo-sb-mark" aria-hidden="true">
-              <img src={logoDark} alt="" />
+              {/* Both crops are mounted; sidebar.css shows the one matching the sidebar's theme. */}
+              <img src={logoDark} alt="" className="nobo-logo-dark" />
+              <img src={logoLight} alt="" className="nobo-logo-light" />
             </span>
           ) : (
             <NoboLogo className="nobo-sb-logo" />
@@ -218,88 +329,59 @@ export default function AppLayout({ children, onLogout }) {
           <ChevronsLeft size={16} />
         </button>
 
-        <nav className="nobo-sb-nav scrollbar-none" aria-label={t("layout.home")}>
-          <div className="nobo-sb-section" data-accent="blue">
-            <div className="nobo-sb-items">
-              <button
-                type="button"
-                onClick={() => navigate(ROUTES.DASHBOARD)}
-                aria-label={t("layout.home")}
-                aria-current={activePath === ROUTES.DASHBOARD ? "page" : undefined}
-                data-active={activePath === ROUTES.DASHBOARD}
-                className="nobo-sb-item"
-              >
-                <HomeIcon size={20} className="nobo-sb-icon" />
-                {collapsed ? (
-                  <span className="nobo-sb-tip">{t("layout.home")}</span>
-                ) : (
-                  <span className="nobo-sb-label">{t("layout.home")}</span>
-                )}
-              </button>
-              {/* Deliberately NOT a PermissionNavItem: those all require currentCompanyId truthy,
-                  but the applicant Customer Registration flow is exactly for a user who may have NO
-                  company yet (its route bypasses CompanyGate too -- see AuthenticatedOnlyRoute).
-                  Always visible to any authenticated user; the backend is the real gate. */}
-              <button
-                type="button"
-                onClick={() => navigate(ROUTES.REGISTRATION_NEW)}
-                aria-label={t("nav.myRegistration")}
-                aria-current={activePath === ROUTES.REGISTRATION_NEW ? "page" : undefined}
-                data-active={activePath === ROUTES.REGISTRATION_NEW}
-                className="nobo-sb-item"
-              >
-                <FilePlus2 size={20} className="nobo-sb-icon" />
-                {collapsed ? (
-                  <span className="nobo-sb-tip">{t("nav.myRegistration")}</span>
-                ) : (
-                  <span className="nobo-sb-label">{t("nav.myRegistration")}</span>
-                )}
-              </button>
-            </div>
-          </div>
-          {NAV_SECTIONS.map((section) => (
-            <div key={section.id} className="nobo-sb-section" data-accent={section.accent}>
-              <div className="nobo-sb-title">{t(section.titleKey)}</div>
-              <div className="nobo-sb-items">{section.items.map(renderNavItem)}</div>
-            </div>
-          ))}
-        </nav>
+        {renderSidebarNav(collapsed, navigate)}
+      </aside>
 
-        <div className="nobo-sb-footer">
+      {/* Mobile drawer (below lg): the same sidebar, always expanded, sliding in over a backdrop.
+          Kept mounted so the slide can animate both ways; `inert` while closed keeps it out of
+          tab order and screen readers. */}
+      <div
+        className="nobo-sidebar-backdrop"
+        data-open={mobileNavOpen}
+        onClick={() => setMobileNavOpen(false)}
+        aria-hidden="true"
+      />
+      <aside
+        id="nobo-mobile-nav"
+        className="nobo-sidebar nobo-sidebar-drawer flex flex-col"
+        data-collapsed="false"
+        data-open={mobileNavOpen}
+        aria-label={t("layout.menu")}
+        inert={!mobileNavOpen}
+      >
+        <div className="nobo-sb-top">
+          <NoboLogo className="nobo-sb-logo" />
           <button
             type="button"
-            onClick={() => navigate(ROUTES.PROFILE)}
-            aria-label={displayName}
-            className="nobo-sb-profile"
+            onClick={() => setMobileNavOpen(false)}
+            aria-label={t("layout.closeMenu")}
+            className="nobo-sb-toggle"
           >
-            {/* Real identity only -- no fake seeded avatar image (Cashier Real Identity task).
-                A plain initials circle needs no backend "avatar" concept that doesn't exist. */}
-            <span className="nobo-sb-avatar">{initial}</span>
-            {collapsed ? (
-              <span className="nobo-sb-tip">{displayName}</span>
-            ) : (
-              <span className="nobo-sb-who">
-                <div className="nobo-sb-who-name">{displayName}</div>
-                {session?.email && session.email !== displayName && (
-                  <div className="nobo-sb-who-mail">{session.email}</div>
-                )}
-              </span>
-            )}
+            <X size={16} />
           </button>
-          {!collapsed && (
-            <div className="nobo-sb-status">
-              <div>
-                <strong>{t("layout.systemStatus")}</strong>
-                {t("layout.allServices")}
-              </div>
-              <span className="nobo-sb-dot" />
-            </div>
-          )}
         </div>
+        {renderSidebarNav(false, navigateFromDrawer)}
       </aside>
 
       {/* main */}
-      <main className={`min-w-0 flex-1 overflow-x-hidden ${isPos ? "p-1.5" : "p-3 sm:p-4 md:p-6"}`}>
+      {/* Every back-office page takes the Odoo look (`odoo-root`: Odoo colour tokens, black buttons,
+          see shared/components/odoo/odoo.css). The POS keeps its own touch-first design. */}
+      <main className={`min-w-0 flex-1 overflow-x-hidden ${isPos ? "p-1.5" : "odoo-root p-3 sm:p-4 md:p-6"}`}>
+        {/* Mobile top bar (below lg): the menu button that opens the drawer, plus the logo. It
+            replaces the old horizontal scrolling row of nav buttons. */}
+        <div className={`flex items-center gap-2 lg:hidden ${isPos ? "mb-1.5" : "mb-3"}`}>
+          <button
+            type="button"
+            onClick={() => setMobileNavOpen(true)}
+            aria-label={t("layout.openMenu")}
+            aria-expanded={mobileNavOpen}
+            aria-controls="nobo-mobile-nav"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-white/10 bg-white/5 text-gray-200 transition hover:bg-white/10"
+          >
+            <Menu size={20} />
+          </button>
+          <NoboLogo className="h-7 w-auto" />
+        </div>
         {/* On the POS route the clock/theme/logout/shortcuts controls move down and merge into the
             footer's own status line (Header `bare` inside Footer's `children`, below) instead of
             taking a row of their own at the top — that row is prime real estate for the actual
@@ -315,51 +397,6 @@ export default function AppLayout({ children, onLogout }) {
             onSwitchBranch={switchableBranches.length > 1 ? clearBranch : undefined}
           />
         )}
-        <nav className="mb-5 flex gap-2 overflow-x-auto pb-1 scrollbar-none lg:hidden">
-          {NAV_ITEMS.filter((item) => !item.comingSoon).map((item, i) => {
-            if (item.kind === "group") {
-              const GroupComponent = NAV_GROUPS[item.module];
-              return (
-                <GroupComponent
-                  key={item.module}
-                  activePath={activePath}
-                  navigate={navigate}
-                  variant="mobile"
-                />
-              );
-            }
-
-            if (item.permission || item.permissions) {
-              return (
-                <PermissionNavItem
-                  key={i}
-                  icon={item.icon}
-                  labelKey={item.labelKey}
-                  to={item.to}
-                  permission={item.permission}
-                  permissions={item.permissions}
-                  entitlement={item.entitlement}
-                  activePath={activePath}
-                  navigate={navigate}
-                  variant="mobile"
-                />
-              );
-            }
-
-            const isActive = activePath === item.to;
-            return (
-              <button
-                key={item.to}
-                type="button"
-                onClick={() => navigate(item.to)}
-                className={`flex shrink-0 items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold transition ${isActive ? "border-blue-400/50 bg-blue-500/20 text-white" : "border-white/10 bg-white/5 text-gray-300"}`}
-              >
-                <item.icon size={14} />
-                {t(item.labelKey)}
-              </button>
-            );
-          })}
-        </nav>
         {children}
         <Footer compact={isPos}>
           {isPos && <Header bare onLogout={handleLogout} />}

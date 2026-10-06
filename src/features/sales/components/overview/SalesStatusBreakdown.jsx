@@ -12,14 +12,14 @@ export function SalesStatusBreakdown({ breakdown }) {
         {breakdown.map((item) => (
           <div
             key={item.status}
-            className="flex items-center gap-2 rounded-xl bg-white/[0.025] px-3 py-2"
+            className="flex items-center gap-2 rounded-xl bg-raised px-3 py-2"
           >
             <SalesOrderStatusBadge status={item.status} />
-            <span className="text-sm font-black text-white">{item.orderCount}</span>
+            <span className="text-sm font-black text-ink">{item.orderCount}</span>
           </div>
         ))}
       </div>
-      <p className="text-[10px] text-slate-500">{t("salesOrders.overview.status.note")}</p>
+      <p className="text-[10px] text-subtle">{t("salesOrders.overview.status.note")}</p>
     </div>
   );
 }

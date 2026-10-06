@@ -31,7 +31,7 @@ export function PurchaseOrderLineEditor({ lines, onChange, items, disabled, curr
 
   return (
     <div className="space-y-2">
-      <div className="hidden grid-cols-[2fr_1fr_1fr_1fr_auto] gap-2 px-1 text-[10px] font-bold uppercase tracking-wide text-slate-500 lg:grid">
+      <div className="hidden grid-cols-[2fr_1fr_1fr_1fr_auto] gap-2 px-1 text-xs font-bold uppercase tracking-wide text-subtle lg:grid">
         <span>{t("procurement.po.form.item")}</span>
         <span>{t("procurement.po.form.orderedQuantity")}</span>
         <span>{t("procurement.po.form.unitCost")}</span>
@@ -47,7 +47,7 @@ export function PurchaseOrderLineEditor({ lines, onChange, items, disabled, curr
         return (
           <div
             key={line.key}
-            className="grid grid-cols-2 gap-2 rounded-xl border border-white/10 bg-white/[0.025] p-2.5 lg:grid-cols-[2fr_1fr_1fr_1fr_auto] lg:items-center"
+            className="grid grid-cols-2 gap-2 rounded-xl border border-line bg-raised p-2.5 lg:grid-cols-[2fr_1fr_1fr_1fr_auto] lg:items-center"
           >
             <div className="col-span-2 lg:col-span-1">
               <InventoryItemPicker
@@ -65,7 +65,7 @@ export function PurchaseOrderLineEditor({ lines, onChange, items, disabled, curr
               onChange={(event) => updateLine(line.key, { orderedQuantity: event.target.value })}
               placeholder={t("procurement.po.form.orderedQuantity")}
               disabled={disabled}
-              className="h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+              className="h-10 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
             />
             <input
               type="text"
@@ -74,9 +74,9 @@ export function PurchaseOrderLineEditor({ lines, onChange, items, disabled, curr
               onChange={(event) => updateLine(line.key, { unitCost: event.target.value })}
               placeholder={t("procurement.po.form.unitCost")}
               disabled={disabled}
-              className="h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+              className="h-10 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
             />
-            <div className="text-xs font-bold text-slate-200">
+            <div className="text-sm font-bold text-ink">
               {currencyCode
                 ? formatMoney(lineTotal, currencyCode, currencyMinorUnitDigits ?? undefined)
                 : formatPurchaseAmount(lineTotal)}
@@ -85,7 +85,7 @@ export function PurchaseOrderLineEditor({ lines, onChange, items, disabled, curr
               <button
                 type="button"
                 onClick={() => removeLine(line.key)}
-                className="flex h-9 w-9 items-center justify-center rounded-lg border border-rose-400/25 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20"
+                className="flex h-9 w-9 items-center justify-center rounded-lg border border-danger bg-danger-soft text-danger hover:brightness-110"
                 aria-label={t("procurement.po.form.removeLine")}
               >
                 <Trash2 size={14} />
@@ -99,7 +99,7 @@ export function PurchaseOrderLineEditor({ lines, onChange, items, disabled, curr
         <button
           type="button"
           onClick={addLine}
-          className="flex h-10 w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-white/15 text-xs font-bold text-slate-300 hover:bg-white/[0.03]"
+          className="flex h-10 w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-line text-sm font-bold text-muted hover:bg-raised"
         >
           <Plus size={14} />
           {t("procurement.po.form.addItem")}

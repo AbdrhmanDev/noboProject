@@ -7,7 +7,7 @@ export function SupplierStatusBadge({ status }) {
 
   return (
     <span
-      className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold ${SUPPLIER_STATUS_BADGE_CLASSES[status]}`}
+      className={`inline-flex whitespace-nowrap rounded-full px-2.5 py-0.5 text-sm font-bold ${SUPPLIER_STATUS_BADGE_CLASSES[status]}`}
     >
       {t(SUPPLIER_STATUS_LABEL_KEYS[status])}
     </span>

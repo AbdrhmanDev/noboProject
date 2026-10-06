@@ -1,6 +1,9 @@
 import { useMemo, useState } from "react";
-import { ArrowUpDown, PackageSearch, RefreshCw, Search } from "lucide-react";
-import { EmptyState, ErrorState, LoadingState } from "../../../shared/components/ui";
+import { ArrowUpDown, MapPin, PackageSearch, RefreshCw } from "lucide-react";
+import { ErrorState, LoadingState } from "../../../shared/components/ui";
+import { useI18n } from "../../../i18n/I18nContext";
+import { ControlPanel } from "../../../shared/components/odoo/ControlPanel";
+import { ListView } from "../../../shared/components/odoo/ListView";
 import {
   useActiveInventoryItems,
   useInventoryLocations,
@@ -9,171 +12,195 @@ import {
 } from "../hooks/useInventory";
 import { StockAdjustmentDialog } from "./StockAdjustmentDialog";
 
-function getErrorMessage(error) {
-  return error?.message || "Request failed.";
+const STOCK_STATES = ["inStock", "out", "negative"];
+
+function stockState(item) {
+  const quantity = Number(item.quantityOnHand);
+  if (quantity < 0) return "negative";
+  if (quantity === 0) return "out";
+  return "inStock";
 }
 
-function quantityTone(quantity) {
-  if (quantity < 0) return "text-rose-300";
-  if (quantity === 0) return "text-slate-500";
-  return "text-slate-100";
-}
+const QUANTITY_TONE = { negative: "text-danger", out: "text-subtle", inStock: "text-ink" };
 
+// Stock on hand, Odoo style: control panel (location, search, Filters by stock state, Group By
+// stock state / unit) over a list. Everything filters the one location's stock already loaded --
+// the stock endpoint has no server-side search. Adjustments keep using StockAdjustmentDialog.
 export function StockPanel({ companyId, branchId, canView, canAdjust, notify }) {
-  const [locationId, setLocationId] = useState("");
+  const { t } = useI18n();
+  const [pickedLocationId, setPickedLocationId] = useState("");
   const [search, setSearch] = useState("");
+  const [stateFilter, setStateFilter] = useState("");
+  const [groupBy, setGroupBy] = useState("");
   const [adjustDialog, setAdjustDialog] = useState(null);
 
   const locationsQuery = useInventoryLocations(companyId, branchId, {}, canView);
   const operationalLocationsQuery = useOperationalInventoryLocations(companyId, branchId, canAdjust);
   const activeItemsQuery = useActiveInventoryItems(companyId, canAdjust);
-  const stockQuery = useInventoryLocationStock(
-    companyId,
-    branchId,
-    locationId,
-    canView && Boolean(locationId),
-  );
 
-  const locations = locationsQuery.data || [];
-  const filteredItems = useMemo(() => {
-    const items = stockQuery.data?.items || [];
+  const locations = useMemo(() => locationsQuery.data || [], [locationsQuery.data]);
+  // Defaults to the branch's default location (else the first one) instead of an empty page.
+  const locationId =
+    pickedLocationId ||
+    locations.find((location) => location.isDefault && location.status !== "Suspended")?.inventoryLocationId ||
+    locations[0]?.inventoryLocationId ||
+    "";
+
+  const stockQuery = useInventoryLocationStock(companyId, branchId, locationId, canView && Boolean(locationId));
+
+  const visibleItems = useMemo(() => {
     const term = search.trim().toLowerCase();
-    if (!term) return items;
-
-    return items.filter(
+    return (stockQuery.data?.items || []).filter(
       (item) =>
-        item.code.toLowerCase().includes(term) || item.name.toLowerCase().includes(term),
+        (!stateFilter || stockState(item) === stateFilter) &&
+        (!term || item.code.toLowerCase().includes(term) || item.name.toLowerCase().includes(term)),
     );
-  }, [stockQuery.data, search]);
+  }, [stockQuery.data, search, stateFilter]);
+
+  const groups = useMemo(() => {
+    if (!groupBy) return null;
+    const map = new Map();
+    for (const item of visibleItems) {
+      const key = groupBy === "state" ? stockState(item) : item.baseUnitOfMeasure?.symbol || "—";
+      const label = groupBy === "state" ? t(`inventory.stock.state.${key}`) : key;
+      if (!map.has(key)) map.set(key, { key, label, rows: [] });
+      map.get(key).rows.push(item);
+    }
+    return [...map.values()];
+  }, [groupBy, visibleItems, t]);
 
   const openAdjustDialog = (initialInventoryItemId) => {
-    setAdjustDialog({
-      initialLocationId: locationId || "",
-      initialInventoryItemId: initialInventoryItemId || "",
-    });
+    setAdjustDialog({ initialLocationId: locationId || "", initialInventoryItemId: initialInventoryItemId || "" });
   };
+
+  const facets = [
+    stateFilter && { id: "state", label: t(`inventory.stock.state.${stateFilter}`), onRemove: () => setStateFilter("") },
+    groupBy && {
+      id: "group",
+      label: `${t("odoo.groupBy")}: ${t(`inventory.stock.groupBy.${groupBy}`)}`,
+      onRemove: () => setGroupBy(""),
+    },
+  ].filter(Boolean);
+
+  const columns = [
+    { key: "code", header: t("inventory.stock.col.code"), render: (item) => <span className="text-muted">{item.code}</span> },
+    { key: "name", header: t("inventory.stock.col.item"), render: (item) => <span className="font-bold">{item.name}</span> },
+    { key: "uom", header: t("inventory.stock.col.uom"), render: (item) => <span className="text-muted">{item.baseUnitOfMeasure.symbol}</span> },
+    {
+      key: "qty",
+      header: t("inventory.stock.col.onHand"),
+      align: "end",
+      render: (item) => <span className={`font-bold ${QUANTITY_TONE[stockState(item)]}`}>{item.quantityOnHand}</span>,
+    },
+    ...(canAdjust
+      ? [
+          {
+            key: "adjust",
+            header: "",
+            align: "end",
+            render: (item) => (
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  openAdjustDialog(item.inventoryItemId);
+                }}
+                className="rounded-md border border-line px-2.5 py-1 text-xs font-bold text-accent transition hover:bg-accent-soft"
+              >
+                {t("inventory.stock.adjust")}
+              </button>
+            ),
+          },
+        ]
+      : []),
+  ];
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="grid flex-1 gap-2 sm:grid-cols-[1fr_1fr] sm:max-w-xl">
-          <select
-            value={locationId}
-            onChange={(event) => setLocationId(event.target.value)}
-            className="h-10 rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none focus:border-blue-400/60"
-          >
-            <option value="">Select location...</option>
-            {locations.map((location) => (
-              <option key={location.inventoryLocationId} value={location.inventoryLocationId}>
-                {location.name} ({location.code})
-                {location.status === "Suspended" ? " · Suspended" : ""}
-              </option>
-            ))}
-          </select>
-          <label className="relative block">
-            <Search
-              size={14}
-              className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500"
-            />
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search item code or name"
-              disabled={!locationId}
-              className="h-10 w-full rounded-xl border border-white/10 bg-black/20 pr-9 pl-3 text-xs text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
-            />
-          </label>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {locationId && (
+      <ControlPanel
+        breadcrumbs={[t("nav.inventory"), t("inventory.tabs.stock")]}
+        actions={
+          <>
+            {canAdjust && (
+              <button
+                type="button"
+                onClick={() => openAdjustDialog()}
+                className="flex h-8 items-center gap-1.5 rounded-lg bg-accent px-3 text-sm font-bold text-white transition hover:bg-accent-strong"
+              >
+                <ArrowUpDown size={14} />
+                {t("inventory.stock.adjustStock")}
+              </button>
+            )}
             <button
               type="button"
               onClick={() => stockQuery.refetch()}
-              className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold text-slate-100"
+              disabled={!locationId}
+              aria-label={t("inventory.stock.refresh")}
+              title={t("inventory.stock.refresh")}
+              className="grid h-8 w-8 place-items-center rounded-lg border border-line text-muted transition hover:bg-hover disabled:opacity-40"
             >
               <RefreshCw size={14} />
-              Refresh
             </button>
-          )}
-          {canAdjust && (
-            <button
-              type="button"
-              onClick={() => openAdjustDialog()}
-              className="flex items-center gap-2 rounded-xl bg-blue-600 px-3 py-2 text-xs font-bold text-white"
-            >
-              <ArrowUpDown size={14} />
-              Adjust Stock
-            </button>
-          )}
-        </div>
-      </div>
+          </>
+        }
+        search={{ value: search, onChange: setSearch, placeholder: t("inventory.stock.searchPlaceholder") }}
+        facets={facets}
+        filters={STOCK_STATES.map((value) => ({
+          id: value,
+          label: t(`inventory.stock.state.${value}`),
+          active: stateFilter === value,
+          onToggle: () => setStateFilter((current) => (current === value ? "" : value)),
+        }))}
+        groupBy={["state", "uom"].map((value) => ({
+          id: value,
+          label: t(`inventory.stock.groupBy.${value}`),
+          active: groupBy === value,
+          onSelect: () => setGroupBy((current) => (current === value ? "" : value)),
+        }))}
+      />
 
-      {!locationId ? (
-        <EmptyState
-          title="Select an inventory location"
-          message="Choose a location to view its current stock on hand."
+      {locations.length > 0 && (
+        <label className="flex w-fit items-center gap-2 rounded-xl border border-line bg-surface px-3 py-2 text-sm text-muted">
+          <MapPin size={15} className="text-accent" />
+          {t("inventory.overview.location")}
+          <select
+            value={locationId}
+            onChange={(event) => setPickedLocationId(event.target.value)}
+            className="h-8 rounded-md border border-line bg-canvas px-2 text-ink outline-none"
+          >
+            {locations.map((location) => (
+              <option key={location.inventoryLocationId} value={location.inventoryLocationId}>
+                {location.name} ({location.code})
+                {location.status === "Suspended" ? ` · ${t("inventory.stock.suspended")}` : ""}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+
+      {(locationsQuery.isLoading || stockQuery.isLoading) && <LoadingState label={t("inventory.overview.loading")} />}
+      {stockQuery.isError && <ErrorState title={t("inventory.overview.stockError")} message={stockQuery.error?.message} />}
+
+      {!stockQuery.isLoading && !stockQuery.isError && (
+        <ListView
+          columns={columns}
+          rows={groups ? undefined : visibleItems}
+          groups={groups ?? undefined}
+          getRowKey={(item) => item.inventoryItemId}
+          emptyLabel={
+            !locationId
+              ? t("inventory.overview.noLocations.message")
+              : search.trim() || stateFilter
+                ? t("inventory.stock.noMatch")
+                : t("inventory.stock.empty")
+          }
         />
-      ) : (
-        <section className="rounded-2xl border border-white/10 bg-[#0c1424] p-3">
-          {stockQuery.isLoading && <LoadingState label="Loading stock..." />}
-          {stockQuery.isError && (
-            <ErrorState title="Unable to load stock" message={getErrorMessage(stockQuery.error)} />
-          )}
-          {!stockQuery.isLoading && !stockQuery.isError && filteredItems.length === 0 && (
-            <EmptyState
-              title="No stock recorded"
-              message={
-                search.trim()
-                  ? "No items match the current search."
-                  : "No inventory item has a recorded balance at this location yet."
-              }
-            />
-          )}
-          {!stockQuery.isLoading && !stockQuery.isError && filteredItems.length > 0 && (
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="border-b border-white/10 text-right text-slate-500">
-                    <th className="pb-2 font-medium">Code</th>
-                    <th className="pb-2 font-medium">Item</th>
-                    <th className="pb-2 font-medium">UOM</th>
-                    <th className="pb-2 font-medium">Quantity on hand</th>
-                    {canAdjust && <th className="pb-2 font-medium"></th>}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredItems.map((item) => (
-                    <tr key={item.inventoryItemId} className="border-b border-white/5">
-                      <td className="py-2.5 text-slate-300">{item.code}</td>
-                      <td className="py-2.5 text-slate-100">{item.name}</td>
-                      <td className="py-2.5 text-slate-400">{item.baseUnitOfMeasure.symbol}</td>
-                      <td className={`py-2.5 font-bold ${quantityTone(Number(item.quantityOnHand))}`}>
-                        {item.quantityOnHand}
-                      </td>
-                      {canAdjust && (
-                        <td className="py-2.5 text-left">
-                          <button
-                            type="button"
-                            onClick={() => openAdjustDialog(item.inventoryItemId)}
-                            className="rounded-lg border border-white/10 px-2 py-1 text-[11px] font-bold text-blue-300 hover:bg-blue-500/10"
-                          >
-                            Adjust
-                          </button>
-                        </td>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
       )}
 
       {!canAdjust && (
-        <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
-          <PackageSearch size={13} className="mb-0.5 mr-1 inline text-amber-300" />
-          Inventory.AdjustStock permission is required to record manual stock adjustments.
+        <div className="flex items-center gap-2 rounded-xl border border-warning bg-warning-soft px-3 py-2 text-xs text-warning">
+          <PackageSearch size={14} className="shrink-0" />
+          {t("inventory.stock.adjustPermission")}
         </div>
       )}
 

@@ -17,10 +17,10 @@ export function PlatformEnabledAppsBadges({ codes, size = "sm" }) {
   const list = codes || [];
 
   if (list.length === 0) {
-    return <span className="text-[11px] text-slate-500">{t("platform.apps.none")}</span>;
+    return <span className="text-xs text-subtle">{t("platform.apps.none")}</span>;
   }
 
-  const padding = size === "lg" ? "px-2.5 py-1 text-[11px]" : "px-2 py-0.5 text-[10px]";
+  const padding = size === "lg" ? "px-2.5 py-1 text-xs" : "px-2 py-0.5 text-xs";
   const iconSize = size === "lg" ? 12 : 10;
 
   return (
@@ -30,7 +30,7 @@ export function PlatformEnabledAppsBadges({ codes, size = "sm" }) {
         return (
           <span
             key={code}
-            className={`inline-flex items-center gap-1 rounded-full border border-emerald-400/30 bg-emerald-500/10 font-bold text-emerald-300 ${padding}`}
+            className={`inline-flex items-center gap-1 rounded-full border border-success bg-success-soft font-bold text-success ${padding}`}
           >
             {Icon && <Icon size={iconSize} />}
             {t(`platform.apps.${code}`) || code}

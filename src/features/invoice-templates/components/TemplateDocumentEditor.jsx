@@ -82,13 +82,13 @@ export function TemplateDocumentEditor({ schema, initialDocument, onChange, disa
   return (
     <div className="space-y-3">
       <div className="grid gap-2 sm:grid-cols-2">
-        <label className="block text-xs font-semibold text-slate-400">
+        <label className="block text-sm font-semibold text-muted">
           Paper width
           <select
             value={paperWidth}
             onChange={(event) => changePaperWidth(event.target.value)}
             disabled={disabled}
-            className="mt-1 h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+            className="mt-1 h-10 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
           >
             {schema.paperWidths.map((width) => (
               <option key={width} value={width}>
@@ -97,16 +97,16 @@ export function TemplateDocumentEditor({ schema, initialDocument, onChange, disa
             ))}
           </select>
         </label>
-        <label className="block text-xs font-semibold text-slate-400">
+        <label className="block text-sm font-semibold text-muted">
           Locale
-          <span className="ms-1 font-normal text-slate-500">(e.g. ar-SA)</span>
+          <span className="ms-1 font-normal text-subtle">(e.g. ar-SA)</span>
           <input
             type="text"
             value={locale}
             onChange={(event) => changeLocale(event.target.value)}
             disabled={disabled}
             maxLength={35}
-            className="mt-1 h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+            className="mt-1 h-10 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
           />
         </label>
       </div>
@@ -128,18 +128,18 @@ export function TemplateDocumentEditor({ schema, initialDocument, onChange, disa
           />
         ))}
         {keyedBlocks.length === 0 && (
-          <div className="rounded-xl border border-dashed border-white/15 p-4 text-center text-xs text-slate-500">
+          <div className="rounded-xl border border-dashed border-line p-4 text-center text-sm text-subtle">
             No blocks yet. Add one below.
           </div>
         )}
       </div>
 
-      <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.02] p-2">
+      <div className="flex items-center gap-2 rounded-xl border border-line bg-raised p-2">
         <select
           value={addBlockType}
           onChange={(event) => setAddBlockType(event.target.value)}
           disabled={disabled || keyedBlocks.length >= schema.maxBlocks}
-          className="h-9 flex-1 rounded-lg border border-white/10 bg-black/20 px-2 text-xs text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+          className="h-9 flex-1 rounded-lg border border-line bg-canvas px-2 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
         >
           <option value="">Add a block...</option>
           {addableTypes.map((entry) => (
@@ -152,13 +152,13 @@ export function TemplateDocumentEditor({ schema, initialDocument, onChange, disa
           type="button"
           onClick={addBlock}
           disabled={disabled || !addBlockType || keyedBlocks.length >= schema.maxBlocks}
-          className="flex h-9 items-center gap-1.5 rounded-lg bg-blue-600 px-3 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex h-9 items-center gap-1.5 rounded-lg bg-accent px-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Plus size={14} />
           Add
         </button>
       </div>
-      <p className="text-[11px] text-slate-500">
+      <p className="text-xs text-subtle">
         {keyedBlocks.length} / {schema.maxBlocks} blocks
       </p>
     </div>

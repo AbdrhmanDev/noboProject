@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Plus, Search, Truck } from "lucide-react";
+import { LayoutGrid, List, Plus, Truck } from "lucide-react";
 import AppLayout from "../../components/AppLayout";
 import { EmptyState, ErrorState, LoadingState } from "../../shared/components/ui";
 import { formatDateTime, formatMoney } from "../../shared/utils/formatters";
@@ -11,26 +11,31 @@ import { useHasPermission } from "../../features/companies/hooks/useCompanies";
 import { useAllSuppliers } from "../../features/procurement/hooks/useSuppliers";
 import { usePurchaseOrders } from "../../features/procurement/hooks/usePurchaseOrders";
 import { PurchaseOrderStatusBadge } from "../../features/procurement/components/PurchaseOrderStatusBadge";
-import { purchaseOrderNumberDisplay } from "../../features/procurement/utils/procurementFormatters";
+import {
+  PURCHASE_ORDER_STATUS_LABEL_KEYS,
+  purchaseOrderNumberDisplay,
+} from "../../features/procurement/utils/procurementFormatters";
+import { customDateRange, presetDateRange } from "../../features/sales/utils/dateRangePresets";
+import { ControlPanel } from "../../shared/components/odoo/ControlPanel";
+import { ListView } from "../../shared/components/odoo/ListView";
 import { ROUTES, purchaseOrderDetailsPath } from "../../utils/routes";
 
 const PURCHASES_VIEW_PERMISSION = "Purchases.View";
 const PURCHASES_MANAGE_PERMISSION = "Purchases.Manage";
-const PAGE_SIZE = 25;
+// Odoo's default page size for list views.
+const PAGE_SIZE = 80;
 const STATUS_OPTIONS = ["Draft", "Submitted", "PartiallyReceived", "Received", "Closed", "Cancelled"];
+const DATE_PRESETS = ["today", "last7", "last30", "custom"];
 
-function toStartOfDayUtc(value) {
-  return value ? new Date(`${value}T00:00:00`).toISOString() : undefined;
+function orderTotal(order) {
+  return formatMoney(order.totalAmount, order.currencyCode, order.currencyMinorUnitDigits ?? undefined);
 }
 
-// Half-open [from, to) — next-day-exclusive boundary, never 23:59:59.999.
-function toNextDayUtc(value) {
-  if (!value) return undefined;
-  const date = new Date(`${value}T00:00:00`);
-  date.setDate(date.getDate() + 1);
-  return date.toISOString();
-}
-
+// Purchase orders, Odoo style (same building blocks as Sales orders): one control panel --
+// search by PO number, Filters for status / supplier / created date, Group By, list <-> kanban,
+// pager -- over a list or kanban view. Filters map 1:1 to the existing server-side query params
+// (one status, one supplier, one date range), so each filter section behaves like a radio group.
+// Group By regroups the loaded page (up to PAGE_SIZE orders); the API has no server-side grouping.
 export default function PurchasesPage() {
   const { t } = useI18n();
   const navigate = useNavigate();
@@ -40,10 +45,13 @@ export default function PurchasesPage() {
 
   const [status, setStatus] = useState("");
   const [supplierId, setSupplierId] = useState(searchParams.get("supplierId") || "");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
+  const [datePreset, setDatePreset] = useState("");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [purchaseOrderNumber, setPurchaseOrderNumber] = useState("");
+  const [groupBy, setGroupBy] = useState("");
+  const [view, setView] = useState("list");
   const [pageNumber, setPageNumber] = useState(1);
 
   const viewPermissionQuery = useHasPermission(currentCompanyId, PURCHASES_VIEW_PERMISSION);
@@ -64,10 +72,15 @@ export default function PurchasesPage() {
     return () => clearTimeout(handle);
   }, [searchInput]);
 
-  // Filter dropdown needs the complete supplier set (any status, for
-  // historical filtering) — never the paginated management-list query.
+  // Filter menu needs the complete supplier set (any status, for historical filtering) — never
+  // the paginated management-list query.
   const suppliersQuery = useAllSuppliers(currentCompanyId, {}, canQuery);
-  const suppliers = suppliersQuery.data || [];
+  const suppliers = useMemo(() => suppliersQuery.data || [], [suppliersQuery.data]);
+
+  const dateRange = useMemo(() => {
+    if (datePreset === "custom") return customDateRange(customFrom, customTo);
+    return datePreset ? presetDateRange(datePreset) : {};
+  }, [datePreset, customFrom, customTo]);
 
   const filters = useMemo(
     () => ({
@@ -76,290 +89,270 @@ export default function PurchasesPage() {
       status,
       supplierId,
       purchaseOrderNumber,
-      createdFromUtc: toStartOfDayUtc(dateFrom),
-      createdToUtc: toNextDayUtc(dateTo),
+      createdFromUtc: dateRange.fromUtc,
+      createdToUtc: dateRange.toUtc,
     }),
-    [pageNumber, status, supplierId, purchaseOrderNumber, dateFrom, dateTo],
+    [pageNumber, status, supplierId, purchaseOrderNumber, dateRange],
   );
 
   const poQuery = usePurchaseOrders(currentCompanyId, currentBranchId, filters, canQuery);
-  const orders = poQuery.data?.items || [];
+  const page = poQuery.data;
+  const orders = useMemo(() => page?.items ?? [], [page]);
 
-  const resetFilters = () => {
-    setStatus("");
-    setSupplierId("");
-    setDateFrom("");
-    setDateTo("");
-    setSearchInput("");
-    setPurchaseOrderNumber("");
+  const openOrder = (purchaseOrderId) => navigate(purchaseOrderDetailsPath(purchaseOrderId));
+  const pick = (setter, current, value) => {
+    setter(current === value ? "" : value);
     setPageNumber(1);
   };
 
-  const openOrder = (purchaseOrderId) => navigate(purchaseOrderDetailsPath(purchaseOrderId));
+  const selectedSupplier = suppliers.find((supplier) => supplier.supplierId === supplierId);
+  const facets = [
+    status && {
+      id: "status",
+      label: t(PURCHASE_ORDER_STATUS_LABEL_KEYS[status]),
+      onRemove: () => pick(setStatus, status, status),
+    },
+    supplierId && {
+      id: "supplier",
+      label: selectedSupplier ? selectedSupplier.name : t("procurement.po.form.supplier"),
+      onRemove: () => pick(setSupplierId, supplierId, supplierId),
+    },
+    datePreset && {
+      id: "date",
+      label: t(`salesOrders.overview.dateRange.${datePreset}`),
+      onRemove: () => pick(setDatePreset, datePreset, datePreset),
+    },
+    groupBy && {
+      id: "group",
+      label: `${t("odoo.groupBy")}: ${t(`procurement.list.groupBy.${groupBy}`)}`,
+      onRemove: () => setGroupBy(""),
+    },
+  ].filter(Boolean);
+
+  const columns = [
+    {
+      key: "number",
+      header: t("procurement.po.number"),
+      render: (order) => (
+        <span className="font-bold">
+          {purchaseOrderNumberDisplay(order.purchaseOrderNumber, order.purchaseOrderNumberFormatted)}
+        </span>
+      ),
+    },
+    { key: "supplier", header: t("procurement.po.form.supplier"), render: (order) => order.supplierName },
+    {
+      key: "created",
+      header: t("procurement.po.created"),
+      render: (order) => <span className="text-muted">{formatDateTime(order.createdAtUtc)}</span>,
+    },
+    {
+      key: "progress",
+      header: t("procurement.receipt.progress"),
+      align: "end",
+      render: (order) => (
+        <span className="text-muted">
+          {order.totalReceivedQuantity} / {order.totalOrderedQuantity}
+        </span>
+      ),
+    },
+    {
+      key: "total",
+      header: t("procurement.po.total"),
+      align: "end",
+      render: (order) => <span className="font-bold">{orderTotal(order)}</span>,
+      sum: (rows) =>
+        rows.length
+          ? formatMoney(
+              rows.reduce((total, row) => total + Number(row.totalAmount), 0),
+              rows[0].currencyCode,
+              rows[0].currencyMinorUnitDigits ?? undefined,
+            )
+          : null,
+    },
+    { key: "status", header: t("procurement.filters.status"), render: (order) => <PurchaseOrderStatusBadge status={order.status} /> },
+  ];
+
+  const groups = useMemo(() => {
+    if (!groupBy) return null;
+    const map = new Map();
+    for (const order of orders) {
+      const key = groupBy === "status" ? order.status : order.supplierId || order.supplierName;
+      const label = groupBy === "status" ? t(PURCHASE_ORDER_STATUS_LABEL_KEYS[order.status]) : order.supplierName;
+      if (!map.has(key)) map.set(key, { key, label, rows: [] });
+      map.get(key).rows.push(order);
+    }
+    return [...map.values()];
+  }, [groupBy, orders, t]);
+
+  const total = page?.totalCount ?? 0;
+  const start = total ? (pageNumber - 1) * PAGE_SIZE + 1 : 0;
+  const end = Math.min(pageNumber * PAGE_SIZE, total);
 
   return (
     <AppLayout activePath={ROUTES.PURCHASES}>
-      <main className="space-y-4" dir="rtl">
-        <header className="rounded-2xl border border-white/10 bg-[#0c1424]/85 p-4 shadow-xl shadow-black/20">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <div className="flex items-center gap-2 text-xs text-slate-400">
-                <Truck size={16} className="text-blue-300" />
-                {t("nav.purchases")}
-              </div>
-              <h1 className="mt-1 text-2xl font-black text-white">{t("procurement.po.title")}</h1>
-              <p className="mt-0.5 text-[11px] text-slate-500">{t("procurement.po.subtitle")}</p>
-            </div>
-            {canManage && (
-              <button
-                type="button"
-                onClick={() => navigate(ROUTES.PURCHASE_ORDER_NEW)}
-                className="flex items-center gap-2 rounded-xl bg-blue-600 px-3 py-2 text-xs font-bold text-white transition hover:brightness-110"
-              >
-                <Plus size={14} />
-                {t("procurement.po.new")}
-              </button>
-            )}
+      <main className="odoo-root space-y-3" dir="rtl">
+        {/* Odoo-style app bar: module name. */}
+        <header className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl border border-line bg-surface px-4 py-2.5 shadow-[var(--shadow-surface)]">
+          <div className="flex items-center gap-2 text-lg font-bold text-ink">
+            <Truck size={18} className="text-accent" />
+            {t("nav.purchases")}
           </div>
         </header>
 
         {!currentCompanyId || !currentBranchId ? (
-          <EmptyState
-            title={t("procurement.companyRequired.title")}
-            message={t("procurement.companyRequired.message")}
-          />
+          <EmptyState title={t("procurement.companyRequired.title")} message={t("procurement.companyRequired.message")} />
         ) : viewPermissionQuery.isLoading ? (
           <LoadingState label={t("procurement.loading")} />
         ) : !viewPermissionQuery.hasPermission ? (
-          <ErrorState
-            title={t("procurement.permissionRequired.title")}
-            message={t("procurement.permissionRequired.message")}
-          />
+          <ErrorState title={t("procurement.permissionRequired.title")} message={t("procurement.permissionRequired.message")} />
         ) : (
           <>
-            <section className="grid gap-2 rounded-2xl border border-white/10 bg-[#0c1424] p-3 md:grid-cols-6">
-              <label className="text-[11px] font-semibold text-slate-400 md:col-span-2">
-                {t("procurement.po.search")}
-                <div className="mt-1 flex h-10 items-center gap-2 rounded-xl border border-white/10 bg-black/20 px-3">
-                  <Search size={13} className="shrink-0 text-slate-500" />
+            <ControlPanel
+              breadcrumbs={[t("nav.purchases"), t("procurement.po.title")]}
+              actions={
+                canManage && (
+                  <button
+                    type="button"
+                    onClick={() => navigate(ROUTES.PURCHASE_ORDER_NEW)}
+                    className="flex h-8 items-center gap-1.5 rounded-lg bg-accent px-3 text-sm font-bold text-white transition hover:bg-accent-strong"
+                  >
+                    <Plus size={14} />
+                    {t("procurement.po.new")}
+                  </button>
+                )
+              }
+              search={{ value: searchInput, onChange: setSearchInput, placeholder: t("procurement.po.search") }}
+              facets={facets}
+              filters={[
+                STATUS_OPTIONS.map((value) => ({
+                  id: `status-${value}`,
+                  label: t(PURCHASE_ORDER_STATUS_LABEL_KEYS[value]),
+                  active: status === value,
+                  onToggle: () => pick(setStatus, status, value),
+                })),
+                DATE_PRESETS.map((value) => ({
+                  id: `date-${value}`,
+                  label: t(`salesOrders.overview.dateRange.${value}`),
+                  active: datePreset === value,
+                  onToggle: () => pick(setDatePreset, datePreset, value),
+                })),
+                suppliers.map((supplier) => ({
+                  id: `supplier-${supplier.supplierId}`,
+                  label: `${supplier.code} — ${supplier.name}`,
+                  active: supplierId === supplier.supplierId,
+                  onToggle: () => pick(setSupplierId, supplierId, supplier.supplierId),
+                })),
+              ].filter((section) => section.length > 0)}
+              groupBy={["status", "supplier"].map((value) => ({
+                id: value,
+                label: t(`procurement.list.groupBy.${value}`),
+                active: groupBy === value,
+                onSelect: () => setGroupBy((current) => (current === value ? "" : value)),
+              }))}
+              views={{
+                current: view,
+                onChange: setView,
+                options: [
+                  { id: "list", label: t("odoo.view.list"), icon: List },
+                  { id: "kanban", label: t("odoo.view.kanban"), icon: LayoutGrid },
+                ],
+              }}
+              pager={{
+                start,
+                end,
+                total,
+                onPrev: pageNumber > 1 ? () => setPageNumber((current) => current - 1) : undefined,
+                onNext: page && pageNumber < page.totalPages ? () => setPageNumber((current) => current + 1) : undefined,
+              }}
+            />
+
+            {datePreset === "custom" && (
+              <div className="flex flex-wrap items-center gap-2 rounded-xl border border-line bg-surface px-3 py-2 text-sm text-muted">
+                <label className="flex items-center gap-1.5">
+                  {t("procurement.filters.dateFrom")}
                   <input
-                    value={searchInput}
-                    onChange={(event) => setSearchInput(event.target.value)}
-                    placeholder={t("procurement.po.search")}
-                    className="w-full bg-transparent text-xs text-white outline-none placeholder:text-slate-600"
+                    type="date"
+                    value={customFrom}
+                    onChange={(event) => {
+                      setCustomFrom(event.target.value);
+                      setPageNumber(1);
+                    }}
+                    className="h-8 rounded-md border border-line bg-canvas px-2 text-ink outline-none focus:border-accent-line"
                   />
-                </div>
-              </label>
-              <label className="text-[11px] font-semibold text-slate-400">
-                {t("procurement.filters.status")}
-                <select
-                  value={status}
-                  onChange={(event) => {
-                    setStatus(event.target.value);
-                    setPageNumber(1);
-                  }}
-                  className="mt-1 h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none"
-                >
-                  <option value="">{t("procurement.filters.statusAll")}</option>
-                  {STATUS_OPTIONS.map((value) => (
-                    <option key={value} value={value}>
-                      {t(`procurement.po.status.${value.charAt(0).toLowerCase()}${value.slice(1)}`)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="text-[11px] font-semibold text-slate-400">
-                {t("procurement.po.form.supplier")}
-                <select
-                  value={supplierId}
-                  onChange={(event) => {
-                    setSupplierId(event.target.value);
-                    setPageNumber(1);
-                  }}
-                  className="mt-1 h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none"
-                >
-                  <option value="">{t("procurement.filters.supplierAll")}</option>
-                  {suppliers.map((supplier) => (
-                    <option key={supplier.supplierId} value={supplier.supplierId}>
-                      {supplier.code} — {supplier.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="text-[11px] font-semibold text-slate-400">
-                {t("procurement.filters.dateFrom")}
-                <input
-                  type="date"
-                  value={dateFrom}
-                  onChange={(event) => {
-                    setDateFrom(event.target.value);
-                    setPageNumber(1);
-                  }}
-                  className="mt-1 h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none"
-                />
-              </label>
-              <label className="text-[11px] font-semibold text-slate-400">
-                {t("procurement.filters.dateTo")}
-                <input
-                  type="date"
-                  value={dateTo}
-                  onChange={(event) => {
-                    setDateTo(event.target.value);
-                    setPageNumber(1);
-                  }}
-                  className="mt-1 h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none"
-                />
-              </label>
-              <button
-                type="button"
-                onClick={resetFilters}
-                className="mt-auto h-10 rounded-xl border border-white/10 bg-white/[0.035] px-3 text-xs font-bold text-slate-200 md:col-start-6"
-              >
-                {t("procurement.filters.reset")}
-              </button>
-            </section>
-
-            <section className="rounded-2xl border border-white/10 bg-[#0c1424] p-3">
-              <div className="mb-3 flex items-center justify-between">
-                <div className="text-sm font-black text-white">{t("procurement.po.title")}</div>
-                <div className="text-[11px] text-slate-500">
-                  {t("procurement.totalCount", { count: poQuery.data?.totalCount ?? 0 })}
-                </div>
+                </label>
+                <label className="flex items-center gap-1.5">
+                  {t("procurement.filters.dateTo")}
+                  <input
+                    type="date"
+                    value={customTo}
+                    onChange={(event) => {
+                      setCustomTo(event.target.value);
+                      setPageNumber(1);
+                    }}
+                    className="h-8 rounded-md border border-line bg-canvas px-2 text-ink outline-none focus:border-accent-line"
+                  />
+                </label>
               </div>
+            )}
 
-              {poQuery.isLoading && <LoadingState label={t("procurement.loading")} />}
-              {poQuery.isError && (
-                <>
-                  <ErrorState
-                    title={t("procurement.error.title")}
-                    message={poQuery.error?.message || t("procurement.error.message")}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => poQuery.refetch()}
-                    className="mt-3 w-full rounded-xl border border-white/10 bg-white/[0.035] py-2 text-xs font-bold text-slate-100 hover:bg-white/10"
-                  >
-                    {t("procurement.retry")}
-                  </button>
-                </>
-              )}
-              {!poQuery.isLoading && !poQuery.isError && orders.length === 0 && (
+            {poQuery.isLoading && <LoadingState label={t("procurement.loading")} />}
+            {poQuery.isError && (
+              <ErrorState title={t("procurement.error.title")} message={poQuery.error?.message || t("procurement.error.message")} />
+            )}
+
+            {!poQuery.isLoading && !poQuery.isError && view === "list" && (
+              <ListView
+                columns={columns}
+                rows={groups ? undefined : orders}
+                groups={groups ?? undefined}
+                getRowKey={(order) => order.purchaseOrderId}
+                onRowClick={(order) => openOrder(order.purchaseOrderId)}
+                emptyLabel={t("procurement.po.empty.message")}
+              />
+            )}
+
+            {!poQuery.isLoading && !poQuery.isError && view === "kanban" && (
+              orders.length === 0 ? (
                 <EmptyState title={t("procurement.po.empty.title")} message={t("procurement.po.empty.message")} />
-              )}
-
-              {!poQuery.isLoading && !poQuery.isError && orders.length > 0 && (
-                <>
-                  <div className="hidden overflow-x-auto lg:block">
-                    <table className="w-full text-xs">
-                      <thead>
-                        <tr className="text-start text-slate-500">
-                          <th className="pb-2 text-start font-medium">{t("procurement.po.number")}</th>
-                          <th className="pb-2 text-start font-medium">{t("procurement.po.form.supplier")}</th>
-                          <th className="pb-2 text-start font-medium">{t("procurement.filters.status")}</th>
-                          <th className="pb-2 text-start font-medium">{t("procurement.po.total")}</th>
-                          <th className="pb-2 text-start font-medium">{t("procurement.receipt.progress")}</th>
-                          <th className="pb-2 text-start font-medium">{t("procurement.po.created")}</th>
-                          <th className="pb-2 text-end font-medium">{t("procurement.actions.view")}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {orders.map((order) => (
-                          <tr
+              ) : (
+                <div className="space-y-4">
+                  {(groups ?? [{ key: "all", label: null, rows: orders }]).map((group) => (
+                    <div key={group.key}>
+                      {group.label && (
+                        <div className="mb-2 flex items-center gap-2 text-sm font-bold text-ink">
+                          {group.label} <span className="pos-num font-normal text-subtle">({group.rows.length})</span>
+                        </div>
+                      )}
+                      <div className="grid grid-cols-[repeat(auto-fill,minmax(230px,1fr))] gap-2">
+                        {group.rows.map((order) => (
+                          <button
                             key={order.purchaseOrderId}
+                            type="button"
                             onClick={() => openOrder(order.purchaseOrderId)}
-                            className="cursor-pointer border-t border-white/5 hover:bg-white/[0.03]"
+                            className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-3 text-start shadow-[var(--shadow-surface)] transition hover:border-accent-line hover:bg-hover"
                           >
-                            <td className="py-2.5 font-bold text-white">
-                              {purchaseOrderNumberDisplay(order.purchaseOrderNumber, order.purchaseOrderNumberFormatted)}
-                            </td>
-                            <td className="py-2.5 text-slate-200">{order.supplierName}</td>
-                            <td className="py-2.5">
+                            <div className="flex items-start justify-between gap-2">
+                              <span className="font-bold text-ink">
+                                {purchaseOrderNumberDisplay(order.purchaseOrderNumber, order.purchaseOrderNumberFormatted)}
+                              </span>
                               <PurchaseOrderStatusBadge status={order.status} />
-                            </td>
-                            <td className="py-2.5 font-bold text-white">
-                              {formatMoney(order.totalAmount, order.currencyCode, order.currencyMinorUnitDigits ?? undefined)}
-                            </td>
-                            <td className="py-2.5 text-slate-300">
-                              {order.totalReceivedQuantity} / {order.totalOrderedQuantity}
-                            </td>
-                            <td className="py-2.5 text-slate-300">{formatDateTime(order.createdAtUtc)}</td>
-                            <td className="py-2.5 text-end">
-                              <button
-                                type="button"
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  openOrder(order.purchaseOrderId);
-                                }}
-                                className="rounded-lg border border-white/10 px-2.5 py-1 text-[11px] font-bold text-blue-300 hover:bg-blue-500/10"
-                              >
-                                {t("procurement.actions.view")}
-                              </button>
-                            </td>
-                          </tr>
+                            </div>
+                            <div className="truncate text-xs text-muted">{order.supplierName}</div>
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="pos-num text-xs text-muted">
+                                {order.totalReceivedQuantity} / {order.totalOrderedQuantity}
+                              </span>
+                              <span className="pos-num text-base font-black text-ink">{orderTotal(order)}</span>
+                            </div>
+                            <div className="text-[11px] text-subtle">{formatDateTime(order.createdAtUtc)}</div>
+                          </button>
                         ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <div className="space-y-2 lg:hidden">
-                    {orders.map((order) => (
-                      <button
-                        key={order.purchaseOrderId}
-                        type="button"
-                        onClick={() => openOrder(order.purchaseOrderId)}
-                        className="flex w-full flex-col gap-2 rounded-xl border border-white/10 bg-[#0d1728] p-3 text-start transition hover:border-blue-400/40"
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-sm font-black text-white">
-                            {purchaseOrderNumberDisplay(order.purchaseOrderNumber, order.purchaseOrderNumberFormatted)}
-                          </span>
-                          <PurchaseOrderStatusBadge status={order.status} />
-                        </div>
-                        <div className="flex items-center justify-between gap-2 text-[11px] text-slate-400">
-                          <span>{order.supplierName}</span>
-                          <span className="font-bold text-white">
-                            {formatMoney(order.totalAmount, order.currencyCode, order.currencyMinorUnitDigits ?? undefined)}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between text-[10px] text-slate-500">
-                          <span>{formatDateTime(order.createdAtUtc)}</span>
-                          <span>
-                            {order.totalReceivedQuantity} / {order.totalOrderedQuantity}
-                          </span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-
-              {poQuery.data && poQuery.data.totalPages > 1 && (
-                <div className="mt-3 flex items-center justify-between gap-2 border-t border-white/10 pt-3">
-                  <button
-                    type="button"
-                    disabled={pageNumber <= 1}
-                    onClick={() => setPageNumber((page) => Math.max(1, page - 1))}
-                    className="rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    {t("procurement.pagination.previous")}
-                  </button>
-                  <span className="text-xs text-slate-400">
-                    {t("procurement.pagination.page", {
-                      current: poQuery.data.pageNumber,
-                      total: poQuery.data.totalPages,
-                    })}
-                  </span>
-                  <button
-                    type="button"
-                    disabled={pageNumber >= poQuery.data.totalPages}
-                    onClick={() => setPageNumber((page) => page + 1)}
-                    className="rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    {t("procurement.pagination.next")}
-                  </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              )}
-            </section>
+              )
+            )}
           </>
         )}
       </main>

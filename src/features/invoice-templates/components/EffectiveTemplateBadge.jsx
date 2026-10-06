@@ -20,13 +20,13 @@ export function EffectiveTemplateBadge({ effective }) {
   if (!effective) return null;
 
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-white/[0.02] px-3 py-2 text-xs text-slate-300">
+    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-line bg-raised px-3 py-2 text-sm text-muted">
       <StatusBadge tone={SOURCE_TONE[effective.source] || "neutral"}>
         {SOURCE_LABEL[effective.source] || effective.source}
       </StatusBadge>
-      <span className="text-slate-500">Paper: {effective.paperWidth}</span>
-      {effective.versionNumber != null && <span className="text-slate-500">Version: {effective.versionNumber}</span>}
-      <span className="text-slate-500">Locale: {effective.locale}</span>
+      <span className="text-subtle">Paper: {effective.paperWidth}</span>
+      {effective.versionNumber != null && <span className="text-subtle">Version: {effective.versionNumber}</span>}
+      <span className="text-subtle">Locale: {effective.locale}</span>
     </div>
   );
 }

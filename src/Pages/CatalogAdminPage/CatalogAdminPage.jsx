@@ -107,7 +107,7 @@ function getAvailabilityState(availability) {
     return {
       label: "Not configured",
       description: "No branch availability row exists.",
-      className: "border-amber-400/25 bg-amber-500/10 text-amber-100",
+      className: "border-warning bg-warning-soft text-warning",
     };
   }
 
@@ -115,14 +115,14 @@ function getAvailabilityState(availability) {
     return {
       label: "Available",
       description: "Explicitly available for this branch.",
-      className: "border-emerald-400/25 bg-emerald-500/10 text-emerald-100",
+      className: "border-success bg-success-soft text-success",
     };
   }
 
   return {
     label: "Not available",
     description: "Explicitly unavailable for this branch.",
-    className: "border-red-400/25 bg-red-500/10 text-red-100",
+    className: "border-danger bg-danger-soft text-danger",
   };
 }
 
@@ -130,7 +130,7 @@ function AvailabilityBadge({ availability }) {
   const state = getAvailabilityState(availability);
 
   return (
-    <span className={`rounded-full border px-2 py-1 text-[11px] font-bold ${state.className}`}>
+    <span className={`rounded-full border px-2 py-1 text-xs font-bold ${state.className}`}>
       {state.label}
     </span>
   );
@@ -146,17 +146,17 @@ function EntityCard({ icon, title, meta, status, selected, onSelect, children })
     <button
       type="button"
       onClick={onSelect}
-      className={`w-full rounded-xl border p-3 text-start transition hover:border-blue-400/40 hover:bg-blue-500/10 ${
-        selected ? "border-blue-400/60 bg-blue-500/15" : "border-white/10 bg-[#0d1728]"
+      className={`w-full rounded-xl border p-3 text-start transition hover:border-accent-line hover:bg-accent-soft ${
+        selected ? "border-accent-line bg-accent-soft" : "border-line bg-raised"
       }`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             {icon}
-            <div className="truncate text-sm font-black text-white">{title}</div>
+            <div className="truncate text-sm font-black text-ink">{title}</div>
           </div>
-          {meta && <div className="mt-1 truncate text-xs text-slate-400">{meta}</div>}
+          {meta && <div className="mt-1 truncate text-sm text-muted">{meta}</div>}
         </div>
         <StatusBadge tone={statusTone(status)}>{status}</StatusBadge>
       </div>
@@ -190,17 +190,17 @@ function CategoryForm({
       className="space-y-3"
     >
       <div className="grid gap-3 md:grid-cols-[1fr_220px_140px]">
-        <label className="text-xs font-semibold text-slate-400">
+        <label className="text-sm font-semibold text-muted">
           Name
           <input
             value={form.name}
             onChange={(event) => setForm((draft) => ({ ...draft, name: event.target.value }))}
             maxLength={200}
             disabled={!canManage || isPending}
-            className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+            className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
           />
         </label>
-        <label className="text-xs font-semibold text-slate-400">
+        <label className="text-sm font-semibold text-muted">
           Parent
           <select
             value={form.parentCategoryId}
@@ -208,7 +208,7 @@ function CategoryForm({
               setForm((draft) => ({ ...draft, parentCategoryId: event.target.value }))
             }
             disabled={!canManage || isPending}
-            className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+            className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
           >
             <option value="">No parent</option>
             {parentOptions.map((category) => (
@@ -218,7 +218,7 @@ function CategoryForm({
             ))}
           </select>
         </label>
-        <label className="text-xs font-semibold text-slate-400">
+        <label className="text-sm font-semibold text-muted">
           Sort Order
           <input
             type="number"
@@ -228,7 +228,7 @@ function CategoryForm({
               setForm((draft) => ({ ...draft, sortOrder: event.target.value }))
             }
             disabled={!canManage || isPending}
-            className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+            className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
           />
         </label>
       </div>
@@ -267,17 +267,17 @@ function ProductForm({
       className="space-y-3"
     >
       <div className="grid gap-3 md:grid-cols-[1fr_220px_140px]">
-        <label className="text-xs font-semibold text-slate-400">
+        <label className="text-sm font-semibold text-muted">
           Name
           <input
             value={form.name}
             onChange={(event) => setForm((draft) => ({ ...draft, name: event.target.value }))}
             maxLength={200}
             disabled={!canManage || isPending}
-            className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+            className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
           />
         </label>
-        <label className="text-xs font-semibold text-slate-400">
+        <label className="text-sm font-semibold text-muted">
           Category
           <select
             value={form.categoryId}
@@ -285,7 +285,7 @@ function ProductForm({
               setForm((draft) => ({ ...draft, categoryId: event.target.value }))
             }
             disabled={!canManage || isPending}
-            className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+            className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
           >
             <option value="">No category</option>
             {categories.map((category) => (
@@ -295,7 +295,7 @@ function ProductForm({
             ))}
           </select>
         </label>
-        <label className="text-xs font-semibold text-slate-400">
+        <label className="text-sm font-semibold text-muted">
           Sort Order
           <input
             type="number"
@@ -305,11 +305,11 @@ function ProductForm({
               setForm((draft) => ({ ...draft, sortOrder: event.target.value }))
             }
             disabled={!canManage || isPending}
-            className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+            className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
           />
         </label>
       </div>
-      <label className="block text-xs font-semibold text-slate-400">
+      <label className="block text-sm font-semibold text-muted">
         Description
         <textarea
           value={form.description}
@@ -319,11 +319,11 @@ function ProductForm({
           maxLength={1000}
           rows={3}
           disabled={!canManage || isPending}
-          className="mt-1 w-full rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+          className="mt-1 w-full rounded-xl border border-line bg-canvas px-3 py-2 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
         />
       </label>
       <div className="flex items-end gap-3">
-        <label className="flex-1 text-xs font-semibold text-slate-400">
+        <label className="flex-1 text-sm font-semibold text-muted">
           Image URL
           <input
             value={form.imageUrl}
@@ -333,10 +333,10 @@ function ProductForm({
             placeholder="/demo-products/burger.svg or https://…"
             maxLength={2048}
             disabled={!canManage || isPending}
-            className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+            className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
           />
         </label>
-        <div className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl border border-white/10 bg-white/[0.025]">
+        <div className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl border border-line bg-raised">
           {form.imageUrl ? (
             <img
               src={form.imageUrl}
@@ -347,7 +347,7 @@ function ProductForm({
               }}
             />
           ) : (
-            <Package size={18} className="text-slate-500" />
+            <Package size={18} className="text-subtle" />
           )}
         </div>
       </div>
@@ -387,27 +387,27 @@ function VariantForm({
       className="space-y-3"
     >
       <div className="grid gap-3 md:grid-cols-[1fr_180px_220px_140px]">
-        <label className="text-xs font-semibold text-slate-400">
+        <label className="text-sm font-semibold text-muted">
           Name
           <input
             value={form.name}
             onChange={(event) => setForm((draft) => ({ ...draft, name: event.target.value }))}
             maxLength={200}
             disabled={!canManage || isPending || !selectedProduct}
-            className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+            className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
           />
         </label>
-        <label className="text-xs font-semibold text-slate-400">
+        <label className="text-sm font-semibold text-muted">
           SKU
           <input
             value={form.sku}
             onChange={(event) => setForm((draft) => ({ ...draft, sku: event.target.value }))}
             maxLength={100}
             disabled={!canManage || isPending || !selectedProduct}
-            className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+            className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
           />
         </label>
-        <label className="text-xs font-semibold text-slate-400">
+        <label className="text-sm font-semibold text-muted">
           Sales UOM
           {mode === "create" ? (
             <select
@@ -416,7 +416,7 @@ function VariantForm({
                 setForm((draft) => ({ ...draft, salesUnitOfMeasureId: event.target.value }))
               }
               disabled={!canManage || isPending || !selectedProduct}
-              className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+              className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
             >
               <option value="">Select unit</option>
               {units.map((unit) => (
@@ -426,14 +426,14 @@ function VariantForm({
               ))}
             </select>
           ) : (
-            <div className="mt-1 flex h-11 items-center rounded-xl border border-white/10 bg-white/[0.025] px-3 text-sm text-slate-200">
+            <div className="mt-1 flex h-11 items-center rounded-xl border border-line bg-raised px-3 text-sm text-ink">
               {selectedVariant
                 ? `${selectedVariant.salesUnitOfMeasureCode} - ${selectedVariant.salesUnitOfMeasureName}`
                 : "Loading"}
             </div>
           )}
         </label>
-        <label className="text-xs font-semibold text-slate-400">
+        <label className="text-sm font-semibold text-muted">
           Sort Order
           <input
             type="number"
@@ -443,11 +443,11 @@ function VariantForm({
               setForm((draft) => ({ ...draft, sortOrder: event.target.value }))
             }
             disabled={!canManage || isPending || !selectedProduct}
-            className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+            className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
           />
         </label>
       </div>
-      <div className="rounded-xl border border-white/10 bg-white/[0.025] px-3 py-2 text-xs text-slate-400">
+      <div className="rounded-xl border border-line bg-raised px-3 py-2 text-sm text-muted">
         Sales unit of measure is selected when creating the variant and is read-only after creation.
       </div>
       <ActionRow
@@ -506,17 +506,17 @@ function BranchAvailabilityPanel({
   const state = getAvailabilityState(availability);
 
   return (
-    <div className="space-y-3 rounded-xl border border-white/10 bg-white/[0.025] p-3">
+    <div className="space-y-3 rounded-xl border border-line bg-raised p-3">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2 text-xs text-slate-400">
-            <MapPin size={14} className="text-blue-300" />
+          <div className="flex items-center gap-2 text-sm text-muted">
+            <MapPin size={14} className="text-accent" />
             Branch Availability
           </div>
-          <div className="mt-1 text-sm font-black text-white">
+          <div className="mt-1 text-sm font-black text-ink">
             Current Branch: {currentBranch.name}
           </div>
-          <div className="mt-1 text-xs text-slate-400">{state.description}</div>
+          <div className="mt-1 text-sm text-muted">{state.description}</div>
         </div>
         <AvailabilityBadge availability={availability} />
       </div>
@@ -531,7 +531,7 @@ function BranchAvailabilityPanel({
       </div>
 
       {!availability?.isConfigured && (
-        <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+        <div className="rounded-xl border border-warning bg-warning-soft px-3 py-2 text-sm text-warning">
           Configure branch availability before expecting this variant to appear in POS.
         </div>
       )}
@@ -541,7 +541,7 @@ function BranchAvailabilityPanel({
           type="button"
           disabled={!canManage || isPending}
           onClick={() => onSetAvailability(true)}
-          className="flex h-10 items-center gap-2 rounded-xl bg-emerald-600 px-4 text-xs font-bold text-white disabled:opacity-50"
+          className="flex h-10 items-center gap-2 rounded-xl bg-success px-4 text-sm font-bold text-white disabled:opacity-50"
         >
           <PackageCheck size={15} />
           Make available
@@ -550,7 +550,7 @@ function BranchAvailabilityPanel({
           type="button"
           disabled={!canManage || isPending}
           onClick={() => onSetAvailability(false)}
-          className="flex h-10 items-center gap-2 rounded-xl border border-red-400/20 bg-red-500/10 px-4 text-xs font-bold text-red-100 disabled:opacity-50"
+          className="flex h-10 items-center gap-2 rounded-xl border border-danger bg-danger-soft px-4 text-sm font-bold text-danger disabled:opacity-50"
         >
           <PackageX size={15} />
           Make unavailable
@@ -617,23 +617,23 @@ function PrintLabelPanel({ companyId, branchId, selectedVariant, canManage, show
   };
 
   const inputClass =
-    "w-full rounded-lg border border-white/10 bg-[#0a1220] px-3 py-2 text-xs text-white outline-none focus:border-blue-400/60";
+    "w-full rounded-lg border border-line bg-canvas px-3 py-2 text-sm text-ink outline-none focus:border-accent-line";
 
   return (
-    <div className="space-y-3 rounded-xl border border-white/10 bg-white/[0.025] p-3">
-      <div className="flex items-center gap-2 text-xs text-slate-400">
-        <Printer size={14} className="text-blue-300" />
+    <div className="space-y-3 rounded-xl border border-line bg-raised p-3">
+      <div className="flex items-center gap-2 text-sm text-muted">
+        <Printer size={14} className="text-accent" />
         Print Label
       </div>
 
       {devices.length === 0 ? (
-        <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+        <div className="rounded-xl border border-warning bg-warning-soft px-3 py-2 text-sm text-warning">
           No label printers found in this branch.
         </div>
       ) : (
         <div className="grid gap-2 md:grid-cols-3">
           <div>
-            <label className="mb-1 block text-[11px] text-slate-400">Label printer</label>
+            <label className="mb-1 block text-xs text-muted">Label printer</label>
             <select className={inputClass} value={deviceId} onChange={(event) => setDeviceId(event.target.value)}>
               <option value="">Select a device</option>
               {devices.map((device) => (
@@ -644,7 +644,7 @@ function PrintLabelPanel({ companyId, branchId, selectedVariant, canManage, show
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-[11px] text-slate-400">Barcode</label>
+            <label className="mb-1 block text-xs text-muted">Barcode</label>
             <select className={inputClass} value={barcodeId} onChange={(event) => setBarcodeId(event.target.value)}>
               <option value="">Use primary barcode</option>
               {activeBarcodes.map((barcode) => (
@@ -655,11 +655,11 @@ function PrintLabelPanel({ companyId, branchId, selectedVariant, canManage, show
               ))}
             </select>
             {!barcodesQuery.isLoading && activeBarcodes.length === 0 && (
-              <p className="mt-1 text-[11px] text-amber-300">No active barcode found for this variant.</p>
+              <p className="mt-1 text-xs text-warning">No active barcode found for this variant.</p>
             )}
           </div>
           <div>
-            <label className="mb-1 block text-[11px] text-slate-400">Copies</label>
+            <label className="mb-1 block text-xs text-muted">Copies</label>
             <input
               type="number"
               min={1}
@@ -676,7 +676,7 @@ function PrintLabelPanel({ companyId, branchId, selectedVariant, canManage, show
         type="button"
         disabled={!canManage || devices.length === 0 || printMutation.isPending}
         onClick={print}
-        className="flex h-10 items-center gap-2 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex h-10 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <Printer size={15} />
         {printMutation.isPending ? "Sending..." : "Print Label"}
@@ -691,7 +691,7 @@ function ActionRow({ mode, entity, selected, canManage, isPending, nextStatus, o
       <button
         type="submit"
         disabled={!canManage || isPending}
-        className="flex h-10 items-center gap-2 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex h-10 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {mode === "edit" ? <Pencil size={15} /> : <Plus size={15} />}
         {isPending ? "Saving..." : mode === "edit" ? `Save ${entity}` : `Create ${entity}`}
@@ -701,7 +701,7 @@ function ActionRow({ mode, entity, selected, canManage, isPending, nextStatus, o
           type="button"
           disabled={!canManage || isPending}
           onClick={() => onStatusChange(nextStatus)}
-          className="flex h-10 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-4 text-xs font-bold text-slate-100 transition hover:border-blue-400/40 hover:bg-blue-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex h-10 items-center gap-2 rounded-xl border border-line bg-raised px-4 text-sm font-bold text-ink transition hover:border-accent-line hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-50"
         >
           {nextStatus === "Active" ? <CircleCheck size={15} /> : <CirclePause size={15} />}
           {nextStatus === "Active" ? "Activate" : "Suspend"}
@@ -928,10 +928,10 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
 
   return (
     <div className="grid gap-4 2xl:grid-cols-[380px_1fr]">
-      <section className="rounded-2xl border border-white/10 bg-[#0c1424] p-3">
+      <section className="rounded-xl border border-line bg-surface p-3">
         <div className="mb-3 flex flex-wrap gap-2">
           <label className="relative block min-w-[180px] flex-1">
-            <Search size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            <Search size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-subtle" />
             <input
               value={groupSearch}
               onChange={(event) => {
@@ -940,7 +940,7 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
               }}
               maxLength={100}
               placeholder="Search groups"
-              className="h-10 w-full rounded-xl border border-white/10 bg-black/20 pr-9 pl-3 text-xs text-white outline-none"
+              className="h-10 w-full rounded-xl border border-line bg-canvas pr-9 pl-3 text-sm text-ink outline-none"
             />
           </label>
           <select
@@ -949,7 +949,7 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
               setGroupStatus(event.target.value);
               setGroupPage(1);
             }}
-            className="h-10 rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none"
+            className="h-10 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none"
           >
             <option value="">All status</option>
             <option value="Active">Active</option>
@@ -958,7 +958,7 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
           <button
             type="button"
             onClick={startCreateGroup}
-            className="flex h-10 items-center gap-2 rounded-xl bg-blue-600 px-3 text-xs font-bold text-white"
+            className="flex h-10 items-center gap-2 rounded-xl bg-accent px-3 text-sm font-bold text-white"
           >
             <Plus size={14} />
             New group
@@ -976,21 +976,21 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
             {groups.map((group) => (
               <EntityCard
                 key={group.modifierGroupId}
-                icon={<SlidersHorizontal size={15} className="shrink-0 text-blue-300" />}
+                icon={<SlidersHorizontal size={15} className="shrink-0 text-accent" />}
                 title={group.name}
                 meta={`${group.optionCount} options`}
                 status={group.status}
                 selected={selectedGroupId === group.modifierGroupId}
                 onSelect={() => selectGroup(group)}
               >
-                <div className="mt-3 text-[11px] text-slate-500">
+                <div className="mt-3 text-xs text-subtle">
                   Created {formatDateTime(group.createdAtUtc)}
                 </div>
               </EntityCard>
             ))}
           </div>
         )}
-        <div className="mt-3 flex items-center justify-between gap-2 text-xs text-slate-400">
+        <div className="mt-3 flex items-center justify-between gap-2 text-sm text-muted">
           <span>
             Page {groupsQuery.data?.pageNumber || 1} / {groupsQuery.data?.totalPages || 0}
           </span>
@@ -999,7 +999,7 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
               type="button"
               disabled={groupPage <= 1}
               onClick={() => setGroupPage((page) => Math.max(1, page - 1))}
-              className="rounded-lg border border-white/10 px-3 py-1 disabled:opacity-40"
+              className="rounded-lg border border-line px-3 py-1 disabled:opacity-40"
             >
               Prev
             </button>
@@ -1007,7 +1007,7 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
               type="button"
               disabled={!groupsQuery.data || groupPage >= groupsQuery.data.totalPages}
               onClick={() => setGroupPage((page) => page + 1)}
-              className="rounded-lg border border-white/10 px-3 py-1 disabled:opacity-40"
+              className="rounded-lg border border-line px-3 py-1 disabled:opacity-40"
             >
               Next
             </button>
@@ -1016,9 +1016,9 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
       </section>
 
       <section className="space-y-4">
-        <div className="rounded-2xl border border-white/10 bg-[#0c1424] p-4">
+        <div className="rounded-xl border border-line bg-surface p-4">
           <PanelTitle
-            icon={<SlidersHorizontal size={15} className="text-blue-300" />}
+            icon={<SlidersHorizontal size={15} className="text-accent" />}
             eyebrow={groupMode === "create" ? "Create modifier group" : "Modifier group details"}
             title={groupMode === "create" ? "New modifier group" : selectedGroup?.name || "Loading group"}
             status={selectedGroup?.status}
@@ -1035,14 +1035,14 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
               }}
               className="space-y-3"
             >
-              <label className="block text-xs font-semibold text-slate-400">
+              <label className="block text-sm font-semibold text-muted">
                 Name
                 <input
                   value={groupForm.name}
                   onChange={(event) => setGroupForm({ name: event.target.value })}
                   maxLength={200}
                   disabled={!canManage || isGroupPending}
-                  className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none disabled:opacity-50"
+                  className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none disabled:opacity-50"
                 />
               </label>
               <ActionRow
@@ -1060,14 +1060,14 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
           )}
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-[#0c1424] p-4">
+        <div className="rounded-xl border border-line bg-surface p-4">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
-              <div className="flex items-center gap-2 text-xs text-slate-400">
-                <ListChecks size={15} className="text-blue-300" />
+              <div className="flex items-center gap-2 text-sm text-muted">
+                <ListChecks size={15} className="text-accent" />
                 Modifier options
               </div>
-              <h2 className="mt-1 text-lg font-black text-white">
+              <h2 className="mt-1 text-lg font-black text-ink">
                 {selectedGroup?.name || "Select a modifier group"}
               </h2>
             </div>
@@ -1075,7 +1075,7 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
               <select
                 value={optionStatus}
                 onChange={(event) => setOptionStatus(event.target.value)}
-                className="h-10 rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none"
+                className="h-10 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none"
               >
                 <option value="">All options</option>
                 <option value="Active">Active</option>
@@ -1089,7 +1089,7 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
                   setOptionForm(EMPTY_MODIFIER_OPTION_FORM);
                 }}
                 disabled={!selectedGroup}
-                className="flex h-10 items-center gap-2 rounded-xl bg-blue-600 px-3 text-xs font-bold text-white disabled:opacity-50"
+                className="flex h-10 items-center gap-2 rounded-xl bg-accent px-3 text-sm font-bold text-white disabled:opacity-50"
               >
                 <Plus size={14} />
                 New option
@@ -1111,7 +1111,7 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
                   options.map((option) => (
                     <EntityCard
                       key={option.modifierOptionId}
-                      icon={<ListChecks size={15} className="shrink-0 text-blue-300" />}
+                      icon={<ListChecks size={15} className="shrink-0 text-accent" />}
                       title={option.name}
                       meta={`Sort ${option.sortOrder}`}
                       status={option.status}
@@ -1130,7 +1130,7 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
                   className="space-y-3"
                 >
                   <div className="grid gap-3 md:grid-cols-[1fr_140px]">
-                    <label className="text-xs font-semibold text-slate-400">
+                    <label className="text-sm font-semibold text-muted">
                       Name
                       <input
                         value={optionForm.name}
@@ -1139,10 +1139,10 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
                         }
                         maxLength={200}
                         disabled={!canManage || isOptionPending}
-                        className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none disabled:opacity-50"
+                        className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none disabled:opacity-50"
                       />
                     </label>
-                    <label className="text-xs font-semibold text-slate-400">
+                    <label className="text-sm font-semibold text-muted">
                       Sort Order
                       <input
                         type="number"
@@ -1152,7 +1152,7 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
                           setOptionForm((draft) => ({ ...draft, sortOrder: event.target.value }))
                         }
                         disabled={!canManage || isOptionPending}
-                        className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none disabled:opacity-50"
+                        className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none disabled:opacity-50"
                       />
                     </label>
                   </div>
@@ -1177,14 +1177,14 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
           )}
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-[#0c1424] p-4">
+        <div className="rounded-xl border border-line bg-surface p-4">
           <PanelTitle
-            icon={<Link2 size={15} className="text-blue-300" />}
+            icon={<Link2 size={15} className="text-accent" />}
             eyebrow="Variant assignments"
             title="ProductVariant modifier groups"
           />
           <div className="grid gap-3 lg:grid-cols-2">
-            <label className="text-xs font-semibold text-slate-400">
+            <label className="text-sm font-semibold text-muted">
               Product
               <select
                 value={assignmentProductId}
@@ -1192,7 +1192,7 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
                   setAssignmentProductId(event.target.value);
                   setAssignmentVariantId("");
                 }}
-                className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none"
+                className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none"
               >
                 <option value="">Select product</option>
                 {(productsQuery.data?.items || []).map((product) => (
@@ -1202,13 +1202,13 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
                 ))}
               </select>
             </label>
-            <label className="text-xs font-semibold text-slate-400">
+            <label className="text-sm font-semibold text-muted">
               Variant
               <select
                 value={assignmentVariantId}
                 onChange={(event) => setAssignmentVariantId(event.target.value)}
                 disabled={!assignmentProduct}
-                className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none disabled:opacity-50"
+                className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none disabled:opacity-50"
               >
                 <option value="">Select variant</option>
                 {(assignmentProduct?.variants || []).map((variant) => (
@@ -1238,14 +1238,14 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
                       key={assignment.modifierGroupId}
                       type="button"
                       onClick={() => loadAssignment(assignment)}
-                      className="w-full rounded-xl border border-white/10 bg-[#0d1728] p-3 text-start transition hover:border-blue-400/40 hover:bg-blue-500/10"
+                      className="w-full rounded-xl border border-line bg-raised p-3 text-start transition hover:border-accent-line hover:bg-accent-soft"
                     >
                       <div className="flex items-center justify-between gap-3">
                         <div className="min-w-0">
-                          <div className="truncate text-sm font-black text-white">
+                          <div className="truncate text-sm font-black text-ink">
                             {assignment.modifierGroupName}
                           </div>
-                          <div className="mt-1 text-xs text-slate-400">
+                          <div className="mt-1 text-sm text-muted">
                             Min {assignment.minSelections} · Max {assignment.maxSelections} · Sort {assignment.sortOrder}
                           </div>
                         </div>
@@ -1265,7 +1265,7 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
                 className="space-y-3"
               >
                 <div className="grid gap-3 md:grid-cols-[1fr_120px_120px_120px]">
-                  <label className="text-xs font-semibold text-slate-400">
+                  <label className="text-sm font-semibold text-muted">
                     Modifier Group
                     <select
                       value={assignmentForm.modifierGroupId}
@@ -1275,7 +1275,7 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
                           modifierGroupId: event.target.value,
                         }))
                       }
-                      className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none"
+                      className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none"
                     >
                       <option value="">Select group</option>
                       {groups.map((group) => (
@@ -1289,7 +1289,7 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
                   <NumberField label="Max" value={assignmentForm.maxSelections} onChange={(value) => setAssignmentForm((draft) => ({ ...draft, maxSelections: value }))} min="1" />
                   <NumberField label="Sort" value={assignmentForm.sortOrder} onChange={(value) => setAssignmentForm((draft) => ({ ...draft, sortOrder: value }))} />
                 </div>
-                <label className="flex items-center gap-2 text-xs font-semibold text-slate-300">
+                <label className="flex items-center gap-2 text-sm font-semibold text-muted">
                   <input
                     type="checkbox"
                     checked={assignmentForm.isEnabled}
@@ -1299,17 +1299,17 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
                         isEnabled: event.target.checked,
                       }))
                     }
-                    className="h-4 w-4 rounded border-white/20 bg-black/20"
+                    className="h-4 w-4 rounded border-line-strong bg-canvas"
                   />
                   Enabled for future sellable catalog reads
                 </label>
-                <div className="rounded-xl border border-white/10 bg-white/[0.025] px-3 py-2 text-xs text-slate-400">
+                <div className="rounded-xl border border-line bg-raised px-3 py-2 text-sm text-muted">
                   Required behavior is derived from Min selections greater than zero. Disabled assignments remain configured with isEnabled=false; no delete endpoint exists.
                 </div>
                 <button
                   type="submit"
                   disabled={!canManage || assignmentMutation.isPending}
-                  className="flex h-10 items-center gap-2 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white disabled:opacity-50"
+                  className="flex h-10 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-bold text-white disabled:opacity-50"
                 >
                   <Link2 size={15} />
                   {assignmentMutation.isPending ? "Saving..." : "Save assignment"}
@@ -1325,14 +1325,14 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
 
 function NumberField({ label, value, onChange, min = "0" }) {
   return (
-    <label className="text-xs font-semibold text-slate-400">
+    <label className="text-sm font-semibold text-muted">
       {label}
       <input
         type="number"
         min={min}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none"
+        className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none"
       />
     </label>
   );
@@ -1685,7 +1685,7 @@ export default function CatalogAdminPage() {
 
   return (
     <AppLayout>
-      <main className="space-y-4" dir="rtl">
+      <main className="odoo-root space-y-3" dir="rtl">
         <PageHeader
           title="Catalog"
           actions={
@@ -1697,7 +1697,7 @@ export default function CatalogAdminPage() {
                   productsQuery.refetch();
                   if (selectedProductId) variantsQuery.refetch();
                 }}
-                className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold text-slate-100"
+                className="flex items-center gap-2 rounded-xl border border-line bg-raised px-3 py-2 text-sm font-bold text-ink"
               >
                 <RefreshCw size={14} />
                 Refresh
@@ -1706,7 +1706,7 @@ export default function CatalogAdminPage() {
                 <button
                   type="button"
                   onClick={tab === "categories" ? startCreateCategory : startCreateProduct}
-                  className="flex items-center gap-2 rounded-xl bg-blue-600 px-3 py-2 text-xs font-bold text-white"
+                  className="flex items-center gap-2 rounded-xl bg-accent px-3 py-2 text-sm font-bold text-white"
                 >
                   <Plus size={14} />
                   {tab === "categories" ? "New category" : "New product"}
@@ -1717,17 +1717,17 @@ export default function CatalogAdminPage() {
         />
 
         {notice && (
-          <div className="rounded-xl border border-blue-400/25 bg-blue-500/10 px-3 py-2 text-xs text-blue-100">
+          <div className="rounded-xl border border-accent-line bg-accent-soft px-3 py-2 text-sm text-accent">
             {notice}
           </div>
         )}
 
-        <div className="flex gap-2 rounded-2xl border border-white/10 bg-[#0c1424] p-2">
+        <div className="flex gap-1 rounded-xl border border-line bg-surface p-1.5 shadow-[var(--shadow-surface)]">
           <button
             type="button"
             onClick={() => setTab("categories")}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition ${
-              tab === "categories" ? "bg-blue-600 text-white" : "text-slate-300 hover:bg-white/5"
+            className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-bold transition ${
+              tab === "categories" ? "bg-accent-soft text-accent" : "text-muted hover:bg-hover hover:text-ink"
             }`}
           >
             <Tags size={15} />
@@ -1736,8 +1736,8 @@ export default function CatalogAdminPage() {
           <button
             type="button"
             onClick={() => setTab("products")}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition ${
-              tab === "products" ? "bg-blue-600 text-white" : "text-slate-300 hover:bg-white/5"
+            className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-bold transition ${
+              tab === "products" ? "bg-accent-soft text-accent" : "text-muted hover:bg-hover hover:text-ink"
             }`}
           >
             <Package size={15} />
@@ -1746,8 +1746,8 @@ export default function CatalogAdminPage() {
           <button
             type="button"
             onClick={() => setTab("modifiers")}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition ${
-              tab === "modifiers" ? "bg-blue-600 text-white" : "text-slate-300 hover:bg-white/5"
+            className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-bold transition ${
+              tab === "modifiers" ? "bg-accent-soft text-accent" : "text-muted hover:bg-hover hover:text-ink"
             }`}
           >
             <SlidersHorizontal size={15} />
@@ -1763,11 +1763,11 @@ export default function CatalogAdminPage() {
           <ErrorState title="Permission required" message="Catalog.View permission is required." />
         ) : tab === "categories" ? (
           <div className="grid gap-4 xl:grid-cols-[420px_1fr]">
-            <section className="rounded-2xl border border-white/10 bg-[#0c1424] p-3">
+            <section className="rounded-xl border border-line bg-surface p-3">
               <select
                 value={categoryStatus}
                 onChange={(event) => setCategoryStatus(event.target.value)}
-                className="mb-3 h-10 rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none"
+                className="mb-3 h-10 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none"
               >
                 <option value="">All categories</option>
                 <option value="Active">Active</option>
@@ -1785,21 +1785,21 @@ export default function CatalogAdminPage() {
                   {categoriesQuery.data.map((category) => (
                     <EntityCard
                       key={category.categoryId}
-                      icon={<Tags size={15} className="shrink-0 text-blue-300" />}
+                      icon={<Tags size={15} className="shrink-0 text-accent" />}
                       title={category.name}
                       meta={category.parentCategoryName ? `Parent: ${category.parentCategoryName}` : "Root category"}
                       status={category.status}
                       selected={selectedCategoryId === category.categoryId}
                       onSelect={() => selectCategory(category)}
                     >
-                      <div className="mt-3 grid grid-cols-2 gap-2 text-[11px]">
-                        <div className="rounded-lg bg-white/[0.03] p-2">
-                          <div className="text-slate-500">Sort</div>
-                          <div className="mt-1 font-semibold text-slate-200">{category.sortOrder}</div>
+                      <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                        <div className="rounded-lg bg-raised p-2">
+                          <div className="text-subtle">Sort</div>
+                          <div className="mt-1 font-semibold text-ink">{category.sortOrder}</div>
                         </div>
-                        <div className="rounded-lg bg-white/[0.03] p-2">
-                          <div className="text-slate-500">Created</div>
-                          <div className="mt-1 font-semibold text-slate-200">
+                        <div className="rounded-lg bg-raised p-2">
+                          <div className="text-subtle">Created</div>
+                          <div className="mt-1 font-semibold text-ink">
                             {formatDateTime(category.createdAtUtc)}
                           </div>
                         </div>
@@ -1809,9 +1809,9 @@ export default function CatalogAdminPage() {
                 </div>
               )}
             </section>
-            <section className="rounded-2xl border border-white/10 bg-[#0c1424] p-4">
+            <section className="rounded-xl border border-line bg-surface p-4">
               <PanelTitle
-                icon={<Power size={15} className="text-blue-300" />}
+                icon={<Power size={15} className="text-accent" />}
                 eyebrow={categoryMode === "create" ? "Create category" : "Category details"}
                 title={categoryMode === "create" ? "New category" : selectedCategory?.name || "Loading category"}
                 status={selectedCategory?.status}
@@ -1837,10 +1837,10 @@ export default function CatalogAdminPage() {
           </div>
         ) : tab === "products" ? (
           <div className="grid gap-4 2xl:grid-cols-[380px_1fr]">
-            <section className="rounded-2xl border border-white/10 bg-[#0c1424] p-3">
+            <section className="rounded-xl border border-line bg-surface p-3">
               <div className="mb-3 grid gap-2 sm:grid-cols-[1fr_130px]">
                 <label className="relative block">
-                  <Search size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                  <Search size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-subtle" />
                   <input
                     value={productSearch}
                     onChange={(event) => {
@@ -1849,7 +1849,7 @@ export default function CatalogAdminPage() {
                     }}
                     maxLength={100}
                     placeholder="Search products"
-                    className="h-10 w-full rounded-xl border border-white/10 bg-black/20 pr-9 pl-3 text-xs text-white outline-none"
+                    className="h-10 w-full rounded-xl border border-line bg-canvas pr-9 pl-3 text-sm text-ink outline-none"
                   />
                 </label>
                 <select
@@ -1858,7 +1858,7 @@ export default function CatalogAdminPage() {
                     setProductStatus(event.target.value);
                     setProductPage(1);
                   }}
-                  className="h-10 rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none"
+                  className="h-10 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none"
                 >
                   <option value="">All status</option>
                   <option value="Active">Active</option>
@@ -1870,7 +1870,7 @@ export default function CatalogAdminPage() {
                     setProductCategoryId(event.target.value);
                     setProductPage(1);
                   }}
-                  className="h-10 rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none sm:col-span-2"
+                  className="h-10 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none sm:col-span-2"
                 >
                   <option value="">All categories</option>
                   {categories.map((category) => (
@@ -1892,28 +1892,28 @@ export default function CatalogAdminPage() {
                   {products.map((product) => (
                     <EntityCard
                       key={product.productId}
-                      icon={<Package size={15} className="shrink-0 text-blue-300" />}
+                      icon={<Package size={15} className="shrink-0 text-accent" />}
                       title={product.name}
                       meta={product.categoryName || "No category"}
                       status={product.status}
                       selected={selectedProductId === product.productId}
                       onSelect={() => selectProduct(product)}
                     >
-                      <div className="mt-3 grid grid-cols-2 gap-2 text-[11px]">
-                        <div className="rounded-lg bg-white/[0.03] p-2">
-                          <div className="text-slate-500">Variants</div>
-                          <div className="mt-1 font-semibold text-slate-200">{product.variantCount}</div>
+                      <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                        <div className="rounded-lg bg-raised p-2">
+                          <div className="text-subtle">Variants</div>
+                          <div className="mt-1 font-semibold text-ink">{product.variantCount}</div>
                         </div>
-                        <div className="rounded-lg bg-white/[0.03] p-2">
-                          <div className="text-slate-500">Sort</div>
-                          <div className="mt-1 font-semibold text-slate-200">{product.sortOrder}</div>
+                        <div className="rounded-lg bg-raised p-2">
+                          <div className="text-subtle">Sort</div>
+                          <div className="mt-1 font-semibold text-ink">{product.sortOrder}</div>
                         </div>
                       </div>
                     </EntityCard>
                   ))}
                 </div>
               )}
-              <div className="mt-3 flex items-center justify-between gap-2 text-xs text-slate-400">
+              <div className="mt-3 flex items-center justify-between gap-2 text-sm text-muted">
                 <span>
                   Page {productsQuery.data?.pageNumber || 1} / {productsQuery.data?.totalPages || 0}
                 </span>
@@ -1922,7 +1922,7 @@ export default function CatalogAdminPage() {
                     type="button"
                     disabled={productPage <= 1}
                     onClick={() => setProductPage((page) => Math.max(1, page - 1))}
-                    className="rounded-lg border border-white/10 px-3 py-1 disabled:opacity-40"
+                    className="rounded-lg border border-line px-3 py-1 disabled:opacity-40"
                   >
                     Prev
                   </button>
@@ -1930,7 +1930,7 @@ export default function CatalogAdminPage() {
                     type="button"
                     disabled={!productsQuery.data || productPage >= productsQuery.data.totalPages}
                     onClick={() => setProductPage((page) => page + 1)}
-                    className="rounded-lg border border-white/10 px-3 py-1 disabled:opacity-40"
+                    className="rounded-lg border border-line px-3 py-1 disabled:opacity-40"
                   >
                     Next
                   </button>
@@ -1938,9 +1938,9 @@ export default function CatalogAdminPage() {
               </div>
             </section>
             <section className="space-y-4">
-              <div className="rounded-2xl border border-white/10 bg-[#0c1424] p-4">
+              <div className="rounded-xl border border-line bg-surface p-4">
                 <PanelTitle
-                  icon={<Power size={15} className="text-blue-300" />}
+                  icon={<Power size={15} className="text-accent" />}
                   eyebrow={productMode === "create" ? "Create product" : "Product details"}
                   title={productMode === "create" ? "New product" : selectedProduct?.name || "Loading product"}
                   status={selectedProduct?.status}
@@ -1970,21 +1970,21 @@ export default function CatalogAdminPage() {
                       onSubmit={submitProduct}
                       onStatusChange={(status) => changeStatus(productStatusMutation, status, "Product")}
                     />
-                    <div className="rounded-xl border border-white/10 bg-white/[0.025] px-3 py-2 text-xs text-slate-400">
+                    <div className="rounded-xl border border-line bg-raised px-3 py-2 text-sm text-muted">
                       Pricing, tax assignment, inventory consumption, and modifiers are managed outside this Catalog Core slice.
                     </div>
                   </div>
                 )}
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-[#0c1424] p-4">
+              <div className="rounded-xl border border-line bg-surface p-4">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <div className="flex items-center gap-2 text-xs text-slate-400">
-                      <Boxes size={15} className="text-blue-300" />
+                    <div className="flex items-center gap-2 text-sm text-muted">
+                      <Boxes size={15} className="text-accent" />
                       Product variants
                     </div>
-                    <h2 className="mt-1 text-lg font-black text-white">
+                    <h2 className="mt-1 text-lg font-black text-ink">
                       {selectedProduct?.name || "Select a product"}
                     </h2>
                   </div>
@@ -1992,7 +1992,7 @@ export default function CatalogAdminPage() {
                     <select
                       value={variantStatus}
                       onChange={(event) => setVariantStatus(event.target.value)}
-                      className="h-10 rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none"
+                      className="h-10 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none"
                     >
                       <option value="">All variants</option>
                       <option value="Active">Active</option>
@@ -2002,7 +2002,7 @@ export default function CatalogAdminPage() {
                       type="button"
                       onClick={startCreateVariant}
                       disabled={!selectedProduct}
-                      className="flex h-10 items-center gap-2 rounded-xl bg-blue-600 px-3 text-xs font-bold text-white disabled:opacity-50"
+                      className="flex h-10 items-center gap-2 rounded-xl bg-accent px-3 text-sm font-bold text-white disabled:opacity-50"
                     >
                       <Plus size={14} />
                       New variant
@@ -2019,23 +2019,23 @@ export default function CatalogAdminPage() {
                   <div className="grid gap-4 xl:grid-cols-[340px_1fr]">
                     <div className="max-h-[300px] space-y-2 overflow-y-auto pr-1 scrollbar-none">
                       {currentBranchId && branchAvailabilityOverviewQuery.data && (
-                        <div className="rounded-xl border border-white/10 bg-white/[0.025] p-3 text-xs text-slate-300">
-                          <div className="flex items-center gap-2 font-bold text-white">
-                            <MapPin size={14} className="text-blue-300" />
+                        <div className="rounded-xl border border-line bg-raised p-3 text-sm text-muted">
+                          <div className="flex items-center gap-2 font-bold text-ink">
+                            <MapPin size={14} className="text-accent" />
                             Current branch availability
                           </div>
-                          <div className="mt-2 grid grid-cols-3 gap-2 text-[11px]">
-                            <div className="rounded-lg bg-emerald-500/10 p-2 text-emerald-100">
+                          <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
+                            <div className="rounded-lg bg-success-soft p-2 text-success">
                               Available {branchAvailabilitySummary.available}
                             </div>
-                            <div className="rounded-lg bg-red-500/10 p-2 text-red-100">
+                            <div className="rounded-lg bg-danger-soft p-2 text-danger">
                               Unavailable {branchAvailabilitySummary.unavailable}
                             </div>
-                            <div className="rounded-lg bg-amber-500/10 p-2 text-amber-100">
+                            <div className="rounded-lg bg-warning-soft p-2 text-warning">
                               Missing {branchAvailabilitySummary.missing}
                             </div>
                           </div>
-                          <div className="mt-2 text-[11px] text-slate-500">
+                          <div className="mt-2 text-xs text-subtle">
                             Showing {branchAvailabilityOverviewQuery.data.items.length} of {branchAvailabilitySummary.total}
                           </div>
                         </div>
@@ -2046,7 +2046,7 @@ export default function CatalogAdminPage() {
                         variants.map((variant) => (
                           <EntityCard
                             key={variant.productVariantId}
-                            icon={<Boxes size={15} className="shrink-0 text-blue-300" />}
+                            icon={<Boxes size={15} className="shrink-0 text-accent" />}
                             title={variant.name}
                             meta={`${variant.sku || "No SKU"} · ${variant.salesUnitOfMeasureCode}`}
                             status={variant.status}
@@ -2116,11 +2116,11 @@ function PanelTitle({ icon, eyebrow, title, status }) {
   return (
     <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
       <div>
-        <div className="flex items-center gap-2 text-xs text-slate-400">
+        <div className="flex items-center gap-2 text-sm text-muted">
           {icon}
           {eyebrow}
         </div>
-        <h2 className="mt-1 text-xl font-black text-white">{title}</h2>
+        <h2 className="mt-1 text-xl font-black text-ink">{title}</h2>
       </div>
       {status && <StatusBadge tone={statusTone(status)}>{status}</StatusBadge>}
     </div>
@@ -2129,9 +2129,9 @@ function PanelTitle({ icon, eyebrow, title, status }) {
 
 function InfoTile({ label, value }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.025] p-3">
-      <div className="text-[11px] text-slate-500">{label}</div>
-      <div className="mt-1 truncate text-sm font-black text-white">{value}</div>
+    <div className="rounded-xl border border-line bg-raised p-3">
+      <div className="text-xs text-subtle">{label}</div>
+      <div className="mt-1 truncate text-sm font-black text-ink">{value}</div>
     </div>
   );
 }

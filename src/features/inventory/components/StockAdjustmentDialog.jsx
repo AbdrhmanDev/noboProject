@@ -105,7 +105,7 @@ export function StockAdjustmentDialog({
   return (
     <InventoryModal title="Adjust Stock" onClose={onClose}>
       {formError && (
-        <div className="mb-3 rounded-xl border border-rose-400/25 bg-rose-500/10 px-3 py-2 text-xs text-rose-100">
+        <div className="mb-3 rounded-xl border border-danger bg-danger-soft px-3 py-2 text-sm text-danger">
           {formError}
         </div>
       )}
@@ -118,7 +118,7 @@ export function StockAdjustmentDialog({
           }}
           className="space-y-3"
         >
-          <label className="block text-xs font-semibold text-slate-400">
+          <label className="block text-sm font-semibold text-muted">
             Inventory location
             <select
               value={locationId}
@@ -126,7 +126,7 @@ export function StockAdjustmentDialog({
                 setLocationId(event.target.value);
                 setFormError("");
               }}
-              className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60"
+              className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line"
             >
               <option value="">Select location...</option>
               {locations.map((location) => (
@@ -137,7 +137,7 @@ export function StockAdjustmentDialog({
             </select>
           </label>
 
-          <label className="block text-xs font-semibold text-slate-400">
+          <label className="block text-sm font-semibold text-muted">
             Inventory item
             <select
               value={inventoryItemId}
@@ -145,7 +145,7 @@ export function StockAdjustmentDialog({
                 setInventoryItemId(event.target.value);
                 setFormError("");
               }}
-              className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60"
+              className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line"
             >
               <option value="">Select item...</option>
               {items.map((item) => (
@@ -157,13 +157,13 @@ export function StockAdjustmentDialog({
           </label>
 
           {locationId && inventoryItemId && (
-            <div className="rounded-xl border border-white/10 bg-white/[0.025] px-3 py-2 text-xs text-slate-400">
+            <div className="rounded-xl border border-line bg-raised px-3 py-2 text-sm text-muted">
               {stockQuery.isLoading ? (
                 "Loading current stock..."
               ) : currentStockEntry ? (
                 <>
                   Current stock:{" "}
-                  <span className="font-bold text-slate-200">
+                  <span className="font-bold text-ink">
                     {currentStockEntry.quantityOnHand} {currentStockEntry.baseUnitOfMeasure.symbol}
                   </span>
                 </>
@@ -173,7 +173,7 @@ export function StockAdjustmentDialog({
             </div>
           )}
 
-          <label className="block text-xs font-semibold text-slate-400">
+          <label className="block text-sm font-semibold text-muted">
             Quantity delta (+/-)
             <input
               type="text"
@@ -184,26 +184,26 @@ export function StockAdjustmentDialog({
                 setFormError("");
               }}
               placeholder="e.g. 10 or -3"
-              className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60"
+              className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line"
             />
-            <span className="mt-1 block text-[11px] font-normal text-slate-500">
+            <span className="mt-1 block text-xs font-normal text-subtle">
               Positive adds stock, negative removes stock.
             </span>
           </label>
 
-          <label className="block text-xs font-semibold text-slate-400">
+          <label className="block text-sm font-semibold text-muted">
             Reason (optional)
             <textarea
               value={reason}
               onChange={(event) => setReason(event.target.value)}
               maxLength={500}
-              className="mt-1 h-20 w-full rounded-xl border border-white/10 bg-black/20 p-3 text-xs text-white outline-none focus:border-blue-400/60"
+              className="mt-1 h-20 w-full rounded-xl border border-line bg-canvas p-3 text-sm text-ink outline-none focus:border-accent-line"
             />
           </label>
 
           <button
             type="submit"
-            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 text-sm font-bold text-white transition hover:brightness-110"
+            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-accent text-sm font-bold text-white transition hover:brightness-110"
           >
             Review adjustment
             <ArrowRight size={16} />
@@ -211,45 +211,45 @@ export function StockAdjustmentDialog({
         </form>
       ) : (
         <div className="space-y-3">
-          <div className="space-y-2 rounded-xl border border-white/10 bg-white/[0.025] p-3 text-xs">
+          <div className="space-y-2 rounded-xl border border-line bg-raised p-3 text-sm">
             <div className="flex justify-between gap-3">
-              <span className="text-slate-500">Item</span>
-              <span className="font-bold text-slate-200">{selectedItem?.name}</span>
+              <span className="text-subtle">Item</span>
+              <span className="font-bold text-ink">{selectedItem?.name}</span>
             </div>
             <div className="flex justify-between gap-3">
-              <span className="text-slate-500">Location</span>
-              <span className="font-bold text-slate-200">{selectedLocation?.name}</span>
+              <span className="text-subtle">Location</span>
+              <span className="font-bold text-ink">{selectedLocation?.name}</span>
             </div>
             <div className="flex justify-between gap-3">
-              <span className="text-slate-500">Current stock</span>
-              <span className="font-bold text-slate-200">
+              <span className="text-subtle">Current stock</span>
+              <span className="font-bold text-ink">
                 {currentStockEntry
                   ? `${currentStockEntry.quantityOnHand} ${currentStockEntry.baseUnitOfMeasure.symbol}`
                   : `Not tracked yet (0 ${selectedItem?.baseUnitOfMeasure.symbol || ""})`}
               </span>
             </div>
             <div className="flex justify-between gap-3">
-              <span className="text-slate-500">Adjustment</span>
+              <span className="text-subtle">Adjustment</span>
               <span
-                className={`font-bold ${parsedQuantity.amount > 0 ? "text-emerald-300" : "text-rose-300"}`}
+                className={`font-bold ${parsedQuantity.amount > 0 ? "text-success" : "text-danger"}`}
               >
                 {parsedQuantity.amount > 0 ? "+" : ""}
                 {parsedQuantity.amount} {selectedItem?.baseUnitOfMeasure.symbol}
               </span>
             </div>
-            <div className="flex justify-between gap-3 border-t border-white/10 pt-2">
-              <span className="text-slate-500">Expected result</span>
-              <span className="font-bold text-blue-300">
+            <div className="flex justify-between gap-3 border-t border-line pt-2">
+              <span className="text-subtle">Expected result</span>
+              <span className="font-bold text-accent">
                 {expectedQuantity} {selectedItem?.baseUnitOfMeasure.symbol}
               </span>
             </div>
             {reason.trim() && (
-              <div className="border-t border-white/10 pt-2">
-                <span className="text-slate-500">Reason</span>
-                <p className="mt-1 text-slate-300">{reason.trim()}</p>
+              <div className="border-t border-line pt-2">
+                <span className="text-subtle">Reason</span>
+                <p className="mt-1 text-muted">{reason.trim()}</p>
               </div>
             )}
-            <p className="text-[10px] text-slate-600">
+            <p className="text-xs text-subtle">
               Expected result is informational only; the server balance is authoritative.
             </p>
           </div>
@@ -259,7 +259,7 @@ export function StockAdjustmentDialog({
               type="button"
               onClick={() => setStep("form")}
               disabled={adjustMutation.isPending}
-              className="flex h-11 flex-1 items-center justify-center rounded-xl border border-white/10 bg-white/[0.035] text-sm font-bold text-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-11 flex-1 items-center justify-center rounded-xl border border-line bg-raised text-sm font-bold text-ink disabled:cursor-not-allowed disabled:opacity-50"
             >
               Back
             </button>
@@ -267,7 +267,7 @@ export function StockAdjustmentDialog({
               type="button"
               onClick={submitAdjustment}
               disabled={adjustMutation.isPending}
-              className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-600 text-sm font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-success text-sm font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <CircleCheck size={16} />
               {adjustMutation.isPending ? "Saving..." : "Confirm adjustment"}

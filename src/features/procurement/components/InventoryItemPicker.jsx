@@ -13,7 +13,7 @@ export function InventoryItemPicker({ items, value, onChange, excludeIds = [], d
       value={value || ""}
       onChange={(event) => onChange(event.target.value || null)}
       disabled={disabled}
-      className="h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+      className="h-10 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
     >
       <option value="">{t("procurement.po.form.itemSelectPlaceholder")}</option>
       {available.map((item) => (

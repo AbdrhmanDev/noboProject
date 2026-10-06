@@ -16,17 +16,17 @@ export function SalesPaymentBreakdown({ breakdown, currencyCode }) {
   return (
     <div className="space-y-2">
       {breakdown.map((item) => (
-        <div key={item.paymentMethodId} className="rounded-xl bg-white/[0.025] p-2.5">
+        <div key={item.paymentMethodId} className="rounded-xl bg-raised p-2.5">
           <div className="flex items-center justify-between gap-2 text-[11px]">
-            <span className="font-bold text-slate-200">{item.paymentMethodName}</span>
-            <span className="text-slate-400">
+            <span className="font-bold text-ink">{item.paymentMethodName}</span>
+            <span className="text-muted">
               {currencyCode ? formatMoney(item.netAmount, currencyCode, 2) : item.netAmount} ·{" "}
               {item.transactionCount} {t("salesOrders.overview.payment.transactions")}
             </span>
           </div>
-          <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/5">
+          <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-inset">
             <div
-              className="h-full rounded-full bg-blue-400/70"
+              className="h-full rounded-full bg-accent"
               style={{ width: `${(item.netAmount / maxAmount) * 100}%` }}
             />
           </div>

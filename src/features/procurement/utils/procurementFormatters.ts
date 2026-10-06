@@ -39,17 +39,16 @@ export const PURCHASE_ORDER_STATUS_LABEL_KEYS: Record<PurchaseOrderStatus, strin
   Cancelled: "procurement.po.status.cancelled",
 };
 
-// Restrained, semantic palette per the spec — kept as its own map (not the
-// shared 5-tone StatusBadge) since PurchaseOrder has 6 distinct statuses
-// that need visually distinct colors (Draft/neutral vs. Closed/muted purple
-// both being "neutral" would collapse two meaningfully different states).
+// Semantic, theme-aware palette (app tokens, so it follows light/dark and the Odoo look) — kept
+// as its own map (not the shared 5-tone StatusBadge) since PurchaseOrder has 6 distinct statuses
+// that need to stay visually distinct: Draft is a plain neutral pill, Closed an outlined muted one.
 export const PURCHASE_ORDER_STATUS_BADGE_CLASSES: Record<PurchaseOrderStatus, string> = {
-  Draft: "bg-white/10 text-slate-300",
-  Submitted: "bg-blue-500/15 text-blue-300",
-  PartiallyReceived: "bg-amber-500/15 text-amber-300",
-  Received: "bg-emerald-500/15 text-emerald-300",
-  Closed: "bg-violet-500/12 text-violet-300",
-  Cancelled: "bg-rose-500/15 text-rose-300",
+  Draft: "bg-inset text-muted",
+  Submitted: "bg-accent-soft text-accent",
+  PartiallyReceived: "bg-warning-soft text-warning",
+  Received: "bg-success-soft text-success",
+  Closed: "bg-raised text-subtle ring-1 ring-line",
+  Cancelled: "bg-danger-soft text-danger",
 };
 
 export const SUPPLIER_STATUS_LABEL_KEYS: Record<SupplierStatus, string> = {
@@ -58,8 +57,8 @@ export const SUPPLIER_STATUS_LABEL_KEYS: Record<SupplierStatus, string> = {
 };
 
 export const SUPPLIER_STATUS_BADGE_CLASSES: Record<SupplierStatus, string> = {
-  Active: "bg-emerald-500/15 text-emerald-300",
-  Suspended: "bg-rose-500/15 text-rose-300",
+  Active: "bg-success-soft text-success",
+  Suspended: "bg-danger-soft text-danger",
 };
 
 // Known business errors this backend can return for Procurement actions —

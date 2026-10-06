@@ -17,9 +17,9 @@ export function ConfirmToggleEntitlementDialog({ entitlement, nextEnabled, isPen
   return (
     <PlatformModal title={title} onClose={onClose}>
       <div className="space-y-4">
-        <div className="flex items-start gap-3 rounded-xl border border-amber-400/25 bg-amber-500/10 p-3">
-          <AlertTriangle size={18} className="mt-0.5 shrink-0 text-amber-300" />
-          <div className="space-y-1.5 text-xs leading-5 text-amber-100">
+        <div className="flex items-start gap-3 rounded-xl border border-warning bg-warning-soft p-3">
+          <AlertTriangle size={18} className="mt-0.5 shrink-0 text-warning" />
+          <div className="space-y-1.5 text-sm leading-5 text-warning">
             {isRootApp && isTurningOff ? (
               <>
                 <p>{t("platform.confirm.disableAppConsequence1")}</p>
@@ -43,7 +43,7 @@ export function ConfirmToggleEntitlementDialog({ entitlement, nextEnabled, isPen
             type="button"
             onClick={onClose}
             disabled={isPending}
-            className="flex h-11 flex-1 items-center justify-center rounded-xl border border-white/10 bg-white/[0.035] text-sm font-bold text-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex h-11 flex-1 items-center justify-center rounded-xl border border-line bg-raised text-sm font-bold text-ink disabled:cursor-not-allowed disabled:opacity-50"
           >
             {t("platform.actions.cancel")}
           </button>
@@ -52,7 +52,7 @@ export function ConfirmToggleEntitlementDialog({ entitlement, nextEnabled, isPen
             onClick={onConfirm}
             disabled={isPending}
             className={`flex h-11 flex-1 items-center justify-center rounded-xl text-sm font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-50 ${
-              isTurningOff ? "bg-rose-600 hover:brightness-110" : "bg-emerald-600 hover:brightness-110"
+              isTurningOff ? "bg-danger hover:brightness-110" : "bg-success hover:brightness-110"
             }`}
           >
             {isPending

@@ -151,3 +151,19 @@ export function sortVariantsBySize(variants = []) {
 export function getDefaultVariant(product) {
   return sortVariantsBySize(product?.variants)[0] ?? null;
 }
+
+// Stock level lights on the POS product card (red / yellow / green). Fixed thresholds for every
+// product -- the catalog has no per-product "full" quantity -- in AVAILABLE UNITS of the product
+// (what its stock items can still make). Change the numbers here to retune all cards.
+export const STOCK_LEVEL_THRESHOLDS = {
+  full: 20, // >= full -> green
+  half: 10, // >= half -> yellow; below -> red (about to run out)
+};
+
+export const STOCK_LEVELS = ["low", "half", "full"];
+
+export function getStockLevel(availableUnits) {
+  if (availableUnits >= STOCK_LEVEL_THRESHOLDS.full) return "full";
+  if (availableUnits >= STOCK_LEVEL_THRESHOLDS.half) return "half";
+  return "low";
+}

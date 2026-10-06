@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { X } from "lucide-react";
 import { ROUTES } from "../../../../utils/routes";
 import { EmptyState, ErrorState, LoadingState } from "../../../../shared/components/ui";
@@ -5,6 +6,7 @@ import { PriceListOnboarding } from "../../../pricing/components/PriceListOnboar
 import { FirstProductOnboarding } from "../../../catalog/components/FirstProductOnboarding";
 import { TaxSettingsOnboarding } from "../../../tax/components/TaxSettingsOnboarding";
 import { CategorySidebar } from "./CategorySidebar";
+import { CategoryRail } from "./CategoryRail";
 import { PosProductCard } from "./PosProductCard";
 import { ROVING_ITEM_SELECTOR, useGridArrowNav } from "../../../shortcuts/rovingFocus";
 import { brandAccentStyle } from "../../utils/brandAccents";
@@ -40,12 +42,23 @@ export function CatalogPanel({
   activeProductId,
   onIncrementProductLine,
   onDecrementProductLine,
+  // Stock shown on a flipped card's back: { enabled, companyId, stockByItemId, isLoading, isError }.
+  inventory,
 }) {
   const handleProductGridKeyDown = useGridArrowNav(productGridRef, ROVING_ITEM_SELECTOR);
+  // The one product card currently turned to its back face (sizes / stepper / stock). Tapping
+  // another card turns that one over instead; tapping the same card (or its back button) turns it
+  // back. Pure view state.
+  const [flippedProductId, setFlippedProductId] = useState(null);
 
   return (
     <section className="flex min-w-0 gap-2 rounded-pos-lg border border-pos-border bg-pos-bg p-2 xl:h-[calc(100dvh-var(--pos-chrome))]">
       <div className="flex min-w-0 flex-1 flex-col gap-2">
+      {/* Responsive: below md the side category column would eat a third of a phone's width, so
+          the same categories become a horizontal scrolling bar above the products instead. */}
+      <div className="md:hidden">
+        <CategoryRail categories={catalogCategories} activeCategoryId={category} onSelect={setCategory} />
+      </div>
       {taxCategoryBanner && (
         <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-400/25 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
           <span>
@@ -80,7 +93,10 @@ export function CatalogPanel({
           never change where this box's OWN last row lands once scrolled all the way down). */}
       <div
         className="min-h-0 flex-1 space-y-4 overflow-y-auto px-1 py-1 scrollbar-none"
-        style={{ paddingBottom: "calc(var(--pos-bottom-chrome-h) + env(safe-area-inset-bottom) + 0.75rem)" }}
+        style={{
+          paddingBottom:
+            "calc(var(--pos-bottom-chrome-h) + var(--pos-fab-clearance) + env(safe-area-inset-bottom))",
+        }}
       >
         {catalogPermissionQuery.isLoading && (
           <LoadingState label="Checking catalog access..." />
@@ -157,9 +173,14 @@ export function CatalogPanel({
                     product={product}
                     cartInfo={cartInfo}
                     isActive={isActive}
+                    isFlipped={flippedProductId === product.productId}
                     disabled={!canEditDraft}
                     accentStyle={accentStyle}
                     currencyCode={catalogCurrencyCode}
+                    inventory={inventory}
+                    onFlip={() =>
+                      setFlippedProductId((current) => (current === product.productId ? null : product.productId))
+                    }
                     onAddDefault={() => onTapProduct(product)}
                     onSelectSize={(variant) => onSelectProductSize(product, variant)}
                     onIncrement={onIncrementProductLine}
@@ -175,7 +196,9 @@ export function CatalogPanel({
       {/* Touch-first redesign (11th pass): moved to the opposite side from the 10th pass -- rendered
           AFTER the product-grid column here (not before), so in this RTL app it lands on the
           physical left instead of the right. */}
-      <CategorySidebar categories={catalogCategories} activeCategoryId={category} onSelect={setCategory} />
+      <div className="hidden md:flex">
+        <CategorySidebar categories={catalogCategories} activeCategoryId={category} onSelect={setCategory} />
+      </div>
     </section>
   );
 }

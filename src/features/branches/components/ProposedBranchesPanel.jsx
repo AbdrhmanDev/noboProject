@@ -44,31 +44,31 @@ export function ProposedBranchesPanel({ companyId, canView, canManage }) {
   };
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-[#0c1424] p-3">
-      <div className="mb-2 flex items-center gap-2 text-xs font-bold text-slate-300">
-        <Sparkles size={14} className="text-blue-300" />
+    <div className="rounded-xl border border-line bg-surface p-3">
+      <div className="mb-2 flex items-center gap-2 text-sm font-bold text-muted">
+        <Sparkles size={14} className="text-accent" />
         Proposed branches (approved profile v{profileQuery.data.version.versionNumber})
       </div>
-      <p className="mb-2 text-[11px] text-slate-500">
+      <p className="mb-2 text-xs text-subtle">
         These came from the company's approved registration profile. Applying one creates the real
         branch; nothing here is created automatically.
       </p>
-      {error && <div className="mb-2 rounded-xl border border-red-400/20 bg-red-500/10 p-2 text-xs text-red-200">{error}</div>}
+      {error && <div className="mb-2 rounded-xl border border-danger bg-danger-soft p-2 text-sm text-danger">{error}</div>}
       <div className="space-y-1.5">
         {proposed.map((proposal) => (
           <div
             key={proposal.ordinal}
-            className="flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/[0.02] p-2 text-xs"
+            className="flex items-center justify-between gap-2 rounded-xl border border-line bg-raised p-2 text-sm"
           >
             <div className="min-w-0">
-              <div className="truncate font-bold text-white">{proposal.name}</div>
-              <div className="truncate text-[10px] text-slate-500">
+              <div className="truncate font-bold text-ink">{proposal.name}</div>
+              <div className="truncate text-xs text-subtle">
                 {proposal.city}
                 {proposal.code ? ` · ${proposal.code}` : ""}
               </div>
             </div>
             {proposal.materializedBranchId ? (
-              <span className="flex shrink-0 items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
+              <span className="flex shrink-0 items-center gap-1 rounded-full bg-success-soft px-2 py-0.5 text-xs font-bold text-success">
                 <CircleCheck size={11} /> Applied ({proposal.materializedBranchStatus})
               </span>
             ) : canManage ? (
@@ -76,12 +76,12 @@ export function ProposedBranchesPanel({ companyId, canView, canManage }) {
                 type="button"
                 disabled={applyingOrdinal === proposal.ordinal}
                 onClick={() => apply(proposal.ordinal)}
-                className="shrink-0 rounded-lg bg-blue-600 px-2 py-1 text-[11px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                className="shrink-0 rounded-lg bg-accent px-2 py-1 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {applyingOrdinal === proposal.ordinal ? "Applying..." : "Apply"}
               </button>
             ) : (
-              <span className="shrink-0 text-[10px] text-slate-500">Not applied</span>
+              <span className="shrink-0 text-xs text-subtle">Not applied</span>
             )}
           </div>
         ))}

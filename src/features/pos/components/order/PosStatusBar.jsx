@@ -20,6 +20,7 @@ export function PosStatusBar({ cashierName, onCloseShift }) {
     month: "long",
     day: "numeric",
   });
+  const shortDate = now.toLocaleDateString(locale, { day: "numeric", month: "short" });
 
   return (
     <div
@@ -27,21 +28,25 @@ export function PosStatusBar({ cashierName, onCloseShift }) {
       style={{ right: "var(--app-sidebar-w, 0px)", paddingBottom: "env(safe-area-inset-bottom)" }}
       className="pos-fs-secondary fixed bottom-0 left-0 z-[85] border-t border-pos-border bg-pos-bg text-pos-muted"
     >
-      <div className="mx-auto flex h-[var(--pos-status-bar-h)] w-full max-w-[2200px] items-center gap-5 px-3">
-        <span className="flex items-center gap-1.5">
+      {/* Responsive: always one line. On phones the date shortens (day + month), the "Cashier:"
+          label and the close-shift text drop out, leaving the name and an icon button. */}
+      <div className="mx-auto flex h-[var(--pos-status-bar-h)] w-full max-w-[2200px] items-center gap-3 px-3 sm:gap-5">
+        <span className="flex shrink-0 items-center gap-1.5">
           <Clock3 size={15} />
           <span className="pos-num font-bold text-pos-text">{time}</span>
         </span>
         <span className="flex min-w-0 items-center gap-1.5">
-          <CalendarDays size={15} />
-          <span className="truncate">{date}</span>
+          <CalendarDays size={15} className="shrink-0" />
+          <span className="truncate sm:hidden">{shortDate}</span>
+          <span className="hidden truncate sm:inline">{date}</span>
         </span>
-        <div className="ms-auto flex min-w-0 items-center gap-3">
+        <div className="ms-auto flex min-w-0 items-center gap-2 sm:gap-3">
           {cashierName && (
             <span className="flex min-w-0 items-center gap-1.5">
-              <UserRound size={15} />
+              <UserRound size={15} className="shrink-0" />
               <span className="truncate">
-                {t("pos.statusBar.cashier")}: <span className="font-bold text-pos-text">{cashierName}</span>
+                <span className="hidden sm:inline">{t("pos.statusBar.cashier")}: </span>
+                <span className="font-bold text-pos-text">{cashierName}</span>
               </span>
             </span>
           )}
@@ -49,10 +54,12 @@ export function PosStatusBar({ cashierName, onCloseShift }) {
             <button
               type="button"
               onClick={onCloseShift}
-              className="flex h-7 shrink-0 items-center gap-1.5 rounded-pos border border-pos-danger/40 bg-pos-card px-2.5 font-bold text-pos-danger-text transition hover:bg-pos-danger/10"
+              aria-label={t("pos.statusBar.closeShift")}
+              title={t("pos.statusBar.closeShift")}
+              className="flex h-7 shrink-0 items-center gap-1.5 rounded-pos border border-pos-danger/40 bg-pos-card px-2 font-bold text-pos-danger-text transition hover:bg-pos-danger/10 sm:px-2.5"
             >
               <Power size={14} />
-              {t("pos.statusBar.closeShift")}
+              <span className="hidden sm:inline">{t("pos.statusBar.closeShift")}</span>
             </button>
           )}
         </div>

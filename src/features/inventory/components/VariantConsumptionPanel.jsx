@@ -106,12 +106,12 @@ export function VariantConsumptionPanel({ companyId, canView, canConfigure }) {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-sm font-bold text-white">Variant Consumption</h2>
+        <h2 className="text-sm font-bold text-ink">Variant Consumption</h2>
         {productVariantId && (
           <button
             type="button"
             onClick={() => consumptionQuery.refetch()}
-            className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold text-slate-100"
+            className="flex items-center gap-2 rounded-xl border border-line bg-raised px-3 py-2 text-sm font-bold text-ink"
           >
             <RefreshCw size={14} />
             Refresh
@@ -120,12 +120,12 @@ export function VariantConsumptionPanel({ companyId, canView, canConfigure }) {
       </div>
 
       {notice && (
-        <div className="rounded-xl border border-blue-400/25 bg-blue-500/10 px-3 py-2 text-xs text-blue-100">
+        <div className="rounded-xl border border-accent-line bg-accent-soft px-3 py-2 text-sm text-accent">
           {notice}
         </div>
       )}
 
-      <section className="rounded-2xl border border-white/10 bg-[#0c1424] p-4">
+      <section className="rounded-xl border border-line bg-surface p-4">
         <ProductVariantPicker
           companyId={companyId}
           enabled={canView}
@@ -142,9 +142,9 @@ export function VariantConsumptionPanel({ companyId, canView, canConfigure }) {
           message="Choose a product and variant to view its inventory consumption components."
         />
       ) : (
-        <section className="rounded-2xl border border-white/10 bg-[#0c1424] p-4">
-          <div className="mb-3 flex items-center gap-2 text-xs text-slate-400">
-            <Layers size={15} className="text-blue-300" />
+        <section className="rounded-xl border border-line bg-surface p-4">
+          <div className="mb-3 flex items-center gap-2 text-sm text-muted">
+            <Layers size={15} className="text-accent" />
             Components consumed per one sales unit of this variant
           </div>
 
@@ -159,18 +159,18 @@ export function VariantConsumptionPanel({ companyId, canView, canConfigure }) {
           {!consumptionQuery.isLoading && !consumptionQuery.isError && (
             <div className="space-y-2">
               {components.length === 0 && (
-                <div className="rounded-xl border border-dashed border-white/10 p-4 text-center text-xs text-slate-500">
+                <div className="rounded-xl border border-dashed border-line p-4 text-center text-sm text-subtle">
                   No consumption components configured for this variant yet.
                 </div>
               )}
               {components.map((component) => (
                 <div
                   key={component.inventoryItemId}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.025] p-3"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-raised p-3"
                 >
                   <div className="min-w-0">
-                    <div className="truncate text-sm font-bold text-white">{component.name}</div>
-                    <div className="text-xs text-slate-400">{component.code}</div>
+                    <div className="truncate text-sm font-bold text-ink">{component.name}</div>
+                    <div className="text-sm text-muted">{component.code}</div>
                   </div>
                   <div className="flex items-center gap-2">
                     <input
@@ -182,16 +182,16 @@ export function VariantConsumptionPanel({ companyId, canView, canConfigure }) {
                         if (event.target.value === String(component.quantityPerSalesUnit)) return;
                         submitComponent(component.inventoryItemId, event.target.value);
                       }}
-                      className="h-9 w-28 rounded-lg border border-white/10 bg-black/20 px-2 text-right text-xs text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+                      className="h-9 w-28 rounded-lg border border-line bg-canvas px-2 text-right text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
                     />
-                    <span className="text-xs text-slate-500">
+                    <span className="text-sm text-subtle">
                       {component.baseUnitOfMeasure.symbol}
                     </span>
                     <button
                       type="button"
                       disabled={!canConfigure || removeComponentMutation.isPending}
                       onClick={() => removeComponent(component.inventoryItemId)}
-                      className="rounded-lg border border-rose-400/25 p-2 text-rose-200 disabled:cursor-not-allowed disabled:opacity-40"
+                      className="rounded-lg border border-danger p-2 text-danger disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -202,14 +202,14 @@ export function VariantConsumptionPanel({ companyId, canView, canConfigure }) {
           )}
 
           {canConfigure && (
-            <div className="mt-4 flex flex-wrap items-end gap-2 border-t border-white/10 pt-4">
-              <label className="text-xs font-semibold text-slate-400">
+            <div className="mt-4 flex flex-wrap items-end gap-2 border-t border-line pt-4">
+              <label className="text-sm font-semibold text-muted">
                 Add inventory item
                 <select
                   value={selectedInventoryItemId}
                   onChange={(event) => setSelectedInventoryItemId(event.target.value)}
                   disabled={activeItemsQuery.isLoading}
-                  className="mt-1 h-10 w-56 rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+                  className="mt-1 h-10 w-56 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
                 >
                   <option value="">Select item...</option>
                   {availableItemsToAdd.map((item) => (
@@ -219,14 +219,14 @@ export function VariantConsumptionPanel({ companyId, canView, canConfigure }) {
                   ))}
                 </select>
               </label>
-              <label className="text-xs font-semibold text-slate-400">
+              <label className="text-sm font-semibold text-muted">
                 Quantity per sales unit
                 <input
                   type="text"
                   inputMode="decimal"
                   value={quantityInput}
                   onChange={(event) => setQuantityInput(event.target.value)}
-                  className="mt-1 h-10 w-40 rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none focus:border-blue-400/60"
+                  className="mt-1 h-10 w-40 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line"
                   placeholder="0.00"
                 />
               </label>
@@ -234,7 +234,7 @@ export function VariantConsumptionPanel({ companyId, canView, canConfigure }) {
                 type="button"
                 disabled={setComponentMutation.isPending}
                 onClick={() => submitComponent(selectedInventoryItemId, quantityInput)}
-                className="flex h-10 items-center gap-2 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-10 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Plus size={15} />
                 Add component
@@ -242,7 +242,7 @@ export function VariantConsumptionPanel({ companyId, canView, canConfigure }) {
             </div>
           )}
           {!canConfigure && (
-            <div className="mt-4 rounded-xl border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+            <div className="mt-4 rounded-xl border border-warning bg-warning-soft px-3 py-2 text-sm text-warning">
               Inventory.Configure permission is required to change consumption components.
             </div>
           )}

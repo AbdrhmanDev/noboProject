@@ -41,10 +41,10 @@ export function PlatformDateRangeSelector({ preset, onPresetChange, onRangeChang
             key={option.id}
             type="button"
             onClick={() => selectPreset(option.id)}
-            className={`rounded-lg border px-2.5 py-1.5 text-[11px] font-bold transition ${
+            className={`rounded-lg border px-2.5 py-1.5 text-xs font-bold transition ${
               preset === option.id
-                ? "border-blue-400/70 bg-blue-500/15 text-blue-100"
-                : "border-white/10 bg-black/10 text-slate-400 hover:bg-white/10"
+                ? "border-accent-line bg-accent-soft text-accent"
+                : "border-line bg-canvas text-muted hover:bg-hover"
             }`}
           >
             {t(option.labelKey)}
@@ -53,22 +53,22 @@ export function PlatformDateRangeSelector({ preset, onPresetChange, onRangeChang
       </div>
       {preset === "custom" && (
         <div className="flex items-center gap-1.5">
-          <label className="flex items-center gap-1 text-[11px] text-slate-400">
+          <label className="flex items-center gap-1 text-xs text-muted">
             {t("platform.dateRange.from")}
             <input
               type="date"
               value={customFrom}
               onChange={(event) => applyCustom(event.target.value, customTo)}
-              className="h-8 rounded-lg border border-white/10 bg-black/20 px-2 text-[11px] text-white outline-none"
+              className="h-8 rounded-lg border border-line bg-canvas px-2 text-xs text-ink outline-none"
             />
           </label>
-          <label className="flex items-center gap-1 text-[11px] text-slate-400">
+          <label className="flex items-center gap-1 text-xs text-muted">
             {t("platform.dateRange.to")}
             <input
               type="date"
               value={customTo}
               onChange={(event) => applyCustom(customFrom, event.target.value)}
-              className="h-8 rounded-lg border border-white/10 bg-black/20 px-2 text-[11px] text-white outline-none"
+              className="h-8 rounded-lg border border-line bg-canvas px-2 text-xs text-ink outline-none"
             />
           </label>
         </div>

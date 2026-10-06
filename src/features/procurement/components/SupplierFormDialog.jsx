@@ -75,100 +75,100 @@ export function SupplierFormDialog({ companyId, supplier, onClose, onSuccess }) 
     >
       <form onSubmit={submit} className="space-y-3">
         {formError && (
-          <div className="rounded-xl border border-rose-400/25 bg-rose-500/10 px-3 py-2 text-xs text-rose-100">
+          <div className="rounded-xl border border-danger bg-danger-soft px-3 py-2 text-sm text-danger">
             {formError}
           </div>
         )}
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="block text-xs font-semibold text-slate-400">
+          <label className="block text-sm font-semibold text-muted">
             {t("procurement.supplier.code")}
             <input
               type="text"
               value={code}
               onChange={(event) => setCode(event.target.value)}
               maxLength={50}
-              className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60"
+              className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line"
             />
           </label>
-          <label className="block text-xs font-semibold text-slate-400">
+          <label className="block text-sm font-semibold text-muted">
             {t("procurement.supplier.name")}
             <input
               type="text"
               value={name}
               onChange={(event) => setName(event.target.value)}
               maxLength={200}
-              className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60"
+              className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line"
             />
           </label>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="block text-xs font-semibold text-slate-400">
+          <label className="block text-sm font-semibold text-muted">
             {t("procurement.supplier.contactPerson")}
             <input
               type="text"
               value={contactPerson}
               onChange={(event) => setContactPerson(event.target.value)}
-              className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60"
+              className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line"
             />
           </label>
-          <label className="block text-xs font-semibold text-slate-400">
+          <label className="block text-sm font-semibold text-muted">
             {t("procurement.supplier.phone")}
             <input
               type="text"
               value={phone}
               onChange={(event) => setPhone(event.target.value)}
-              className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60"
+              className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line"
             />
           </label>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="block text-xs font-semibold text-slate-400">
+          <label className="block text-sm font-semibold text-muted">
             {t("procurement.supplier.email")}
             <input
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60"
+              className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line"
             />
           </label>
-          <label className="block text-xs font-semibold text-slate-400">
+          <label className="block text-sm font-semibold text-muted">
             {t("procurement.supplier.taxNumber")}
             <input
               type="text"
               value={taxNumber}
               onChange={(event) => setTaxNumber(event.target.value)}
-              className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60"
+              className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line"
             />
           </label>
         </div>
 
-        <label className="block text-xs font-semibold text-slate-400">
+        <label className="block text-sm font-semibold text-muted">
           {t("procurement.supplier.address")}
           <textarea
             value={address}
             onChange={(event) => setAddress(event.target.value)}
             maxLength={500}
-            className="mt-1 h-16 w-full rounded-xl border border-white/10 bg-black/20 p-3 text-xs text-white outline-none focus:border-blue-400/60"
+            className="mt-1 h-16 w-full rounded-xl border border-line bg-canvas p-3 text-sm text-ink outline-none focus:border-accent-line"
           />
         </label>
 
-        <label className="block text-xs font-semibold text-slate-400">
+        <label className="block text-sm font-semibold text-muted">
           {t("procurement.supplier.note")}
           <textarea
             value={note}
             onChange={(event) => setNote(event.target.value)}
             maxLength={500}
-            className="mt-1 h-16 w-full rounded-xl border border-white/10 bg-black/20 p-3 text-xs text-white outline-none focus:border-blue-400/60"
+            className="mt-1 h-16 w-full rounded-xl border border-line bg-canvas p-3 text-sm text-ink outline-none focus:border-accent-line"
           />
         </label>
 
         <button
           type="submit"
           disabled={isPending}
-          className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 text-sm font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-accent text-sm font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isPending
             ? t("procurement.actions.saving")

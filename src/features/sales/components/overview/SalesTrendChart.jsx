@@ -12,17 +12,23 @@ function formatTick(value) {
   }
 }
 
+// Compact axis labels (12.5K, 1.2M) so long amounts never crowd the chart.
+const compactNumber = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 });
+function formatCompact(value) {
+  return compactNumber.format(value);
+}
+
 function TrendTooltip({ active, payload, label, t, currencyCode }) {
   if (!active || !payload?.length) return null;
   const point = payload[0].payload;
 
   return (
-    <div className="rounded-lg border border-white/10 bg-[#0c1424] px-3 py-2 text-[11px] shadow-xl">
-      <div className="font-bold text-slate-200">{formatTick(label)}</div>
-      <div className="mt-1 text-slate-300">
+    <div className="rounded-lg border border-line bg-surface px-3 py-2 text-[11px] shadow-xl">
+      <div className="font-bold text-ink">{formatTick(label)}</div>
+      <div className="mt-1 text-muted">
         {currencyCode ? formatMoney(point.salesAmount, currencyCode, 2) : point.salesAmount}
       </div>
-      <div className="text-slate-500">
+      <div className="text-subtle">
         {t("salesOrders.overview.trend.orderCount")}: {point.orderCount}
       </div>
     </div>
@@ -49,7 +55,7 @@ export function SalesTrendChart({ trend, currencyCode }) {
               <stop offset="100%" stopColor="#60a5fa" stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#94a3b833" vertical={false} />
           <XAxis
             dataKey="date"
             tickFormatter={formatTick}
@@ -59,6 +65,7 @@ export function SalesTrendChart({ trend, currencyCode }) {
             tickLine={false}
           />
           <YAxis
+            tickFormatter={formatCompact}
             stroke="#64748b"
             tick={{ fontSize: 10 }}
             axisLine={false}

@@ -22,21 +22,21 @@ export default function MorePage({ onLogout }) {
     <AppLayout onLogout={onLogout} activePath={ROUTES.MORE}>
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <h1 className="text-xl font-black brand-text">{t("more.title")}</h1>
-        <span className="text-xs text-gray-400">{t("more.subtitle")}</span>
+        <span className="text-sm text-muted">{t("more.subtitle")}</span>
       </div>
 
       {/* module cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         {modules.map((m, i) => (
-          <div key={i} className="panel rounded-2xl p-4 cursor-pointer hover:border-blue-500/50">
+          <div key={i} className="panel rounded-xl p-4 cursor-pointer hover:border-accent-line">
             <div className="flex items-center justify-between mb-3">
               <div className="rounded-xl p-2" style={{ background: `${m.color}22` }}>
                 <m.icon size={18} color={m.color} />
               </div>
-              <span className="text-[10px] text-gray-500">{t("more.new")}</span>
+              <span className="text-xs text-subtle">{t("more.new")}</span>
             </div>
-            <div className="font-bold text-white text-sm">{t(m.titleKey)}</div>
-            <div className="text-[11px] text-gray-400 mt-1">{t(m.descKey)}</div>
+            <div className="font-bold text-ink text-sm">{t(m.titleKey)}</div>
+            <div className="text-xs text-muted mt-1">{t(m.descKey)}</div>
           </div>
         ))}
       </div>

@@ -29,7 +29,7 @@ function CompanyStatusBadge({ status }) {
 function LastActivityCell({ value }) {
   const { t } = useI18n();
   if (!value) {
-    return <span className="text-slate-500">{t("platform.never")}</span>;
+    return <span className="text-subtle">{t("platform.never")}</span>;
   }
   return <span>{formatDateTime(value)}</span>;
 }
@@ -77,34 +77,34 @@ function PlatformCompaniesContent() {
   const companies = companiesQuery.data?.items || [];
 
   return (
-    <main className="space-y-4" dir="rtl">
-      <header className="rounded-2xl border border-white/10 bg-[#0c1424]/85 p-4 shadow-xl shadow-black/20">
-        <div className="flex items-center gap-2 text-xs text-slate-400">
-          <ShieldCheck size={16} className="text-blue-300" />
+    <main className="odoo-root space-y-3" dir="rtl">
+      <header className="rounded-xl border border-line bg-surface p-4 shadow-xl shadow-black/20">
+        <div className="flex items-center gap-2 text-sm text-muted">
+          <ShieldCheck size={16} className="text-accent" />
           {t("nav.platform")}
         </div>
-        <h1 className="mt-1 text-2xl font-black text-white">{t("platform.companies.title")}</h1>
-        <p className="mt-0.5 text-[11px] text-slate-500">{t("platform.companies.subtitle")}</p>
+        <h1 className="mt-1 text-2xl font-black text-ink">{t("platform.companies.title")}</h1>
+        <p className="mt-0.5 text-xs text-subtle">{t("platform.companies.subtitle")}</p>
       </header>
 
-      <section className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-[#0c1424] p-3">
+      <section className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-surface p-3">
         <div className="flex flex-wrap items-center gap-2">
-          <label className="flex h-10 items-center gap-2 rounded-xl border border-white/10 bg-black/20 px-3">
-            <Search size={13} className="shrink-0 text-slate-500" />
+          <label className="flex h-10 items-center gap-2 rounded-xl border border-line bg-canvas px-3">
+            <Search size={13} className="shrink-0 text-subtle" />
             <input
               value={searchInput}
               onChange={(event) => setSearchInput(event.target.value)}
               placeholder={t("platform.companies.search")}
-              className="w-40 bg-transparent text-xs text-white outline-none placeholder:text-slate-600 sm:w-56"
+              className="w-40 bg-transparent text-sm text-ink outline-none placeholder:text-subtle sm:w-56"
             />
           </label>
           <select
             value={status}
             onChange={(event) => handleStatusChange(event.target.value)}
-            className="h-10 rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none"
+            className="h-10 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none"
           >
             {STATUS_OPTIONS.map((option) => (
-              <option key={option || "all"} value={option} className="bg-[#0c1424]">
+              <option key={option || "all"} value={option} className="bg-surface">
                 {option ? t(`platform.companies.status.${option}`) : t("platform.companies.status.all")}
               </option>
             ))}
@@ -112,12 +112,12 @@ function PlatformCompaniesContent() {
         </div>
         <PlatformDateRangeSelector preset={datePreset} onPresetChange={setDatePreset} onRangeChange={handleRangeChange} />
       </section>
-      <p className="text-[11px] text-slate-500">{t("platform.activityPeriodNote")} {t("platform.lastActivityNote")}</p>
+      <p className="text-xs text-subtle">{t("platform.activityPeriodNote")} {t("platform.lastActivityNote")}</p>
 
-      <section className="rounded-2xl border border-white/10 bg-[#0c1424] p-3">
+      <section className="rounded-xl border border-line bg-surface p-3">
         <div className="mb-3 flex items-center justify-between">
-          <div className="text-sm font-black text-white">{t("platform.companies.title")}</div>
-          <div className="text-[11px] text-slate-500">
+          <div className="text-sm font-black text-ink">{t("platform.companies.title")}</div>
+          <div className="text-xs text-subtle">
             {t("platform.companies.totalCount", { count: companiesQuery.data?.totalCount ?? 0 })}
           </div>
         </div>
@@ -133,9 +133,9 @@ function PlatformCompaniesContent() {
         {!companiesQuery.isLoading && !companiesQuery.isError && companies.length > 0 && (
           <>
             <div className="hidden overflow-x-auto lg:block">
-              <table className="w-full text-xs">
+              <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-start text-slate-500">
+                  <tr className="text-start text-subtle">
                     <th className="pb-2 text-start font-medium">{t("platform.companies.legalName")}</th>
                     <th className="pb-2 text-start font-medium">{t("platform.companies.status")}</th>
                     <th className="pb-2 text-start font-medium">{t("platform.companies.branches")}</th>
@@ -153,31 +153,31 @@ function PlatformCompaniesContent() {
                   {companies.map((company) => (
                     <tr
                       key={company.companyId}
-                      className="cursor-pointer border-t border-white/5 hover:bg-white/[0.03]"
+                      className="cursor-pointer border-t border-line hover:bg-raised"
                       onClick={() => navigate(platformCompanyDetailsPath(company.companyId))}
                     >
-                      <td className="py-2.5 font-bold text-white">
+                      <td className="py-2.5 font-bold text-ink">
                         {company.legalName}
                         {company.tradeName && (
-                          <span className="ms-1 text-[10px] font-normal text-slate-500">({company.tradeName})</span>
+                          <span className="ms-1 text-xs font-normal text-subtle">({company.tradeName})</span>
                         )}
                       </td>
                       <td className="py-2.5">
                         <CompanyStatusBadge status={company.status} />
                       </td>
-                      <td className="py-2.5 text-slate-300">{company.branchCount}</td>
-                      <td className="py-2.5 text-slate-300">{company.userCount}</td>
-                      <td className="py-2.5 text-slate-300">{company.activeUserCount}</td>
-                      <td className="py-2.5 text-slate-300">{company.pendingInvitationCount}</td>
+                      <td className="py-2.5 text-muted">{company.branchCount}</td>
+                      <td className="py-2.5 text-muted">{company.userCount}</td>
+                      <td className="py-2.5 text-muted">{company.activeUserCount}</td>
+                      <td className="py-2.5 text-muted">{company.pendingInvitationCount}</td>
                       <td className="py-2.5">
                         <PlatformEnabledAppsBadges codes={company.enabledAppCodes} />
                       </td>
-                      <td className="py-2.5 text-slate-300">{company.ordersCount}</td>
-                      <td className="py-2.5 text-slate-300">{formatMoney(company.salesAmount, company.currencyCode)}</td>
-                      <td className="py-2.5 text-slate-400">
+                      <td className="py-2.5 text-muted">{company.ordersCount}</td>
+                      <td className="py-2.5 text-muted">{formatMoney(company.salesAmount, company.currencyCode)}</td>
+                      <td className="py-2.5 text-muted">
                         <LastActivityCell value={company.lastActivityAtUtc} />
                       </td>
-                      <td className="py-2.5 text-end text-blue-300">{t("platform.companies.viewDetails")}</td>
+                      <td className="py-2.5 text-end text-accent">{t("platform.companies.viewDetails")}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -190,18 +190,18 @@ function PlatformCompaniesContent() {
                   key={company.companyId}
                   type="button"
                   onClick={() => navigate(platformCompanyDetailsPath(company.companyId))}
-                  className="flex w-full flex-col gap-2 rounded-xl border border-white/10 bg-[#0d1728] p-3 text-start transition hover:border-blue-400/40"
+                  className="flex w-full flex-col gap-2 rounded-xl border border-line bg-raised p-3 text-start transition hover:border-accent-line"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-black text-white">
+                    <span className="text-sm font-black text-ink">
                       {company.legalName}
                       {company.tradeName && (
-                        <span className="ms-1 text-[10px] font-normal text-slate-500">({company.tradeName})</span>
+                        <span className="ms-1 text-xs font-normal text-subtle">({company.tradeName})</span>
                       )}
                     </span>
                     <CompanyStatusBadge status={company.status} />
                   </div>
-                  <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-slate-400">
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-muted">
                     <span>{t("platform.companies.branches")}: {company.branchCount}</span>
                     <span>{t("platform.companies.users")}: {company.userCount}</span>
                     <span>{t("platform.companies.activeUsers")}: {company.activeUserCount}</span>
@@ -210,7 +210,7 @@ function PlatformCompaniesContent() {
                     <span>{t("platform.companies.sales")}: {formatMoney(company.salesAmount, company.currencyCode)}</span>
                   </div>
                   <PlatformEnabledAppsBadges codes={company.enabledAppCodes} />
-                  <div className="text-[11px] text-slate-500">
+                  <div className="text-xs text-subtle">
                     {t("platform.companies.lastActivity")}: <LastActivityCell value={company.lastActivityAtUtc} />
                   </div>
                 </button>
@@ -220,16 +220,16 @@ function PlatformCompaniesContent() {
         )}
 
         {companiesQuery.data && companiesQuery.data.totalPages > 1 && (
-          <div className="mt-3 flex items-center justify-between gap-2 border-t border-white/10 pt-3">
+          <div className="mt-3 flex items-center justify-between gap-2 border-t border-line pt-3">
             <button
               type="button"
               disabled={pageNumber <= 1}
               onClick={() => setPageNumber((page) => Math.max(1, page - 1))}
-              className="rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-xl border border-line bg-raised px-3 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-40"
             >
               {t("platform.pagination.previous")}
             </button>
-            <span className="text-xs text-slate-400">
+            <span className="text-sm text-muted">
               {t("platform.pagination.page", {
                 current: companiesQuery.data.pageNumber,
                 total: companiesQuery.data.totalPages,
@@ -239,7 +239,7 @@ function PlatformCompaniesContent() {
               type="button"
               disabled={pageNumber >= companiesQuery.data.totalPages}
               onClick={() => setPageNumber((page) => page + 1)}
-              className="rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-xl border border-line bg-raised px-3 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-40"
             >
               {t("platform.pagination.next")}
             </button>

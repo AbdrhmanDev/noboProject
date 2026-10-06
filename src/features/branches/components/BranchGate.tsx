@@ -15,7 +15,7 @@ type BranchGateProps = {
 
 function BranchGateShell({ children }: { children: ReactNode }) {
   return (
-    <div className="bg-space grid min-h-screen place-items-center p-4 text-white">
+    <div className="bg-space grid min-h-screen place-items-center p-4 text-ink">
       <div className="bg-stars absolute inset-0 pointer-events-none" />
       <div className="relative z-10 w-full max-w-3xl">{children}</div>
     </div>

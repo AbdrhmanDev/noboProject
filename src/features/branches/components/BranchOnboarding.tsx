@@ -51,7 +51,7 @@ function mapCreateBranchError(error: ApiError) {
 }
 
 const inputClass =
-  "mt-2 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-blue-400/60 disabled:cursor-not-allowed disabled:opacity-60";
+  "mt-2 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none transition placeholder:text-subtle focus:border-accent-line disabled:cursor-not-allowed disabled:opacity-60";
 
 export function BranchOnboarding() {
   const { currentCompanyId } = useCompany();
@@ -124,14 +124,14 @@ export function BranchOnboarding() {
 
   if (!permissionQuery.hasPermission) {
     return (
-      <section className="panel rounded-2xl p-5">
+      <section className="panel rounded-xl p-5">
         <div className="flex items-center gap-3">
-          <div className="grid h-11 w-11 place-items-center rounded-xl bg-yellow-500/15 text-yellow-300">
+          <div className="grid h-11 w-11 place-items-center rounded-xl bg-warning-soft text-warning">
             <LockKeyhole size={20} />
           </div>
           <div>
             <h1 className="brand-text text-xl font-black">Branch setup required</h1>
-            <p className="text-xs text-gray-400">
+            <p className="text-sm text-muted">
               This company has no branches yet, and your role cannot create one. Ask an
               owner or manager to create the first branch.
             </p>
@@ -142,14 +142,14 @@ export function BranchOnboarding() {
   }
 
   return (
-    <section className="panel rounded-2xl p-5">
+    <section className="panel rounded-xl p-5">
       <div className="flex items-center gap-3">
-        <div className="grid h-11 w-11 place-items-center rounded-xl bg-blue-500/15 text-blue-300">
+        <div className="grid h-11 w-11 place-items-center rounded-xl bg-accent-soft text-accent">
           <MapPin size={20} />
         </div>
         <div>
           <h1 className="brand-text text-xl font-black">Create your first branch</h1>
-          <p className="text-xs text-gray-400">
+          <p className="text-sm text-muted">
             Company created successfully. Create your first branch to continue.
           </p>
         </div>
@@ -158,7 +158,7 @@ export function BranchOnboarding() {
       <form onSubmit={handleSubmit(onSubmit)} className="mt-5 grid gap-5" noValidate>
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block">
-            <span className="text-xs font-bold text-slate-300">Branch Name</span>
+            <span className="text-sm font-bold text-muted">Branch Name</span>
             <input
               type="text"
               disabled={isSubmitting}
@@ -166,14 +166,14 @@ export function BranchOnboarding() {
               className={inputClass}
             />
             {fieldMessage(errors.name?.message) && (
-              <span className="mt-1.5 block text-xs text-rose-300">
+              <span className="mt-1.5 block text-sm text-danger">
                 {fieldMessage(errors.name?.message)}
               </span>
             )}
           </label>
 
           <label className="block">
-            <span className="text-xs font-bold text-slate-300">Branch Code</span>
+            <span className="text-sm font-bold text-muted">Branch Code</span>
             <input
               type="text"
               disabled={isSubmitting}
@@ -181,14 +181,14 @@ export function BranchOnboarding() {
               className={inputClass}
             />
             {fieldMessage(errors.code?.message) && (
-              <span className="mt-1.5 block text-xs text-rose-300">
+              <span className="mt-1.5 block text-sm text-danger">
                 {fieldMessage(errors.code?.message)}
               </span>
             )}
           </label>
 
           <label className="block sm:col-span-2">
-            <span className="text-xs font-bold text-slate-300">Phone Number (optional)</span>
+            <span className="text-sm font-bold text-muted">Phone Number (optional)</span>
             <input
               type="text"
               disabled={isSubmitting}
@@ -196,7 +196,7 @@ export function BranchOnboarding() {
               className={inputClass}
             />
             {fieldMessage(errors.phone?.message) && (
-              <span className="mt-1.5 block text-xs text-rose-300">
+              <span className="mt-1.5 block text-sm text-danger">
                 {fieldMessage(errors.phone?.message)}
               </span>
             )}
@@ -204,11 +204,11 @@ export function BranchOnboarding() {
         </div>
 
         <div>
-          <div className="text-xs font-bold text-slate-300">Registered Address</div>
+          <div className="text-sm font-bold text-muted">Registered Address</div>
 
           <div className="mt-3 grid gap-4 sm:grid-cols-2">
             <label className="block">
-              <span className="text-xs text-slate-400">Country Code</span>
+              <span className="text-sm text-muted">Country Code</span>
               <input
                 type="text"
                 maxLength={2}
@@ -217,14 +217,14 @@ export function BranchOnboarding() {
                 className={`${inputClass} uppercase`}
               />
               {fieldMessage(errors.countryCode?.message) && (
-                <span className="mt-1.5 block text-xs text-rose-300">
+                <span className="mt-1.5 block text-sm text-danger">
                   {fieldMessage(errors.countryCode?.message)}
                 </span>
               )}
             </label>
 
             <label className="block">
-              <span className="text-xs text-slate-400">City</span>
+              <span className="text-sm text-muted">City</span>
               <input
                 type="text"
                 disabled={isSubmitting}
@@ -232,14 +232,14 @@ export function BranchOnboarding() {
                 className={inputClass}
               />
               {fieldMessage(errors.city?.message) && (
-                <span className="mt-1.5 block text-xs text-rose-300">
+                <span className="mt-1.5 block text-sm text-danger">
                   {fieldMessage(errors.city?.message)}
                 </span>
               )}
             </label>
 
             <label className="block">
-              <span className="text-xs text-slate-400">District (optional)</span>
+              <span className="text-sm text-muted">District (optional)</span>
               <input
                 type="text"
                 disabled={isSubmitting}
@@ -249,7 +249,7 @@ export function BranchOnboarding() {
             </label>
 
             <label className="block">
-              <span className="text-xs text-slate-400">Street (optional)</span>
+              <span className="text-sm text-muted">Street (optional)</span>
               <input
                 type="text"
                 disabled={isSubmitting}
@@ -259,7 +259,7 @@ export function BranchOnboarding() {
             </label>
 
             <label className="block">
-              <span className="text-xs text-slate-400">Building Number (optional)</span>
+              <span className="text-sm text-muted">Building Number (optional)</span>
               <input
                 type="text"
                 disabled={isSubmitting}
@@ -269,7 +269,7 @@ export function BranchOnboarding() {
             </label>
 
             <label className="block">
-              <span className="text-xs text-slate-400">Additional Number (optional)</span>
+              <span className="text-sm text-muted">Additional Number (optional)</span>
               <input
                 type="text"
                 disabled={isSubmitting}
@@ -279,7 +279,7 @@ export function BranchOnboarding() {
             </label>
 
             <label className="block">
-              <span className="text-xs text-slate-400">Postal Code (optional)</span>
+              <span className="text-sm text-muted">Postal Code (optional)</span>
               <input
                 type="text"
                 disabled={isSubmitting}
@@ -291,7 +291,7 @@ export function BranchOnboarding() {
         </div>
 
         {formError && (
-          <div className="rounded-xl border border-rose-400/25 bg-rose-500/10 px-3 py-2 text-xs text-rose-100">
+          <div className="rounded-xl border border-danger bg-danger-soft px-3 py-2 text-sm text-danger">
             {formError}
           </div>
         )}
@@ -299,7 +299,7 @@ export function BranchOnboarding() {
         <button
           type="submit"
           disabled={isSubmitting || mutation.isPending}
-          className="flex h-12 items-center justify-center gap-2 rounded-xl bg-gradient-to-l from-blue-600 to-[#0A84FF] text-sm font-black text-white shadow-lg shadow-blue-950/40 transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-300 disabled:cursor-not-allowed disabled:opacity-55"
+          className="flex h-12 items-center justify-center gap-2 rounded-xl bg-accent text-sm font-black text-white shadow-sm transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-55"
         >
           {mutation.isPending ? <RefreshCw size={17} className="animate-spin" /> : null}
           Create Branch

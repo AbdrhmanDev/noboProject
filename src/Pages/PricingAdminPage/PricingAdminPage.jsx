@@ -86,14 +86,14 @@ function formatConfiguredAmount(value, currencyCode) {
 function PriceBadge({ item, currencyCode }) {
   if (!item?.isConfigured) {
     return (
-      <span className="rounded-full border border-amber-400/25 bg-amber-500/10 px-2 py-1 text-[11px] font-bold text-amber-100">
+      <span className="rounded-full border border-warning bg-warning-soft px-2 py-1 text-xs font-bold text-warning">
         No price
       </span>
     );
   }
 
   return (
-    <span className="rounded-full border border-emerald-400/25 bg-emerald-500/10 px-2 py-1 text-[11px] font-bold text-emerald-100">
+    <span className="rounded-full border border-success bg-success-soft px-2 py-1 text-xs font-bold text-success">
       {formatConfiguredAmount(item.amount ?? item.amountAdjustment ?? 0, currencyCode)}
     </span>
   );
@@ -104,25 +104,25 @@ function PriceListCard({ priceList, selected, onSelect }) {
     <button
       type="button"
       onClick={onSelect}
-      className={`w-full rounded-xl border p-3 text-start transition hover:border-blue-400/40 hover:bg-blue-500/10 ${
-        selected ? "border-blue-400/60 bg-blue-500/15" : "border-white/10 bg-[#0d1728]"
+      className={`w-full rounded-xl border p-3 text-start transition hover:border-accent-line hover:bg-accent-soft ${
+        selected ? "border-accent-line bg-accent-soft" : "border-line bg-raised"
       }`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <BadgeDollarSign size={16} className="shrink-0 text-blue-300" />
-            <div className="truncate text-sm font-black text-white">{priceList.name}</div>
+            <BadgeDollarSign size={16} className="shrink-0 text-accent" />
+            <div className="truncate text-sm font-black text-ink">{priceList.name}</div>
           </div>
-          <div className="mt-1 flex flex-wrap gap-2 text-xs text-slate-400">
+          <div className="mt-1 flex flex-wrap gap-2 text-sm text-muted">
             <span>{priceList.currencyCode}</span>
             <span>{priceList.taxMode || "No tax mode"}</span>
-            {priceList.isDefault && <span className="text-blue-200">Default</span>}
+            {priceList.isDefault && <span className="text-accent">Default</span>}
           </div>
         </div>
         <StatusBadge tone={statusTone(priceList.status)}>{priceList.status}</StatusBadge>
       </div>
-      <div className="mt-3 text-[11px] text-slate-500">
+      <div className="mt-3 text-xs text-subtle">
         Created {formatDateTime(priceList.createdAtUtc)}
       </div>
     </button>
@@ -133,11 +133,11 @@ function PanelTitle({ icon, eyebrow, title, status }) {
   return (
     <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
       <div>
-        <div className="flex items-center gap-2 text-xs text-slate-400">
+        <div className="flex items-center gap-2 text-sm text-muted">
           {icon}
           {eyebrow}
         </div>
-        <h2 className="mt-1 text-xl font-black text-white">{title}</h2>
+        <h2 className="mt-1 text-xl font-black text-ink">{title}</h2>
       </div>
       {status && <StatusBadge tone={statusTone(status)}>{status}</StatusBadge>}
     </div>
@@ -146,9 +146,9 @@ function PanelTitle({ icon, eyebrow, title, status }) {
 
 function InfoTile({ label, value }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.025] p-3">
-      <div className="text-[11px] text-slate-500">{label}</div>
-      <div className="mt-1 truncate text-sm font-black text-white">{value}</div>
+    <div className="rounded-xl border border-line bg-raised p-3">
+      <div className="text-xs text-subtle">{label}</div>
+      <div className="mt-1 truncate text-sm font-black text-ink">{value}</div>
     </div>
   );
 }
@@ -436,7 +436,7 @@ export default function PricingAdminPage() {
 
   return (
     <AppLayout>
-      <main className="space-y-4" dir="rtl">
+      <main className="odoo-root space-y-3" dir="rtl">
         <PageHeader
           title="Pricing"
           actions={
@@ -448,7 +448,7 @@ export default function PricingAdminPage() {
                   variantPricesQuery.refetch();
                   modifierPricesQuery.refetch();
                 }}
-                className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold text-slate-100"
+                className="flex items-center gap-2 rounded-xl border border-line bg-raised px-3 py-2 text-sm font-bold text-ink"
               >
                 <RefreshCw size={14} />
                 Refresh
@@ -456,7 +456,7 @@ export default function PricingAdminPage() {
               <button
                 type="button"
                 onClick={startCreatePriceList}
-                className="flex items-center gap-2 rounded-xl bg-blue-600 px-3 py-2 text-xs font-bold text-white"
+                className="flex items-center gap-2 rounded-xl bg-accent px-3 py-2 text-sm font-bold text-white"
               >
                 <Plus size={14} />
                 New price list
@@ -466,7 +466,7 @@ export default function PricingAdminPage() {
         />
 
         {notice && (
-          <div className="rounded-xl border border-blue-400/25 bg-blue-500/10 px-3 py-2 text-xs text-blue-100">
+          <div className="rounded-xl border border-accent-line bg-accent-soft px-3 py-2 text-sm text-accent">
             {notice}
           </div>
         )}
@@ -479,22 +479,22 @@ export default function PricingAdminPage() {
           <ErrorState title="Permission required" message="Pricing.View permission is required." />
         ) : (
           <div className="grid gap-4 2xl:grid-cols-[380px_1fr]">
-            <section className="rounded-2xl border border-white/10 bg-[#0c1424] p-3">
+            <section className="rounded-xl border border-line bg-surface p-3">
               <div className="mb-3 flex flex-wrap gap-2">
                 <label className="relative block min-w-[180px] flex-1">
-                  <Search size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                  <Search size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-subtle" />
                   <input
                     value={priceListSearch}
                     onChange={(event) => setPriceListSearch(event.target.value)}
                     maxLength={100}
                     placeholder="Search price lists"
-                    className="h-10 w-full rounded-xl border border-white/10 bg-black/20 pr-9 pl-3 text-xs text-white outline-none"
+                    className="h-10 w-full rounded-xl border border-line bg-canvas pr-9 pl-3 text-sm text-ink outline-none"
                   />
                 </label>
                 <select
                   value={priceListStatus}
                   onChange={(event) => setPriceListStatus(event.target.value)}
-                  className="h-10 rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none"
+                  className="h-10 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none"
                 >
                   <option value="">All status</option>
                   <option value="Active">Active</option>
@@ -523,9 +523,9 @@ export default function PricingAdminPage() {
             </section>
 
             <section className="space-y-4">
-              <div className="rounded-2xl border border-white/10 bg-[#0c1424] p-4">
+              <div className="rounded-xl border border-line bg-surface p-4">
                 <PanelTitle
-                  icon={<Power size={15} className="text-blue-300" />}
+                  icon={<Power size={15} className="text-accent" />}
                   eyebrow={priceListMode === "create" ? "Create price list" : "Price list configuration"}
                   title={priceListMode === "create" ? "New price list" : selectedPriceList?.name || "Loading price list"}
                   status={selectedPriceList?.status}
@@ -551,23 +551,23 @@ export default function PricingAdminPage() {
                       </div>
                     )}
                     <div className="grid gap-3 md:grid-cols-[1fr_170px_170px]">
-                      <label className="text-xs font-semibold text-slate-400">
+                      <label className="text-sm font-semibold text-muted">
                         Name
                         <input
                           value={priceListForm.name}
                           onChange={(event) => setPriceListForm((draft) => ({ ...draft, name: event.target.value }))}
                           maxLength={200}
                           disabled={!canManage || priceListPending}
-                          className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none disabled:opacity-50"
+                          className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none disabled:opacity-50"
                         />
                       </label>
-                      <label className="text-xs font-semibold text-slate-400">
+                      <label className="text-sm font-semibold text-muted">
                         Tax Mode
                         <select
                           value={priceListForm.taxMode}
                           onChange={(event) => setPriceListForm((draft) => ({ ...draft, taxMode: event.target.value }))}
                           disabled={!canManage || priceListPending}
-                          className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none disabled:opacity-50"
+                          className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none disabled:opacity-50"
                         >
                           {TAX_MODES.map((mode) => (
                             <option key={mode} value={mode}>
@@ -576,18 +576,18 @@ export default function PricingAdminPage() {
                           ))}
                         </select>
                       </label>
-                      <label className="flex items-end gap-2 pb-3 text-xs font-semibold text-slate-300">
+                      <label className="flex items-end gap-2 pb-3 text-sm font-semibold text-muted">
                         <input
                           type="checkbox"
                           checked={priceListForm.isDefault}
                           onChange={(event) => setPriceListForm((draft) => ({ ...draft, isDefault: event.target.checked }))}
                           disabled={priceListMode === "edit" || !canManage || priceListPending}
-                          className="h-4 w-4 rounded border-white/20 bg-black/20"
+                          className="h-4 w-4 rounded border-line-strong bg-canvas"
                         />
                         Default on create
                       </label>
                     </div>
-                    <div className="rounded-xl border border-white/10 bg-white/[0.025] px-3 py-2 text-xs text-slate-400">
+                    <div className="rounded-xl border border-line bg-raised px-3 py-2 text-sm text-muted">
                       Currency and default selection are fixed at creation and cannot be changed
                       afterward — create another price list if you need different values. Tax mode
                       can be changed here; it is saved automatically together with the name
@@ -596,7 +596,7 @@ export default function PricingAdminPage() {
                       touching the name).
                     </div>
                     {!canManage && (
-                      <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+                      <div className="rounded-xl border border-warning bg-warning-soft px-3 py-2 text-sm text-warning">
                         Pricing.Manage permission is required for pricing changes.
                       </div>
                     )}
@@ -604,7 +604,7 @@ export default function PricingAdminPage() {
                       <button
                         type="submit"
                         disabled={!canManage || priceListPending}
-                        className="flex h-10 items-center gap-2 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white disabled:opacity-50"
+                        className="flex h-10 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-bold text-white disabled:opacity-50"
                       >
                         {priceListMode === "edit" ? <Pencil size={15} /> : <Plus size={15} />}
                         {priceListPending ? "Saving..." : priceListMode === "edit" ? "Save price list" : "Create price list"}
@@ -615,7 +615,7 @@ export default function PricingAdminPage() {
                             type="button"
                             disabled={!canManage || priceListPending}
                             onClick={submitTaxMode}
-                            className="flex h-10 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-4 text-xs font-bold text-slate-100 disabled:opacity-50"
+                            className="flex h-10 items-center gap-2 rounded-xl border border-line bg-raised px-4 text-sm font-bold text-ink disabled:opacity-50"
                           >
                             <Banknote size={15} />
                             Save tax mode
@@ -624,7 +624,7 @@ export default function PricingAdminPage() {
                             type="button"
                             disabled={!canManage || priceListPending}
                             onClick={changeStatus}
-                            className="flex h-10 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-4 text-xs font-bold text-slate-100 disabled:opacity-50"
+                            className="flex h-10 items-center gap-2 rounded-xl border border-line bg-raised px-4 text-sm font-bold text-ink disabled:opacity-50"
                           >
                             {selectedPriceList.status === "Active" ? <CirclePause size={15} /> : <CircleCheck size={15} />}
                             {selectedPriceList.status === "Active" ? "Suspend" : "Activate"}
@@ -636,9 +636,9 @@ export default function PricingAdminPage() {
                 )}
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-[#0c1424] p-4">
+              <div className="rounded-xl border border-line bg-surface p-4">
                 <PanelTitle
-                  icon={<Coins size={15} className="text-blue-300" />}
+                  icon={<Coins size={15} className="text-accent" />}
                   eyebrow="Variant prices"
                   title={selectedPriceList?.name || "Select a price list"}
                 />
@@ -648,7 +648,7 @@ export default function PricingAdminPage() {
                   <div className="space-y-4">
                     <div className="grid gap-2 lg:grid-cols-[1fr_150px_180px_160px]">
                       <label className="relative block">
-                        <Search size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                        <Search size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-subtle" />
                         <input
                           value={variantSearch}
                           onChange={(event) => {
@@ -657,7 +657,7 @@ export default function PricingAdminPage() {
                           }}
                           maxLength={100}
                           placeholder="Search variants"
-                          className="h-10 w-full rounded-xl border border-white/10 bg-black/20 pr-9 pl-3 text-xs text-white outline-none"
+                          className="h-10 w-full rounded-xl border border-line bg-canvas pr-9 pl-3 text-sm text-ink outline-none"
                         />
                       </label>
                       <select
@@ -666,7 +666,7 @@ export default function PricingAdminPage() {
                           setVariantConfiguration(event.target.value);
                           setVariantPage(1);
                         }}
-                        className="h-10 rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none"
+                        className="h-10 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none"
                       >
                         <option value="">All</option>
                         <option value="configured">Configured</option>
@@ -679,7 +679,7 @@ export default function PricingAdminPage() {
                           setVariantProductId("");
                           setVariantPage(1);
                         }}
-                        className="h-10 rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none"
+                        className="h-10 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none"
                       >
                         <option value="">All categories</option>
                         {(categoriesQuery.data || []).map((category) => (
@@ -694,7 +694,7 @@ export default function PricingAdminPage() {
                           setVariantProductId(event.target.value);
                           setVariantPage(1);
                         }}
-                        className="h-10 rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none"
+                        className="h-10 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none"
                       >
                         <option value="">All products</option>
                         {(productsQuery.data?.items || []).map((product) => (
@@ -719,16 +719,16 @@ export default function PricingAdminPage() {
                                 key={item.productVariantId}
                                 type="button"
                                 onClick={() => selectVariantPrice(item)}
-                                className={`w-full rounded-xl border p-3 text-start transition hover:border-blue-400/40 hover:bg-blue-500/10 ${
+                                className={`w-full rounded-xl border p-3 text-start transition hover:border-accent-line hover:bg-accent-soft ${
                                   selectedVariantId === item.productVariantId
-                                    ? "border-blue-400/60 bg-blue-500/15"
-                                    : "border-white/10 bg-[#0d1728]"
+                                    ? "border-accent-line bg-accent-soft"
+                                    : "border-line bg-raised"
                                 }`}
                               >
                                 <div className="flex items-start justify-between gap-3">
                                   <div className="min-w-0">
-                                    <div className="truncate text-sm font-black text-white">{item.variantName}</div>
-                                    <div className="mt-1 truncate text-xs text-slate-400">
+                                    <div className="truncate text-sm font-black text-ink">{item.variantName}</div>
+                                    <div className="mt-1 truncate text-sm text-muted">
                                       {item.productName} {item.sku ? `| ${item.sku}` : ""}
                                     </div>
                                   </div>
@@ -737,7 +737,7 @@ export default function PricingAdminPage() {
                               </button>
                             ))
                           )}
-                          <div className="flex items-center justify-between gap-2 pt-2 text-xs text-slate-400">
+                          <div className="flex items-center justify-between gap-2 pt-2 text-sm text-muted">
                             <span>
                               Page {variantPricesQuery.data?.pageNumber || 1} / {variantPricesQuery.data?.totalPages || 0}
                             </span>
@@ -746,7 +746,7 @@ export default function PricingAdminPage() {
                                 type="button"
                                 disabled={variantPage <= 1}
                                 onClick={() => setVariantPage((page) => Math.max(1, page - 1))}
-                                className="rounded-lg border border-white/10 px-3 py-1 disabled:opacity-40"
+                                className="rounded-lg border border-line px-3 py-1 disabled:opacity-40"
                               >
                                 Prev
                               </button>
@@ -754,7 +754,7 @@ export default function PricingAdminPage() {
                                 type="button"
                                 disabled={!variantPricesQuery.data || variantPage >= variantPricesQuery.data.totalPages}
                                 onClick={() => setVariantPage((page) => page + 1)}
-                                className="rounded-lg border border-white/10 px-3 py-1 disabled:opacity-40"
+                                className="rounded-lg border border-line px-3 py-1 disabled:opacity-40"
                               >
                                 Next
                               </button>
@@ -782,24 +782,24 @@ export default function PricingAdminPage() {
                                 <InfoTile label="Current" value={selectedVariantPrice?.isConfigured ? formatConfiguredAmount(selectedVariantPrice.amount ?? 0, selectedVariantPrice.currencyCode) : "No price"} />
                                 <InfoTile label="Status" value={selectedVariantPrice?.variantStatus || ""} />
                               </div>
-                              <label className="block text-xs font-semibold text-slate-400">
+                              <label className="block text-sm font-semibold text-muted">
                                 Amount
                                 <input
                                   value={variantPriceForm.amount}
                                   onChange={(event) => setVariantPriceForm({ amount: event.target.value })}
                                   placeholder="0.00"
                                   disabled={!canEditPrices || setVariantPriceMutation.isPending}
-                                  className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none disabled:opacity-50"
+                                  className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none disabled:opacity-50"
                                 />
                               </label>
-                              <div className="rounded-xl border border-white/10 bg-white/[0.025] px-3 py-2 text-xs text-slate-400">
+                              <div className="rounded-xl border border-line bg-raised px-3 py-2 text-sm text-muted">
                                 Missing price is different from an explicit 0 price. No rounding is applied; backend currency precision remains authoritative.
                               </div>
                               <div className="flex flex-wrap gap-2">
                                 <button
                                   type="submit"
                                   disabled={!canEditPrices || setVariantPriceMutation.isPending}
-                                  className="flex h-10 items-center gap-2 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white disabled:opacity-50"
+                                  className="flex h-10 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-bold text-white disabled:opacity-50"
                                 >
                                   <Pencil size={15} />
                                   Save variant price
@@ -808,7 +808,7 @@ export default function PricingAdminPage() {
                                   type="button"
                                   disabled={!canEditPrices || !selectedVariantPrice?.isConfigured || removeVariantPriceMutation.isPending}
                                   onClick={removeVariantPrice}
-                                  className="flex h-10 items-center gap-2 rounded-xl border border-red-400/20 bg-red-500/10 px-4 text-xs font-bold text-red-100 disabled:opacity-50"
+                                  className="flex h-10 items-center gap-2 rounded-xl border border-danger bg-danger-soft px-4 text-sm font-bold text-danger disabled:opacity-50"
                                 >
                                   <Trash2 size={15} />
                                   Delete configured price
@@ -823,9 +823,9 @@ export default function PricingAdminPage() {
                 )}
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-[#0c1424] p-4">
+              <div className="rounded-xl border border-line bg-surface p-4">
                 <PanelTitle
-                  icon={<BadgeDollarSign size={15} className="text-blue-300" />}
+                  icon={<BadgeDollarSign size={15} className="text-accent" />}
                   eyebrow="Modifier prices"
                   title={selectedVariantPrice?.variantName || "Select a variant"}
                 />
@@ -846,17 +846,17 @@ export default function PricingAdminPage() {
                             key={`${item.modifierGroupId}-${item.modifierOptionId}`}
                             type="button"
                             onClick={() => selectModifierPrice(item)}
-                            className={`w-full rounded-xl border p-3 text-start transition hover:border-blue-400/40 hover:bg-blue-500/10 ${
+                            className={`w-full rounded-xl border p-3 text-start transition hover:border-accent-line hover:bg-accent-soft ${
                               selectedModifier?.modifierGroupId === item.modifierGroupId &&
                               selectedModifier?.modifierOptionId === item.modifierOptionId
-                                ? "border-blue-400/60 bg-blue-500/15"
-                                : "border-white/10 bg-[#0d1728]"
+                                ? "border-accent-line bg-accent-soft"
+                                : "border-line bg-raised"
                             }`}
                           >
                             <div className="flex items-start justify-between gap-3">
                               <div className="min-w-0">
-                                <div className="truncate text-sm font-black text-white">{item.modifierOptionName}</div>
-                                <div className="mt-1 truncate text-xs text-slate-400">{item.modifierGroupName}</div>
+                                <div className="truncate text-sm font-black text-ink">{item.modifierOptionName}</div>
+                                <div className="mt-1 truncate text-sm text-muted">{item.modifierGroupName}</div>
                               </div>
                               <PriceBadge item={item} currencyCode={item.currencyCode} />
                             </div>
@@ -883,24 +883,24 @@ export default function PricingAdminPage() {
                           <InfoTile label="Option" value={selectedModifierPrice?.modifierOptionName || ""} />
                           <InfoTile label="Current" value={selectedModifierPrice?.isConfigured ? formatConfiguredAmount(selectedModifierPrice.amountAdjustment ?? 0, selectedModifierPrice.currencyCode) : "No price"} />
                         </div>
-                        <label className="block text-xs font-semibold text-slate-400">
+                        <label className="block text-sm font-semibold text-muted">
                           Amount Adjustment
                           <input
                             value={modifierPriceForm.amountAdjustment}
                             onChange={(event) => setModifierPriceForm({ amountAdjustment: event.target.value })}
                             placeholder="0.00"
                             disabled={!canEditPrices || setModifierPriceMutation.isPending}
-                            className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none disabled:opacity-50"
+                            className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none disabled:opacity-50"
                           />
                         </label>
-                        <div className="rounded-xl border border-white/10 bg-white/[0.025] px-3 py-2 text-xs text-slate-400">
+                        <div className="rounded-xl border border-line bg-raised px-3 py-2 text-sm text-muted">
                           Missing modifier price is different from an explicit 0 adjustment. Deleting may remove the option from future sellable catalog responses.
                         </div>
                         <div className="flex flex-wrap gap-2">
                           <button
                             type="submit"
                             disabled={!canEditPrices || setModifierPriceMutation.isPending}
-                            className="flex h-10 items-center gap-2 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white disabled:opacity-50"
+                            className="flex h-10 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-bold text-white disabled:opacity-50"
                           >
                             <Pencil size={15} />
                             Save modifier price
@@ -909,7 +909,7 @@ export default function PricingAdminPage() {
                             type="button"
                             disabled={!canEditPrices || !selectedModifierPrice?.isConfigured || removeModifierPriceMutation.isPending}
                             onClick={removeModifierPrice}
-                            className="flex h-10 items-center gap-2 rounded-xl border border-red-400/20 bg-red-500/10 px-4 text-xs font-bold text-red-100 disabled:opacity-50"
+                            className="flex h-10 items-center gap-2 rounded-xl border border-danger bg-danger-soft px-4 text-sm font-bold text-danger disabled:opacity-50"
                           >
                             <Trash2 size={15} />
                             Delete modifier price

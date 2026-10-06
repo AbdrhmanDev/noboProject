@@ -13,14 +13,14 @@ export function ConsumptionRulesPanel({ companyId, canView, canConfigure }) {
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap gap-2 rounded-2xl border border-white/10 bg-[#0c1424] p-2">
+      <div className="flex flex-wrap gap-2 rounded-xl border border-line bg-surface p-2">
         {SUB_TABS.map(([value, label, Icon]) => (
           <button
             key={value}
             type="button"
             onClick={() => setSubTab(value)}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition ${
-              subTab === value ? "bg-blue-600 text-white" : "text-slate-300 hover:bg-white/5"
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition ${
+              subTab === value ? "bg-accent-soft text-accent" : "text-muted hover:bg-hover hover:text-ink"
             }`}
           >
             <Icon size={15} />

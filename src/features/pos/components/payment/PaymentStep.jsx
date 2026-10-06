@@ -1,5 +1,5 @@
-import { useMemo, useRef } from "react";
-import { CircleDollarSign, ReceiptText, Wallet } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { Check, CircleDollarSign, ReceiptText, Split, Wallet } from "lucide-react";
 import { formatMoney } from "../../../../shared/utils/formatters";
 import { formatPaymentDate, getPaymentMethodIcon } from "../../utils/posFormatters";
 import { PaymentMethodOnboarding } from "../../../payments/components/PaymentMethodOnboarding";
@@ -106,6 +106,8 @@ export function PaymentStep({
   }, [isCashSelected, remainingAmount]);
 
   if (!draftOrder) return null;
+
+  const showPayments = !paymentMethodsQuery.isLoading && paymentMethods.length > 0;
 
   return (
     <div className="grid items-start gap-2 xl:grid-cols-[380px_minmax(0,1fr)]">
@@ -302,8 +304,16 @@ export function PaymentStep({
                   </div>
                 ))}
 
-              {!paymentMethodsQuery.isLoading && paymentMethods.length > 0 && (
+              {showPayments && (
                 <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pe-1 scrollbar-none">
+                  <SplitCheckPanel
+                    total={total}
+                    netPaidAmount={netPaidAmount}
+                    remainingAmount={remainingAmount}
+                    currencyCode={settlementCurrencyCode}
+                    minorUnitDigits={settlementMinorUnitDigits}
+                    onPayShare={(amount) => setPaymentAmountInput(String(amount))}
+                  />
                   <div
                     ref={paymentMethodGridRef}
                     onKeyDown={handlePaymentMethodGridKeyDown}
@@ -400,7 +410,7 @@ export function PaymentStep({
                 </div>
               )}
 
-              {!paymentMethodsQuery.isLoading && paymentMethods.length > 0 && (
+              {showPayments && (
                 <button
                   type="button"
                   disabled={!canReceivePayment}
@@ -426,5 +436,132 @@ export function PaymentStep({
           )}
         </div>
       </div>
+  );
+}
+
+const SPLIT_PART_OPTIONS = [2, 3, 4];
+
+// N equal cheques for `totalMinor`, in minor units, adding up exactly (leftover units go first).
+function buildCheques(parts, totalMinor) {
+  if (!parts || totalMinor <= 0) return [];
+  const base = Math.floor(totalMinor / parts);
+  const leftover = totalMinor - base * parts;
+  let cumulative = 0;
+  return Array.from({ length: parts }, (_, index) => {
+    const shareMinor = base + (index < leftover ? 1 : 0);
+    cumulative += shareMinor;
+    return { number: index + 1, shareMinor, cumulativeMinor: cumulative };
+  });
+}
+
+// Split check: divides the order total into N equal cheques and pays them one at a time through
+// the order's normal partial payments (each cheque = one receive-payment of its share). Purely a
+// payment-amount helper -- the order itself is never split, nothing new is sent to the server.
+// Shares are computed in minor units so they always add up to the exact total (any leftover
+// minor unit goes to the first cheques). A cheque counts as paid once the order's net paid amount
+// covers it and every cheque before it.
+function SplitCheckPanel({ total, netPaidAmount, remainingAmount, currencyCode, minorUnitDigits, onPayShare }) {
+  const { t } = useI18n();
+  const [parts, setParts] = useState(null);
+
+  const factor = 10 ** minorUnitDigits;
+  const totalMinor = Math.round(Number(total) * factor);
+  const paidMinor = Math.round(Number(netPaidAmount) * factor);
+
+  const cheques = useMemo(() => buildCheques(parts, totalMinor), [parts, totalMinor]);
+  const currentIndex = cheques.findIndex((cheque) => cheque.cumulativeMinor > paidMinor);
+  const money = (minor) => formatMoney(minor / factor, currencyCode, minorUnitDigits);
+
+  // Fills the payment amount with what's still owed up to the end of this cheque (covers a
+  // partly-paid one), never above the order's remaining amount.
+  const payCheque = (cheque) => {
+    if (!cheque) return;
+    const dueMinor = Math.min(cheque.cumulativeMinor - paidMinor, Math.round(remainingAmount * factor));
+    if (dueMinor > 0) onPayShare((dueMinor / factor).toFixed(minorUnitDigits));
+  };
+
+  if (remainingAmount <= 0 && !parts) return null;
+
+  return (
+    <div className="rounded-pos border border-pos-border bg-pos-bg p-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 text-xs font-bold text-pos-text">
+          <Split size={14} className="text-pos-primary-text" />
+          {t("pos.split.title")}
+        </div>
+        <div className="flex items-center gap-1" role="group" aria-label={t("pos.split.title")}>
+          <button
+            type="button"
+            aria-pressed={!parts}
+            onClick={() => setParts(null)}
+            className={`h-8 rounded-pos border px-2.5 text-[11px] font-bold transition ${
+              !parts ? "border-pos-primary bg-pos-tint text-pos-primary-text" : "border-pos-border bg-pos-card text-pos-text hover:border-pos-primary"
+            }`}
+          >
+            {t("pos.split.none")}
+          </button>
+          {SPLIT_PART_OPTIONS.map((option) => (
+            <button
+              key={option}
+              type="button"
+              aria-pressed={parts === option}
+              onClick={() => {
+                setParts(option);
+                // Pre-fill the amount for the first unpaid cheque right away.
+                payCheque(buildCheques(option, totalMinor).find((cheque) => cheque.cumulativeMinor > paidMinor));
+              }}
+              className={`pos-num h-8 min-w-8 rounded-pos border px-2 text-[11px] font-bold transition ${
+                parts === option ? "border-pos-primary bg-pos-tint text-pos-primary-text" : "border-pos-border bg-pos-card text-pos-text hover:border-pos-primary"
+              }`}
+            >
+              ÷{option}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {cheques.length > 0 && (
+        <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
+          {cheques.map((cheque, index) => {
+            const isPaid = cheque.cumulativeMinor <= paidMinor;
+            const isCurrent = index === currentIndex;
+            return (
+              <div
+                key={cheque.number}
+                className={`flex items-center justify-between gap-2 rounded-pos border px-2.5 py-1.5 ${
+                  isPaid
+                    ? "border-pos-action/40 bg-pos-action-tint"
+                    : isCurrent
+                      ? "border-pos-primary bg-pos-card"
+                      : "border-pos-border bg-pos-card"
+                }`}
+              >
+                <div className="min-w-0">
+                  <div className="text-[10px] font-bold text-pos-muted">
+                    {t("pos.split.cheque", { number: cheque.number, count: cheques.length })}
+                  </div>
+                  <div className="pos-num text-sm font-black text-pos-text">{money(cheque.shareMinor)}</div>
+                </div>
+                {isPaid ? (
+                  <span className="flex shrink-0 items-center gap-1 text-[11px] font-bold text-pos-action-text">
+                    <Check size={14} />
+                    {t("pos.split.paid")}
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={!isCurrent}
+                    onClick={() => payCheque(cheque)}
+                    className="h-8 shrink-0 rounded-pos bg-pos-primary-strong px-3 text-[11px] font-bold text-white transition hover:bg-pos-primary-strong-hover disabled:cursor-not-allowed disabled:bg-pos-border disabled:text-pos-muted"
+                  >
+                    {t("pos.split.payThis")}
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }

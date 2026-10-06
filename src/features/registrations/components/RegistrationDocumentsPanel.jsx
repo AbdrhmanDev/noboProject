@@ -121,11 +121,11 @@ export function RegistrationDocumentsPanel({
   return (
     <div className="space-y-3">
       {permissions.canUploadDocuments && (
-        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-white/[0.02] p-2">
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-line bg-raised p-2">
           <select
             value={uploadType}
             onChange={(event) => setUploadType(event.target.value)}
-            className="h-9 rounded-lg border border-white/10 bg-black/20 px-2 text-xs text-white outline-none"
+            className="h-9 rounded-lg border border-line bg-canvas px-2 text-sm text-ink outline-none"
           >
             {DOCUMENT_TYPES.map((type) => (
               <option key={type} value={type}>
@@ -138,14 +138,14 @@ export function RegistrationDocumentsPanel({
             type="button"
             disabled={uploadMutation.isPending}
             onClick={() => fileInputRef.current?.click()}
-            className="flex h-9 items-center gap-1.5 rounded-lg bg-blue-600 px-3 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex h-9 items-center gap-1.5 rounded-lg bg-accent px-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             <FileUp size={13} /> {uploadMutation.isPending ? "Uploading..." : "Upload document"}
           </button>
         </div>
       )}
 
-      {error && <div className="rounded-xl border border-red-400/20 bg-red-500/10 p-2 text-xs text-red-200">{error}</div>}
+      {error && <div className="rounded-xl border border-danger bg-danger-soft p-2 text-sm text-danger">{error}</div>}
 
       {documentsQuery.isLoading && <LoadingState label="Loading documents..." />}
       {documentsQuery.isError && (
@@ -160,14 +160,14 @@ export function RegistrationDocumentsPanel({
             <div
               key={doc.id}
               onClick={() => onSelectDocument(doc.id)}
-              className={`cursor-pointer rounded-xl border p-3 text-xs transition ${
-                selectedDocumentId === doc.id ? "border-blue-400/60 bg-blue-500/10" : "border-white/10 bg-[#0d1728] hover:border-blue-400/30"
+              className={`cursor-pointer rounded-xl border p-3 text-sm transition ${
+                selectedDocumentId === doc.id ? "border-accent-line bg-accent-soft" : "border-line bg-raised hover:border-accent-line"
               } ${doc.isSuperseded ? "opacity-50" : ""}`}
             >
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <div className="truncate font-bold text-white">{doc.fileName}</div>
-                  <div className="mt-0.5 text-[10px] text-slate-500">
+                  <div className="truncate font-bold text-ink">{doc.fileName}</div>
+                  <div className="mt-0.5 text-xs text-subtle">
                     {doc.documentType} · {formatSize(doc.sizeBytes)} · {doc.uploadSource} · {formatDateTime(doc.uploadedAtUtc)}
                     {doc.isSuperseded && " · superseded"}
                   </div>
@@ -177,7 +177,7 @@ export function RegistrationDocumentsPanel({
                   <DocumentExtractionStatusBadge status={doc.extractionStatus} />
                 </div>
               </div>
-              {doc.reviewNote && <div className="mt-1 text-[10px] text-slate-500">Note: {doc.reviewNote}</div>}
+              {doc.reviewNote && <div className="mt-1 text-xs text-subtle">Note: {doc.reviewNote}</div>}
 
               <div className="mt-2 flex flex-wrap gap-1.5" onClick={(event) => event.stopPropagation()}>
                 {permissions.canDownloadDocuments && (
@@ -185,7 +185,7 @@ export function RegistrationDocumentsPanel({
                     type="button"
                     disabled={downloadingId === doc.id}
                     onClick={() => download(doc)}
-                    className="flex items-center gap-1 rounded-lg border border-white/10 px-2 py-1 font-bold text-slate-200 hover:border-blue-400/40"
+                    className="flex items-center gap-1 rounded-lg border border-line px-2 py-1 font-bold text-ink hover:border-accent-line"
                   >
                     <Download size={11} /> {downloadingId === doc.id ? "..." : "Download"}
                   </button>
@@ -196,14 +196,14 @@ export function RegistrationDocumentsPanel({
                       type="button"
                       disabled={reviewMutation.isPending}
                       onClick={() => review(doc.id)}
-                      className="flex items-center gap-1 rounded-lg border border-emerald-400/30 px-2 py-1 font-bold text-emerald-300 hover:bg-emerald-500/10"
+                      className="flex items-center gap-1 rounded-lg border border-success px-2 py-1 font-bold text-success hover:bg-success-soft"
                     >
                       <ShieldCheck size={11} /> Mark reviewed
                     </button>
                     <button
                       type="button"
                       onClick={() => setRejectingId(doc.id)}
-                      className="flex items-center gap-1 rounded-lg border border-red-400/30 px-2 py-1 font-bold text-red-300 hover:bg-red-500/10"
+                      className="flex items-center gap-1 rounded-lg border border-danger px-2 py-1 font-bold text-danger hover:bg-danger-soft"
                     >
                       <ShieldX size={11} /> Reject
                     </button>
@@ -228,7 +228,7 @@ export function RegistrationDocumentsPanel({
                         setReplacingId(doc.id);
                         window.setTimeout(() => replaceInputRef.current?.click(), 0);
                       }}
-                      className="flex items-center gap-1 rounded-lg border border-white/10 px-2 py-1 font-bold text-slate-200 hover:border-blue-400/40"
+                      className="flex items-center gap-1 rounded-lg border border-line px-2 py-1 font-bold text-ink hover:border-accent-line"
                     >
                       <RefreshCcw size={11} /> Replace
                     </button>
@@ -242,14 +242,14 @@ export function RegistrationDocumentsPanel({
                     value={rejectReason}
                     onChange={(event) => setRejectReason(event.target.value)}
                     placeholder="Rejection reason (required)"
-                    className="h-9 w-full rounded-lg border border-white/10 bg-black/20 px-2 text-xs text-white outline-none"
+                    className="h-9 w-full rounded-lg border border-line bg-canvas px-2 text-sm text-ink outline-none"
                   />
                   <div className="flex gap-1.5">
                     <button
                       type="button"
                       disabled={rejectMutation.isPending}
                       onClick={() => reject(doc.id)}
-                      className="rounded-lg bg-rose-600 px-2 py-1 text-[11px] font-bold text-white disabled:opacity-50"
+                      className="rounded-lg bg-danger px-2 py-1 text-xs font-bold text-white disabled:opacity-50"
                     >
                       {rejectMutation.isPending ? "..." : "Confirm reject"}
                     </button>
@@ -259,7 +259,7 @@ export function RegistrationDocumentsPanel({
                         setRejectingId(null);
                         setRejectReason("");
                       }}
-                      className="rounded-lg border border-white/10 px-2 py-1 text-[11px] font-bold text-slate-300"
+                      className="rounded-lg border border-line px-2 py-1 text-xs font-bold text-muted"
                     >
                       Cancel
                     </button>

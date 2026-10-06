@@ -46,34 +46,34 @@ function CreateUnitModal({ companyId, onClose }) {
   return (
     <BranchesModal title="New generation unit" onClose={onClose}>
       <form onSubmit={submit} className="space-y-3">
-        <label className="block text-xs font-semibold text-slate-400">
+        <label className="block text-sm font-semibold text-muted">
           Name
           <input
             value={name}
             onChange={(event) => setName(event.target.value)}
             disabled={createMutation.isPending}
-            className="mt-1 h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
+            className="mt-1 h-10 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
           />
         </label>
-        <p className="text-[11px] text-slate-500">
+        <p className="text-xs text-subtle">
           Unique per company (case-insensitive). It starts Active; it is not the default unit unless the
           backend already designates one (the first unit a company gets is its default, and that cannot
           be changed here -- no endpoint supports it).
         </p>
-        {error && <div className="rounded-xl border border-red-400/20 bg-red-500/10 p-2 text-xs text-red-200">{error}</div>}
+        {error && <div className="rounded-xl border border-danger bg-danger-soft p-2 text-sm text-danger">{error}</div>}
         <div className="flex gap-2 pt-1">
           <button
             type="button"
             onClick={onClose}
             disabled={createMutation.isPending}
-            className="h-10 flex-1 rounded-xl border border-white/10 text-xs font-bold text-slate-300 disabled:opacity-50"
+            className="h-10 flex-1 rounded-xl border border-line text-sm font-bold text-muted disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={createMutation.isPending}
-            className="h-10 flex-1 rounded-xl bg-blue-600 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+            className="h-10 flex-1 rounded-xl bg-accent text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             {createMutation.isPending ? "Creating..." : "Create"}
           </button>
@@ -107,17 +107,17 @@ function GenerationUnitRow({ companyId, unit, canManage }) {
   const isPending = activateMutation.isPending || deactivateMutation.isPending;
 
   return (
-    <div className="rounded-xl border border-white/10 bg-[#0d1728] p-3">
+    <div className="rounded-xl border border-line bg-raised p-3">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <Cpu size={15} className="shrink-0 text-blue-300" />
-            <div className="truncate text-sm font-black text-white">{unit.name}</div>
+            <Cpu size={15} className="shrink-0 text-accent" />
+            <div className="truncate text-sm font-black text-ink">{unit.name}</div>
             {unit.isDefault && (
-              <span className="rounded-full bg-purple-500/15 px-2 py-0.5 text-[10px] font-bold text-purple-300">default</span>
+              <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-bold text-accent">default</span>
             )}
           </div>
-          <div className="mt-1 text-[11px] text-slate-500">
+          <div className="mt-1 text-xs text-subtle">
             {unit.assignedBranchCount} branch(es) assigned · created {formatDateTime(unit.createdAtUtc)}
           </div>
         </div>
@@ -130,14 +130,14 @@ function GenerationUnitRow({ companyId, unit, canManage }) {
             disabled={isPending || (unit.isDefault && unit.status === "Active")}
             title={unit.isDefault && unit.status === "Active" ? "The default unit cannot be deactivated" : ""}
             onClick={() => (unit.status === "Active" ? setConfirmDeactivate(true) : toggle())}
-            className="flex items-center gap-1.5 rounded-lg border border-white/10 px-2 py-1 text-[11px] font-bold text-slate-200 hover:border-blue-400/40 disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex items-center gap-1.5 rounded-lg border border-line px-2 py-1 text-xs font-bold text-ink hover:border-accent-line disabled:cursor-not-allowed disabled:opacity-40"
           >
             {unit.status === "Active" ? <CirclePause size={13} /> : <CirclePlay size={13} />}
             {unit.status === "Active" ? "Deactivate" : "Activate"}
           </button>
         </div>
       )}
-      {error && <div className="mt-2 rounded-xl border border-red-400/20 bg-red-500/10 p-2 text-[11px] text-red-200">{error}</div>}
+      {error && <div className="mt-2 rounded-xl border border-danger bg-danger-soft p-2 text-xs text-danger">{error}</div>}
       {confirmDeactivate && (
         <ConfirmActionDialog
           title="Deactivate generation unit"
@@ -164,7 +164,7 @@ export function GenerationUnitsPage() {
 
   return (
     <AppLayout>
-      <main className="space-y-4" dir="rtl">
+      <main className="odoo-root space-y-3" dir="rtl">
         <PageHeader
           title="Generation Units"
           actions={
@@ -172,7 +172,7 @@ export function GenerationUnitsPage() {
               <button
                 type="button"
                 onClick={() => unitsQuery.refetch()}
-                className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold text-slate-100"
+                className="flex items-center gap-2 rounded-xl border border-line bg-raised px-3 py-2 text-sm font-bold text-ink"
               >
                 <RefreshCw size={14} /> Refresh
               </button>
@@ -180,7 +180,7 @@ export function GenerationUnitsPage() {
                 <button
                   type="button"
                   onClick={() => setShowCreate(true)}
-                  className="flex items-center gap-2 rounded-xl bg-blue-600 px-3 py-2 text-xs font-bold text-white"
+                  className="flex items-center gap-2 rounded-xl bg-accent px-3 py-2 text-sm font-bold text-white"
                 >
                   <Plus size={14} /> New unit
                 </button>
@@ -189,7 +189,7 @@ export function GenerationUnitsPage() {
           }
         />
 
-        <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.02] px-3 py-2 text-[11px] text-slate-500">
+        <div className="flex items-center gap-2 rounded-xl border border-line bg-raised px-3 py-2 text-xs text-subtle">
           A generation unit is a compliance foundation entity (one invoice sequence/hash chain), not a
           branch. Assigning a branch to a unit happens on the Branches page.
         </div>
@@ -201,7 +201,7 @@ export function GenerationUnitsPage() {
         ) : !canManage ? (
           <ErrorState title="Permission required" message="Compliance.Manage permission is required to see generation units." />
         ) : (
-          <div className="rounded-2xl border border-white/10 bg-[#0c1424] p-3">
+          <div className="rounded-xl border border-line bg-surface p-3">
             {unitsQuery.isLoading && <LoadingState label="Loading generation units..." />}
             {unitsQuery.isError && (
               <ErrorState title="Unable to load generation units" message={getErrorMessage(unitsQuery.error)} />

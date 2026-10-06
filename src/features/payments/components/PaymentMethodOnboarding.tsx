@@ -44,7 +44,7 @@ function mapCreateError(error: ApiError) {
 }
 
 const inputClass =
-  "mt-2 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-blue-400/60 disabled:cursor-not-allowed disabled:opacity-60";
+  "mt-2 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none transition placeholder:text-subtle focus:border-accent-line disabled:cursor-not-allowed disabled:opacity-60";
 
 type PaymentMethodOnboardingProps = {
   onCreated?: () => void;
@@ -91,12 +91,12 @@ export function PaymentMethodOnboarding({ onCreated }: PaymentMethodOnboardingPr
 
   if (!permissionQuery.hasPermission) {
     return (
-      <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 px-3 py-3 text-xs text-amber-100">
+      <div className="rounded-xl border border-warning bg-warning-soft px-3 py-3 text-xs text-warning">
         <div className="flex items-center gap-2 font-bold">
           <LockKeyhole size={14} />
           No active payment methods
         </div>
-        <p className="mt-1 text-amber-100/80">
+        <p className="mt-1 text-warning/80">
           No active payment methods are configured for this company. Contact an
           administrator to add one.
         </p>
@@ -105,14 +105,14 @@ export function PaymentMethodOnboarding({ onCreated }: PaymentMethodOnboardingPr
   }
 
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.025] p-3">
+    <div className="rounded-xl border border-line bg-raised p-3">
       <div className="flex items-center gap-2">
-        <div className="grid h-9 w-9 place-items-center rounded-lg bg-blue-500/15 text-blue-300">
+        <div className="grid h-9 w-9 place-items-center rounded-lg bg-accent-soft text-accent">
           <WalletCards size={16} />
         </div>
         <div>
-          <div className="text-sm font-bold text-white">Payment Setup Required</div>
-          <p className="text-[11px] text-gray-400">
+          <div className="text-sm font-bold text-ink">Payment Setup Required</div>
+          <p className="text-[11px] text-muted">
             No active payment methods are configured. Add at least one to accept
             payments.
           </p>
@@ -122,7 +122,7 @@ export function PaymentMethodOnboarding({ onCreated }: PaymentMethodOnboardingPr
       <form onSubmit={handleSubmit(onSubmit)} className="mt-3 grid gap-3">
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block">
-            <span className="text-xs font-bold text-slate-300">Code</span>
+            <span className="text-xs font-bold text-muted">Code</span>
             <input
               type="text"
               disabled={isSubmitting}
@@ -130,13 +130,13 @@ export function PaymentMethodOnboarding({ onCreated }: PaymentMethodOnboardingPr
               className={inputClass}
             />
             {fieldMessage(errors.code?.message) && (
-              <span className="mt-1.5 block text-xs text-rose-300">
+              <span className="mt-1.5 block text-xs text-danger">
                 {fieldMessage(errors.code?.message)}
               </span>
             )}
           </label>
           <label className="block">
-            <span className="text-xs font-bold text-slate-300">Name</span>
+            <span className="text-xs font-bold text-muted">Name</span>
             <input
               type="text"
               disabled={isSubmitting}
@@ -144,14 +144,14 @@ export function PaymentMethodOnboarding({ onCreated }: PaymentMethodOnboardingPr
               className={inputClass}
             />
             {fieldMessage(errors.name?.message) && (
-              <span className="mt-1.5 block text-xs text-rose-300">
+              <span className="mt-1.5 block text-xs text-danger">
                 {fieldMessage(errors.name?.message)}
               </span>
             )}
           </label>
         </div>
         <label className="block">
-          <span className="text-xs font-bold text-slate-300">Kind</span>
+          <span className="text-xs font-bold text-muted">Kind</span>
           <select disabled={isSubmitting} {...register("kind")} className={inputClass}>
             <option value="Cash">Cash</option>
             <option value="Card">Card</option>
@@ -161,7 +161,7 @@ export function PaymentMethodOnboarding({ onCreated }: PaymentMethodOnboardingPr
         </label>
 
         {formError && (
-          <div className="rounded-xl border border-rose-400/25 bg-rose-500/10 px-3 py-2 text-xs text-rose-100">
+          <div className="rounded-xl border border-danger bg-danger-soft px-3 py-2 text-sm text-danger">
             {formError}
           </div>
         )}
@@ -169,7 +169,7 @@ export function PaymentMethodOnboarding({ onCreated }: PaymentMethodOnboardingPr
         <button
           type="submit"
           disabled={isSubmitting || mutation.isPending}
-          className="flex h-11 items-center justify-center gap-2 rounded-xl bg-gradient-to-l from-blue-600 to-[#0A84FF] text-sm font-black text-white shadow-lg shadow-blue-950/40 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-55"
+          className="flex h-11 items-center justify-center gap-2 rounded-xl bg-accent text-sm font-bold text-white shadow-sm transition hover:bg-accent-strong disabled:cursor-not-allowed disabled:opacity-55"
         >
           {mutation.isPending ? <RefreshCw size={16} className="animate-spin" /> : null}
           Add Payment Method

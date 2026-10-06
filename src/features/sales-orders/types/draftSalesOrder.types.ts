@@ -321,3 +321,17 @@ export type RequestSalesOrderDiscountResponse = {
   applied: AppliedSalesOrderDiscountResponse | null;
   approval: PendingDiscountApprovalResponse | null;
 };
+
+// POST /sales-orders/{targetSalesOrderId}/merge -- proposed contract (table transfer/merge API
+// spec), not implemented by the backend yet.
+export type MergeSalesOrdersRequest = {
+  sourceSalesOrderId: string;
+  expectedTargetVersion?: number;
+  expectedSourceVersion?: number;
+};
+
+export type MergeSalesOrdersResponse = {
+  salesOrder: DraftSalesOrder;
+  mergedSalesOrderId: string;
+  releasedRestaurantTableId: string | null;
+};

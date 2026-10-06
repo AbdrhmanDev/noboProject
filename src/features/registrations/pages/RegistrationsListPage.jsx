@@ -33,7 +33,7 @@ function RegistrationsTable() {
   const hasNextPage = rows.length === PAGE_SIZE;
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-[#0c1424] p-3">
+    <div className="rounded-xl border border-line bg-surface p-3">
       <div className="mb-3 grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
         <select
           value={status}
@@ -41,7 +41,7 @@ function RegistrationsTable() {
             setStatus(event.target.value);
             setPage(1);
           }}
-          className="h-10 rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none"
+          className="h-10 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none"
         >
           <option value="">All statuses</option>
           {STATUSES.map((value) => (
@@ -56,7 +56,7 @@ function RegistrationsTable() {
             setKind(event.target.value);
             setPage(1);
           }}
-          className="h-10 rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none"
+          className="h-10 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none"
         >
           <option value="">All kinds</option>
           {KINDS.map((value) => (
@@ -68,7 +68,7 @@ function RegistrationsTable() {
         <button
           type="button"
           onClick={() => registrationsQuery.refetch()}
-          className="flex h-10 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 text-xs font-bold text-slate-100"
+          className="flex h-10 items-center gap-2 rounded-xl border border-line bg-raised px-3 text-sm font-bold text-ink"
         >
           <RefreshCw size={14} /> Refresh
         </button>
@@ -83,9 +83,9 @@ function RegistrationsTable() {
       )}
       {!registrationsQuery.isLoading && !registrationsQuery.isError && rows.length > 0 && (
         <>
-          <table className="w-full text-xs">
+          <table className="w-full text-sm">
             <thead>
-              <tr className="text-start text-slate-500">
+              <tr className="text-start text-subtle">
                 <th className="pb-2 font-medium">Reference</th>
                 <th className="pb-2 font-medium">Kind</th>
                 <th className="pb-2 font-medium">Applicant / legal name</th>
@@ -99,28 +99,28 @@ function RegistrationsTable() {
                 <tr
                   key={registration.id}
                   onClick={() => navigate(platformRegistrationDetailsPath(registration.id))}
-                  className="cursor-pointer border-t border-white/5 hover:bg-white/[0.03]"
+                  className="cursor-pointer border-t border-line hover:bg-raised"
                 >
-                  <td className="py-2.5 font-bold text-white">{registration.reference}</td>
-                  <td className="py-2.5 text-slate-300">{registration.kind}</td>
-                  <td className="py-2.5 text-slate-300">{registration.legalName || "-"}</td>
+                  <td className="py-2.5 font-bold text-ink">{registration.reference}</td>
+                  <td className="py-2.5 text-muted">{registration.kind}</td>
+                  <td className="py-2.5 text-muted">{registration.legalName || "-"}</td>
                   <td className="py-2.5">
                     <RegistrationStatusBadge status={registration.status} />
                   </td>
-                  <td className="py-2.5 text-slate-400">
+                  <td className="py-2.5 text-muted">
                     {registration.submittedAtUtc ? formatDateTime(registration.submittedAtUtc) : "-"}
                   </td>
-                  <td className="py-2.5 text-slate-400">{formatDateTime(registration.updatedAtUtc)}</td>
+                  <td className="py-2.5 text-muted">{formatDateTime(registration.updatedAtUtc)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
-          <div className="mt-3 flex items-center justify-between gap-2 text-xs text-slate-400">
+          <div className="mt-3 flex items-center justify-between gap-2 text-sm text-muted">
             <button
               type="button"
               disabled={page <= 1}
               onClick={() => setPage((value) => Math.max(1, value - 1))}
-              className="flex items-center gap-1 rounded-lg border border-white/10 px-2 py-1 font-bold disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex items-center gap-1 rounded-lg border border-line px-2 py-1 font-bold disabled:cursor-not-allowed disabled:opacity-40"
             >
               <ChevronRight size={13} /> Previous
             </button>
@@ -129,7 +129,7 @@ function RegistrationsTable() {
               type="button"
               disabled={!hasNextPage}
               onClick={() => setPage((value) => value + 1)}
-              className="flex items-center gap-1 rounded-lg border border-white/10 px-2 py-1 font-bold disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex items-center gap-1 rounded-lg border border-line px-2 py-1 font-bold disabled:cursor-not-allowed disabled:opacity-40"
             >
               Next <ChevronLeft size={13} />
             </button>
@@ -143,9 +143,9 @@ function RegistrationsTable() {
 export function RegistrationsListPage() {
   return (
     <AppLayout>
-      <main className="space-y-4" dir="rtl">
+      <main className="odoo-root space-y-3" dir="rtl">
         <PageHeader title="Registration Requests" />
-        <div className="rounded-xl border border-white/10 bg-white/[0.02] px-3 py-2 text-[11px] text-slate-500">
+        <div className="rounded-xl border border-line bg-raised px-3 py-2 text-xs text-subtle">
           The Support work queue for customer registrations and profile amendments. Company owners
           manage their own amendments from Company Profile; this screen is for the review persona.
         </div>

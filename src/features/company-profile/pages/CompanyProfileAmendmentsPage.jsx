@@ -40,7 +40,7 @@ export function CompanyProfileAmendmentsPage() {
 
   return (
     <AppLayout>
-      <main className="space-y-4" dir="rtl">
+      <main className="odoo-root space-y-3" dir="rtl">
         <PageHeader
           title="Profile Amendments"
           actions={
@@ -48,14 +48,14 @@ export function CompanyProfileAmendmentsPage() {
               <button
                 type="button"
                 onClick={() => navigate(ROUTES.COMPANY_PROFILE)}
-                className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold text-slate-100"
+                className="flex items-center gap-2 rounded-xl border border-line bg-raised px-3 py-2 text-sm font-bold text-ink"
               >
                 <ArrowRight size={14} /> Back to profile
               </button>
               <button
                 type="button"
                 onClick={() => amendmentsQuery.refetch()}
-                className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold text-slate-100"
+                className="flex items-center gap-2 rounded-xl border border-line bg-raised px-3 py-2 text-sm font-bold text-ink"
               >
                 <RefreshCw size={14} /> Refresh
               </button>
@@ -63,7 +63,7 @@ export function CompanyProfileAmendmentsPage() {
           }
         />
 
-        <div className="rounded-xl border border-white/10 bg-white/[0.02] px-3 py-2 text-[11px] text-slate-500">
+        <div className="rounded-xl border border-line bg-raised px-3 py-2 text-xs text-subtle">
           An amendment proposes changes to the company's APPROVED profile. It starts from the current
           approved version (its baseline); Support reviews and approves it before anything changes.
           Only the company owner can start or edit one.
@@ -74,21 +74,21 @@ export function CompanyProfileAmendmentsPage() {
         ) : !isOwner ? (
           <ErrorState title="Owner access required" message="Only the company owner can view or start amendments." />
         ) : (
-          <div className="rounded-2xl border border-white/10 bg-[#0c1424] p-3">
+          <div className="rounded-xl border border-line bg-surface p-3">
             <div className="mb-3 flex items-center justify-between gap-2">
-              <h2 className="text-sm font-black text-white">Amendments</h2>
+              <h2 className="text-sm font-black text-ink">Amendments</h2>
               <button
                 type="button"
                 disabled={hasOpenAmendment || createMutation.isPending}
                 onClick={create}
                 title={hasOpenAmendment ? "There is already an open amendment" : ""}
-                className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex items-center gap-1.5 rounded-xl bg-accent px-3 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <FilePlus2 size={14} /> {createMutation.isPending ? "Creating..." : "New amendment"}
               </button>
             </div>
 
-            {error && <div className="mb-2 rounded-xl border border-red-400/20 bg-red-500/10 p-2 text-xs text-red-200">{error}</div>}
+            {error && <div className="mb-2 rounded-xl border border-danger bg-danger-soft p-2 text-sm text-danger">{error}</div>}
 
             {amendmentsQuery.isLoading && <LoadingState label="Loading amendments..." />}
             {amendmentsQuery.isError && (
@@ -104,11 +104,11 @@ export function CompanyProfileAmendmentsPage() {
                     type="button"
                     key={amendment.id}
                     onClick={() => navigate(companyProfileAmendmentDetailsPath(amendment.id))}
-                    className="flex w-full items-center justify-between gap-2 rounded-xl border border-white/10 bg-[#0d1728] p-3 text-start hover:border-blue-400/40 hover:bg-blue-500/10"
+                    className="flex w-full items-center justify-between gap-2 rounded-xl border border-line bg-raised p-3 text-start hover:border-accent-line hover:bg-accent-soft"
                   >
                     <div>
-                      <div className="text-sm font-bold text-white">{amendment.reference}</div>
-                      <div className="text-[11px] text-slate-500">
+                      <div className="text-sm font-bold text-ink">{amendment.reference}</div>
+                      <div className="text-xs text-subtle">
                         Based on approved v{amendment.baseProfileVersionNumber} · created {formatDateTime(amendment.createdAtUtc)}
                       </div>
                     </div>

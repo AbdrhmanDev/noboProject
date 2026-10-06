@@ -155,8 +155,13 @@ export default function RestaurantFloorPage() {
                   // RestaurantTableTile), auto-filling as many columns as fit -- ~20 tables on one
                   // desktop screen. Tune the size from these two values.
                   <div
-                    className="grid grid-cols-[repeat(auto-fill,minmax(var(--floor-table-min-w),1fr))] gap-4"
-                    style={{ "--floor-table-min-w": "180px", "--floor-table-h": "112px", "--floor-table-fs": "2.25rem" }}
+                    className="grid grid-cols-[repeat(auto-fill,minmax(var(--floor-table-min-w),1fr))] gap-2 sm:gap-4"
+                    style={{
+                      // Responsive: two tables per row on a phone, growing to the full size on wide screens.
+                      "--floor-table-min-w": "clamp(130px, 40vw, 180px)",
+                      "--floor-table-h": "clamp(84px, 24vw, 112px)",
+                      "--floor-table-fs": "clamp(1.6rem, 6vw, 2.25rem)",
+                    }}
                   >
                     {filteredTables.map((table) => (
                       <RestaurantTableTile

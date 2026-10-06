@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Search, Truck, X } from "lucide-react";
+import { LayoutGrid, List, Mail, Phone, Plus, Truck, UserRound, X } from "lucide-react";
 import { toast } from "sonner";
 import AppLayout from "../../components/AppLayout";
 import { EmptyState, ErrorState, LoadingState } from "../../shared/components/ui";
@@ -10,22 +10,30 @@ import { useActivateSupplier, useSuppliers, useSuspendSupplier } from "../../fea
 import { SupplierStatusBadge } from "../../features/procurement/components/SupplierStatusBadge";
 import { SupplierFormDialog } from "../../features/procurement/components/SupplierFormDialog";
 import { ConfirmActionDialog } from "../../features/procurement/components/ConfirmActionDialog";
+import { ControlPanel } from "../../shared/components/odoo/ControlPanel";
+import { ListView } from "../../shared/components/odoo/ListView";
 import { ROUTES } from "../../utils/routes";
 
 const PURCHASES_VIEW_PERMISSION = "Purchases.View";
 const PURCHASES_MANAGE_PERMISSION = "Purchases.Manage";
-const PAGE_SIZE = 25;
+// Odoo's default page size for list views.
+const PAGE_SIZE = 80;
 const STATUS_OPTIONS = ["Active", "Suspended"];
 
-function Field({ label, value }) {
+// Odoo form-view field: bold label + value, one per row.
+function FieldRow({ label, children }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.025] p-2.5">
-      <div className="text-[10px] text-slate-500">{label}</div>
-      <div className="mt-0.5 text-xs font-bold text-slate-100">{value ?? "—"}</div>
+    <div className="grid grid-cols-[minmax(6rem,40%)_1fr] items-baseline gap-3 border-b border-line py-1.5 last:border-0">
+      <dt className="text-sm font-bold text-ink">{label}</dt>
+      <dd className="min-w-0 break-words text-sm text-ink">{children || <span className="text-subtle">—</span>}</dd>
     </div>
   );
 }
 
+// Suppliers, Odoo style (same building blocks as Sales / Purchases): control panel -- search,
+// Filters by status, Group By status, list <-> kanban, pager -- over a list or kanban view, and the
+// selected supplier in a side sheet with its actions (edit / suspend / activate / its purchase
+// orders). Same queries, mutations and dialogs as before -- presentation only.
 export default function SuppliersPage() {
   const { t } = useI18n();
   const { currentCompanyId } = useCompany();
@@ -34,6 +42,8 @@ export default function SuppliersPage() {
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [pageNumber, setPageNumber] = useState(1);
+  const [groupBy, setGroupBy] = useState("");
+  const [view, setView] = useState("list");
   const [dialog, setDialog] = useState(null); // { type: "create" | "edit", supplier? }
   const [confirmAction, setConfirmAction] = useState(null); // { type: "activate"|"suspend", supplier }
   const [selectedSupplierId, setSelectedSupplierId] = useState(null);
@@ -54,7 +64,8 @@ export default function SuppliersPage() {
 
   const filters = useMemo(() => ({ pageNumber, pageSize: PAGE_SIZE, status, search }), [pageNumber, status, search]);
   const suppliersQuery = useSuppliers(currentCompanyId, filters, canQuery);
-  const suppliers = suppliersQuery.data?.items || [];
+  const page = suppliersQuery.data;
+  const suppliers = useMemo(() => page?.items ?? [], [page]);
 
   const activateMutation = useActivateSupplier(currentCompanyId);
   const suspendMutation = useSuspendSupplier(currentCompanyId);
@@ -78,267 +89,232 @@ export default function SuppliersPage() {
     }
   };
 
+  const statusLabel = (value) => t(`procurement.supplier.status.${value.toLowerCase()}`);
+  const facets = [
+    status && {
+      id: "status",
+      label: statusLabel(status),
+      onRemove: () => {
+        setStatus("");
+        setPageNumber(1);
+      },
+    },
+    groupBy && { id: "group", label: `${t("odoo.groupBy")}: ${t("procurement.list.groupBy.status")}`, onRemove: () => setGroupBy("") },
+  ].filter(Boolean);
+
+  const columns = [
+    { key: "code", header: t("procurement.supplier.code"), render: (supplier) => <span className="text-muted">{supplier.code}</span> },
+    { key: "name", header: t("procurement.supplier.name"), render: (supplier) => <span className="font-bold">{supplier.name}</span> },
+    { key: "contact", header: t("procurement.supplier.contactPerson"), render: (supplier) => supplier.contactPerson || "—" },
+    { key: "phone", header: t("procurement.supplier.phone"), render: (supplier) => <span className="pos-num">{supplier.phone || "—"}</span> },
+    { key: "email", header: t("procurement.supplier.email"), render: (supplier) => supplier.email || "—" },
+    { key: "status", header: t("procurement.filters.status"), render: (supplier) => <SupplierStatusBadge status={supplier.status} /> },
+  ];
+
+  const groups = useMemo(() => {
+    if (!groupBy) return null;
+    return STATUS_OPTIONS.map((value) => ({
+      key: value,
+      label: t(`procurement.supplier.status.${value.toLowerCase()}`),
+      rows: suppliers.filter((supplier) => supplier.status === value),
+    })).filter((group) => group.rows.length > 0);
+  }, [groupBy, suppliers, t]);
+
+  const total = page?.totalCount ?? 0;
+  const start = total ? (pageNumber - 1) * PAGE_SIZE + 1 : 0;
+  const end = Math.min(pageNumber * PAGE_SIZE, total);
+
   return (
     <AppLayout activePath={ROUTES.SUPPLIERS}>
-      <main className="space-y-4" dir="rtl">
-        <header className="rounded-2xl border border-white/10 bg-[#0c1424]/85 p-4 shadow-xl shadow-black/20">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <div className="flex items-center gap-2 text-xs text-slate-400">
-                <Truck size={16} className="text-blue-300" />
-                {t("nav.purchases")}
-              </div>
-              <h1 className="mt-1 text-2xl font-black text-white">{t("procurement.supplier.title")}</h1>
-              <p className="mt-0.5 text-[11px] text-slate-500">{t("procurement.supplier.subtitle")}</p>
-            </div>
-            {canManage && (
-              <button
-                type="button"
-                onClick={() => setDialog({ type: "create" })}
-                className="flex items-center gap-2 rounded-xl bg-blue-600 px-3 py-2 text-xs font-bold text-white transition hover:brightness-110"
-              >
-                <Plus size={14} />
-                {t("procurement.supplier.new")}
-              </button>
-            )}
+      <main className="odoo-root space-y-3" dir="rtl">
+        {/* Odoo-style app bar: module name. */}
+        <header className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl border border-line bg-surface px-4 py-2.5 shadow-[var(--shadow-surface)]">
+          <div className="flex items-center gap-2 text-lg font-bold text-ink">
+            <Truck size={18} className="text-accent" />
+            {t("nav.purchases")}
           </div>
         </header>
 
         {!currentCompanyId ? (
-          <EmptyState
-            title={t("procurement.companyRequired.title")}
-            message={t("procurement.companyRequired.message")}
-          />
+          <EmptyState title={t("procurement.companyRequired.title")} message={t("procurement.companyRequired.message")} />
         ) : viewPermissionQuery.isLoading ? (
           <LoadingState label={t("procurement.loading")} />
         ) : !viewPermissionQuery.hasPermission ? (
-          <ErrorState
-            title={t("procurement.permissionRequired.title")}
-            message={t("procurement.permissionRequired.message")}
-          />
+          <ErrorState title={t("procurement.permissionRequired.title")} message={t("procurement.permissionRequired.message")} />
         ) : (
           <>
-            <section className="grid gap-2 rounded-2xl border border-white/10 bg-[#0c1424] p-3 md:grid-cols-4">
-              <label className="text-[11px] font-semibold text-slate-400 md:col-span-2">
-                {t("procurement.supplier.search")}
-                <div className="mt-1 flex h-10 items-center gap-2 rounded-xl border border-white/10 bg-black/20 px-3">
-                  <Search size={13} className="shrink-0 text-slate-500" />
-                  <input
-                    value={searchInput}
-                    onChange={(event) => setSearchInput(event.target.value)}
-                    placeholder={t("procurement.supplier.search")}
-                    className="w-full bg-transparent text-xs text-white outline-none placeholder:text-slate-600"
-                  />
-                </div>
-              </label>
-              <label className="text-[11px] font-semibold text-slate-400">
-                {t("procurement.filters.status")}
-                <select
-                  value={status}
-                  onChange={(event) => {
-                    setStatus(event.target.value);
-                    setPageNumber(1);
-                  }}
-                  className="mt-1 h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none"
-                >
-                  <option value="">{t("procurement.filters.statusAll")}</option>
-                  {STATUS_OPTIONS.map((value) => (
-                    <option key={value} value={value}>
-                      {t(`procurement.supplier.status.${value.toLowerCase()}`)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <button
-                type="button"
-                onClick={() => {
-                  setStatus("");
-                  setSearchInput("");
-                  setSearch("");
+            <ControlPanel
+              breadcrumbs={[t("nav.purchases"), t("procurement.supplier.title")]}
+              actions={
+                canManage && (
+                  <button
+                    type="button"
+                    onClick={() => setDialog({ type: "create" })}
+                    className="flex h-8 items-center gap-1.5 rounded-lg bg-accent px-3 text-sm font-bold text-white transition hover:bg-accent-strong"
+                  >
+                    <Plus size={14} />
+                    {t("procurement.supplier.new")}
+                  </button>
+                )
+              }
+              search={{ value: searchInput, onChange: setSearchInput, placeholder: t("procurement.supplier.search") }}
+              facets={facets}
+              filters={STATUS_OPTIONS.map((value) => ({
+                id: value,
+                label: statusLabel(value),
+                active: status === value,
+                onToggle: () => {
+                  setStatus((current) => (current === value ? "" : value));
                   setPageNumber(1);
-                }}
-                className="mt-auto h-10 rounded-xl border border-white/10 bg-white/[0.035] px-3 text-xs font-bold text-slate-200"
-              >
-                {t("procurement.filters.reset")}
-              </button>
-            </section>
+                },
+              }))}
+              groupBy={[
+                {
+                  id: "status",
+                  label: t("procurement.list.groupBy.status"),
+                  active: groupBy === "status",
+                  onSelect: () => setGroupBy((current) => (current ? "" : "status")),
+                },
+              ]}
+              views={{
+                current: view,
+                onChange: setView,
+                options: [
+                  { id: "list", label: t("odoo.view.list"), icon: List },
+                  { id: "kanban", label: t("odoo.view.kanban"), icon: LayoutGrid },
+                ],
+              }}
+              pager={{
+                start,
+                end,
+                total,
+                onPrev: pageNumber > 1 ? () => setPageNumber((current) => current - 1) : undefined,
+                onNext: page && pageNumber < page.totalPages ? () => setPageNumber((current) => current + 1) : undefined,
+              }}
+            />
 
-            <div className="flex flex-col gap-4 xl:flex-row xl:items-start">
-              <section className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-[#0c1424] p-3">
-                <div className="mb-3 flex items-center justify-between">
-                  <div className="text-sm font-black text-white">{t("procurement.supplier.title")}</div>
-                  <div className="text-[11px] text-slate-500">
-                    {t("procurement.totalCount", { count: suppliersQuery.data?.totalCount ?? 0 })}
-                  </div>
-                </div>
-
+            <div className="flex flex-col gap-3 xl:flex-row xl:items-start">
+              <div className="min-w-0 flex-1">
                 {suppliersQuery.isLoading && <LoadingState label={t("procurement.loading")} />}
                 {suppliersQuery.isError && (
-                  <>
-                    <ErrorState
-                      title={t("procurement.error.title")}
-                      message={suppliersQuery.error?.message || t("procurement.error.message")}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => suppliersQuery.refetch()}
-                      className="mt-3 w-full rounded-xl border border-white/10 bg-white/[0.035] py-2 text-xs font-bold text-slate-100 hover:bg-white/10"
-                    >
-                      {t("procurement.retry")}
-                    </button>
-                  </>
-                )}
-                {!suppliersQuery.isLoading && !suppliersQuery.isError && suppliers.length === 0 && (
-                  <EmptyState
-                    title={t("procurement.supplier.empty.title")}
-                    message={t("procurement.supplier.empty.message")}
+                  <ErrorState
+                    title={t("procurement.error.title")}
+                    message={suppliersQuery.error?.message || t("procurement.error.message")}
                   />
                 )}
 
-                {!suppliersQuery.isLoading && !suppliersQuery.isError && suppliers.length > 0 && (
-                  <>
-                    <div className="hidden overflow-x-auto lg:block">
-                      <table className="w-full text-xs">
-                        <thead>
-                          <tr className="text-start text-slate-500">
-                            <th className="pb-2 text-start font-medium">{t("procurement.supplier.code")}</th>
-                            <th className="pb-2 text-start font-medium">{t("procurement.supplier.name")}</th>
-                            <th className="pb-2 text-start font-medium">{t("procurement.supplier.contactPerson")}</th>
-                            <th className="pb-2 text-start font-medium">{t("procurement.supplier.phone")}</th>
-                            <th className="pb-2 text-start font-medium">{t("procurement.supplier.email")}</th>
-                            <th className="pb-2 text-start font-medium">{t("procurement.filters.status")}</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {suppliers.map((supplier) => (
-                            <tr
-                              key={supplier.supplierId}
-                              onClick={() => setSelectedSupplierId(supplier.supplierId)}
-                              className={`cursor-pointer border-t border-white/5 hover:bg-white/[0.03] ${
-                                selectedSupplierId === supplier.supplierId ? "bg-blue-500/[0.06]" : ""
-                              }`}
-                            >
-                              <td className="py-2.5 font-bold text-white">{supplier.code}</td>
-                              <td className="py-2.5 text-slate-200">{supplier.name}</td>
-                              <td className="py-2.5 text-slate-300">{supplier.contactPerson || "—"}</td>
-                              <td className="py-2.5 text-slate-300">{supplier.phone || "—"}</td>
-                              <td className="py-2.5 text-slate-300">{supplier.email || "—"}</td>
-                              <td className="py-2.5">
-                                <SupplierStatusBadge status={supplier.status} />
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                {!suppliersQuery.isLoading && !suppliersQuery.isError && view === "list" && (
+                  <ListView
+                    columns={columns}
+                    rows={groups ? undefined : suppliers}
+                    groups={groups ?? undefined}
+                    getRowKey={(supplier) => supplier.supplierId}
+                    onRowClick={(supplier) => setSelectedSupplierId(supplier.supplierId)}
+                    emptyLabel={t("procurement.supplier.empty.message")}
+                  />
+                )}
 
-                    <div className="space-y-2 lg:hidden">
-                      {suppliers.map((supplier) => (
-                        <button
-                          key={supplier.supplierId}
-                          type="button"
-                          onClick={() => setSelectedSupplierId(supplier.supplierId)}
-                          className="flex w-full flex-col gap-1.5 rounded-xl border border-white/10 bg-[#0d1728] p-3 text-start transition hover:border-blue-400/40"
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="text-sm font-black text-white">{supplier.name}</span>
-                            <SupplierStatusBadge status={supplier.status} />
+                {!suppliersQuery.isLoading && !suppliersQuery.isError && view === "kanban" && (
+                  suppliers.length === 0 ? (
+                    <EmptyState title={t("procurement.supplier.empty.title")} message={t("procurement.supplier.empty.message")} />
+                  ) : (
+                    <div className="space-y-4">
+                      {(groups ?? [{ key: "all", label: null, rows: suppliers }]).map((group) => (
+                        <div key={group.key}>
+                          {group.label && (
+                            <div className="mb-2 flex items-center gap-2 text-sm font-bold text-ink">
+                              {group.label} <span className="pos-num font-normal text-subtle">({group.rows.length})</span>
+                            </div>
+                          )}
+                          <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-2">
+                            {group.rows.map((supplier) => (
+                              <button
+                                key={supplier.supplierId}
+                                type="button"
+                                onClick={() => setSelectedSupplierId(supplier.supplierId)}
+                                className={`flex items-start gap-3 rounded-xl border bg-surface p-3 text-start shadow-[var(--shadow-surface)] transition hover:border-accent-line hover:bg-hover ${
+                                  selectedSupplierId === supplier.supplierId ? "border-accent-line" : "border-line"
+                                }`}
+                              >
+                                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-inset text-base font-bold text-muted">
+                                  {(supplier.name || "?").trim().charAt(0).toUpperCase()}
+                                </span>
+                                <span className="min-w-0 flex-1">
+                                  <span className="flex items-start justify-between gap-2">
+                                    <span className="truncate font-bold text-ink">{supplier.name}</span>
+                                    <SupplierStatusBadge status={supplier.status} />
+                                  </span>
+                                  <span className="block truncate text-xs text-muted">{supplier.code}</span>
+                                  {supplier.contactPerson && (
+                                    <span className="mt-1 flex items-center gap-1 truncate text-xs text-muted">
+                                      <UserRound size={12} className="shrink-0" /> {supplier.contactPerson}
+                                    </span>
+                                  )}
+                                  {supplier.phone && (
+                                    <span className="flex items-center gap-1 truncate text-xs text-muted">
+                                      <Phone size={12} className="shrink-0" /> <span className="pos-num">{supplier.phone}</span>
+                                    </span>
+                                  )}
+                                  {supplier.email && (
+                                    <span className="flex items-center gap-1 truncate text-xs text-muted">
+                                      <Mail size={12} className="shrink-0" /> {supplier.email}
+                                    </span>
+                                  )}
+                                </span>
+                              </button>
+                            ))}
                           </div>
-                          <div className="text-[11px] text-slate-400">
-                            {supplier.code} · {supplier.contactPerson || "—"}
-                          </div>
-                        </button>
+                        </div>
                       ))}
                     </div>
-                  </>
+                  )
                 )}
-
-                {suppliersQuery.data && suppliersQuery.data.totalPages > 1 && (
-                  <div className="mt-3 flex items-center justify-between gap-2 border-t border-white/10 pt-3">
-                    <button
-                      type="button"
-                      disabled={pageNumber <= 1}
-                      onClick={() => setPageNumber((page) => Math.max(1, page - 1))}
-                      className="rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                      {t("procurement.pagination.previous")}
-                    </button>
-                    <span className="text-xs text-slate-400">
-                      {t("procurement.pagination.page", {
-                        current: suppliersQuery.data.pageNumber,
-                        total: suppliersQuery.data.totalPages,
-                      })}
-                    </span>
-                    <button
-                      type="button"
-                      disabled={pageNumber >= suppliersQuery.data.totalPages}
-                      onClick={() => setPageNumber((page) => page + 1)}
-                      className="rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                      {t("procurement.pagination.next")}
-                    </button>
-                  </div>
-                )}
-              </section>
+              </div>
 
               {selectedSupplier && (
-                <aside className="w-full shrink-0 rounded-2xl border border-white/10 bg-[#0c1424] p-4 xl:w-[360px]">
-                  <div className="mb-3 flex items-start justify-between gap-3">
-                    <div>
-                      <div className="text-[11px] text-slate-500">{selectedSupplier.code}</div>
-                      <h2 className="text-lg font-black text-white">{selectedSupplier.name}</h2>
+                <aside className="w-full shrink-0 space-y-3 rounded-xl border border-line bg-surface p-4 shadow-[var(--shadow-surface)] xl:w-[380px]">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="text-xs text-muted">{selectedSupplier.code}</div>
+                      <h2 className="truncate text-xl font-bold text-ink">{selectedSupplier.name}</h2>
+                      <div className="mt-1">
+                        <SupplierStatusBadge status={selectedSupplier.status} />
+                      </div>
                     </div>
                     <button
                       type="button"
                       onClick={() => setSelectedSupplierId(null)}
-                      className="rounded-lg p-1 text-slate-400 hover:bg-white/10 hover:text-white"
+                      aria-label={t("procurement.actions.back")}
+                      className="rounded-md p-1 text-muted hover:bg-hover hover:text-ink"
                     >
                       <X size={18} />
                     </button>
                   </div>
 
-                  <SupplierStatusBadge status={selectedSupplier.status} />
-
-                  <div className="mt-3 grid grid-cols-2 gap-2">
-                    <Field label={t("procurement.supplier.contactPerson")} value={selectedSupplier.contactPerson} />
-                    <Field label={t("procurement.supplier.phone")} value={selectedSupplier.phone} />
-                    <Field label={t("procurement.supplier.email")} value={selectedSupplier.email} />
-                    <Field label={t("procurement.supplier.taxNumber")} value={selectedSupplier.taxNumber} />
-                  </div>
-                  {selectedSupplier.address && (
-                    <div className="mt-2">
-                      <div className="mb-1 text-[10px] font-bold uppercase tracking-wide text-slate-500">
-                        {t("procurement.supplier.address")}
-                      </div>
-                      <p className="rounded-xl border border-white/10 bg-white/[0.025] p-2.5 text-xs leading-5 text-slate-300">
-                        {selectedSupplier.address}
-                      </p>
-                    </div>
-                  )}
-                  {selectedSupplier.note && (
-                    <div className="mt-2">
-                      <div className="mb-1 text-[10px] font-bold uppercase tracking-wide text-slate-500">
-                        {t("procurement.supplier.note")}
-                      </div>
-                      <p className="rounded-xl border border-white/10 bg-white/[0.025] p-2.5 text-xs leading-5 text-slate-300">
-                        {selectedSupplier.note}
-                      </p>
-                    </div>
-                  )}
+                  <dl>
+                    <FieldRow label={t("procurement.supplier.contactPerson")}>{selectedSupplier.contactPerson}</FieldRow>
+                    <FieldRow label={t("procurement.supplier.phone")}>
+                      {selectedSupplier.phone && <span className="pos-num">{selectedSupplier.phone}</span>}
+                    </FieldRow>
+                    <FieldRow label={t("procurement.supplier.email")}>{selectedSupplier.email}</FieldRow>
+                    <FieldRow label={t("procurement.supplier.taxNumber")}>{selectedSupplier.taxNumber}</FieldRow>
+                    <FieldRow label={t("procurement.supplier.address")}>{selectedSupplier.address}</FieldRow>
+                    <FieldRow label={t("procurement.supplier.note")}>{selectedSupplier.note}</FieldRow>
+                  </dl>
 
                   <a
                     href={`${ROUTES.PURCHASES}?supplierId=${selectedSupplier.supplierId}`}
-                    className="mt-3 block rounded-xl border border-blue-400/25 bg-blue-500/10 px-3 py-2 text-center text-xs font-bold text-blue-200 hover:bg-blue-500/20"
+                    className="odoo-link block rounded-lg border border-line px-3 py-2 text-center text-sm font-bold hover:bg-hover"
                   >
                     {t("procurement.supplier.viewPurchaseOrders")}
                   </a>
 
                   {canManage && (
-                    <div className="mt-3 flex gap-2">
+                    <div className="flex gap-2">
                       <button
                         type="button"
                         onClick={() => setDialog({ type: "edit", supplier: selectedSupplier })}
-                        className="flex h-10 flex-1 items-center justify-center rounded-xl border border-white/10 bg-white/[0.035] text-xs font-bold text-slate-100 hover:bg-white/10"
+                        className="flex h-10 flex-1 items-center justify-center rounded-lg bg-accent text-sm font-bold text-white hover:bg-accent-strong"
                       >
                         {t("procurement.actions.editSupplier")}
                       </button>
@@ -346,7 +322,7 @@ export default function SuppliersPage() {
                         <button
                           type="button"
                           onClick={() => setConfirmAction({ type: "suspend", supplier: selectedSupplier })}
-                          className="flex h-10 flex-1 items-center justify-center rounded-xl border border-rose-400/30 bg-rose-500/10 text-xs font-bold text-rose-200 hover:bg-rose-500/20"
+                          className="flex h-10 flex-1 items-center justify-center rounded-lg border border-danger bg-danger-soft text-sm font-bold text-danger hover:brightness-110"
                         >
                           {t("procurement.actions.suspend")}
                         </button>
@@ -354,7 +330,7 @@ export default function SuppliersPage() {
                         <button
                           type="button"
                           onClick={() => setConfirmAction({ type: "activate", supplier: selectedSupplier })}
-                          className="flex h-10 flex-1 items-center justify-center rounded-xl border border-emerald-400/30 bg-emerald-500/10 text-xs font-bold text-emerald-200 hover:bg-emerald-500/20"
+                          className="flex h-10 flex-1 items-center justify-center rounded-lg border border-success bg-success-soft text-sm font-bold text-success hover:brightness-110"
                         >
                           {t("procurement.actions.activate")}
                         </button>
@@ -366,40 +342,34 @@ export default function SuppliersPage() {
             </div>
           </>
         )}
+
+        {/* Dialogs live inside <main> so they take the page's Odoo theme (`.odoo-root`); they're
+            fixed overlays, so their position in the tree doesn't affect layout. */}
+        {dialog && (
+          <SupplierFormDialog
+            companyId={currentCompanyId}
+            supplier={dialog.type === "edit" ? dialog.supplier : null}
+            onClose={() => setDialog(null)}
+            onSuccess={() => setDialog(null)}
+          />
+        )}
+
+        {confirmAction && (
+          <ConfirmActionDialog
+            title={confirmAction.type === "activate" ? t("procurement.actions.activate") : t("procurement.actions.suspend")}
+            message={
+              confirmAction.type === "activate"
+                ? t("procurement.confirm.activateSupplier", { name: confirmAction.supplier.name })
+                : t("procurement.confirm.suspendSupplier", { name: confirmAction.supplier.name })
+            }
+            confirmLabel={confirmAction.type === "activate" ? t("procurement.actions.activate") : t("procurement.actions.suspend")}
+            tone={confirmAction.type === "suspend" ? "danger" : "default"}
+            isPending={activateMutation.isPending || suspendMutation.isPending}
+            onConfirm={runConfirm}
+            onClose={() => setConfirmAction(null)}
+          />
+        )}
       </main>
-
-      {dialog && (
-        <SupplierFormDialog
-          companyId={currentCompanyId}
-          supplier={dialog.type === "edit" ? dialog.supplier : null}
-          onClose={() => setDialog(null)}
-          onSuccess={() => setDialog(null)}
-        />
-      )}
-
-      {confirmAction && (
-        <ConfirmActionDialog
-          title={
-            confirmAction.type === "activate"
-              ? t("procurement.actions.activate")
-              : t("procurement.actions.suspend")
-          }
-          message={
-            confirmAction.type === "activate"
-              ? t("procurement.confirm.activateSupplier", { name: confirmAction.supplier.name })
-              : t("procurement.confirm.suspendSupplier", { name: confirmAction.supplier.name })
-          }
-          confirmLabel={
-            confirmAction.type === "activate"
-              ? t("procurement.actions.activate")
-              : t("procurement.actions.suspend")
-          }
-          tone={confirmAction.type === "suspend" ? "danger" : "default"}
-          isPending={activateMutation.isPending || suspendMutation.isPending}
-          onConfirm={runConfirm}
-          onClose={() => setConfirmAction(null)}
-        />
-      )}
     </AppLayout>
   );
 }

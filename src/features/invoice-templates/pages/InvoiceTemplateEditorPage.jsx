@@ -34,10 +34,10 @@ function getErrorMessage(error) {
 function ValidationIssues({ issues }) {
   if (!issues?.length) return null;
   return (
-    <div className="space-y-1 rounded-xl border border-red-400/20 bg-red-500/10 p-3 text-xs text-red-200">
+    <div className="space-y-1 rounded-xl border border-danger bg-danger-soft p-3 text-sm text-danger">
       {issues.map((issue, index) => (
         <div key={index}>
-          <span className="font-mono text-[10px] text-red-300">{issue.path}</span> — {issue.message}
+          <span className="font-mono text-xs text-danger">{issue.path}</span> — {issue.message}
         </div>
       ))}
     </div>
@@ -47,16 +47,16 @@ function ValidationIssues({ issues }) {
 function VersionsPanel({ versions, selectedVersionId, onSelectVersion, canManage, publishMutation }) {
   return (
     <div className="space-y-2">
-      {versions.length === 0 && <p className="text-xs text-slate-500">No versions yet -- save one below.</p>}
+      {versions.length === 0 && <p className="text-sm text-subtle">No versions yet -- save one below.</p>}
       {versions.map((version) => (
         <div
           key={version.id}
-          className={`flex items-center justify-between gap-2 rounded-xl border p-2 text-xs ${
-            selectedVersionId === version.id ? "border-blue-400/50 bg-blue-500/10" : "border-white/10 bg-white/[0.02]"
+          className={`flex items-center justify-between gap-2 rounded-xl border p-2 text-sm ${
+            selectedVersionId === version.id ? "border-accent-line bg-accent-soft" : "border-line bg-raised"
           }`}
         >
           <button type="button" onClick={() => onSelectVersion(version.id)} className="flex-1 text-start">
-            <div className="font-bold text-white">
+            <div className="font-bold text-ink">
               v{version.versionNumber}
               {version.isActive && (
                 <StatusBadge tone="success">
@@ -64,7 +64,7 @@ function VersionsPanel({ versions, selectedVersionId, onSelectVersion, canManage
                 </StatusBadge>
               )}
             </div>
-            <div className="text-[10px] text-slate-500">
+            <div className="text-xs text-subtle">
               {version.isPublished ? `Published ${formatDateTime(version.publishedAtUtc)}` : "Draft, unpublished"} ·{" "}
               {formatDateTime(version.createdAtUtc)}
             </div>
@@ -74,7 +74,7 @@ function VersionsPanel({ versions, selectedVersionId, onSelectVersion, canManage
               type="button"
               disabled={publishMutation.isPending}
               onClick={() => publishMutation.mutate(version.id)}
-              className="flex items-center gap-1 rounded-lg border border-white/10 px-2 py-1 font-bold text-slate-200 hover:border-emerald-400/40 hover:bg-emerald-500/10 disabled:opacity-50"
+              className="flex items-center gap-1 rounded-lg border border-line px-2 py-1 font-bold text-ink hover:border-success hover:bg-success-soft disabled:opacity-50"
             >
               <Upload size={12} /> Publish
             </button>
@@ -93,25 +93,25 @@ function PreviewPanel({ companyId, template, branches, canView, document }) {
   const previewMutation = useRenderInvoiceTemplatePreview(companyId, branchId);
 
   return (
-    <div className="space-y-3 rounded-2xl border border-white/10 bg-[#0c1424] p-4">
-      <div className="flex items-center gap-2 text-sm font-black text-white">
+    <div className="space-y-3 rounded-xl border border-line bg-surface p-4">
+      <div className="flex items-center gap-2 text-sm font-black text-ink">
         <Eye size={16} /> Preview
       </div>
-      <p className="text-[11px] text-slate-500">
+      <p className="text-xs text-subtle">
         Renders the document currently in the editor against a REAL invoice of the chosen branch (nothing
         is saved). NOBO's API has no invoice search/list endpoint yet, so paste an existing invoice's ID.
       </p>
 
       <div className="grid gap-2 sm:grid-cols-2">
         {template.scope === "Branch" ? (
-          <div className="flex h-10 items-center rounded-xl border border-white/10 bg-white/[0.02] px-3 text-xs text-slate-300">
+          <div className="flex h-10 items-center rounded-xl border border-line bg-raised px-3 text-sm text-muted">
             Branch: {branches.find((b) => b.branchId === branchId)?.name || branchId}
           </div>
         ) : (
           <select
             value={branchId}
             onChange={(event) => setBranchId(event.target.value)}
-            className="h-10 rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none"
+            className="h-10 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none"
           >
             <option value="">Select branch...</option>
             {branches.map((branch) => (
@@ -125,7 +125,7 @@ function PreviewPanel({ companyId, template, branches, canView, document }) {
           value={invoiceId}
           onChange={(event) => setInvoiceId(event.target.value)}
           placeholder="Invoice ID (GUID)"
-          className="h-10 rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none"
+          className="h-10 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none"
         />
       </div>
 
@@ -135,7 +135,7 @@ function PreviewPanel({ companyId, template, branches, canView, document }) {
         type="button"
         disabled={!branchId || !invoiceId.trim() || !document || previewMutation.isPending}
         onClick={() => previewMutation.mutate({ invoiceId: invoiceId.trim(), document })}
-        className="flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-accent text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
       >
         {previewMutation.isPending ? "Rendering..." : "Render preview"}
       </button>
@@ -199,14 +199,14 @@ export function InvoiceTemplateEditorPage() {
 
   return (
     <AppLayout>
-      <main className="space-y-4" dir="rtl">
+      <main className="odoo-root space-y-3" dir="rtl">
         <PageHeader
           title={template ? template.name : "Invoice Template"}
           actions={
             <button
               type="button"
               onClick={() => navigate(ROUTES.INVOICE_TEMPLATES_ADMIN)}
-              className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold text-slate-100"
+              className="flex items-center gap-2 rounded-xl border border-line bg-raised px-3 py-2 text-sm font-bold text-ink"
             >
               <ArrowRight size={14} /> Back to list
             </button>
@@ -214,7 +214,7 @@ export function InvoiceTemplateEditorPage() {
         />
 
         {notice && (
-          <div className="flex items-center gap-2 rounded-xl border border-blue-400/25 bg-blue-500/10 px-3 py-2 text-xs text-blue-100">
+          <div className="flex items-center gap-2 rounded-xl border border-accent-line bg-accent-soft px-3 py-2 text-sm text-accent">
             <CircleCheck size={14} /> {notice}
           </div>
         )}
@@ -232,11 +232,11 @@ export function InvoiceTemplateEditorPage() {
         ) : (
           <div className="grid gap-4 xl:grid-cols-[320px_1fr]">
             <section className="space-y-4">
-              <div className="rounded-2xl border border-white/10 bg-[#0c1424] p-3">
-                <div className="mb-2 text-xs font-bold text-slate-400">
+              <div className="rounded-xl border border-line bg-surface p-3">
+                <div className="mb-2 text-sm font-bold text-muted">
                   {template.scope === "Company" ? "Company-wide template" : "Branch template"}
                 </div>
-                {template.description && <p className="mb-2 text-xs text-slate-500">{template.description}</p>}
+                {template.description && <p className="mb-2 text-sm text-subtle">{template.description}</p>}
                 <VersionsPanel
                   versions={template.versions}
                   selectedVersionId={effectiveVersionId}
@@ -245,14 +245,14 @@ export function InvoiceTemplateEditorPage() {
                   publishMutation={publishMutation}
                 />
                 {publishMutation.isError && (
-                  <div className="mt-2 rounded-xl border border-red-400/20 bg-red-500/10 p-2 text-[11px] text-red-200">
+                  <div className="mt-2 rounded-xl border border-danger bg-danger-soft p-2 text-xs text-danger">
                     {getErrorMessage(publishMutation.error)}
                   </div>
                 )}
               </div>
 
               {!canManage && (
-                <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 p-3 text-xs text-amber-100">
+                <div className="rounded-xl border border-warning bg-warning-soft p-3 text-sm text-warning">
                   InvoiceTemplates.Manage permission is required to save or publish a version. You can still
                   view and preview.
                 </div>
@@ -260,13 +260,13 @@ export function InvoiceTemplateEditorPage() {
             </section>
 
             <section className="space-y-4">
-              <div className="rounded-2xl border border-white/10 bg-[#0c1424] p-4">
+              <div className="rounded-xl border border-line bg-surface p-4">
                 <div className="mb-3 flex items-center justify-between gap-2">
-                  <h2 className="text-sm font-black text-white">Document editor</h2>
+                  <h2 className="text-sm font-black text-ink">Document editor</h2>
                   <button
                     type="button"
                     onClick={() => setShowPreview((value) => !value)}
-                    className="flex items-center gap-1.5 rounded-lg border border-white/10 px-2 py-1 text-[11px] font-bold text-slate-300 hover:border-blue-400/40"
+                    className="flex items-center gap-1.5 rounded-lg border border-line px-2 py-1 text-xs font-bold text-muted hover:border-accent-line"
                   >
                     <Eye size={12} /> {showPreview ? "Hide preview" : "Show preview"}
                   </button>
@@ -286,12 +286,12 @@ export function InvoiceTemplateEditorPage() {
 
                 <ValidationIssues issues={validateMutation.data?.issues} />
                 {validateMutation.data?.isValid && (
-                  <div className="mt-2 rounded-xl border border-emerald-400/20 bg-emerald-500/10 p-2 text-xs text-emerald-200">
+                  <div className="mt-2 rounded-xl border border-success bg-success-soft p-2 text-sm text-success">
                     Document is valid.
                   </div>
                 )}
                 {createVersionMutation.isError && (
-                  <div className="mt-2 rounded-xl border border-red-400/20 bg-red-500/10 p-2 text-xs text-red-200">
+                  <div className="mt-2 rounded-xl border border-danger bg-danger-soft p-2 text-sm text-danger">
                     {getErrorMessage(createVersionMutation.error)}
                   </div>
                 )}
@@ -302,7 +302,7 @@ export function InvoiceTemplateEditorPage() {
                       type="button"
                       disabled={!document || validateMutation.isPending}
                       onClick={() => validateMutation.mutate(document)}
-                      className="flex h-10 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-4 text-xs font-bold text-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="flex h-10 items-center gap-2 rounded-xl border border-line bg-raised px-4 text-sm font-bold text-ink disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <TriangleAlert size={14} /> {validateMutation.isPending ? "Validating..." : "Validate"}
                     </button>
@@ -310,7 +310,7 @@ export function InvoiceTemplateEditorPage() {
                       type="button"
                       disabled={!document || createVersionMutation.isPending}
                       onClick={saveVersion}
-                      className="flex h-10 items-center gap-2 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                      className="flex h-10 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <Save size={14} /> {createVersionMutation.isPending ? "Saving..." : "Save as new version"}
                     </button>

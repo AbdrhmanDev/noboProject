@@ -6,6 +6,7 @@ import {
   createDraftSalesOrder,
   getRetrievableSalesOrders,
   getSalesOrderDetails,
+  mergeSalesOrders,
   requestSalesOrderDiscount,
   updateDraftSalesOrder,
   voidPreparedSalesOrder,
@@ -14,6 +15,7 @@ import { printJobQueryKeys } from "../../devices/hooks/usePrintJobs";
 import type {
   CancelSalesOrderRequest,
   CreateDraftSalesOrderRequest,
+  MergeSalesOrdersRequest,
   RequestSalesOrderDiscountRequest,
   RetrievableSalesOrdersFilters,
   UpdateDraftSalesOrderRequest,
@@ -270,6 +272,34 @@ export function useRequestSalesOrderDiscount(
       if (!companyId || !branchId || !salesOrderId) return;
       queryClient.invalidateQueries({
         queryKey: draftSalesOrderQueryKeys.details(companyId, branchId, salesOrderId),
+      });
+    },
+  });
+}
+
+// POS "merge tables": merges another table's order into the current one (server side, one
+// transaction). Endpoint not on the backend yet -- callers gate it behind env.features.tableMerge.
+export function useMergeSalesOrders(
+  companyId: string | null | undefined,
+  branchId: string | null | undefined,
+  targetSalesOrderId: string | null | undefined,
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: MergeSalesOrdersRequest) =>
+      mergeSalesOrders(companyId as string, branchId as string, targetSalesOrderId as string, payload),
+    onSuccess: async (_result, payload) => {
+      if (!companyId || !branchId || !targetSalesOrderId) return;
+
+      await queryClient.invalidateQueries({
+        queryKey: draftSalesOrderQueryKeys.details(companyId, branchId, targetSalesOrderId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: draftSalesOrderQueryKeys.details(companyId, branchId, payload.sourceSalesOrderId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["sales-orders", companyId, branchId, "retrievable"],
       });
     },
   });

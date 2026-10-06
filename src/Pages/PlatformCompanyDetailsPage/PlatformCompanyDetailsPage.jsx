@@ -24,9 +24,9 @@ function CompanyStatusBadge({ status }) {
 
 function StatCard({ label, value }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-black/20 p-3">
-      <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{label}</div>
-      <div className="mt-1 text-lg font-black text-white">{value}</div>
+    <div className="rounded-xl border border-line bg-canvas p-3">
+      <div className="text-xs font-semibold uppercase tracking-wide text-subtle">{label}</div>
+      <div className="mt-1 text-lg font-black text-ink">{value}</div>
     </div>
   );
 }
@@ -61,20 +61,20 @@ function PlatformCompanyDetailsContent({ companyId }) {
 
   return (
     <div className="space-y-3">
-      <section className="rounded-2xl border border-white/10 bg-[#0c1424] p-4">
+      <section className="rounded-xl border border-line bg-surface p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-black text-white">{company.legalName}</h2>
+              <h2 className="text-lg font-black text-ink">{company.legalName}</h2>
               <CompanyStatusBadge status={company.status} />
             </div>
-            {company.tradeName && <div className="text-[11px] text-slate-500">{company.tradeName}</div>}
+            {company.tradeName && <div className="text-xs text-subtle">{company.tradeName}</div>}
           </div>
           {canManageEntitlements && (
             <button
               type="button"
               onClick={() => navigate(platformCompanyEntitlementsPath(companyId))}
-              className="rounded-xl border border-blue-400/30 bg-blue-500/10 px-3 py-2 text-[11px] font-bold text-blue-200 hover:bg-blue-500/20"
+              className="rounded-xl border border-accent-line bg-accent-soft px-3 py-2 text-xs font-bold text-accent hover:bg-accent-strong/20"
             >
               {t("platform.details.manageEntitlements")}
             </button>
@@ -87,8 +87,8 @@ function PlatformCompanyDetailsContent({ companyId }) {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-white/10 bg-[#0c1424] p-4">
-        <div className="mb-3 text-sm font-black text-white">{t("platform.details.section.usage")}</div>
+      <section className="rounded-xl border border-line bg-surface p-4">
+        <div className="mb-3 text-sm font-black text-ink">{t("platform.details.section.usage")}</div>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           <StatCard label={t("platform.details.totalUsers")} value={company.userCount} />
           <StatCard label={t("platform.details.activeUsers")} value={company.activeUserCount} />
@@ -97,17 +97,17 @@ function PlatformCompanyDetailsContent({ companyId }) {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-white/10 bg-[#0c1424] p-4">
-        <div className="mb-3 text-sm font-black text-white">{t("platform.details.section.apps")}</div>
+      <section className="rounded-xl border border-line bg-surface p-4">
+        <div className="mb-3 text-sm font-black text-ink">{t("platform.details.section.apps")}</div>
         <PlatformEnabledAppsBadges codes={company.entitlements.filter((e) => e.kind === "App" && e.effectiveEnabled).map((e) => e.code)} size="lg" />
       </section>
 
-      <section className="rounded-2xl border border-white/10 bg-[#0c1424] p-4">
+      <section className="rounded-xl border border-line bg-surface p-4">
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <div className="text-sm font-black text-white">{t("platform.details.section.activity")}</div>
+          <div className="text-sm font-black text-ink">{t("platform.details.section.activity")}</div>
           <PlatformDateRangeSelector preset={datePreset} onPresetChange={setDatePreset} onRangeChange={setDateRange} />
         </div>
-        <p className="mb-3 text-[11px] text-slate-500">{t("platform.activityPeriodNote")}</p>
+        <p className="mb-3 text-xs text-subtle">{t("platform.activityPeriodNote")}</p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           <StatCard label={t("platform.details.orders")} value={company.ordersCount} />
           <StatCard label={t("platform.details.sales")} value={formatMoney(company.salesAmount, company.currencyCode)} />
@@ -116,7 +116,7 @@ function PlatformCompanyDetailsContent({ companyId }) {
             value={company.lastActivityAtUtc ? formatDateTime(company.lastActivityAtUtc) : t("platform.never")}
           />
         </div>
-        <p className="mt-2 text-[11px] text-slate-500">{t("platform.lastActivityNote")}</p>
+        <p className="mt-2 text-xs text-subtle">{t("platform.lastActivityNote")}</p>
       </section>
     </div>
   );
@@ -130,21 +130,21 @@ export default function PlatformCompanyDetailsPage() {
   return (
     <AppLayout activePath={ROUTES.PLATFORM_COMPANY_DETAILS}>
       <PlatformAccessGate>
-        <main className="space-y-4" dir="rtl">
-          <header className="rounded-2xl border border-white/10 bg-[#0c1424]/85 p-4 shadow-xl shadow-black/20">
+        <main className="odoo-root space-y-3" dir="rtl">
+          <header className="rounded-xl border border-line bg-surface p-4 shadow-xl shadow-black/20">
             <button
               type="button"
               onClick={() => navigate(ROUTES.PLATFORM_COMPANIES)}
-              className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold text-slate-400 hover:text-white"
+              className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-muted hover:text-ink"
             >
               <ArrowLeft size={14} />
               {t("platform.details.back")}
             </button>
-            <div className="flex items-center gap-2 text-xs text-slate-400">
-              <ShieldCheck size={16} className="text-blue-300" />
+            <div className="flex items-center gap-2 text-sm text-muted">
+              <ShieldCheck size={16} className="text-accent" />
               {t("nav.platform")}
             </div>
-            <h1 className="mt-1 text-2xl font-black text-white">{t("platform.details.title")}</h1>
+            <h1 className="mt-1 text-2xl font-black text-ink">{t("platform.details.title")}</h1>
           </header>
 
           {!companyId ? (

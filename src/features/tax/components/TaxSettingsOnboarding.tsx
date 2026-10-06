@@ -60,12 +60,12 @@ export function TaxSettingsOnboarding({ onCompleted }: TaxSettingsOnboardingProp
     return (
       <section className="panel rounded-2xl p-5">
         <div className="flex items-center gap-3">
-          <div className="grid h-11 w-11 place-items-center rounded-xl bg-yellow-500/15 text-yellow-300">
+          <div className="grid h-11 w-11 place-items-center rounded-xl bg-warning-soft text-warning">
             <LockKeyhole size={20} />
           </div>
           <div>
             <h1 className="brand-text text-xl font-black">Tax setup required</h1>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-muted">
               This company has not configured tax settings yet, and your role cannot
               configure them. Ask an owner or manager to set it up.
             </p>
@@ -78,29 +78,29 @@ export function TaxSettingsOnboarding({ onCompleted }: TaxSettingsOnboardingProp
   return (
     <section className="panel rounded-2xl p-5">
       <div className="flex items-center gap-3">
-        <div className="grid h-11 w-11 place-items-center rounded-xl bg-blue-500/15 text-blue-300">
+        <div className="grid h-11 w-11 place-items-center rounded-xl bg-accent-soft text-accent">
           <Percent size={20} />
         </div>
         <div>
           <h1 className="brand-text text-xl font-black">Tax Setup Required</h1>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-muted">
             Configure how this company handles tax before creating the first sale.
           </p>
         </div>
       </div>
 
       <div className="mt-5 grid gap-3">
-        <p className="text-xs font-bold text-slate-300">Enable tax for this company?</p>
+        <p className="text-xs font-bold text-muted">Enable tax for this company?</p>
 
         <div className="grid gap-3 sm:grid-cols-2">
           <button
             type="button"
             onClick={() => handleChoice(true)}
             disabled={mutation.isPending}
-            className="rounded-xl border border-white/10 bg-white/5 p-4 text-start transition hover:border-blue-400/45 hover:bg-blue-500/10 disabled:cursor-not-allowed disabled:opacity-55"
+            className="rounded-xl border border-line bg-inset p-4 text-start transition hover:border-accent-line hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-55"
           >
-            <div className="font-bold text-white">Yes, enable tax</div>
-            <p className="mt-1 text-xs text-gray-400">
+            <div className="font-bold text-ink">Yes, enable tax</div>
+            <p className="mt-1 text-xs text-muted">
               Each product will need a tax category assigned before it can be sold.
               Configure categories in Tax Administration.
             </p>
@@ -110,10 +110,10 @@ export function TaxSettingsOnboarding({ onCompleted }: TaxSettingsOnboardingProp
             type="button"
             onClick={() => handleChoice(false)}
             disabled={mutation.isPending}
-            className="rounded-xl border border-white/10 bg-white/5 p-4 text-start transition hover:border-blue-400/45 hover:bg-blue-500/10 disabled:cursor-not-allowed disabled:opacity-55"
+            className="rounded-xl border border-line bg-inset p-4 text-start transition hover:border-accent-line hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-55"
           >
-            <div className="font-bold text-white">No, disable tax</div>
-            <p className="mt-1 text-xs text-gray-400">
+            <div className="font-bold text-ink">No, disable tax</div>
+            <p className="mt-1 text-xs text-muted">
               Sales will be created without tax. You can enable this later in Tax
               Administration.
             </p>
@@ -121,14 +121,14 @@ export function TaxSettingsOnboarding({ onCompleted }: TaxSettingsOnboardingProp
         </div>
 
         {mutation.isPending && (
-          <div className="flex items-center gap-2 text-xs text-gray-400">
+          <div className="flex items-center gap-2 text-xs text-muted">
             <RefreshCw size={14} className="animate-spin" />
             Saving tax settings...
           </div>
         )}
 
         {formError && (
-          <div className="rounded-xl border border-rose-400/25 bg-rose-500/10 px-3 py-2 text-xs text-rose-100">
+          <div className="rounded-xl border border-danger bg-danger-soft px-3 py-2 text-sm text-danger">
             {formError}
           </div>
         )}
@@ -136,7 +136,7 @@ export function TaxSettingsOnboarding({ onCompleted }: TaxSettingsOnboardingProp
         <button
           type="button"
           onClick={() => navigate(ROUTES.TAX_ADMIN)}
-          className="text-start text-xs font-semibold text-blue-300 hover:text-blue-200"
+          className="text-start text-xs font-semibold text-accent hover:text-accent"
         >
           Open full Tax Administration
         </button>
