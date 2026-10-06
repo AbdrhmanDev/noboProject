@@ -7,6 +7,7 @@ import logoLight from "../assets/nobo-logo-light.png";
 import Header from "./Header";
 import Footer from "./Footer";
 import "../shared/components/odoo/odoo.css";
+import { env } from "../app/config/env";
 import { useI18n } from "../i18n/I18nContext";
 import { useAuth } from "../features/auth/hooks/useAuth";
 import { useCurrentUserProfile } from "../features/auth/hooks/useCurrentUserProfile";
@@ -217,22 +218,27 @@ export default function AppLayout({ children, onLogout }) {
             {/* Deliberately NOT a PermissionNavItem: those all require currentCompanyId truthy,
                 but the applicant Customer Registration flow is exactly for a user who may have NO
                 company yet (its route bypasses CompanyGate too -- see AuthenticatedOnlyRoute).
-                Always visible to any authenticated user; the backend is the real gate. */}
-            <button
-              type="button"
-              onClick={() => go(ROUTES.REGISTRATION_NEW)}
-              aria-label={t("nav.myRegistration")}
-              aria-current={activePath === ROUTES.REGISTRATION_NEW ? "page" : undefined}
-              data-active={activePath === ROUTES.REGISTRATION_NEW}
-              className="nobo-sb-item"
-            >
-              <FilePlus2 size={20} className="nobo-sb-icon" />
-              {isCollapsed ? (
-                <span className="nobo-sb-tip">{t("nav.myRegistration")}</span>
-              ) : (
-                <span className="nobo-sb-label">{t("nav.myRegistration")}</span>
-              )}
-            </button>
+                Always visible to any authenticated user; the backend is the real gate.
+                SelfHosted exception: a single-restaurant offline install has no "register a new
+                company with NOBO" use case at all, so this entry point is hidden there -- Cloud
+                (where this is a real new-customer signup flow) is unaffected. */}
+            {env.deploymentMode !== "SelfHosted" && (
+              <button
+                type="button"
+                onClick={() => go(ROUTES.REGISTRATION_NEW)}
+                aria-label={t("nav.myRegistration")}
+                aria-current={activePath === ROUTES.REGISTRATION_NEW ? "page" : undefined}
+                data-active={activePath === ROUTES.REGISTRATION_NEW}
+                className="nobo-sb-item"
+              >
+                <FilePlus2 size={20} className="nobo-sb-icon" />
+                {isCollapsed ? (
+                  <span className="nobo-sb-tip">{t("nav.myRegistration")}</span>
+                ) : (
+                  <span className="nobo-sb-label">{t("nav.myRegistration")}</span>
+                )}
+              </button>
+            )}
           </div>
         </div>
         {NAV_SECTIONS.map((section) => (

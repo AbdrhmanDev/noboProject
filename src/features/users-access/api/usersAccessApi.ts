@@ -9,10 +9,13 @@ import type {
   CompanyMembershipPinResponse,
   CompanyRole,
   CreateInvitationRequest,
+  CreateMemberDirectlyRequest,
+  CreateMemberDirectlyResponse,
   CreateRoleRequest,
   InvitationMutationResponse,
   PagedInvitations,
   PagedMemberships,
+  ResetMemberPasswordRequest,
   SetCompanyMembershipPinRequest,
   UpdateInvitationRequest,
   UpdateMembershipBranchAccessRequest,
@@ -96,6 +99,24 @@ export async function changeMembershipStatus(
     `/api/companies/${companyId}/memberships/${membershipId}/${action}`,
   );
   return response.data;
+}
+
+// No email sent, no invitation-accept step: the account is Active immediately. Never log or
+// persist `payload.password` anywhere beyond this request body.
+export async function createCompanyMemberDirectly(companyId: string, payload: CreateMemberDirectlyRequest) {
+  const response = await httpClient.post<CreateMemberDirectlyResponse>(
+    `/api/companies/${companyId}/members/direct`,
+    payload,
+  );
+  return response.data;
+}
+
+export async function resetCompanyMemberPassword(
+  companyId: string,
+  membershipId: string,
+  payload: ResetMemberPasswordRequest,
+) {
+  await httpClient.post(`/api/companies/${companyId}/memberships/${membershipId}/password`, payload);
 }
 
 export async function getCompanyRoles(companyId: string) {

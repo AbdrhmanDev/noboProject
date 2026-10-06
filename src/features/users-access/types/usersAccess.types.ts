@@ -114,6 +114,32 @@ export type UpdateInvitationRequest = {
   selectedBranchIds: string[];
 };
 
+// No email round-trip: the caller sets the password directly and hands it to the new member out
+// of band. Built so a deployment with no working email transport can still add a user.
+export type CreateMemberDirectlyRequest = {
+  email: string;
+  displayName: string;
+  password: string;
+  roleIds: string[];
+  branchAccessMode: BranchAccessMode;
+  selectedBranchIds: string[];
+};
+
+export type CreateMemberDirectlyResponse = {
+  userId: string;
+  companyMembershipId: string;
+  companyId: string;
+  email: string;
+  displayName: string;
+  branchAccessMode: BranchAccessMode;
+  roleIds: string[];
+  selectedBranchIds: string[];
+};
+
+export type ResetMemberPasswordRequest = {
+  newPassword: string;
+};
+
 export type UpdateMembershipBranchAccessRequest = {
   branchAccessMode: BranchAccessMode;
   selectedBranchIds: string[];

@@ -3,9 +3,11 @@ import {
   Ban,
   CheckCircle2,
   Edit3,
+  KeyRound,
   RefreshCw,
   Search,
   ShieldCheck,
+  UserCog,
   UserPlus,
   XCircle,
 } from "lucide-react";
@@ -39,7 +41,9 @@ import {
   useCompanyRoles,
   useCreateCompanyRole,
   useCreateInvitation,
+  useCreateMemberDirectly,
   useResendInvitation,
+  useResetMemberPassword,
   useTenantAdminBranches,
   useUpdateCompanyRole,
   useUpdateInvitation,
@@ -637,6 +641,180 @@ function InviteDialog({
   );
 }
 
+// Creates an Active membership directly, with a password the caller sets here and hands to the
+// new user out of band -- no email, no invitation-accept step. Same roles/branch-access pickers
+// as InviteDialog, since the access being granted is the same; only how the account comes to
+// exist differs.
+function CreateMemberDirectlyDialog({
+  roles,
+  branches,
+  canManage,
+  actorPermissions,
+  onSubmit,
+  onClose,
+  pending,
+}) {
+  const [email, setEmail] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [password, setPassword] = useState("");
+  const [access, setAccess] = useState(EMPTY_ACCESS);
+  const [error, setError] = useState("");
+
+  const submit = async () => {
+    if (!email.trim()) return setError("Email is required.");
+    if (!displayName.trim()) return setError("Name is required.");
+    if (!password || password.length < 8)
+      return setError("Password must be at least 8 characters.");
+    if (
+      access.branchAccessMode === "SelectedBranches" &&
+      access.selectedBranchIds.length === 0
+    )
+      return setError("Select at least one branch.");
+    setError("");
+    try {
+      await onSubmit({
+        email: email.trim(),
+        displayName: displayName.trim(),
+        password,
+        ...access,
+      });
+    } catch (mutationError) {
+      setError(getErrorMessage(mutationError));
+    }
+  };
+
+  return (
+    <Dialog title="Create Account Directly" onClose={onClose}>
+      <div className="space-y-5">
+        <div className="rounded-xl border border-blue-400/20 bg-blue-500/10 p-3 text-xs text-blue-100">
+          No email is sent. The account is active immediately -- give the email and password you
+          set here to the new user yourself.
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="text-xs font-bold text-slate-400">
+            Name
+            <input
+              value={displayName}
+              onChange={(event) => setDisplayName(event.target.value)}
+              disabled={!canManage || pending}
+              className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400 disabled:opacity-50"
+            />
+          </label>
+          <label className="text-xs font-bold text-slate-400">
+            Email
+            <input
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              disabled={!canManage || pending}
+              className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400 disabled:opacity-50"
+            />
+          </label>
+        </div>
+        <label className="block text-xs font-bold text-slate-400">
+          Password
+          <input
+            type="text"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            disabled={!canManage || pending}
+            placeholder="At least 8 characters"
+            className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400 disabled:opacity-50"
+          />
+        </label>
+        <section>
+          <h3 className="mb-2 text-sm font-black text-white">Roles</h3>
+          <RolePicker
+            roles={roles}
+            selectedIds={access.roleIds}
+            setSelectedIds={(ids) =>
+              setAccess((draft) => ({ ...draft, roleIds: ids }))
+            }
+            disabled={!canManage || pending}
+            actorPermissions={actorPermissions}
+          />
+        </section>
+        <section>
+          <h3 className="mb-2 text-sm font-black text-white">Branch Access</h3>
+          <BranchAccessPicker
+            branches={branches}
+            mode={access.branchAccessMode}
+            selectedIds={access.selectedBranchIds}
+            setMode={(mode) =>
+              setAccess((draft) => ({ ...draft, branchAccessMode: mode }))
+            }
+            setSelectedIds={(ids) =>
+              setAccess((draft) => ({ ...draft, selectedBranchIds: ids }))
+            }
+            disabled={!canManage || pending}
+          />
+        </section>
+        {error && (
+          <div className="rounded-xl border border-red-400/20 bg-red-500/10 p-3 text-sm text-red-100">
+            {error}
+          </div>
+        )}
+        <button
+          type="button"
+          disabled={!canManage || pending}
+          onClick={submit}
+          className="h-11 rounded-xl bg-blue-600 px-5 text-sm font-black text-white disabled:opacity-50"
+        >
+          {pending ? "Creating..." : "Create account"}
+        </button>
+      </div>
+    </Dialog>
+  );
+}
+
+// New password only -- the current one is never fetched or shown (the backend never exposes it
+// either). The caller then hands the new password to the member out of band.
+function ResetPasswordDialog({ member, onSubmit, onClose, pending }) {
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  const submit = async () => {
+    if (!password || password.length < 8)
+      return setError("Password must be at least 8 characters.");
+    setError("");
+    try {
+      await onSubmit(password);
+    } catch (mutationError) {
+      setError(getErrorMessage(mutationError));
+    }
+  };
+
+  return (
+    <Dialog title={`Reset password for ${member.displayName}`} onClose={onClose}>
+      <div className="space-y-5">
+        <label className="block text-xs font-bold text-slate-400">
+          New password
+          <input
+            type="text"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            disabled={pending}
+            placeholder="At least 8 characters"
+            className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400 disabled:opacity-50"
+          />
+        </label>
+        {error && (
+          <div className="rounded-xl border border-red-400/20 bg-red-500/10 p-3 text-sm text-red-100">
+            {error}
+          </div>
+        )}
+        <button
+          type="button"
+          disabled={pending}
+          onClick={submit}
+          className="h-11 rounded-xl bg-blue-600 px-5 text-sm font-black text-white disabled:opacity-50"
+        >
+          {pending ? "Saving..." : "Set new password"}
+        </button>
+      </div>
+    </Dialog>
+  );
+}
+
 function RoleDialog({
   role,
   entitlements,
@@ -848,6 +1026,8 @@ export default function UsersAccessPage() {
     canManageUsers,
   );
   const createInvite = useCreateInvitation(currentCompanyId);
+  const createMemberDirectly = useCreateMemberDirectly(currentCompanyId);
+  const resetMemberPassword = useResetMemberPassword(currentCompanyId);
   const updateInvite = useUpdateInvitation(currentCompanyId);
   const resendInvite = useResendInvitation(currentCompanyId);
   const cancelInvite = useCancelInvitation(currentCompanyId);
@@ -949,6 +1129,16 @@ export default function UsersAccessPage() {
               >
                 <UserPlus size={15} />
                 Invite User
+              </button>
+            )}
+            {canManageUsers && (
+              <button
+                onClick={() => setDialog({ type: "createMember" })}
+                title="Creates an active account immediately, with a password you set -- no email required."
+                className="flex h-10 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 text-xs font-black text-white"
+              >
+                <UserCog size={15} />
+                Create Account Directly
               </button>
             )}
             {canManageRoles && (
@@ -1053,6 +1243,15 @@ export default function UsersAccessPage() {
                     >
                       <Edit3 size={14} />
                     </button>
+                    {canManageUsers && (
+                      <button
+                        title="Reset password"
+                        onClick={() => setDialog({ type: "resetPassword", member })}
+                        className="rounded-lg border border-white/10 px-3 py-2 text-xs font-bold text-white"
+                      >
+                        <KeyRound size={14} />
+                      </button>
+                    )}
                     {/* Owners are not blanket-excluded here (Section 2/15): the backend only
                         rejects Suspend/Revoke on the LAST active owner
                         (CompanyMembership.LastOwnerCannotBeSuspended/Revoked) -- a co-owner in a
@@ -1312,6 +1511,36 @@ export default function UsersAccessPage() {
                 ? "Invitation sent."
                 : "Invitation created, but email delivery was not confirmed.",
             );
+          }}
+        />
+      )}
+      {dialog?.type === "createMember" && (
+        <CreateMemberDirectlyDialog
+          roles={roles}
+          branches={branches}
+          canManage={canManageUsers}
+          actorPermissions={permissionsQuery.data}
+          pending={createMemberDirectly.isPending}
+          onClose={() => setDialog(null)}
+          onSubmit={async (payload) => {
+            await createMemberDirectly.mutateAsync(payload);
+            setDialog(null);
+            setNotice("Account created. Share the email and password with the new user yourself.");
+          }}
+        />
+      )}
+      {dialog?.type === "resetPassword" && (
+        <ResetPasswordDialog
+          member={dialog.member}
+          pending={resetMemberPassword.isPending}
+          onClose={() => setDialog(null)}
+          onSubmit={async (newPassword) => {
+            await resetMemberPassword.mutateAsync({
+              membershipId: dialog.member.membershipId,
+              payload: { newPassword },
+            });
+            setDialog(null);
+            setNotice(`Password reset for ${dialog.member.displayName}.`);
           }}
         />
       )}

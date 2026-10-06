@@ -6,6 +6,7 @@ import {
   cancelCompanyInvitation,
   changeMembershipStatus,
   createCompanyInvitation,
+  createCompanyMemberDirectly,
   createCompanyRole,
   getCompanyInvitation,
   getCompanyInvitations,
@@ -15,6 +16,7 @@ import {
   getTenantAdminBranches,
   previewCompanyInvitation,
   resendCompanyInvitation,
+  resetCompanyMemberPassword,
   setCompanyMembershipPin,
   updateCompanyInvitation,
   updateCompanyRole,
@@ -24,7 +26,9 @@ import {
 import type {
   AssignMembershipRolesRequest,
   CreateInvitationRequest,
+  CreateMemberDirectlyRequest,
   CreateRoleRequest,
+  ResetMemberPasswordRequest,
   SetCompanyMembershipPinRequest,
   UpdateInvitationRequest,
   UpdateMembershipBranchAccessRequest,
@@ -106,6 +110,22 @@ export function useCreateInvitation(companyId: string | null | undefined) {
   return useMutation({
     mutationFn: (payload: CreateInvitationRequest) => createCompanyInvitation(companyId as string, payload),
     onSuccess: () => invalidateCompanyAccess(queryClient, companyId as string),
+  });
+}
+
+export function useCreateMemberDirectly(companyId: string | null | undefined) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: CreateMemberDirectlyRequest) => createCompanyMemberDirectly(companyId as string, payload),
+    onSuccess: () => invalidateCompanyAccess(queryClient, companyId as string),
+  });
+}
+
+export function useResetMemberPassword(companyId: string | null | undefined) {
+  return useMutation({
+    mutationFn: ({ membershipId, payload }: { membershipId: string; payload: ResetMemberPasswordRequest }) =>
+      resetCompanyMemberPassword(companyId as string, membershipId, payload),
+    // No invalidation needed: a password reset changes no displayed data.
   });
 }
 
