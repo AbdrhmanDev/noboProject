@@ -1,10 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createCompany,
+  deleteCompanyLogo,
   getCompanyDetails,
   getCompanyEntitlements,
   getCompanyPermissions,
   getMyCompanies,
+  setCompanyReceiptContactLines,
+  uploadCompanyLogo,
 } from "../api/companiesApi";
 import { getBusinessSectors } from "../api/businessSectorsApi";
 import type {
@@ -38,6 +41,39 @@ export function useCompanyDetails(companyId: string | null | undefined) {
     queryKey: companyQueryKeys.details(companyId || ""),
     queryFn: () => getCompanyDetails(companyId as string),
     enabled: Boolean(companyId),
+  });
+}
+
+export function useUploadCompanyLogo(companyId: string | null | undefined) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (file: File) => uploadCompanyLogo(companyId as string, file),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: companyQueryKeys.details(companyId || "") });
+    },
+  });
+}
+
+export function useDeleteCompanyLogo(companyId: string | null | undefined) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => deleteCompanyLogo(companyId as string),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: companyQueryKeys.details(companyId || "") });
+    },
+  });
+}
+
+export function useSetCompanyReceiptContactLines(companyId: string | null | undefined) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (lines: string | null) => setCompanyReceiptContactLines(companyId as string, lines),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: companyQueryKeys.details(companyId || "") });
+    },
   });
 }
 

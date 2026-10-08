@@ -19,6 +19,7 @@ import {
   StatusBadge,
 } from "../../shared/components/ui";
 import { formatDateTime } from "../../shared/utils/formatters";
+import { useI18n } from "../../i18n/I18nContext";
 import { useBranch } from "../../features/branches/context/BranchContext";
 import { useCompany } from "../../features/companies/context/CompanyContext";
 import { useHasPermission } from "../../features/companies/hooks/useCompanies";
@@ -43,8 +44,12 @@ function statusTone(status) {
   return status === "Active" ? "success" : "warning";
 }
 
-function getErrorMessage(error) {
-  return error?.message || "Request failed.";
+function statusLabel(status, t) {
+  return status === "Active" ? t("posTerminalAdmin.common.active") : t("posTerminalAdmin.common.suspended");
+}
+
+function getErrorMessage(error, t) {
+  return error?.message || t("posTerminalAdmin.common.requestFailed");
 }
 
 function formatAmount(value) {
@@ -55,6 +60,7 @@ function formatAmount(value) {
 }
 
 function TerminalCard({ terminal, selected, onSelect }) {
+  const { t } = useI18n();
   return (
     <button
       type="button"
@@ -71,19 +77,19 @@ function TerminalCard({ terminal, selected, onSelect }) {
           </div>
           <div className="mt-1 truncate text-xs text-slate-400">{terminal.name}</div>
         </div>
-        <StatusBadge tone={statusTone(terminal.status)}>{terminal.status}</StatusBadge>
+        <StatusBadge tone={statusTone(terminal.status)}>{statusLabel(terminal.status, t)}</StatusBadge>
       </div>
       <div className="mt-3 grid grid-cols-2 gap-2 text-[11px]">
         <div className="rounded-lg bg-white/[0.03] p-2">
-          <div className="text-slate-500">Created</div>
+          <div className="text-slate-500">{t("posTerminalAdmin.card.created")}</div>
           <div className="mt-1 font-semibold text-slate-200">
             {formatDateTime(terminal.createdAtUtc)}
           </div>
         </div>
         <div className="rounded-lg bg-white/[0.03] p-2">
-          <div className="text-slate-500">Open Shift</div>
+          <div className="text-slate-500">{t("posTerminalAdmin.card.openShift")}</div>
           <div className="mt-1 font-semibold text-slate-200">
-            {terminal.openShift ? "Yes" : "No"}
+            {terminal.openShift ? t("posTerminalAdmin.common.yes") : t("posTerminalAdmin.common.no")}
           </div>
         </div>
       </div>
@@ -92,10 +98,11 @@ function TerminalCard({ terminal, selected, onSelect }) {
 }
 
 function OpenShiftNotice({ openShift }) {
+  const { t } = useI18n();
   if (!openShift) {
     return (
       <div className="rounded-xl border border-white/10 bg-white/[0.025] p-3 text-xs text-slate-400">
-        No open shift on this terminal.
+        {t("posTerminalAdmin.openShift.none")}
       </div>
     );
   }
@@ -104,19 +111,19 @@ function OpenShiftNotice({ openShift }) {
     <div className="rounded-xl border border-amber-400/25 bg-amber-500/10 p-3">
       <div className="flex items-center gap-2 text-xs font-bold text-amber-100">
         <Clock3 size={15} className="text-amber-300" />
-        Open shift active
+        {t("posTerminalAdmin.openShift.active")}
       </div>
       <div className="mt-2 grid gap-2 text-[11px] text-slate-300 sm:grid-cols-3">
         <div>
-          <div className="text-slate-500">Opened</div>
+          <div className="text-slate-500">{t("posTerminalAdmin.openShift.opened")}</div>
           <div className="font-semibold">{formatDateTime(openShift.openedAtUtc)}</div>
         </div>
         <div>
-          <div className="text-slate-500">Opening Float</div>
+          <div className="text-slate-500">{t("posTerminalAdmin.openShift.openingFloat")}</div>
           <div className="font-semibold">{formatAmount(openShift.openingFloatAmount)}</div>
         </div>
         <div>
-          <div className="text-slate-500">Expected Cash</div>
+          <div className="text-slate-500">{t("posTerminalAdmin.openShift.expectedCash")}</div>
           <div className="font-semibold">{formatAmount(openShift.expectedCashAmount)}</div>
         </div>
       </div>
@@ -134,6 +141,7 @@ function TerminalForm({
   onStatusChange,
   selectedTerminal,
 }) {
+  const { t } = useI18n();
   const isEdit = mode === "edit";
   const nextStatus = form.status === "Active" ? "Suspended" : "Active";
 
@@ -147,7 +155,7 @@ function TerminalForm({
     >
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="text-xs font-semibold text-slate-400">
-          Code
+          {t("posTerminalAdmin.field.code")}
           <input
             value={form.code}
             onChange={(event) => setForm((draft) => ({ ...draft, code: event.target.value }))}
@@ -157,7 +165,7 @@ function TerminalForm({
           />
         </label>
         <label className="text-xs font-semibold text-slate-400">
-          Name
+          {t("posTerminalAdmin.field.name")}
           <input
             value={form.name}
             onChange={(event) => setForm((draft) => ({ ...draft, name: event.target.value }))}
@@ -169,7 +177,7 @@ function TerminalForm({
       </div>
       {isEdit && (
         <label className="block text-xs font-semibold text-slate-400">
-          Status
+          {t("posTerminalAdmin.field.status")}
           <select
             value={form.status}
             onChange={(event) =>
@@ -178,14 +186,14 @@ function TerminalForm({
             disabled={!canConfigure || isPending}
             className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
           >
-            <option value="Active">Active</option>
-            <option value="Suspended">Suspended</option>
+            <option value="Active">{t("posTerminalAdmin.common.active")}</option>
+            <option value="Suspended">{t("posTerminalAdmin.common.suspended")}</option>
           </select>
         </label>
       )}
       {!canConfigure && (
         <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
-          Pos.Configure permission is required for terminal changes.
+          {t("posTerminalAdmin.notice.configurePermissionRequired")}
         </div>
       )}
       <div className="flex flex-wrap gap-2">
@@ -195,7 +203,11 @@ function TerminalForm({
           className="flex h-10 items-center gap-2 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isEdit ? <Pencil size={15} /> : <Plus size={15} />}
-          {isPending ? "Saving..." : isEdit ? "Save terminal" : "Create terminal"}
+          {isPending
+            ? t("posTerminalAdmin.common.saving")
+            : isEdit
+              ? t("posTerminalAdmin.action.saveTerminal")
+              : t("posTerminalAdmin.action.createTerminal")}
         </button>
         {isEdit && selectedTerminal && (
           <button
@@ -205,7 +217,7 @@ function TerminalForm({
             className="flex h-10 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-4 text-xs font-bold text-slate-100 transition hover:border-blue-400/40 hover:bg-blue-500/10 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {nextStatus === "Active" ? <CircleCheck size={15} /> : <CirclePause size={15} />}
-            {nextStatus === "Active" ? "Activate" : "Suspend"}
+            {nextStatus === "Active" ? t("posTerminalAdmin.common.activate") : t("posTerminalAdmin.common.suspend")}
           </button>
         )}
       </div>
@@ -214,6 +226,7 @@ function TerminalForm({
 }
 
 export default function POSTerminalAdminPage() {
+  const { t } = useI18n();
   const { currentCompanyId } = useCompany();
   const { currentBranchId } = useBranch();
   const [selectedTerminalId, setSelectedTerminalId] = useState(null);
@@ -297,9 +310,9 @@ export default function POSTerminalAdminPage() {
         name: terminal.name,
         status: terminal.status,
       });
-      showNotice("POS terminal created.");
+      showNotice(t("posTerminalAdmin.notice.terminalCreated"));
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
@@ -313,9 +326,9 @@ export default function POSTerminalAdminPage() {
         status,
       });
       setForm((draft) => ({ ...draft, status }));
-      showNotice("POS terminal updated.");
+      showNotice(t("posTerminalAdmin.notice.terminalUpdated"));
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
@@ -332,7 +345,7 @@ export default function POSTerminalAdminPage() {
     <AppLayout>
       <main className="space-y-4" dir="rtl">
         <PageHeader
-          title="POS Terminal Administration"
+          title={t("posTerminalAdmin.pageTitle")}
           actions={
             <div className="flex flex-wrap gap-2">
               <button
@@ -341,7 +354,7 @@ export default function POSTerminalAdminPage() {
                 className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold text-slate-100"
               >
                 <RefreshCw size={14} />
-                Refresh
+                {t("posTerminalAdmin.refresh")}
               </button>
               <button
                 type="button"
@@ -349,7 +362,7 @@ export default function POSTerminalAdminPage() {
                 className="flex items-center gap-2 rounded-xl bg-blue-600 px-3 py-2 text-xs font-bold text-white"
               >
                 <Plus size={14} />
-                New terminal
+                {t("posTerminalAdmin.action.newTerminal")}
               </button>
             </div>
           }
@@ -363,15 +376,15 @@ export default function POSTerminalAdminPage() {
 
         {!currentCompanyId || !currentBranchId ? (
           <EmptyState
-            title="Company and branch required"
-            message="Select a company and branch to manage POS terminals."
+            title={t("posTerminalAdmin.gate.companyRequired.title")}
+            message={t("posTerminalAdmin.gate.companyRequired.message")}
           />
         ) : viewPermissionQuery.isLoading ? (
-          <LoadingState label="Checking POS permissions..." />
+          <LoadingState label={t("posTerminalAdmin.gate.checkingPermissions")} />
         ) : !viewPermissionQuery.hasPermission ? (
           <ErrorState
-            title="Permission required"
-            message="Pos.View permission is required to view POS terminals."
+            title={t("posTerminalAdmin.gate.permissionRequired.title")}
+            message={t("posTerminalAdmin.gate.permissionRequired.message")}
           />
         ) : (
           <div className="grid gap-4 xl:grid-cols-[420px_1fr]">
@@ -387,7 +400,7 @@ export default function POSTerminalAdminPage() {
                     onChange={(event) => setSearch(event.target.value)}
                     maxLength={200}
                     className="h-10 w-full rounded-xl border border-white/10 bg-black/20 pr-9 pl-3 text-xs text-white outline-none focus:border-blue-400/60"
-                    placeholder="Search code or name"
+                    placeholder={t("posTerminalAdmin.field.searchCodeOrName")}
                   />
                 </label>
                 <select
@@ -395,25 +408,25 @@ export default function POSTerminalAdminPage() {
                   onChange={(event) => setStatusFilter(event.target.value)}
                   className="h-10 rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none focus:border-blue-400/60"
                 >
-                  <option value="">All</option>
-                  <option value="Active">Active</option>
-                  <option value="Suspended">Suspended</option>
+                  <option value="">{t("posTerminalAdmin.common.all")}</option>
+                  <option value="Active">{t("posTerminalAdmin.common.active")}</option>
+                  <option value="Suspended">{t("posTerminalAdmin.common.suspended")}</option>
                 </select>
               </div>
 
-              {terminalsQuery.isLoading && <LoadingState label="Loading terminals..." />}
+              {terminalsQuery.isLoading && <LoadingState label={t("posTerminalAdmin.loadingTerminals")} />}
               {terminalsQuery.isError && (
                 <ErrorState
-                  title="Unable to load terminals"
-                  message={getErrorMessage(terminalsQuery.error)}
+                  title={t("posTerminalAdmin.loadTerminalsError")}
+                  message={getErrorMessage(terminalsQuery.error, t)}
                 />
               )}
               {!terminalsQuery.isLoading &&
                 !terminalsQuery.isError &&
                 terminalsQuery.data?.length === 0 && (
                   <EmptyState
-                    title="No terminals found"
-                    message="No POS terminals match the current filters."
+                    title={t("posTerminalAdmin.emptyTerminals.title")}
+                    message={t("posTerminalAdmin.emptyTerminals.message")}
                   />
                 )}
               {!terminalsQuery.isLoading &&
@@ -437,28 +450,30 @@ export default function POSTerminalAdminPage() {
                 <div>
                   <div className="flex items-center gap-2 text-xs text-slate-400">
                     <Power size={15} className="text-blue-300" />
-                    {mode === "create" ? "Create terminal" : "Terminal details"}
+                    {mode === "create"
+                      ? t("posTerminalAdmin.terminalDetails.createLabel")
+                      : t("posTerminalAdmin.terminalDetails.detailsLabel")}
                   </div>
                   <h2 className="mt-1 text-xl font-black text-white">
                     {mode === "create"
-                      ? "New POS terminal"
-                      : selectedTerminal?.code || "Loading terminal"}
+                      ? t("posTerminalAdmin.terminalDetails.newTerminalTitle")
+                      : selectedTerminal?.code || t("posTerminalAdmin.terminalDetails.loadingTerminalTitle")}
                   </h2>
                 </div>
                 {selectedTerminal && (
                   <StatusBadge tone={statusTone(selectedTerminal.status)}>
-                    {selectedTerminal.status}
+                    {statusLabel(selectedTerminal.status, t)}
                   </StatusBadge>
                 )}
               </div>
 
               {mode === "edit" && detailsQuery.isLoading && (
-                <LoadingState label="Loading terminal details..." />
+                <LoadingState label={t("posTerminalAdmin.loadingTerminalDetails")} />
               )}
               {mode === "edit" && detailsQuery.isError && (
                 <ErrorState
-                  title="Unable to load terminal details"
-                  message={getErrorMessage(detailsQuery.error)}
+                  title={t("posTerminalAdmin.loadTerminalDetailsError")}
+                  message={getErrorMessage(detailsQuery.error, t)}
                 />
               )}
               {(mode === "create" || selectedTerminal) && (
@@ -466,21 +481,23 @@ export default function POSTerminalAdminPage() {
                   {selectedTerminal && (
                     <div className="grid gap-2 sm:grid-cols-3">
                       <div className="rounded-xl border border-white/10 bg-white/[0.025] p-3">
-                        <div className="text-[11px] text-slate-500">Name</div>
+                        <div className="text-[11px] text-slate-500">{t("posTerminalAdmin.field.name")}</div>
                         <div className="mt-1 text-sm font-black text-white">
                           {selectedTerminal.name}
                         </div>
                       </div>
                       <div className="rounded-xl border border-white/10 bg-white/[0.025] p-3">
-                        <div className="text-[11px] text-slate-500">Created</div>
+                        <div className="text-[11px] text-slate-500">{t("posTerminalAdmin.card.created")}</div>
                         <div className="mt-1 text-sm font-black text-white">
                           {formatDateTime(selectedTerminal.createdAtUtc)}
                         </div>
                       </div>
                       <div className="rounded-xl border border-white/10 bg-white/[0.025] p-3">
-                        <div className="text-[11px] text-slate-500">Open Shift</div>
+                        <div className="text-[11px] text-slate-500">{t("posTerminalAdmin.card.openShift")}</div>
                         <div className="mt-1 text-sm font-black text-white">
-                          {selectedTerminal.openShift ? "Active" : "None"}
+                          {selectedTerminal.openShift
+                            ? t("posTerminalAdmin.common.active")
+                            : t("posTerminalAdmin.common.none")}
                         </div>
                       </div>
                     </div>

@@ -14,6 +14,11 @@ export function PermissionNavItem({
   // commercial apps are gated by it. When present, visibility is Company-has-App AND User-has-
   // permission (section 14); omitting it leaves existing permission-only items unchanged.
   entitlement,
+  // Optional: hides this item for a member whose OWN CompanyMembership.SalesOrderVisibilityScope is
+  // "Own" (see Sales nav item) -- their SalesOrders.View already self-restricts to their own orders
+  // server-side (ISalesOrderVisibilityScopeService), so the broader all-orders admin page is hidden
+  // rather than granting a separate narrower permission just for that.
+  hideWhenOwnSalesScope,
   activePath,
   navigate,
   variant = "desktop",
@@ -31,7 +36,9 @@ export function PermissionNavItem({
     requiredPermissions.some((requiredPermission) =>
       hasEffectivePermission(permissionQuery.data, requiredPermission),
     );
-  const visible = Boolean(currentCompanyId) && hasPermission && hasEntitlement;
+  const hiddenForOwnScope =
+    hideWhenOwnSalesScope && permissionQuery.data?.salesOrderVisibilityScope === "Own";
+  const visible = Boolean(currentCompanyId) && hasPermission && hasEntitlement && !hiddenForOwnScope;
 
   if (!visible) {
     return null;

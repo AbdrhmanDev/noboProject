@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { EmptyState, ErrorState, LoadingState, StatusBadge } from "../../../shared/components/ui";
 import { formatDateTime } from "../../../shared/utils/formatters";
+import { useI18n } from "../../../i18n/I18nContext";
 import { useActiveUnitsOfMeasure } from "../../catalog/hooks/useCatalog";
 import {
   useChangeInventoryItemStatus,
@@ -23,15 +24,20 @@ import {
 
 const EMPTY_ITEM_FORM = { code: "", name: "", baseUnitOfMeasureId: "" };
 
-function getErrorMessage(error) {
-  return error?.message || "Request failed.";
+function getErrorMessage(error, t) {
+  return error?.message || t("inventory.common.requestFailed");
 }
 
 function statusTone(status) {
   return status === "Active" ? "success" : "warning";
 }
 
+function statusLabel(status, t) {
+  return status === "Active" ? t("inventory.common.active") : t("inventory.common.suspended");
+}
+
 function ItemCard({ item, selected, onSelect }) {
+  const { t } = useI18n();
   return (
     <button
       type="button"
@@ -53,13 +59,14 @@ function ItemCard({ item, selected, onSelect }) {
             </span>
           </div>
         </div>
-        <StatusBadge tone={statusTone(item.status)}>{item.status}</StatusBadge>
+        <StatusBadge tone={statusTone(item.status)}>{statusLabel(item.status, t)}</StatusBadge>
       </div>
     </button>
   );
 }
 
 function ItemForm({ mode, form, setForm, unitsOfMeasureQuery, selectedItem, canManage, isPending, onSubmit, onStatusChange }) {
+  const { t } = useI18n();
   const nextStatus = selectedItem?.status === "Active" ? "Suspended" : "Active";
 
   return (
@@ -72,7 +79,7 @@ function ItemForm({ mode, form, setForm, unitsOfMeasureQuery, selectedItem, canM
     >
       <div className="grid gap-3 sm:grid-cols-[1fr_1fr_1fr]">
         <label className="text-sm font-semibold text-muted">
-          Code
+          {t("inventory.items.field.code")}
           <input
             value={form.code}
             onChange={(event) => setForm((draft) => ({ ...draft, code: event.target.value }))}
@@ -82,7 +89,7 @@ function ItemForm({ mode, form, setForm, unitsOfMeasureQuery, selectedItem, canM
           />
         </label>
         <label className="text-sm font-semibold text-muted">
-          Name
+          {t("inventory.items.field.name")}
           <input
             value={form.name}
             onChange={(event) => setForm((draft) => ({ ...draft, name: event.target.value }))}
@@ -92,7 +99,7 @@ function ItemForm({ mode, form, setForm, unitsOfMeasureQuery, selectedItem, canM
           />
         </label>
         <label className="text-sm font-semibold text-muted">
-          Base unit of measure
+          {t("inventory.items.field.baseUnitOfMeasure")}
           {mode === "create" ? (
             <select
               value={form.baseUnitOfMeasureId}
@@ -102,7 +109,7 @@ function ItemForm({ mode, form, setForm, unitsOfMeasureQuery, selectedItem, canM
               disabled={!canManage || isPending || unitsOfMeasureQuery.isLoading}
               className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
             >
-              <option value="">Select unit...</option>
+              <option value="">{t("inventory.items.field.selectUnitPlaceholder")}</option>
               {(unitsOfMeasureQuery.data || []).map((uom) => (
                 <option key={uom.id} value={uom.id}>
                   {uom.name} ({uom.symbol})
@@ -119,11 +126,11 @@ function ItemForm({ mode, form, setForm, unitsOfMeasureQuery, selectedItem, canM
         </label>
       </div>
       <div className="rounded-xl border border-line bg-raised px-3 py-2 text-sm text-muted">
-        Base unit of measure is selected on create and is read-only after creation.
+        {t("inventory.items.uomReadOnlyNotice")}
       </div>
       {!canManage && (
         <div className="rounded-xl border border-warning bg-warning-soft px-3 py-2 text-sm text-warning">
-          Inventory.Configure permission is required for inventory item changes.
+          {t("inventory.items.notice.configurePermissionRequired")}
         </div>
       )}
       <div className="flex flex-wrap gap-2">
@@ -133,7 +140,11 @@ function ItemForm({ mode, form, setForm, unitsOfMeasureQuery, selectedItem, canM
           className="flex h-10 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {mode === "edit" ? <Pencil size={15} /> : <Plus size={15} />}
-          {isPending ? "Saving..." : mode === "edit" ? "Save item" : "Create item"}
+          {isPending
+            ? t("inventory.common.saving")
+            : mode === "edit"
+              ? t("inventory.items.action.saveItem")
+              : t("inventory.items.action.createItem")}
         </button>
         {mode === "edit" && selectedItem && (
           <button
@@ -143,7 +154,7 @@ function ItemForm({ mode, form, setForm, unitsOfMeasureQuery, selectedItem, canM
             className="flex h-10 items-center gap-2 rounded-xl border border-line bg-raised px-4 text-sm font-bold text-ink transition hover:border-accent-line hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-50"
           >
             {nextStatus === "Active" ? <CircleCheck size={15} /> : <CirclePause size={15} />}
-            {nextStatus === "Active" ? "Activate" : "Suspend"}
+            {nextStatus === "Active" ? t("inventory.common.activate") : t("inventory.common.suspend")}
           </button>
         )}
       </div>
@@ -152,6 +163,7 @@ function ItemForm({ mode, form, setForm, unitsOfMeasureQuery, selectedItem, canM
 }
 
 export function InventoryItemsPanel({ companyId, canView, canConfigure }) {
+  const { t } = useI18n();
   const [status, setStatus] = useState("");
   const [search, setSearch] = useState("");
   const [pageNumber, setPageNumber] = useState(1);
@@ -197,7 +209,7 @@ export function InventoryItemsPanel({ companyId, canView, canConfigure }) {
 
   const submitItem = async () => {
     if (mode === "create" && !form.baseUnitOfMeasureId) {
-      showNotice("Select a base unit of measure.");
+      showNotice(t("inventory.items.validation.selectUnit"));
       return;
     }
 
@@ -215,7 +227,7 @@ export function InventoryItemsPanel({ companyId, canView, canConfigure }) {
           name: created.name,
           baseUnitOfMeasureId: created.baseUnitOfMeasure.id,
         });
-        showNotice("Inventory item created.");
+        showNotice(t("inventory.items.notice.itemCreated"));
         return;
       }
 
@@ -225,9 +237,9 @@ export function InventoryItemsPanel({ companyId, canView, canConfigure }) {
         name: updated.name,
         baseUnitOfMeasureId: updated.baseUnitOfMeasure.id,
       });
-      showNotice("Inventory item updated.");
+      showNotice(t("inventory.items.notice.itemUpdated"));
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
@@ -239,9 +251,13 @@ export function InventoryItemsPanel({ companyId, canView, canConfigure }) {
         name: updated.name,
         baseUnitOfMeasureId: updated.baseUnitOfMeasure.id,
       });
-      showNotice(`Inventory item ${nextStatus.toLowerCase()}.`);
+      showNotice(
+        nextStatus === "Active"
+          ? t("inventory.items.notice.itemActivated")
+          : t("inventory.items.notice.itemSuspended"),
+      );
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
@@ -250,7 +266,7 @@ export function InventoryItemsPanel({ companyId, canView, canConfigure }) {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-sm font-bold text-ink">Inventory Items</h2>
+        <h2 className="text-sm font-bold text-ink">{t("inventory.items.heading")}</h2>
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
@@ -258,7 +274,7 @@ export function InventoryItemsPanel({ companyId, canView, canConfigure }) {
             className="flex items-center gap-2 rounded-xl border border-line bg-raised px-3 py-2 text-sm font-bold text-ink"
           >
             <RefreshCw size={14} />
-            Refresh
+            {t("inventory.common.refresh")}
           </button>
           <button
             type="button"
@@ -266,7 +282,7 @@ export function InventoryItemsPanel({ companyId, canView, canConfigure }) {
             className="flex items-center gap-2 rounded-xl bg-accent px-3 py-2 text-sm font-bold text-white"
           >
             <Plus size={14} />
-            New item
+            {t("inventory.items.action.newItem")}
           </button>
         </div>
       </div>
@@ -292,7 +308,7 @@ export function InventoryItemsPanel({ companyId, canView, canConfigure }) {
                   setPageNumber(1);
                 }}
                 maxLength={100}
-                placeholder="Search code or name"
+                placeholder={t("inventory.items.field.searchCodeOrName")}
                 className="h-10 w-full rounded-xl border border-line bg-canvas pr-9 pl-3 text-sm text-ink outline-none focus:border-accent-line"
               />
             </label>
@@ -304,23 +320,23 @@ export function InventoryItemsPanel({ companyId, canView, canConfigure }) {
               }}
               className="h-10 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line"
             >
-              <option value="">All status</option>
-              <option value="Active">Active</option>
-              <option value="Suspended">Suspended</option>
+              <option value="">{t("inventory.common.allStatus")}</option>
+              <option value="Active">{t("inventory.common.active")}</option>
+              <option value="Suspended">{t("inventory.common.suspended")}</option>
             </select>
           </div>
 
-          {itemsQuery.isLoading && <LoadingState label="Loading inventory items..." />}
+          {itemsQuery.isLoading && <LoadingState label={t("inventory.items.loading")} />}
           {itemsQuery.isError && (
             <ErrorState
-              title="Unable to load inventory items"
-              message={getErrorMessage(itemsQuery.error)}
+              title={t("inventory.items.loadError")}
+              message={getErrorMessage(itemsQuery.error, t)}
             />
           )}
           {!itemsQuery.isLoading && !itemsQuery.isError && page?.items.length === 0 && (
             <EmptyState
-              title="No inventory items found"
-              message="No items match the current filters."
+              title={t("inventory.items.emptyItems.title")}
+              message={t("inventory.items.emptyItems.message")}
             />
           )}
           {!itemsQuery.isLoading && !itemsQuery.isError && Boolean(page?.items.length) && (
@@ -337,7 +353,11 @@ export function InventoryItemsPanel({ companyId, canView, canConfigure }) {
               </div>
               <div className="mt-3 flex items-center justify-between text-sm text-muted">
                 <span>
-                  Page {page.pageNumber} of {page.totalPages || 1} · {page.totalCount} items
+                  {t("inventory.items.pageOfItems", {
+                    page: page.pageNumber,
+                    total: page.totalPages || 1,
+                    count: page.totalCount,
+                  })}
                 </span>
                 <div className="flex gap-1">
                   <button
@@ -367,24 +387,26 @@ export function InventoryItemsPanel({ companyId, canView, canConfigure }) {
             <div>
               <div className="flex items-center gap-2 text-sm text-muted">
                 <Boxes size={15} className="text-accent" />
-                {mode === "create" ? "Create item" : "Item details"}
+                {mode === "create" ? t("inventory.items.details.createLabel") : t("inventory.items.details.detailsLabel")}
               </div>
               <h2 className="mt-1 text-xl font-black text-ink">
-                {mode === "create" ? "New inventory item" : selectedItem?.name || "Loading item"}
+                {mode === "create"
+                  ? t("inventory.items.details.newItemTitle")
+                  : selectedItem?.name || t("inventory.items.details.loadingItemTitle")}
               </h2>
             </div>
             {selectedItem && (
-              <StatusBadge tone={statusTone(selectedItem.status)}>{selectedItem.status}</StatusBadge>
+              <StatusBadge tone={statusTone(selectedItem.status)}>{statusLabel(selectedItem.status, t)}</StatusBadge>
             )}
           </div>
 
           {mode === "edit" && detailsQuery.isLoading && (
-            <LoadingState label="Loading inventory item details..." />
+            <LoadingState label={t("inventory.items.loadingDetails")} />
           )}
           {mode === "edit" && detailsQuery.isError && (
             <ErrorState
-              title="Unable to load item details"
-              message={getErrorMessage(detailsQuery.error)}
+              title={t("inventory.items.loadDetailsError")}
+              message={getErrorMessage(detailsQuery.error, t)}
             />
           )}
           {(mode === "create" || selectedItem) && (
@@ -392,19 +414,19 @@ export function InventoryItemsPanel({ companyId, canView, canConfigure }) {
               {selectedItem && (
                 <div className="grid gap-2 sm:grid-cols-3">
                   <div className="rounded-xl border border-line bg-raised p-3">
-                    <div className="text-xs text-subtle">Unit of measure</div>
+                    <div className="text-xs text-subtle">{t("inventory.items.field.unitOfMeasure")}</div>
                     <div className="mt-1 text-sm font-black text-ink">
                       {selectedItem.baseUnitOfMeasure.code}
                     </div>
                   </div>
                   <div className="rounded-xl border border-line bg-raised p-3">
-                    <div className="text-xs text-subtle">Symbol</div>
+                    <div className="text-xs text-subtle">{t("inventory.items.field.symbol")}</div>
                     <div className="mt-1 text-sm font-black text-ink">
                       {selectedItem.baseUnitOfMeasure.symbol}
                     </div>
                   </div>
                   <div className="rounded-xl border border-line bg-raised p-3">
-                    <div className="text-xs text-subtle">Created</div>
+                    <div className="text-xs text-subtle">{t("inventory.common.created")}</div>
                     <div className="mt-1 text-sm font-black text-ink">
                       {selectedItem.createdAtUtc ? formatDateTime(selectedItem.createdAtUtc) : "-"}
                     </div>

@@ -147,9 +147,16 @@ export function sortVariantsBySize(variants = []) {
     .sort((a, b) => rank(a) - rank(b) || Number(a.price ?? a.unitPrice) - Number(b.price ?? b.unitPrice));
 }
 
-// The variant a plain tap on a product card adds: the smallest size (S, else the cheapest variant).
+// The variant a plain tap on a product card adds: the highest-priced variant. Separate from
+// sortVariantsBySize (which stays smallest-to-largest for the card's own size-circle display) so
+// changing this default never reorders those circles.
 export function getDefaultVariant(product) {
-  return sortVariantsBySize(product?.variants)[0] ?? null;
+  const variants = product?.variants ?? [];
+  if (variants.length === 0) return null;
+
+  return variants.reduce((highest, variant) =>
+    Number(variant.price ?? variant.unitPrice) > Number(highest.price ?? highest.unitPrice) ? variant : highest,
+  );
 }
 
 // Stock level lights on the POS product card (red / yellow / green). Fixed thresholds for every

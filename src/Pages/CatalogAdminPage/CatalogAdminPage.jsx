@@ -20,6 +20,7 @@ import {
   Tags,
 } from "lucide-react";
 import AppLayout from "../../components/AppLayout";
+import { useI18n } from "../../i18n/I18nContext";
 import { env } from "../../app/config/env";
 import {
   EmptyState,
@@ -98,40 +99,41 @@ const EMPTY_ASSIGNMENT_FORM = {
   isEnabled: true,
 };
 
-function getErrorMessage(error) {
-  return error?.message || "Request failed.";
+function getErrorMessage(error, t) {
+  return error?.message || t("catalogAdmin.requestFailed");
 }
 
 function statusTone(status) {
   return status === "Active" ? "success" : "warning";
 }
 
-function getAvailabilityState(availability) {
+function getAvailabilityState(availability, t) {
   if (!availability?.isConfigured) {
     return {
-      label: "Not configured",
-      description: "No branch availability row exists.",
+      label: t("catalogAdmin.availability.state.notConfigured.label"),
+      description: t("catalogAdmin.availability.state.notConfigured.description"),
       className: "border-warning bg-warning-soft text-warning",
     };
   }
 
   if (availability.isAvailable) {
     return {
-      label: "Available",
-      description: "Explicitly available for this branch.",
+      label: t("catalogAdmin.availability.state.available.label"),
+      description: t("catalogAdmin.availability.state.available.description"),
       className: "border-success bg-success-soft text-success",
     };
   }
 
   return {
-    label: "Not available",
-    description: "Explicitly unavailable for this branch.",
+    label: t("catalogAdmin.availability.state.unavailable.label"),
+    description: t("catalogAdmin.availability.state.unavailable.description"),
     className: "border-danger bg-danger-soft text-danger",
   };
 }
 
 function AvailabilityBadge({ availability }) {
-  const state = getAvailabilityState(availability);
+  const { t } = useI18n();
+  const state = getAvailabilityState(availability, t);
 
   return (
     <span className={`rounded-full border px-2 py-1 text-xs font-bold ${state.className}`}>
@@ -180,6 +182,7 @@ function CategoryForm({
   onSubmit,
   onStatusChange,
 }) {
+  const { t } = useI18n();
   const nextStatus = selectedCategory?.status === "Active" ? "Suspended" : "Active";
   const parentOptions = categories.filter(
     (category) => category.categoryId !== selectedCategory?.categoryId,
@@ -195,7 +198,7 @@ function CategoryForm({
     >
       <div className="grid gap-3 md:grid-cols-[1fr_220px_140px]">
         <label className="text-sm font-semibold text-muted">
-          Name
+          {t("catalogAdmin.field.name")}
           <input
             value={form.name}
             onChange={(event) => setForm((draft) => ({ ...draft, name: event.target.value }))}
@@ -205,7 +208,7 @@ function CategoryForm({
           />
         </label>
         <label className="text-sm font-semibold text-muted">
-          Parent
+          {t("catalogAdmin.field.parent")}
           <select
             value={form.parentCategoryId}
             onChange={(event) =>
@@ -214,7 +217,7 @@ function CategoryForm({
             disabled={!canManage || isPending}
             className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
           >
-            <option value="">No parent</option>
+            <option value="">{t("catalogAdmin.field.noParent")}</option>
             {parentOptions.map((category) => (
               <option key={category.categoryId} value={category.categoryId}>
                 {category.name}
@@ -223,7 +226,7 @@ function CategoryForm({
           </select>
         </label>
         <label className="text-sm font-semibold text-muted">
-          Sort Order
+          {t("catalogAdmin.field.sortOrder")}
           <input
             type="number"
             min="0"
@@ -264,6 +267,7 @@ function ProductForm({
   isImageUploading,
   isImageDeleting,
 }) {
+  const { t } = useI18n();
   const nextStatus = selectedProduct?.status === "Active" ? "Suspended" : "Active";
   const isSelfHosted = env.deploymentMode === "SelfHosted";
   const fileInputRef = useRef(null);
@@ -287,7 +291,7 @@ function ProductForm({
     >
       <div className="grid gap-3 md:grid-cols-[1fr_220px_140px]">
         <label className="text-sm font-semibold text-muted">
-          Name
+          {t("catalogAdmin.field.name")}
           <input
             value={form.name}
             onChange={(event) => setForm((draft) => ({ ...draft, name: event.target.value }))}
@@ -297,7 +301,7 @@ function ProductForm({
           />
         </label>
         <label className="text-sm font-semibold text-muted">
-          Category
+          {t("catalogAdmin.field.category")}
           <select
             value={form.categoryId}
             onChange={(event) =>
@@ -306,7 +310,7 @@ function ProductForm({
             disabled={!canManage || isPending}
             className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
           >
-            <option value="">No category</option>
+            <option value="">{t("catalogAdmin.field.noCategory")}</option>
             {categories.map((category) => (
               <option key={category.categoryId} value={category.categoryId}>
                 {category.name}
@@ -315,7 +319,7 @@ function ProductForm({
           </select>
         </label>
         <label className="text-sm font-semibold text-muted">
-          Sort Order
+          {t("catalogAdmin.field.sortOrder")}
           <input
             type="number"
             min="0"
@@ -329,7 +333,7 @@ function ProductForm({
         </label>
       </div>
       <label className="block text-sm font-semibold text-muted">
-        Description
+        {t("catalogAdmin.field.description")}
         <textarea
           value={form.description}
           onChange={(event) =>
@@ -344,7 +348,7 @@ function ProductForm({
       {isSelfHosted ? (
         <div className="flex items-end gap-3">
           <div className="flex-1 text-sm font-semibold text-muted">
-            Image
+            {t("catalogAdmin.field.image")}
             <div className="mt-1 flex items-center gap-2">
               <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={pickImageFile} />
               <button
@@ -353,7 +357,11 @@ function ProductForm({
                 onClick={() => fileInputRef.current?.click()}
                 className="flex h-11 items-center gap-1.5 rounded-xl border border-line bg-canvas px-3 text-sm font-semibold text-ink disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {isImageUploading ? "Uploading..." : selectedProduct?.imageUrl ? "Replace image" : "Upload image"}
+                {isImageUploading
+                  ? t("catalogAdmin.image.uploading")
+                  : selectedProduct?.imageUrl
+                    ? t("catalogAdmin.image.replace")
+                    : t("catalogAdmin.image.upload")}
               </button>
               {selectedProduct?.imageUrl && (
                 <button
@@ -362,11 +370,11 @@ function ProductForm({
                   onClick={() => onDeleteImage?.()}
                   className="flex h-11 items-center gap-1.5 rounded-xl border border-line px-3 text-sm font-semibold text-muted disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {isImageDeleting ? "Removing..." : "Remove"}
+                  {isImageDeleting ? t("catalogAdmin.image.removing") : t("catalogAdmin.image.remove")}
                 </button>
               )}
               {!selectedProduct && (
-                <span className="text-xs text-subtle">Save the product first, then add an image.</span>
+                <span className="text-xs text-subtle">{t("catalogAdmin.image.saveFirst")}</span>
               )}
             </div>
           </div>
@@ -381,7 +389,7 @@ function ProductForm({
       ) : (
         <div className="flex items-end gap-3">
           <label className="flex-1 text-sm font-semibold text-muted">
-            Image URL
+            {t("catalogAdmin.field.imageUrl")}
             <input
               value={form.imageUrl}
               onChange={(event) =>
@@ -434,6 +442,7 @@ function VariantForm({
   onSubmit,
   onStatusChange,
 }) {
+  const { t } = useI18n();
   const nextStatus = selectedVariant?.status === "Active" ? "Suspended" : "Active";
 
   return (
@@ -446,7 +455,7 @@ function VariantForm({
     >
       <div className="grid gap-3 md:grid-cols-[1fr_180px_220px_140px]">
         <label className="text-sm font-semibold text-muted">
-          Name
+          {t("catalogAdmin.field.name")}
           <input
             value={form.name}
             onChange={(event) => setForm((draft) => ({ ...draft, name: event.target.value }))}
@@ -456,7 +465,7 @@ function VariantForm({
           />
         </label>
         <label className="text-sm font-semibold text-muted">
-          SKU
+          {t("catalogAdmin.field.sku")}
           <input
             value={form.sku}
             onChange={(event) => setForm((draft) => ({ ...draft, sku: event.target.value }))}
@@ -466,7 +475,7 @@ function VariantForm({
           />
         </label>
         <label className="text-sm font-semibold text-muted">
-          Sales UOM
+          {t("catalogAdmin.field.salesUom")}
           {mode === "create" ? (
             <select
               value={form.salesUnitOfMeasureId}
@@ -476,7 +485,7 @@ function VariantForm({
               disabled={!canManage || isPending || !selectedProduct}
               className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
             >
-              <option value="">Select unit</option>
+              <option value="">{t("catalogAdmin.field.selectUnit")}</option>
               {units.map((unit) => (
                 <option key={unit.id} value={unit.id}>
                   {unit.code} - {unit.name}
@@ -487,12 +496,12 @@ function VariantForm({
             <div className="mt-1 flex h-11 items-center rounded-xl border border-line bg-raised px-3 text-sm text-ink">
               {selectedVariant
                 ? `${selectedVariant.salesUnitOfMeasureCode} - ${selectedVariant.salesUnitOfMeasureName}`
-                : "Loading"}
+                : t("catalogAdmin.common.loading")}
             </div>
           )}
         </label>
         <label className="text-sm font-semibold text-muted">
-          Sort Order
+          {t("catalogAdmin.field.sortOrder")}
           <input
             type="number"
             min="0"
@@ -506,7 +515,7 @@ function VariantForm({
         </label>
       </div>
       <div className="rounded-xl border border-line bg-raised px-3 py-2 text-sm text-muted">
-        Sales unit of measure is selected when creating the variant and is read-only after creation.
+        {t("catalogAdmin.variant.uomReadonlyNote")}
       </div>
       <ActionRow
         mode={mode}
@@ -529,11 +538,13 @@ function BranchAvailabilityPanel({
   isPending,
   onSetAvailability,
 }) {
+  const { t } = useI18n();
+
   if (!selectedVariant) {
     return (
       <EmptyState
-        title="Select a variant"
-        message="Choose a ProductVariant to configure current branch availability."
+        title={t("catalogAdmin.availability.selectVariant.title")}
+        message={t("catalogAdmin.availability.selectVariant.message")}
       />
     );
   }
@@ -541,27 +552,27 @@ function BranchAvailabilityPanel({
   if (!currentBranch) {
     return (
       <EmptyState
-        title="Branch required"
-        message="Select a current branch before configuring ProductVariant availability."
+        title={t("catalogAdmin.availability.branchRequired.title")}
+        message={t("catalogAdmin.availability.branchRequired.message")}
       />
     );
   }
 
   if (availabilityQuery.isLoading) {
-    return <LoadingState label="Loading branch availability..." />;
+    return <LoadingState label={t("catalogAdmin.availability.loading")} />;
   }
 
   if (availabilityQuery.isError) {
     return (
       <ErrorState
-        title="Unable to load branch availability"
-        message={getErrorMessage(availabilityQuery.error)}
+        title={t("catalogAdmin.availability.loadError")}
+        message={getErrorMessage(availabilityQuery.error, t)}
       />
     );
   }
 
   const availability = availabilityQuery.data;
-  const state = getAvailabilityState(availability);
+  const state = getAvailabilityState(availability, t);
 
   return (
     <div className="space-y-3 rounded-xl border border-line bg-raised p-3">
@@ -569,10 +580,10 @@ function BranchAvailabilityPanel({
         <div>
           <div className="flex items-center gap-2 text-sm text-muted">
             <MapPin size={14} className="text-accent" />
-            Branch Availability
+            {t("catalogAdmin.availability.heading")}
           </div>
           <div className="mt-1 text-sm font-black text-ink">
-            Current Branch: {currentBranch.name}
+            {t("catalogAdmin.availability.currentBranch", { name: currentBranch.name })}
           </div>
           <div className="mt-1 text-sm text-muted">{state.description}</div>
         </div>
@@ -580,17 +591,17 @@ function BranchAvailabilityPanel({
       </div>
 
       <div className="grid gap-2 md:grid-cols-3">
-        <InfoTile label="Variant" value={availability?.variantName || selectedVariant.name} />
-        <InfoTile label="Product" value={availability?.productName || selectedVariant.productName} />
+        <InfoTile label={t("catalogAdmin.field.variant")} value={availability?.variantName || selectedVariant.name} />
+        <InfoTile label={t("catalogAdmin.field.product")} value={availability?.productName || selectedVariant.productName} />
         <InfoTile
-          label="Updated"
-          value={availability?.updatedAtUtc ? formatDateTime(availability.updatedAtUtc) : "None"}
+          label={t("catalogAdmin.common.updated")}
+          value={availability?.updatedAtUtc ? formatDateTime(availability.updatedAtUtc) : t("catalogAdmin.common.none")}
         />
       </div>
 
       {!availability?.isConfigured && (
         <div className="rounded-xl border border-warning bg-warning-soft px-3 py-2 text-sm text-warning">
-          Configure branch availability before expecting this variant to appear in POS.
+          {t("catalogAdmin.availability.configureWarning")}
         </div>
       )}
 
@@ -602,7 +613,7 @@ function BranchAvailabilityPanel({
           className="flex h-10 items-center gap-2 rounded-xl bg-success px-4 text-sm font-bold text-white disabled:opacity-50"
         >
           <PackageCheck size={15} />
-          Make available
+          {t("catalogAdmin.availability.makeAvailable")}
         </button>
         <button
           type="button"
@@ -611,7 +622,7 @@ function BranchAvailabilityPanel({
           className="flex h-10 items-center gap-2 rounded-xl border border-danger bg-danger-soft px-4 text-sm font-bold text-danger disabled:opacity-50"
         >
           <PackageX size={15} />
-          Make unavailable
+          {t("catalogAdmin.availability.makeUnavailable")}
         </button>
       </div>
     </div>
@@ -624,6 +635,7 @@ function BranchAvailabilityPanel({
 // price (that lives in a separate price list, not this catalog-admin read model), so this entry
 // point simply doesn't offer a "print price" option rather than faking one.
 function PrintLabelPanel({ companyId, branchId, selectedVariant, canManage, showNotice }) {
+  const { t } = useI18n();
   const [deviceId, setDeviceId] = useState("");
   const [barcodeId, setBarcodeId] = useState("");
   const [copies, setCopies] = useState("1");
@@ -649,13 +661,13 @@ function PrintLabelPanel({ companyId, branchId, selectedVariant, canManage, show
 
   const print = async () => {
     if (!deviceId) {
-      showNotice("Select a label printer first.");
+      showNotice(t("catalogAdmin.label.selectPrinterFirst"));
       return;
     }
 
     const copiesNumber = Number(copies);
     if (!Number.isInteger(copiesNumber) || copiesNumber < 1) {
-      showNotice("Copies must be a whole number of at least 1.");
+      showNotice(t("catalogAdmin.label.copiesInvalid"));
       return;
     }
 
@@ -668,9 +680,9 @@ function PrintLabelPanel({ companyId, branchId, selectedVariant, canManage, show
         currencyCode: null,
         secondaryText: null,
       });
-      showNotice("Label print job sent.");
+      showNotice(t("catalogAdmin.label.jobSent"));
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
@@ -681,19 +693,19 @@ function PrintLabelPanel({ companyId, branchId, selectedVariant, canManage, show
     <div className="space-y-3 rounded-xl border border-line bg-raised p-3">
       <div className="flex items-center gap-2 text-sm text-muted">
         <Printer size={14} className="text-accent" />
-        Print Label
+        {t("catalogAdmin.label.heading")}
       </div>
 
       {devices.length === 0 ? (
         <div className="rounded-xl border border-warning bg-warning-soft px-3 py-2 text-sm text-warning">
-          No label printers found in this branch.
+          {t("catalogAdmin.label.noPrinters")}
         </div>
       ) : (
         <div className="grid gap-2 md:grid-cols-3">
           <div>
-            <label className="mb-1 block text-xs text-muted">Label printer</label>
+            <label className="mb-1 block text-xs text-muted">{t("catalogAdmin.label.printerField")}</label>
             <select className={inputClass} value={deviceId} onChange={(event) => setDeviceId(event.target.value)}>
-              <option value="">Select a device</option>
+              <option value="">{t("catalogAdmin.label.selectDevice")}</option>
               {devices.map((device) => (
                 <option key={device.deviceId} value={device.deviceId}>
                   {device.name} ({device.code})
@@ -702,22 +714,22 @@ function PrintLabelPanel({ companyId, branchId, selectedVariant, canManage, show
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-xs text-muted">Barcode</label>
+            <label className="mb-1 block text-xs text-muted">{t("catalogAdmin.label.barcodeField")}</label>
             <select className={inputClass} value={barcodeId} onChange={(event) => setBarcodeId(event.target.value)}>
-              <option value="">Use primary barcode</option>
+              <option value="">{t("catalogAdmin.label.usePrimaryBarcode")}</option>
               {activeBarcodes.map((barcode) => (
                 <option key={barcode.id} value={barcode.id}>
                   {barcode.value}
-                  {barcode.isPrimary ? " (primary)" : ""}
+                  {barcode.isPrimary ? ` (${t("catalogAdmin.label.primarySuffix")})` : ""}
                 </option>
               ))}
             </select>
             {!barcodesQuery.isLoading && activeBarcodes.length === 0 && (
-              <p className="mt-1 text-xs text-warning">No active barcode found for this variant.</p>
+              <p className="mt-1 text-xs text-warning">{t("catalogAdmin.label.noActiveBarcode")}</p>
             )}
           </div>
           <div>
-            <label className="mb-1 block text-xs text-muted">Copies</label>
+            <label className="mb-1 block text-xs text-muted">{t("catalogAdmin.label.copiesField")}</label>
             <input
               type="number"
               min={1}
@@ -737,13 +749,24 @@ function PrintLabelPanel({ companyId, branchId, selectedVariant, canManage, show
         className="flex h-10 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <Printer size={15} />
-        {printMutation.isPending ? "Sending..." : "Print Label"}
+        {printMutation.isPending ? t("catalogAdmin.label.sending") : t("catalogAdmin.label.heading")}
       </button>
     </div>
   );
 }
 
+const ENTITY_LABEL_KEYS = {
+  category: "catalogAdmin.entity.category",
+  product: "catalogAdmin.entity.product",
+  variant: "catalogAdmin.entity.variant",
+  "modifier group": "catalogAdmin.entity.modifierGroup",
+  "modifier option": "catalogAdmin.entity.modifierOption",
+};
+
 function ActionRow({ mode, entity, selected, canManage, isPending, nextStatus, onStatusChange }) {
+  const { t } = useI18n();
+  const entityLabel = t(ENTITY_LABEL_KEYS[entity] || "catalogAdmin.entity.item");
+
   return (
     <div className="flex flex-wrap gap-2">
       <button
@@ -752,7 +775,11 @@ function ActionRow({ mode, entity, selected, canManage, isPending, nextStatus, o
         className="flex h-10 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {mode === "edit" ? <Pencil size={15} /> : <Plus size={15} />}
-        {isPending ? "Saving..." : mode === "edit" ? `Save ${entity}` : `Create ${entity}`}
+        {isPending
+          ? t("catalogAdmin.action.saving")
+          : mode === "edit"
+            ? t("catalogAdmin.action.save", { entity: entityLabel })
+            : t("catalogAdmin.action.create", { entity: entityLabel })}
       </button>
       {mode === "edit" && selected && (
         <button
@@ -762,7 +789,7 @@ function ActionRow({ mode, entity, selected, canManage, isPending, nextStatus, o
           className="flex h-10 items-center gap-2 rounded-xl border border-line bg-raised px-4 text-sm font-bold text-ink transition hover:border-accent-line hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-50"
         >
           {nextStatus === "Active" ? <CircleCheck size={15} /> : <CirclePause size={15} />}
-          {nextStatus === "Active" ? "Activate" : "Suspend"}
+          {nextStatus === "Active" ? t("catalogAdmin.action.activate") : t("catalogAdmin.action.suspend")}
         </button>
       )}
     </div>
@@ -770,6 +797,7 @@ function ActionRow({ mode, entity, selected, canManage, isPending, nextStatus, o
 }
 
 function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, canManage, showNotice }) {
+  const { t } = useI18n();
   const [groupStatus, setGroupStatus] = useState("");
   const [groupSearch, setGroupSearch] = useState("");
   const [groupPage, setGroupPage] = useState(1);
@@ -913,15 +941,15 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
       setGroupMode("edit");
       setSelectedGroupId(result.modifierGroupId);
       setGroupForm({ name: result.name });
-      showNotice(`Modifier group ${groupMode === "create" ? "created" : "updated"}.`);
+      showNotice(groupMode === "create" ? t("catalogAdmin.notice.groupCreated") : t("catalogAdmin.notice.groupUpdated"));
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
   const submitOption = async () => {
     const sortOrder = parseSortOrder(optionForm.sortOrder);
-    if (sortOrder === null) return showNotice("Sort order must be zero or greater.");
+    if (sortOrder === null) return showNotice(t("catalogAdmin.notice.sortOrderInvalid"));
 
     try {
       const result =
@@ -931,9 +959,9 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
       setOptionMode("edit");
       setSelectedOptionId(result.modifierOptionId);
       setOptionForm({ name: result.name, sortOrder: String(result.sortOrder) });
-      showNotice(`Modifier option ${optionMode === "create" ? "created" : "updated"}.`);
+      showNotice(optionMode === "create" ? t("catalogAdmin.notice.optionCreated") : t("catalogAdmin.notice.optionUpdated"));
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
@@ -942,14 +970,14 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
     const maxSelections = parseSortOrder(assignmentForm.maxSelections);
     const sortOrder = parseSortOrder(assignmentForm.sortOrder);
     if (minSelections === null || maxSelections === null || sortOrder === null) {
-      return showNotice("Min, max, and sort must be zero or greater.");
+      return showNotice(t("catalogAdmin.notice.minMaxSortInvalid"));
     }
-    if (maxSelections < 1) return showNotice("Max selections must be at least 1.");
+    if (maxSelections < 1) return showNotice(t("catalogAdmin.notice.maxSelectionsInvalid"));
     if (minSelections > maxSelections) {
-      return showNotice("Min selections cannot exceed max selections.");
+      return showNotice(t("catalogAdmin.notice.minExceedsMax"));
     }
     if (!assignmentVariantId || !assignmentForm.modifierGroupId) {
-      return showNotice("Select a variant and modifier group first.");
+      return showNotice(t("catalogAdmin.notice.selectVariantAndGroup"));
     }
 
     try {
@@ -959,9 +987,9 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
         sortOrder,
         isEnabled: assignmentForm.isEnabled,
       });
-      showNotice("Variant modifier group configuration saved.");
+      showNotice(t("catalogAdmin.notice.assignmentSaved"));
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
@@ -975,12 +1003,16 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
     });
   };
 
-  const changeModifierStatus = async (mutation, status, label) => {
+  const changeModifierStatus = async (mutation, status, labelKey) => {
     try {
       await mutation.mutateAsync({ status });
-      showNotice(`${label} ${status.toLowerCase()}.`);
+      showNotice(
+        status === "Active"
+          ? t("catalogAdmin.notice.entityActivated", { entity: t(labelKey) })
+          : t("catalogAdmin.notice.entitySuspended", { entity: t(labelKey) }),
+      );
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
@@ -997,7 +1029,7 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
                 setGroupPage(1);
               }}
               maxLength={100}
-              placeholder="Search groups"
+              placeholder={t("catalogAdmin.modifiers.searchGroups")}
               className="h-10 w-full rounded-xl border border-line bg-canvas pr-9 pl-3 text-sm text-ink outline-none"
             />
           </label>
@@ -1009,9 +1041,9 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
             }}
             className="h-10 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none"
           >
-            <option value="">All status</option>
-            <option value="Active">Active</option>
-            <option value="Suspended">Suspended</option>
+            <option value="">{t("catalogAdmin.field.allStatus")}</option>
+            <option value="Active">{t("catalogAdmin.common.active")}</option>
+            <option value="Suspended">{t("catalogAdmin.common.suspended")}</option>
           </select>
           <button
             type="button"
@@ -1019,15 +1051,15 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
             className="flex h-10 items-center gap-2 rounded-xl bg-accent px-3 text-sm font-bold text-white"
           >
             <Plus size={14} />
-            New group
+            {t("catalogAdmin.modifiers.newGroup")}
           </button>
         </div>
-        {groupsQuery.isLoading && <LoadingState label="Loading modifier groups..." />}
+        {groupsQuery.isLoading && <LoadingState label={t("catalogAdmin.modifiers.loadingGroups")} />}
         {groupsQuery.isError && (
-          <ErrorState title="Unable to load groups" message={getErrorMessage(groupsQuery.error)} />
+          <ErrorState title={t("catalogAdmin.modifiers.loadGroupsError")} message={getErrorMessage(groupsQuery.error, t)} />
         )}
         {!groupsQuery.isLoading && !groupsQuery.isError && groups.length === 0 && (
-          <EmptyState title="No modifier groups found" message="No groups match the current filters." />
+          <EmptyState title={t("catalogAdmin.modifiers.noGroups.title")} message={t("catalogAdmin.modifiers.noGroups.message")} />
         )}
         {!groupsQuery.isLoading && !groupsQuery.isError && groups.length > 0 && (
           <div className="max-h-[calc(100vh-420px)] min-h-[320px] space-y-2 overflow-y-auto pr-1 scrollbar-none">
@@ -1036,13 +1068,13 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
                 key={group.modifierGroupId}
                 icon={<SlidersHorizontal size={15} className="shrink-0 text-accent" />}
                 title={group.name}
-                meta={`${group.optionCount} options`}
+                meta={t("catalogAdmin.modifiers.optionsCount", { count: group.optionCount })}
                 status={group.status}
                 selected={selectedGroupId === group.modifierGroupId}
                 onSelect={() => selectGroup(group)}
               >
                 <div className="mt-3 text-xs text-subtle">
-                  Created {formatDateTime(group.createdAtUtc)}
+                  {t("catalogAdmin.common.createdOn", { date: formatDateTime(group.createdAtUtc) })}
                 </div>
               </EntityCard>
             ))}
@@ -1050,7 +1082,7 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
         )}
         <div className="mt-3 flex items-center justify-between gap-2 text-sm text-muted">
           <span>
-            Page {groupsQuery.data?.pageNumber || 1} / {groupsQuery.data?.totalPages || 0}
+            {t("catalogAdmin.common.pageOf", { current: groupsQuery.data?.pageNumber || 1, total: groupsQuery.data?.totalPages || 0 })}
           </span>
           <div className="flex gap-2">
             <button
@@ -1059,7 +1091,7 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
               onClick={() => setGroupPage((page) => Math.max(1, page - 1))}
               className="rounded-lg border border-line px-3 py-1 disabled:opacity-40"
             >
-              Prev
+              {t("catalogAdmin.common.prev")}
             </button>
             <button
               type="button"
@@ -1067,7 +1099,7 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
               onClick={() => setGroupPage((page) => page + 1)}
               className="rounded-lg border border-line px-3 py-1 disabled:opacity-40"
             >
-              Next
+              {t("catalogAdmin.common.next")}
             </button>
           </div>
         </div>
@@ -1077,13 +1109,13 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
         <div className="rounded-xl border border-line bg-surface p-4">
           <PanelTitle
             icon={<SlidersHorizontal size={15} className="text-accent" />}
-            eyebrow={groupMode === "create" ? "Create modifier group" : "Modifier group details"}
-            title={groupMode === "create" ? "New modifier group" : selectedGroup?.name || "Loading group"}
+            eyebrow={groupMode === "create" ? t("catalogAdmin.modifiers.group.createEyebrow") : t("catalogAdmin.modifiers.group.detailsEyebrow")}
+            title={groupMode === "create" ? t("catalogAdmin.modifiers.group.newTitle") : selectedGroup?.name || t("catalogAdmin.common.loading")}
             status={selectedGroup?.status}
           />
-          {groupMode === "edit" && groupDetailsQuery.isLoading && <LoadingState label="Loading group..." />}
+          {groupMode === "edit" && groupDetailsQuery.isLoading && <LoadingState label={t("catalogAdmin.modifiers.group.loading")} />}
           {groupMode === "edit" && groupDetailsQuery.isError && (
-            <ErrorState title="Unable to load group" message={getErrorMessage(groupDetailsQuery.error)} />
+            <ErrorState title={t("catalogAdmin.modifiers.group.loadError")} message={getErrorMessage(groupDetailsQuery.error, t)} />
           )}
           {(groupMode === "create" || selectedGroup) && (
             <form
@@ -1094,7 +1126,7 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
               className="space-y-3"
             >
               <label className="block text-sm font-semibold text-muted">
-                Name
+                {t("catalogAdmin.field.name")}
                 <input
                   value={groupForm.name}
                   onChange={(event) => setGroupForm({ name: event.target.value })}
@@ -1111,7 +1143,7 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
                 isPending={isGroupPending}
                 nextStatus={selectedGroup?.status === "Active" ? "Suspended" : "Active"}
                 onStatusChange={(status) =>
-                  changeModifierStatus(groupStatusMutation, status, "Modifier group")
+                  changeModifierStatus(groupStatusMutation, status, "catalogAdmin.entity.modifierGroup")
                 }
               />
             </form>
@@ -1123,10 +1155,10 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
             <div>
               <div className="flex items-center gap-2 text-sm text-muted">
                 <ListChecks size={15} className="text-accent" />
-                Modifier options
+                {t("catalogAdmin.modifiers.optionsHeading")}
               </div>
               <h2 className="mt-1 text-lg font-black text-ink">
-                {selectedGroup?.name || "Select a modifier group"}
+                {selectedGroup?.name || t("catalogAdmin.modifiers.selectGroupFallback")}
               </h2>
             </div>
             <div className="flex gap-2">
@@ -1135,9 +1167,9 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
                 onChange={(event) => setOptionStatus(event.target.value)}
                 className="h-10 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none"
               >
-                <option value="">All options</option>
-                <option value="Active">Active</option>
-                <option value="Suspended">Suspended</option>
+                <option value="">{t("catalogAdmin.modifiers.allOptions")}</option>
+                <option value="Active">{t("catalogAdmin.common.active")}</option>
+                <option value="Suspended">{t("catalogAdmin.common.suspended")}</option>
               </select>
               <button
                 type="button"
@@ -1150,28 +1182,28 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
                 className="flex h-10 items-center gap-2 rounded-xl bg-accent px-3 text-sm font-bold text-white disabled:opacity-50"
               >
                 <Plus size={14} />
-                New option
+                {t("catalogAdmin.modifiers.newOption")}
               </button>
             </div>
           </div>
           {!selectedGroupId ? (
-            <EmptyState title="Select a group" message="Choose a modifier group to manage its options." />
+            <EmptyState title={t("catalogAdmin.modifiers.selectGroup.title")} message={t("catalogAdmin.modifiers.selectGroup.message")} />
           ) : optionsQuery.isLoading ? (
-            <LoadingState label="Loading options..." />
+            <LoadingState label={t("catalogAdmin.modifiers.loadingOptions")} />
           ) : optionsQuery.isError ? (
-            <ErrorState title="Unable to load options" message={getErrorMessage(optionsQuery.error)} />
+            <ErrorState title={t("catalogAdmin.modifiers.loadOptionsError")} message={getErrorMessage(optionsQuery.error, t)} />
           ) : (
             <div className="grid gap-4 xl:grid-cols-[320px_1fr]">
               <div className="max-h-[280px] space-y-2 overflow-y-auto pr-1 scrollbar-none">
                 {options.length === 0 ? (
-                  <EmptyState title="No options found" message="This modifier group has no options." />
+                  <EmptyState title={t("catalogAdmin.modifiers.noOptions.title")} message={t("catalogAdmin.modifiers.noOptions.message")} />
                 ) : (
                   options.map((option) => (
                     <EntityCard
                       key={option.modifierOptionId}
                       icon={<ListChecks size={15} className="shrink-0 text-accent" />}
                       title={option.name}
-                      meta={`Sort ${option.sortOrder}`}
+                      meta={t("catalogAdmin.common.sortValue", { n: option.sortOrder })}
                       status={option.status}
                       selected={selectedOptionId === option.modifierOptionId}
                       onSelect={() => selectOption(option)}
@@ -1189,7 +1221,7 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
                 >
                   <div className="grid gap-3 md:grid-cols-[1fr_140px]">
                     <label className="text-sm font-semibold text-muted">
-                      Name
+                      {t("catalogAdmin.field.name")}
                       <input
                         value={optionForm.name}
                         onChange={(event) =>
@@ -1201,7 +1233,7 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
                       />
                     </label>
                     <label className="text-sm font-semibold text-muted">
-                      Sort Order
+                      {t("catalogAdmin.field.sortOrder")}
                       <input
                         type="number"
                         min="0"
@@ -1214,9 +1246,9 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
                       />
                     </label>
                   </div>
-                  {optionMode === "edit" && optionDetailsQuery.isLoading && <LoadingState label="Loading option..." />}
+                  {optionMode === "edit" && optionDetailsQuery.isLoading && <LoadingState label={t("catalogAdmin.modifiers.option.loading")} />}
                   {optionMode === "edit" && optionDetailsQuery.isError && (
-                    <ErrorState title="Unable to load option" message={getErrorMessage(optionDetailsQuery.error)} />
+                    <ErrorState title={t("catalogAdmin.modifiers.option.loadError")} message={getErrorMessage(optionDetailsQuery.error, t)} />
                   )}
                   <ActionRow
                     mode={optionMode}
@@ -1226,7 +1258,7 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
                     isPending={isOptionPending}
                     nextStatus={selectedOption?.status === "Active" ? "Suspended" : "Active"}
                     onStatusChange={(status) =>
-                      changeModifierStatus(optionStatusMutation, status, "Modifier option")
+                      changeModifierStatus(optionStatusMutation, status, "catalogAdmin.entity.modifierOption")
                     }
                   />
                 </form>
@@ -1238,12 +1270,12 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
         <div className="rounded-xl border border-line bg-surface p-4">
           <PanelTitle
             icon={<Link2 size={15} className="text-accent" />}
-            eyebrow="Variant assignments"
-            title="ProductVariant modifier groups"
+            eyebrow={t("catalogAdmin.modifiers.assignmentsEyebrow")}
+            title={t("catalogAdmin.modifiers.assignmentsTitle")}
           />
           <div className="grid gap-3 lg:grid-cols-2">
             <label className="text-sm font-semibold text-muted">
-              Product
+              {t("catalogAdmin.field.product")}
               <select
                 value={assignmentProductId}
                 onChange={(event) => {
@@ -1252,7 +1284,7 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
                 }}
                 className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none"
               >
-                <option value="">Select product</option>
+                <option value="">{t("catalogAdmin.field.selectProduct")}</option>
                 {(productsQuery.data?.items || []).map((product) => (
                   <option key={product.productId} value={product.productId}>
                     {product.name}
@@ -1261,14 +1293,14 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
               </select>
             </label>
             <label className="text-sm font-semibold text-muted">
-              Variant
+              {t("catalogAdmin.field.variant")}
               <select
                 value={assignmentVariantId}
                 onChange={(event) => setAssignmentVariantId(event.target.value)}
                 disabled={!assignmentProduct}
                 className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none disabled:opacity-50"
               >
-                <option value="">Select variant</option>
+                <option value="">{t("catalogAdmin.field.selectVariant")}</option>
                 {(assignmentProduct?.variants || []).map((variant) => (
                   <option key={variant.productVariantId} value={variant.productVariantId}>
                     {variant.name} {variant.sku ? `· ${variant.sku}` : ""}
@@ -1279,17 +1311,17 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
           </div>
           {!assignmentVariantId ? (
             <div className="mt-4">
-              <EmptyState title="Select a variant" message="Choose a ProductVariant to configure modifier group assignments." />
+              <EmptyState title={t("catalogAdmin.modifiers.selectVariantForAssignment.title")} message={t("catalogAdmin.modifiers.selectVariantForAssignment.message")} />
             </div>
           ) : assignmentsQuery.isLoading ? (
-            <LoadingState label="Loading assignments..." />
+            <LoadingState label={t("catalogAdmin.modifiers.loadingAssignments")} />
           ) : assignmentsQuery.isError ? (
-            <ErrorState title="Unable to load assignments" message={getErrorMessage(assignmentsQuery.error)} />
+            <ErrorState title={t("catalogAdmin.modifiers.loadAssignmentsError")} message={getErrorMessage(assignmentsQuery.error, t)} />
           ) : (
             <div className="mt-4 grid gap-4 xl:grid-cols-[320px_1fr]">
               <div className="max-h-[260px] space-y-2 overflow-y-auto pr-1 scrollbar-none">
                 {assignments.length === 0 ? (
-                  <EmptyState title="No assignments" message="This variant has no modifier groups yet." />
+                  <EmptyState title={t("catalogAdmin.modifiers.noAssignments.title")} message={t("catalogAdmin.modifiers.noAssignments.message")} />
                 ) : (
                   assignments.map((assignment) => (
                     <button
@@ -1304,11 +1336,15 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
                             {assignment.modifierGroupName}
                           </div>
                           <div className="mt-1 text-sm text-muted">
-                            Min {assignment.minSelections} · Max {assignment.maxSelections} · Sort {assignment.sortOrder}
+                            {t("catalogAdmin.modifiers.assignmentMeta", {
+                              min: assignment.minSelections,
+                              max: assignment.maxSelections,
+                              sort: assignment.sortOrder,
+                            })}
                           </div>
                         </div>
                         <StatusBadge tone={assignment.isEnabled ? "success" : "warning"}>
-                          {assignment.isEnabled ? "Enabled" : "Disabled"}
+                          {assignment.isEnabled ? t("catalogAdmin.common.enabled") : t("catalogAdmin.common.disabled")}
                         </StatusBadge>
                       </div>
                     </button>
@@ -1324,7 +1360,7 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
               >
                 <div className="grid gap-3 md:grid-cols-[1fr_120px_120px_120px]">
                   <label className="text-sm font-semibold text-muted">
-                    Modifier Group
+                    {t("catalogAdmin.field.modifierGroup")}
                     <select
                       value={assignmentForm.modifierGroupId}
                       onChange={(event) =>
@@ -1335,7 +1371,7 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
                       }
                       className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none"
                     >
-                      <option value="">Select group</option>
+                      <option value="">{t("catalogAdmin.field.selectGroup")}</option>
                       {groups.map((group) => (
                         <option key={group.modifierGroupId} value={group.modifierGroupId}>
                           {group.name}
@@ -1343,9 +1379,9 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
                       ))}
                     </select>
                   </label>
-                  <NumberField label="Min" value={assignmentForm.minSelections} onChange={(value) => setAssignmentForm((draft) => ({ ...draft, minSelections: value }))} />
-                  <NumberField label="Max" value={assignmentForm.maxSelections} onChange={(value) => setAssignmentForm((draft) => ({ ...draft, maxSelections: value }))} min="1" />
-                  <NumberField label="Sort" value={assignmentForm.sortOrder} onChange={(value) => setAssignmentForm((draft) => ({ ...draft, sortOrder: value }))} />
+                  <NumberField label={t("catalogAdmin.field.min")} value={assignmentForm.minSelections} onChange={(value) => setAssignmentForm((draft) => ({ ...draft, minSelections: value }))} />
+                  <NumberField label={t("catalogAdmin.field.max")} value={assignmentForm.maxSelections} onChange={(value) => setAssignmentForm((draft) => ({ ...draft, maxSelections: value }))} min="1" />
+                  <NumberField label={t("catalogAdmin.field.sort")} value={assignmentForm.sortOrder} onChange={(value) => setAssignmentForm((draft) => ({ ...draft, sortOrder: value }))} />
                 </div>
                 <label className="flex items-center gap-2 text-sm font-semibold text-muted">
                   <input
@@ -1359,10 +1395,10 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
                     }
                     className="h-4 w-4 rounded border-line-strong bg-canvas"
                   />
-                  Enabled for future sellable catalog reads
+                  {t("catalogAdmin.modifiers.enabledCheckboxLabel")}
                 </label>
                 <div className="rounded-xl border border-line bg-raised px-3 py-2 text-sm text-muted">
-                  Required behavior is derived from Min selections greater than zero. Disabled assignments remain configured with isEnabled=false; no delete endpoint exists.
+                  {t("catalogAdmin.modifiers.assignmentNote")}
                 </div>
                 <button
                   type="submit"
@@ -1370,7 +1406,7 @@ function CatalogModifiersAdmin({ currentCompanyId, currentBranchId, canRead, can
                   className="flex h-10 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-bold text-white disabled:opacity-50"
                 >
                   <Link2 size={15} />
-                  {assignmentMutation.isPending ? "Saving..." : "Save assignment"}
+                  {assignmentMutation.isPending ? t("catalogAdmin.action.saving") : t("catalogAdmin.modifiers.saveAssignment")}
                 </button>
               </form>
             </div>
@@ -1399,6 +1435,7 @@ function NumberField({ label, value, onChange, min = "0" }) {
 const CATALOG_ADMIN_TABS = ["categories", "products", "modifiers"];
 
 export default function CatalogAdminPage() {
+  const { t } = useI18n();
   const { currentCompanyId } = useCompany();
   const { currentBranchId } = useBranch();
   const currentBranch = useCurrentBranch();
@@ -1639,7 +1676,7 @@ export default function CatalogAdminPage() {
 
   const submitCategory = async () => {
     const sortOrder = parseSortOrder(categoryForm.sortOrder);
-    if (sortOrder === null) return showNotice("Sort order must be zero or greater.");
+    if (sortOrder === null) return showNotice(t("catalogAdmin.notice.sortOrderInvalid"));
 
     try {
       const payload = {
@@ -1658,15 +1695,15 @@ export default function CatalogAdminPage() {
         parentCategoryId: result.parentCategoryId || "",
         sortOrder: String(result.sortOrder),
       });
-      showNotice(`Category ${categoryMode === "create" ? "created" : "updated"}.`);
+      showNotice(categoryMode === "create" ? t("catalogAdmin.notice.categoryCreated") : t("catalogAdmin.notice.categoryUpdated"));
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
   const submitProduct = async () => {
     const sortOrder = parseSortOrder(productForm.sortOrder);
-    if (sortOrder === null) return showNotice("Sort order must be zero or greater.");
+    if (sortOrder === null) return showNotice(t("catalogAdmin.notice.sortOrderInvalid"));
 
     try {
       // SelfHosted: the image is managed entirely by the separate upload/remove endpoints, and
@@ -1697,35 +1734,35 @@ export default function CatalogAdminPage() {
         sortOrder: String(result.sortOrder),
         imageUrl: result.imageUrl || "",
       });
-      showNotice(`Product ${productMode === "create" ? "created" : "updated"}.`);
+      showNotice(productMode === "create" ? t("catalogAdmin.notice.productCreated") : t("catalogAdmin.notice.productUpdated"));
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
   const uploadProductImage = async (file) => {
     try {
       await uploadProductImageMutation.mutateAsync(file);
-      showNotice("Product image uploaded.");
+      showNotice(t("catalogAdmin.notice.imageUploaded"));
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
   const deleteProductImage = async () => {
     try {
       await deleteProductImageMutation.mutateAsync();
-      showNotice("Product image removed.");
+      showNotice(t("catalogAdmin.notice.imageRemoved"));
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
   const submitVariant = async () => {
     const sortOrder = parseSortOrder(variantForm.sortOrder);
-    if (sortOrder === null) return showNotice("Sort order must be zero or greater.");
+    if (sortOrder === null) return showNotice(t("catalogAdmin.notice.sortOrderInvalid"));
     if (variantMode === "create" && !variantForm.salesUnitOfMeasureId) {
-      return showNotice("Sales unit of measure is required.");
+      return showNotice(t("catalogAdmin.notice.uomRequired"));
     }
 
     try {
@@ -1751,29 +1788,37 @@ export default function CatalogAdminPage() {
       });
       showNotice(
         variantMode === "create"
-          ? "Variant created. Configure branch availability before POS sale."
-          : "Variant updated.",
+          ? t("catalogAdmin.notice.variantCreated")
+          : t("catalogAdmin.notice.variantUpdated"),
       );
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
-  const changeStatus = async (mutation, status, label) => {
+  const changeStatus = async (mutation, status, labelKey) => {
     try {
       await mutation.mutateAsync({ status });
-      showNotice(`${label} ${status.toLowerCase()}.`);
+      showNotice(
+        status === "Active"
+          ? t("catalogAdmin.notice.entityActivated", { entity: t(labelKey) })
+          : t("catalogAdmin.notice.entitySuspended", { entity: t(labelKey) }),
+      );
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
   const setBranchAvailability = async (isAvailable) => {
     try {
       await setBranchAvailabilityMutation.mutateAsync({ isAvailable });
-      showNotice(`Variant marked ${isAvailable ? "available" : "unavailable"} for current branch.`);
+      showNotice(
+        isAvailable
+          ? t("catalogAdmin.notice.variantMarkedAvailable")
+          : t("catalogAdmin.notice.variantMarkedUnavailable"),
+      );
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
@@ -1781,7 +1826,7 @@ export default function CatalogAdminPage() {
     <AppLayout>
       <main className="odoo-root space-y-3" dir="rtl">
         <PageHeader
-          title="Catalog"
+          title={t("catalogAdmin.pageTitle")}
           actions={
             <div className="flex flex-wrap gap-2">
               <button
@@ -1794,7 +1839,7 @@ export default function CatalogAdminPage() {
                 className="flex items-center gap-2 rounded-xl border border-line bg-raised px-3 py-2 text-sm font-bold text-ink"
               >
                 <RefreshCw size={14} />
-                Refresh
+                {t("catalogAdmin.refresh")}
               </button>
               {tab !== "modifiers" && (
                 <button
@@ -1803,7 +1848,7 @@ export default function CatalogAdminPage() {
                   className="flex items-center gap-2 rounded-xl bg-accent px-3 py-2 text-sm font-bold text-white"
                 >
                   <Plus size={14} />
-                  {tab === "categories" ? "New category" : "New product"}
+                  {tab === "categories" ? t("catalogAdmin.newCategory") : t("catalogAdmin.newProduct")}
                 </button>
               )}
             </div>
@@ -1825,7 +1870,7 @@ export default function CatalogAdminPage() {
             }`}
           >
             <Tags size={15} />
-            Categories
+            {t("catalogAdmin.tab.categories")}
           </button>
           <button
             type="button"
@@ -1835,7 +1880,7 @@ export default function CatalogAdminPage() {
             }`}
           >
             <Package size={15} />
-            Products
+            {t("catalogAdmin.tab.products")}
           </button>
           <button
             type="button"
@@ -1845,16 +1890,16 @@ export default function CatalogAdminPage() {
             }`}
           >
             <SlidersHorizontal size={15} />
-            Modifiers
+            {t("catalogAdmin.tab.modifiers")}
           </button>
         </div>
 
         {!currentCompanyId ? (
-          <EmptyState title="Company required" message="Select a company to manage catalog core." />
+          <EmptyState title={t("catalogAdmin.gate.companyRequired.title")} message={t("catalogAdmin.gate.companyRequired.message")} />
         ) : viewPermissionQuery.isLoading ? (
-          <LoadingState label="Checking Catalog permissions..." />
+          <LoadingState label={t("catalogAdmin.gate.checkingPermissions")} />
         ) : !viewPermissionQuery.hasPermission ? (
-          <ErrorState title="Permission required" message="Catalog.View permission is required." />
+          <ErrorState title={t("catalogAdmin.gate.permissionRequired.title")} message={t("catalogAdmin.gate.permissionRequired.message")} />
         ) : tab === "categories" ? (
           <div className="grid gap-4 xl:grid-cols-[420px_1fr]">
             <section className="rounded-xl border border-line bg-surface p-3">
@@ -1863,16 +1908,16 @@ export default function CatalogAdminPage() {
                 onChange={(event) => setCategoryStatus(event.target.value)}
                 className="mb-3 h-10 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none"
               >
-                <option value="">All categories</option>
-                <option value="Active">Active</option>
-                <option value="Suspended">Suspended</option>
+                <option value="">{t("catalogAdmin.field.allCategories")}</option>
+                <option value="Active">{t("catalogAdmin.common.active")}</option>
+                <option value="Suspended">{t("catalogAdmin.common.suspended")}</option>
               </select>
-              {categoriesQuery.isLoading && <LoadingState label="Loading categories..." />}
+              {categoriesQuery.isLoading && <LoadingState label={t("catalogAdmin.categories.loading")} />}
               {categoriesQuery.isError && (
-                <ErrorState title="Unable to load categories" message={getErrorMessage(categoriesQuery.error)} />
+                <ErrorState title={t("catalogAdmin.categories.loadError")} message={getErrorMessage(categoriesQuery.error, t)} />
               )}
               {!categoriesQuery.isLoading && !categoriesQuery.isError && categoriesQuery.data?.length === 0 && (
-                <EmptyState title="No categories found" message="No categories match the current filter." />
+                <EmptyState title={t("catalogAdmin.categories.empty.title")} message={t("catalogAdmin.categories.empty.message")} />
               )}
               {!categoriesQuery.isLoading && !categoriesQuery.isError && Boolean(categoriesQuery.data?.length) && (
                 <div className="max-h-[calc(100vh-350px)] min-h-[360px] space-y-2 overflow-y-auto pr-1 scrollbar-none">
@@ -1881,18 +1926,18 @@ export default function CatalogAdminPage() {
                       key={category.categoryId}
                       icon={<Tags size={15} className="shrink-0 text-accent" />}
                       title={category.name}
-                      meta={category.parentCategoryName ? `Parent: ${category.parentCategoryName}` : "Root category"}
+                      meta={category.parentCategoryName ? t("catalogAdmin.categories.parentMeta", { name: category.parentCategoryName }) : t("catalogAdmin.categories.rootCategory")}
                       status={category.status}
                       selected={selectedCategoryId === category.categoryId}
                       onSelect={() => selectCategory(category)}
                     >
                       <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                         <div className="rounded-lg bg-raised p-2">
-                          <div className="text-subtle">Sort</div>
+                          <div className="text-subtle">{t("catalogAdmin.common.sort")}</div>
                           <div className="mt-1 font-semibold text-ink">{category.sortOrder}</div>
                         </div>
                         <div className="rounded-lg bg-raised p-2">
-                          <div className="text-subtle">Created</div>
+                          <div className="text-subtle">{t("catalogAdmin.common.created")}</div>
                           <div className="mt-1 font-semibold text-ink">
                             {formatDateTime(category.createdAtUtc)}
                           </div>
@@ -1906,13 +1951,13 @@ export default function CatalogAdminPage() {
             <section className="rounded-xl border border-line bg-surface p-4">
               <PanelTitle
                 icon={<Power size={15} className="text-accent" />}
-                eyebrow={categoryMode === "create" ? "Create category" : "Category details"}
-                title={categoryMode === "create" ? "New category" : selectedCategory?.name || "Loading category"}
+                eyebrow={categoryMode === "create" ? t("catalogAdmin.categories.createEyebrow") : t("catalogAdmin.categories.detailsEyebrow")}
+                title={categoryMode === "create" ? t("catalogAdmin.categories.newTitle") : selectedCategory?.name || t("catalogAdmin.common.loading")}
                 status={selectedCategory?.status}
               />
-              {categoryMode === "edit" && categoryDetailsQuery.isLoading && <LoadingState label="Loading category..." />}
+              {categoryMode === "edit" && categoryDetailsQuery.isLoading && <LoadingState label={t("catalogAdmin.categories.loadingDetails")} />}
               {categoryMode === "edit" && categoryDetailsQuery.isError && (
-                <ErrorState title="Unable to load category" message={getErrorMessage(categoryDetailsQuery.error)} />
+                <ErrorState title={t("catalogAdmin.categories.loadDetailsError")} message={getErrorMessage(categoryDetailsQuery.error, t)} />
               )}
               {(categoryMode === "create" || selectedCategory) && (
                 <CategoryForm
@@ -1924,7 +1969,7 @@ export default function CatalogAdminPage() {
                   canManage={canManage}
                   isPending={categoryPending}
                   onSubmit={submitCategory}
-                  onStatusChange={(status) => changeStatus(categoryStatusMutation, status, "Category")}
+                  onStatusChange={(status) => changeStatus(categoryStatusMutation, status, "catalogAdmin.entity.category")}
                 />
               )}
             </section>
@@ -1942,7 +1987,7 @@ export default function CatalogAdminPage() {
                       setProductPage(1);
                     }}
                     maxLength={100}
-                    placeholder="Search products"
+                    placeholder={t("catalogAdmin.products.searchPlaceholder")}
                     className="h-10 w-full rounded-xl border border-line bg-canvas pr-9 pl-3 text-sm text-ink outline-none"
                   />
                 </label>
@@ -1954,9 +1999,9 @@ export default function CatalogAdminPage() {
                   }}
                   className="h-10 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none"
                 >
-                  <option value="">All status</option>
-                  <option value="Active">Active</option>
-                  <option value="Suspended">Suspended</option>
+                  <option value="">{t("catalogAdmin.field.allStatus")}</option>
+                  <option value="Active">{t("catalogAdmin.common.active")}</option>
+                  <option value="Suspended">{t("catalogAdmin.common.suspended")}</option>
                 </select>
                 <select
                   value={productCategoryId}
@@ -1966,7 +2011,7 @@ export default function CatalogAdminPage() {
                   }}
                   className="h-10 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none sm:col-span-2"
                 >
-                  <option value="">All categories</option>
+                  <option value="">{t("catalogAdmin.field.allCategories")}</option>
                   {categories.map((category) => (
                     <option key={category.categoryId} value={category.categoryId}>
                       {category.name}
@@ -1974,12 +2019,12 @@ export default function CatalogAdminPage() {
                   ))}
                 </select>
               </div>
-              {productsQuery.isLoading && <LoadingState label="Loading products..." />}
+              {productsQuery.isLoading && <LoadingState label={t("catalogAdmin.products.loading")} />}
               {productsQuery.isError && (
-                <ErrorState title="Unable to load products" message={getErrorMessage(productsQuery.error)} />
+                <ErrorState title={t("catalogAdmin.products.loadError")} message={getErrorMessage(productsQuery.error, t)} />
               )}
               {!productsQuery.isLoading && !productsQuery.isError && products.length === 0 && (
-                <EmptyState title="No products found" message="No products match the current filters." />
+                <EmptyState title={t("catalogAdmin.products.empty.title")} message={t("catalogAdmin.products.empty.message")} />
               )}
               {!productsQuery.isLoading && !productsQuery.isError && products.length > 0 && (
                 <div className="max-h-[calc(100vh-420px)] min-h-[320px] space-y-2 overflow-y-auto pr-1 scrollbar-none">
@@ -1988,18 +2033,18 @@ export default function CatalogAdminPage() {
                       key={product.productId}
                       icon={<Package size={15} className="shrink-0 text-accent" />}
                       title={product.name}
-                      meta={product.categoryName || "No category"}
+                      meta={product.categoryName || t("catalogAdmin.field.noCategory")}
                       status={product.status}
                       selected={selectedProductId === product.productId}
                       onSelect={() => selectProduct(product)}
                     >
                       <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                         <div className="rounded-lg bg-raised p-2">
-                          <div className="text-subtle">Variants</div>
+                          <div className="text-subtle">{t("catalogAdmin.common.variants")}</div>
                           <div className="mt-1 font-semibold text-ink">{product.variantCount}</div>
                         </div>
                         <div className="rounded-lg bg-raised p-2">
-                          <div className="text-subtle">Sort</div>
+                          <div className="text-subtle">{t("catalogAdmin.common.sort")}</div>
                           <div className="mt-1 font-semibold text-ink">{product.sortOrder}</div>
                         </div>
                       </div>
@@ -2009,7 +2054,7 @@ export default function CatalogAdminPage() {
               )}
               <div className="mt-3 flex items-center justify-between gap-2 text-sm text-muted">
                 <span>
-                  Page {productsQuery.data?.pageNumber || 1} / {productsQuery.data?.totalPages || 0}
+                  {t("catalogAdmin.common.pageOf", { current: productsQuery.data?.pageNumber || 1, total: productsQuery.data?.totalPages || 0 })}
                 </span>
                 <div className="flex gap-2">
                   <button
@@ -2018,7 +2063,7 @@ export default function CatalogAdminPage() {
                     onClick={() => setProductPage((page) => Math.max(1, page - 1))}
                     className="rounded-lg border border-line px-3 py-1 disabled:opacity-40"
                   >
-                    Prev
+                    {t("catalogAdmin.common.prev")}
                   </button>
                   <button
                     type="button"
@@ -2026,7 +2071,7 @@ export default function CatalogAdminPage() {
                     onClick={() => setProductPage((page) => page + 1)}
                     className="rounded-lg border border-line px-3 py-1 disabled:opacity-40"
                   >
-                    Next
+                    {t("catalogAdmin.common.next")}
                   </button>
                 </div>
               </div>
@@ -2035,22 +2080,22 @@ export default function CatalogAdminPage() {
               <div className="rounded-xl border border-line bg-surface p-4">
                 <PanelTitle
                   icon={<Power size={15} className="text-accent" />}
-                  eyebrow={productMode === "create" ? "Create product" : "Product details"}
-                  title={productMode === "create" ? "New product" : selectedProduct?.name || "Loading product"}
+                  eyebrow={productMode === "create" ? t("catalogAdmin.products.createEyebrow") : t("catalogAdmin.products.detailsEyebrow")}
+                  title={productMode === "create" ? t("catalogAdmin.products.newTitle") : selectedProduct?.name || t("catalogAdmin.common.loading")}
                   status={selectedProduct?.status}
                 />
-                {productMode === "edit" && productDetailsQuery.isLoading && <LoadingState label="Loading product..." />}
+                {productMode === "edit" && productDetailsQuery.isLoading && <LoadingState label={t("catalogAdmin.products.loadingDetails")} />}
                 {productMode === "edit" && productDetailsQuery.isError && (
-                  <ErrorState title="Unable to load product" message={getErrorMessage(productDetailsQuery.error)} />
+                  <ErrorState title={t("catalogAdmin.products.loadDetailsError")} message={getErrorMessage(productDetailsQuery.error, t)} />
                 )}
                 {(productMode === "create" || selectedProduct) && (
                   <div className="space-y-4">
                     {selectedProduct && (
                       <div className="grid gap-2 md:grid-cols-4">
-                        <InfoTile label="Category" value={selectedProduct.categoryName || "None"} />
-                        <InfoTile label="Tax" value={selectedProduct.salesTaxCategoryCode || "None"} />
-                        <InfoTile label="Variants" value={String(selectedProduct.variants.length)} />
-                        <InfoTile label="Created" value={formatDateTime(selectedProduct.createdAtUtc)} />
+                        <InfoTile label={t("catalogAdmin.field.category")} value={selectedProduct.categoryName || t("catalogAdmin.common.none")} />
+                        <InfoTile label={t("catalogAdmin.common.tax")} value={selectedProduct.salesTaxCategoryCode || t("catalogAdmin.common.none")} />
+                        <InfoTile label={t("catalogAdmin.common.variants")} value={String(selectedProduct.variants.length)} />
+                        <InfoTile label={t("catalogAdmin.common.created")} value={formatDateTime(selectedProduct.createdAtUtc)} />
                       </div>
                     )}
                     <ProductForm
@@ -2062,14 +2107,14 @@ export default function CatalogAdminPage() {
                       canManage={canManage}
                       isPending={productPending}
                       onSubmit={submitProduct}
-                      onStatusChange={(status) => changeStatus(productStatusMutation, status, "Product")}
+                      onStatusChange={(status) => changeStatus(productStatusMutation, status, "catalogAdmin.entity.product")}
                       onUploadImage={uploadProductImage}
                       onDeleteImage={deleteProductImage}
                       isImageUploading={uploadProductImageMutation.isPending}
                       isImageDeleting={deleteProductImageMutation.isPending}
                     />
                     <div className="rounded-xl border border-line bg-raised px-3 py-2 text-sm text-muted">
-                      Pricing, tax assignment, inventory consumption, and modifiers are managed outside this Catalog Core slice.
+                      {t("catalogAdmin.products.scopeNote")}
                     </div>
                   </div>
                 )}
@@ -2080,10 +2125,10 @@ export default function CatalogAdminPage() {
                   <div>
                     <div className="flex items-center gap-2 text-sm text-muted">
                       <Boxes size={15} className="text-accent" />
-                      Product variants
+                      {t("catalogAdmin.products.variantsHeading")}
                     </div>
                     <h2 className="mt-1 text-lg font-black text-ink">
-                      {selectedProduct?.name || "Select a product"}
+                      {selectedProduct?.name || t("catalogAdmin.products.selectProductFallback")}
                     </h2>
                   </div>
                   <div className="flex gap-2">
@@ -2092,9 +2137,9 @@ export default function CatalogAdminPage() {
                       onChange={(event) => setVariantStatus(event.target.value)}
                       className="h-10 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none"
                     >
-                      <option value="">All variants</option>
-                      <option value="Active">Active</option>
-                      <option value="Suspended">Suspended</option>
+                      <option value="">{t("catalogAdmin.field.allVariants")}</option>
+                      <option value="Active">{t("catalogAdmin.common.active")}</option>
+                      <option value="Suspended">{t("catalogAdmin.common.suspended")}</option>
                     </select>
                     <button
                       type="button"
@@ -2103,16 +2148,16 @@ export default function CatalogAdminPage() {
                       className="flex h-10 items-center gap-2 rounded-xl bg-accent px-3 text-sm font-bold text-white disabled:opacity-50"
                     >
                       <Plus size={14} />
-                      New variant
+                      {t("catalogAdmin.products.newVariant")}
                     </button>
                   </div>
                 </div>
                 {!selectedProductId ? (
-                  <EmptyState title="Select a product" message="Choose a product to manage its variants." />
+                  <EmptyState title={t("catalogAdmin.products.selectProduct.title")} message={t("catalogAdmin.products.selectProduct.message")} />
                 ) : variantsQuery.isLoading ? (
-                  <LoadingState label="Loading variants..." />
+                  <LoadingState label={t("catalogAdmin.products.loadingVariants")} />
                 ) : variantsQuery.isError ? (
-                  <ErrorState title="Unable to load variants" message={getErrorMessage(variantsQuery.error)} />
+                  <ErrorState title={t("catalogAdmin.products.loadVariantsError")} message={getErrorMessage(variantsQuery.error, t)} />
                 ) : (
                   <div className="grid gap-4 xl:grid-cols-[340px_1fr]">
                     <div className="max-h-[300px] space-y-2 overflow-y-auto pr-1 scrollbar-none">
@@ -2120,33 +2165,36 @@ export default function CatalogAdminPage() {
                         <div className="rounded-xl border border-line bg-raised p-3 text-sm text-muted">
                           <div className="flex items-center gap-2 font-bold text-ink">
                             <MapPin size={14} className="text-accent" />
-                            Current branch availability
+                            {t("catalogAdmin.products.branchAvailabilityHeading")}
                           </div>
                           <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
                             <div className="rounded-lg bg-success-soft p-2 text-success">
-                              Available {branchAvailabilitySummary.available}
+                              {t("catalogAdmin.products.availCountAvailable", { n: branchAvailabilitySummary.available })}
                             </div>
                             <div className="rounded-lg bg-danger-soft p-2 text-danger">
-                              Unavailable {branchAvailabilitySummary.unavailable}
+                              {t("catalogAdmin.products.availCountUnavailable", { n: branchAvailabilitySummary.unavailable })}
                             </div>
                             <div className="rounded-lg bg-warning-soft p-2 text-warning">
-                              Missing {branchAvailabilitySummary.missing}
+                              {t("catalogAdmin.products.availCountMissing", { n: branchAvailabilitySummary.missing })}
                             </div>
                           </div>
                           <div className="mt-2 text-xs text-subtle">
-                            Showing {branchAvailabilityOverviewQuery.data.items.length} of {branchAvailabilitySummary.total}
+                            {t("catalogAdmin.products.showingOf", {
+                              shown: branchAvailabilityOverviewQuery.data.items.length,
+                              total: branchAvailabilitySummary.total,
+                            })}
                           </div>
                         </div>
                       )}
                       {variants.length === 0 ? (
-                        <EmptyState title="No variants found" message="No variants match the current filter." />
+                        <EmptyState title={t("catalogAdmin.products.noVariants.title")} message={t("catalogAdmin.products.noVariants.message")} />
                       ) : (
                         variants.map((variant) => (
                           <EntityCard
                             key={variant.productVariantId}
                             icon={<Boxes size={15} className="shrink-0 text-accent" />}
                             title={variant.name}
-                            meta={`${variant.sku || "No SKU"} · ${variant.salesUnitOfMeasureCode}`}
+                            meta={`${variant.sku || t("catalogAdmin.field.noSku")} · ${variant.salesUnitOfMeasureCode}`}
                             status={variant.status}
                             selected={selectedVariantId === variant.productVariantId}
                             onSelect={() => selectVariant(variant)}
@@ -2155,9 +2203,9 @@ export default function CatalogAdminPage() {
                       )}
                     </div>
                     <div>
-                      {variantMode === "edit" && variantDetailsQuery.isLoading && <LoadingState label="Loading variant..." />}
+                      {variantMode === "edit" && variantDetailsQuery.isLoading && <LoadingState label={t("catalogAdmin.products.loadingVariantDetails")} />}
                       {variantMode === "edit" && variantDetailsQuery.isError && (
-                        <ErrorState title="Unable to load variant" message={getErrorMessage(variantDetailsQuery.error)} />
+                        <ErrorState title={t("catalogAdmin.products.loadVariantDetailsError")} message={getErrorMessage(variantDetailsQuery.error, t)} />
                       )}
                       {(variantMode === "create" || selectedVariant) && (
                         <div className="space-y-4">
@@ -2171,7 +2219,7 @@ export default function CatalogAdminPage() {
                             canManage={canManage}
                             isPending={variantPending}
                             onSubmit={submitVariant}
-                            onStatusChange={(status) => changeStatus(variantStatusMutation, status, "Variant")}
+                            onStatusChange={(status) => changeStatus(variantStatusMutation, status, "catalogAdmin.entity.variant")}
                           />
                           <BranchAvailabilityPanel
                             currentBranch={currentBranch}

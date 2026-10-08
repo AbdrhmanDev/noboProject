@@ -15,6 +15,7 @@ import {
   Unlink,
 } from "lucide-react";
 import AppLayout from "../../components/AppLayout";
+import { useI18n } from "../../i18n/I18nContext";
 import {
   EmptyState,
   ErrorState,
@@ -48,30 +49,36 @@ const EMPTY_CATEGORY_FORM = {
   ratePercent: "",
 };
 
-function getErrorMessage(error) {
-  return error?.message || "Request failed.";
+function getErrorMessage(error, t) {
+  return error?.message || t("taxAdmin.requestFailed");
 }
 
 function statusTone(status) {
   return status === "Active" ? "success" : "warning";
 }
 
-function parseRatePercent(value, treatment) {
+const TREATMENT_LABEL_KEYS = {
+  StandardRated: "taxAdmin.treatment.standardRated",
+  ZeroRated: "taxAdmin.treatment.zeroRated",
+  Exempt: "taxAdmin.treatment.exempt",
+};
+
+function parseRatePercent(value, treatment, t) {
   const normalized = String(value).trim();
-  if (!normalized) return { error: "Rate percent is required." };
+  if (!normalized) return { error: t("taxAdmin.notice.rateRequired") };
   if (!/^\d+(\.\d+)?$/.test(normalized)) {
-    return { error: "Rate percent must be a valid number." };
+    return { error: t("taxAdmin.notice.rateInvalid") };
   }
 
   const parsed = Number(normalized);
   if (parsed < 0 || parsed > 100) {
-    return { error: "Rate percent must be between 0 and 100." };
+    return { error: t("taxAdmin.notice.rateRange") };
   }
   if (treatment === "StandardRated" && parsed <= 0) {
-    return { error: "StandardRated tax categories must have a positive rate percent." };
+    return { error: t("taxAdmin.notice.standardRatedPositive") };
   }
   if ((treatment === "ZeroRated" || treatment === "Exempt") && parsed !== 0) {
-    return { error: "ZeroRated and Exempt tax categories must have a zero rate percent." };
+    return { error: t("taxAdmin.notice.zeroRatedExemptZero") };
   }
 
   return { value: parsed };
@@ -102,6 +109,7 @@ function InfoTile({ label, value }) {
 }
 
 function TaxCategoryCard({ category, selected, onSelect }) {
+  const { t } = useI18n();
   return (
     <button
       type="button"
@@ -118,20 +126,21 @@ function TaxCategoryCard({ category, selected, onSelect }) {
           </div>
           <div className="mt-1 flex flex-wrap gap-2 text-sm text-muted">
             <span className="font-semibold text-muted">{category.code}</span>
-            <span>{category.treatment}</span>
+            <span>{t(TREATMENT_LABEL_KEYS[category.treatment] || category.treatment)}</span>
             <span>{category.ratePercent}%</span>
           </div>
         </div>
         <StatusBadge tone={statusTone(category.status)}>{category.status}</StatusBadge>
       </div>
       <div className="mt-3 text-xs text-subtle">
-        Updated {formatDateTime(category.updatedAtUtc)}
+        {t("taxAdmin.common.updatedOn", { date: formatDateTime(category.updatedAtUtc) })}
       </div>
     </button>
   );
 }
 
 function ProductCard({ product, selected, onSelect }) {
+  const { t } = useI18n();
   return (
     <button
       type="button"
@@ -147,7 +156,7 @@ function ProductCard({ product, selected, onSelect }) {
             <div className="truncate text-sm font-black text-ink">{product.name}</div>
           </div>
           <div className="mt-1 truncate text-sm text-muted">
-            {product.categoryName || "No category"} | {product.salesTaxCategoryCode || "No tax category"}
+            {product.categoryName || t("taxAdmin.field.noCategory")} | {product.salesTaxCategoryCode || t("taxAdmin.field.noTaxCategory")}
           </div>
         </div>
         <StatusBadge tone={statusTone(product.status)}>{product.status}</StatusBadge>
@@ -157,6 +166,7 @@ function ProductCard({ product, selected, onSelect }) {
 }
 
 export default function TaxAdminPage() {
+  const { t } = useI18n();
   const { currentCompanyId } = useCompany();
   const { currentBranchId } = useBranch();
   const [tab, setTab] = useState("settings");
@@ -254,7 +264,7 @@ export default function TaxAdminPage() {
     setCategoryForm({ ...EMPTY_CATEGORY_FORM });
     window.setTimeout(() => {
       categoryFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      showNotice("Ready to create a new tax category.");
+      showNotice(t("taxAdmin.notice.readyToCreate"));
     }, 0);
   };
 
@@ -279,14 +289,14 @@ export default function TaxAdminPage() {
       await settingsMutation.mutateAsync({
         isTaxEnabled: !settingsQuery.data?.isTaxEnabled,
       });
-      showNotice("Tax settings updated.");
+      showNotice(t("taxAdmin.notice.settingsUpdated"));
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
   const submitCategory = async () => {
-    const rate = parseRatePercent(categoryForm.ratePercent, categoryForm.treatment);
+    const rate = parseRatePercent(categoryForm.ratePercent, categoryForm.treatment, t);
     if (rate.error) return showNotice(rate.error);
 
     try {
@@ -311,9 +321,9 @@ export default function TaxAdminPage() {
         treatment: result.treatment,
         ratePercent: String(result.ratePercent),
       });
-      showNotice(`Tax category ${categoryMode === "create" ? "created" : "updated"}.`);
+      showNotice(categoryMode === "create" ? t("taxAdmin.notice.categoryCreated") : t("taxAdmin.notice.categoryUpdated"));
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
@@ -322,14 +332,14 @@ export default function TaxAdminPage() {
     const status = selectedCategory.status === "Active" ? "Suspended" : "Active";
     try {
       await categoryStatusMutation.mutateAsync({ status });
-      showNotice(`Tax category ${status.toLowerCase()}.`);
+      showNotice(status === "Active" ? t("taxAdmin.notice.categoryActivated") : t("taxAdmin.notice.categorySuspended"));
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
   const submitAssignment = async () => {
-    if (!selectedProductId) return showNotice("Select a product first.");
+    if (!selectedProductId) return showNotice(t("taxAdmin.notice.selectProductFirst"));
 
     try {
       await assignmentMutation.mutateAsync({
@@ -337,11 +347,11 @@ export default function TaxAdminPage() {
       });
       showNotice(
         assignmentTaxCategoryId
-          ? "Product tax category assigned."
-          : "Product tax category cleared.",
+          ? t("taxAdmin.notice.assignmentSet")
+          : t("taxAdmin.notice.assignmentCleared"),
       );
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
@@ -349,9 +359,9 @@ export default function TaxAdminPage() {
     setAssignmentTaxCategoryId("");
     try {
       await assignmentMutation.mutateAsync({ taxCategoryId: null });
-      showNotice("Product tax category cleared.");
+      showNotice(t("taxAdmin.notice.assignmentCleared"));
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
@@ -359,7 +369,7 @@ export default function TaxAdminPage() {
     <AppLayout>
       <main className="odoo-root space-y-3" dir="rtl">
         <PageHeader
-          title="Tax Configuration"
+          title={t("taxAdmin.pageTitle")}
           actions={
             <div className="flex flex-wrap gap-2">
               <button
@@ -373,7 +383,7 @@ export default function TaxAdminPage() {
                 className="flex items-center gap-2 rounded-xl border border-line bg-raised px-3 py-2 text-sm font-bold text-ink"
               >
                 <RefreshCw size={14} />
-                Refresh
+                {t("taxAdmin.refresh")}
               </button>
               {tab === "categories" && (
                 <button
@@ -382,7 +392,7 @@ export default function TaxAdminPage() {
                   className="flex items-center gap-2 rounded-xl bg-accent px-3 py-2 text-sm font-bold text-white"
                 >
                   <Plus size={14} />
-                  New tax category
+                  {t("taxAdmin.newCategory")}
                 </button>
               )}
             </div>
@@ -397,9 +407,9 @@ export default function TaxAdminPage() {
 
         <div className="flex flex-wrap gap-1 rounded-xl border border-line bg-surface p-1.5 shadow-[var(--shadow-surface)]">
           {[
-            ["settings", "Settings", ReceiptText],
-            ["categories", "Tax Categories", BadgePercent],
-            ["assignments", "Product Assignments", Link2],
+            ["settings", t("taxAdmin.tab.settings"), ReceiptText],
+            ["categories", t("taxAdmin.tab.categories"), BadgePercent],
+            ["assignments", t("taxAdmin.tab.assignments"), Link2],
           ].map(([value, label, Icon]) => (
             <button
               key={value}
@@ -416,32 +426,32 @@ export default function TaxAdminPage() {
         </div>
 
         {!currentCompanyId ? (
-          <EmptyState title="Company required" message="Select a company to manage tax." />
+          <EmptyState title={t("taxAdmin.gate.companyRequired.title")} message={t("taxAdmin.gate.companyRequired.message")} />
         ) : viewPermissionQuery.isLoading ? (
-          <LoadingState label="Checking Tax permissions..." />
+          <LoadingState label={t("taxAdmin.gate.checkingPermissions")} />
         ) : !viewPermissionQuery.hasPermission ? (
-          <ErrorState title="Permission required" message="Tax.View permission is required." />
+          <ErrorState title={t("taxAdmin.gate.permissionRequired.title")} message={t("taxAdmin.gate.permissionRequired.message")} />
         ) : tab === "settings" ? (
           <section className="rounded-xl border border-line bg-surface p-4">
             <PanelTitle
               icon={<ReceiptText size={15} className="text-accent" />}
-              eyebrow="Company tax settings"
-              title="Tax Settings"
+              eyebrow={t("taxAdmin.settingsEyebrow")}
+              title={t("taxAdmin.settingsTitle")}
             />
             {settingsQuery.isLoading ? (
-              <LoadingState label="Loading tax settings..." />
+              <LoadingState label={t("taxAdmin.loadingSettings")} />
             ) : settingsQuery.isError ? (
-              <ErrorState title="Unable to load tax settings" message={getErrorMessage(settingsQuery.error)} />
+              <ErrorState title={t("taxAdmin.loadSettingsError")} message={getErrorMessage(settingsQuery.error, t)} />
             ) : (
               <div className="space-y-4">
                 <div className="grid gap-2 md:grid-cols-4">
-                  <InfoTile label="Tax enabled" value={settingsQuery.data?.isTaxEnabled ? "Yes" : "No"} />
-                  <InfoTile label="Configured" value={settingsQuery.data?.isConfigured ? "Yes" : "No"} />
-                  <InfoTile label="Created" value={settingsQuery.data?.createdAtUtc ? formatDateTime(settingsQuery.data.createdAtUtc) : "Not configured"} />
-                  <InfoTile label="Updated" value={settingsQuery.data?.updatedAtUtc ? formatDateTime(settingsQuery.data.updatedAtUtc) : "Not configured"} />
+                  <InfoTile label={t("taxAdmin.field.taxEnabled")} value={settingsQuery.data?.isTaxEnabled ? t("taxAdmin.common.yes") : t("taxAdmin.common.no")} />
+                  <InfoTile label={t("taxAdmin.field.configured")} value={settingsQuery.data?.isConfigured ? t("taxAdmin.common.yes") : t("taxAdmin.common.no")} />
+                  <InfoTile label={t("taxAdmin.common.created")} value={settingsQuery.data?.createdAtUtc ? formatDateTime(settingsQuery.data.createdAtUtc) : t("taxAdmin.common.notConfigured")} />
+                  <InfoTile label={t("taxAdmin.common.updated")} value={settingsQuery.data?.updatedAtUtc ? formatDateTime(settingsQuery.data.updatedAtUtc) : t("taxAdmin.common.notConfigured")} />
                 </div>
                 <div className="rounded-xl border border-line bg-raised px-3 py-2 text-sm text-muted">
-                  This switch controls company tax calculation availability. PriceList tax mode remains managed in Pricing.
+                  {t("taxAdmin.settingsNote")}
                 </div>
                 <button
                   type="button"
@@ -450,7 +460,7 @@ export default function TaxAdminPage() {
                   className="flex h-10 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-bold text-white disabled:opacity-50"
                 >
                   <Power size={15} />
-                  {settingsQuery.data?.isTaxEnabled ? "Disable tax" : "Enable tax"}
+                  {settingsQuery.data?.isTaxEnabled ? t("taxAdmin.disableTax") : t("taxAdmin.enableTax")}
                 </button>
               </div>
             )}
@@ -465,7 +475,7 @@ export default function TaxAdminPage() {
                     value={categorySearch}
                     onChange={(event) => setCategorySearch(event.target.value)}
                     maxLength={100}
-                    placeholder="Search tax categories"
+                    placeholder={t("taxAdmin.searchCategories")}
                     className="h-10 w-full rounded-xl border border-line bg-canvas pr-9 pl-3 text-sm text-ink outline-none"
                   />
                 </label>
@@ -475,30 +485,30 @@ export default function TaxAdminPage() {
                     onChange={(event) => setCategoryStatus(event.target.value)}
                     className="h-10 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none"
                   >
-                    <option value="">All status</option>
-                    <option value="Active">Active</option>
-                    <option value="Suspended">Suspended</option>
+                    <option value="">{t("taxAdmin.field.allStatus")}</option>
+                    <option value="Active">{t("taxAdmin.common.active")}</option>
+                    <option value="Suspended">{t("taxAdmin.common.suspended")}</option>
                   </select>
                   <select
                     value={categoryTreatment}
                     onChange={(event) => setCategoryTreatment(event.target.value)}
                     className="h-10 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none"
                   >
-                    <option value="">All treatments</option>
+                    <option value="">{t("taxAdmin.field.allTreatments")}</option>
                     {TAX_TREATMENTS.map((treatment) => (
                       <option key={treatment} value={treatment}>
-                        {treatment}
+                        {t(TREATMENT_LABEL_KEYS[treatment])}
                       </option>
                     ))}
                   </select>
                 </div>
               </div>
-              {categoriesQuery.isLoading && <LoadingState label="Loading tax categories..." />}
+              {categoriesQuery.isLoading && <LoadingState label={t("taxAdmin.loadingCategories")} />}
               {categoriesQuery.isError && (
-                <ErrorState title="Unable to load tax categories" message={getErrorMessage(categoriesQuery.error)} />
+                <ErrorState title={t("taxAdmin.loadCategoriesError")} message={getErrorMessage(categoriesQuery.error, t)} />
               )}
               {!categoriesQuery.isLoading && !categoriesQuery.isError && categoriesQuery.data?.length === 0 && (
-                <EmptyState title="No tax categories found" message="No categories match the current filters." />
+                <EmptyState title={t("taxAdmin.noCategories.title")} message={t("taxAdmin.noCategories.message")} />
               )}
               {!categoriesQuery.isLoading && !categoriesQuery.isError && Boolean(categoriesQuery.data?.length) && (
                 <div className="max-h-[calc(100vh-360px)] min-h-[340px] space-y-2 overflow-y-auto pr-1 scrollbar-none">
@@ -516,13 +526,13 @@ export default function TaxAdminPage() {
             <section ref={categoryFormRef} className="rounded-xl border border-line bg-surface p-4">
               <PanelTitle
                 icon={<Percent size={15} className="text-accent" />}
-                eyebrow={categoryMode === "create" ? "Create tax category" : "Tax category details"}
-                title={categoryMode === "create" ? "New tax category" : selectedCategory?.name || "Loading category"}
+                eyebrow={categoryMode === "create" ? t("taxAdmin.createEyebrow") : t("taxAdmin.detailsEyebrow")}
+                title={categoryMode === "create" ? t("taxAdmin.newCategory") : selectedCategory?.name || t("taxAdmin.common.loading")}
                 status={selectedCategory?.status}
               />
-              {categoryMode === "edit" && categoryDetailsQuery.isLoading && <LoadingState label="Loading tax category..." />}
+              {categoryMode === "edit" && categoryDetailsQuery.isLoading && <LoadingState label={t("taxAdmin.loadingCategory")} />}
               {categoryMode === "edit" && categoryDetailsQuery.isError && (
-                <ErrorState title="Unable to load tax category" message={getErrorMessage(categoryDetailsQuery.error)} />
+                <ErrorState title={t("taxAdmin.loadCategoryError")} message={getErrorMessage(categoryDetailsQuery.error, t)} />
               )}
               {(categoryMode === "create" || selectedCategory) && (
                 <form
@@ -534,7 +544,7 @@ export default function TaxAdminPage() {
                 >
                   <div className="grid gap-3 lg:grid-cols-[170px_1fr_180px_150px]">
                     <label className="text-sm font-semibold text-muted">
-                      Code
+                      {t("taxAdmin.field.code")}
                       <input
                         value={categoryForm.code}
                         onChange={(event) => setCategoryForm((draft) => ({ ...draft, code: event.target.value }))}
@@ -544,7 +554,7 @@ export default function TaxAdminPage() {
                       />
                     </label>
                     <label className="text-sm font-semibold text-muted">
-                      Name
+                      {t("taxAdmin.field.name")}
                       <input
                         value={categoryForm.name}
                         onChange={(event) => setCategoryForm((draft) => ({ ...draft, name: event.target.value }))}
@@ -554,7 +564,7 @@ export default function TaxAdminPage() {
                       />
                     </label>
                     <label className="text-sm font-semibold text-muted">
-                      Treatment
+                      {t("taxAdmin.field.treatment")}
                       {categoryMode === "create" ? (
                         <select
                           value={categoryForm.treatment}
@@ -564,18 +574,18 @@ export default function TaxAdminPage() {
                         >
                           {TAX_TREATMENTS.map((treatment) => (
                             <option key={treatment} value={treatment}>
-                              {treatment}
+                              {t(TREATMENT_LABEL_KEYS[treatment])}
                             </option>
                           ))}
                         </select>
                       ) : (
                         <div className="mt-1 flex h-11 items-center rounded-xl border border-line bg-raised px-3 text-sm text-ink">
-                          {selectedCategory?.treatment || categoryForm.treatment}
+                          {t(TREATMENT_LABEL_KEYS[selectedCategory?.treatment] || TREATMENT_LABEL_KEYS[categoryForm.treatment])}
                         </div>
                       )}
                     </label>
                     <label className="text-sm font-semibold text-muted">
-                      Rate Percent
+                      {t("taxAdmin.field.ratePercent")}
                       <input
                         value={categoryForm.ratePercent}
                         onChange={(event) => setCategoryForm((draft) => ({ ...draft, ratePercent: event.target.value }))}
@@ -585,7 +595,7 @@ export default function TaxAdminPage() {
                     </label>
                   </div>
                   <div className="rounded-xl border border-line bg-raised px-3 py-2 text-sm text-muted">
-                    TaxTreatment is selected on create and read-only after creation. RatePercent is stored as an actual percent from 0 to 100.
+                    {t("taxAdmin.categoryFormNote")}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <button
@@ -594,7 +604,7 @@ export default function TaxAdminPage() {
                       className="flex h-10 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-bold text-white disabled:opacity-50"
                     >
                       {categoryMode === "edit" ? <Pencil size={15} /> : <Plus size={15} />}
-                      {isCategoryPending ? "Saving..." : categoryMode === "edit" ? "Save category" : "Create category"}
+                      {isCategoryPending ? t("taxAdmin.common.saving") : categoryMode === "edit" ? t("taxAdmin.saveCategory") : t("taxAdmin.createCategory")}
                     </button>
                     {categoryMode === "edit" && selectedCategory && (
                       <button
@@ -604,7 +614,7 @@ export default function TaxAdminPage() {
                         className="flex h-10 items-center gap-2 rounded-xl border border-line bg-raised px-4 text-sm font-bold text-ink disabled:opacity-50"
                       >
                         {selectedCategory.status === "Active" ? <CirclePause size={15} /> : <CircleCheck size={15} />}
-                        {selectedCategory.status === "Active" ? "Suspend" : "Activate"}
+                        {selectedCategory.status === "Active" ? t("taxAdmin.common.suspendAction") : t("taxAdmin.common.activateAction")}
                       </button>
                     )}
                   </div>
@@ -624,16 +634,16 @@ export default function TaxAdminPage() {
                     setProductPage(1);
                   }}
                   maxLength={100}
-                  placeholder="Search products"
+                  placeholder={t("taxAdmin.searchProducts")}
                   className="h-10 w-full rounded-xl border border-line bg-canvas pr-9 pl-3 text-sm text-ink outline-none"
                 />
               </label>
-              {productsQuery.isLoading && <LoadingState label="Loading products..." />}
+              {productsQuery.isLoading && <LoadingState label={t("taxAdmin.loadingProducts")} />}
               {productsQuery.isError && (
-                <ErrorState title="Unable to load products" message={getErrorMessage(productsQuery.error)} />
+                <ErrorState title={t("taxAdmin.loadProductsError")} message={getErrorMessage(productsQuery.error, t)} />
               )}
               {!productsQuery.isLoading && !productsQuery.isError && productsQuery.data?.items.length === 0 && (
-                <EmptyState title="No products found" message="No products match the current filters." />
+                <EmptyState title={t("taxAdmin.noProducts.title")} message={t("taxAdmin.noProducts.message")} />
               )}
               {!productsQuery.isLoading && !productsQuery.isError && Boolean(productsQuery.data?.items.length) && (
                 <div className="max-h-[calc(100vh-390px)] min-h-[340px] space-y-2 overflow-y-auto pr-1 scrollbar-none">
@@ -649,7 +659,7 @@ export default function TaxAdminPage() {
               )}
               <div className="mt-3 flex items-center justify-between gap-2 text-sm text-muted">
                 <span>
-                  Page {productsQuery.data?.pageNumber || 1} / {productsQuery.data?.totalPages || 0}
+                  {t("taxAdmin.common.pageOf", { current: productsQuery.data?.pageNumber || 1, total: productsQuery.data?.totalPages || 0 })}
                 </span>
                 <div className="flex gap-2">
                   <button
@@ -658,7 +668,7 @@ export default function TaxAdminPage() {
                     onClick={() => setProductPage((page) => Math.max(1, page - 1))}
                     className="rounded-lg border border-line px-3 py-1 disabled:opacity-40"
                   >
-                    Prev
+                    {t("taxAdmin.common.prev")}
                   </button>
                   <button
                     type="button"
@@ -666,7 +676,7 @@ export default function TaxAdminPage() {
                     onClick={() => setProductPage((page) => page + 1)}
                     className="rounded-lg border border-line px-3 py-1 disabled:opacity-40"
                   >
-                    Next
+                    {t("taxAdmin.common.next")}
                   </button>
                 </div>
               </div>
@@ -674,15 +684,15 @@ export default function TaxAdminPage() {
             <section className="rounded-xl border border-line bg-surface p-4">
               <PanelTitle
                 icon={<Link2 size={15} className="text-accent" />}
-                eyebrow="Product tax assignment"
-                title={selectedProduct?.name || "Select a product"}
+                eyebrow={t("taxAdmin.assignmentEyebrow")}
+                title={selectedProduct?.name || t("taxAdmin.selectProductFallback")}
               />
               {!selectedProductId ? (
-                <EmptyState title="Select a product" message="Choose a Catalog product to assign or clear its sales tax category." />
+                <EmptyState title={t("taxAdmin.selectProduct.title")} message={t("taxAdmin.selectProduct.message")} />
               ) : productDetailsQuery.isLoading ? (
-                <LoadingState label="Loading product..." />
+                <LoadingState label={t("taxAdmin.loadingProduct")} />
               ) : productDetailsQuery.isError ? (
-                <ErrorState title="Unable to load product" message={getErrorMessage(productDetailsQuery.error)} />
+                <ErrorState title={t("taxAdmin.loadProductError")} message={getErrorMessage(productDetailsQuery.error, t)} />
               ) : (
                 <form
                   onSubmit={(event) => {
@@ -692,28 +702,28 @@ export default function TaxAdminPage() {
                   className="space-y-4"
                 >
                   <div className="grid gap-2 md:grid-cols-3">
-                    <InfoTile label="Product" value={selectedProduct?.name || ""} />
-                    <InfoTile label="Current Tax Category" value={selectedProduct?.salesTaxCategoryCode || "None"} />
-                    <InfoTile label="Product Status" value={selectedProduct?.status || ""} />
+                    <InfoTile label={t("taxAdmin.field.product")} value={selectedProduct?.name || ""} />
+                    <InfoTile label={t("taxAdmin.field.currentTaxCategory")} value={selectedProduct?.salesTaxCategoryCode || t("taxAdmin.common.none")} />
+                    <InfoTile label={t("taxAdmin.field.productStatus")} value={selectedProduct?.status || ""} />
                   </div>
                   <label className="block text-sm font-semibold text-muted">
-                    Tax Category
+                    {t("taxAdmin.field.taxCategory")}
                     <select
                       value={assignmentTaxCategoryId}
                       onChange={(event) => setAssignmentTaxCategoryId(event.target.value)}
                       disabled={!canManage || assignmentMutation.isPending}
                       className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none disabled:opacity-50"
                     >
-                      <option value="">No tax category</option>
+                      <option value="">{t("taxAdmin.field.noTaxCategory")}</option>
                       {(activeCategoriesQuery.data || []).map((category) => (
                         <option key={category.taxCategoryId} value={category.taxCategoryId}>
-                          {category.code} | {category.name} | {category.treatment} | {category.ratePercent}%
+                          {category.code} | {category.name} | {t(TREATMENT_LABEL_KEYS[category.treatment] || category.treatment)} | {category.ratePercent}%
                         </option>
                       ))}
                     </select>
                   </label>
                   <div className="rounded-xl border border-line bg-raised px-3 py-2 text-sm text-muted">
-                    Clearing sends taxCategoryId: null. This does not edit any other Product fields and does not create a fake No Tax category.
+                    {t("taxAdmin.clearAssignmentNote")}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <button
@@ -722,7 +732,7 @@ export default function TaxAdminPage() {
                       className="flex h-10 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-bold text-white disabled:opacity-50"
                     >
                       <Link2 size={15} />
-                      Save assignment
+                      {t("taxAdmin.saveAssignment")}
                     </button>
                     <button
                       type="button"
@@ -731,7 +741,7 @@ export default function TaxAdminPage() {
                       className="flex h-10 items-center gap-2 rounded-xl border border-line bg-raised px-4 text-sm font-bold text-ink disabled:opacity-50"
                     >
                       <Unlink size={15} />
-                      Clear assignment
+                      {t("taxAdmin.clearAssignment")}
                     </button>
                   </div>
                 </form>

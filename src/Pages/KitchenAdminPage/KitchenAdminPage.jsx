@@ -23,6 +23,7 @@ import { formatDateTime } from "../../shared/utils/formatters";
 import { useBranch } from "../../features/branches/context/BranchContext";
 import { useCompany } from "../../features/companies/context/CompanyContext";
 import { useHasPermission } from "../../features/companies/hooks/useCompanies";
+import { useI18n } from "../../i18n/I18nContext";
 import {
   useChangeKitchenStationStatus,
   useKitchenStationDetails,
@@ -45,12 +46,16 @@ const EMPTY_ROUTE_FORM = {
   sortOrder: "0",
 };
 
-function getErrorMessage(error) {
-  return error?.message || "Request failed.";
+function getErrorMessage(error, t) {
+  return error?.message || t("kitchenAdmin.common.requestFailed");
 }
 
 function statusTone(status) {
   return status === "Active" ? "success" : "warning";
+}
+
+function statusLabel(status, t) {
+  return status === "Active" ? t("kitchenAdmin.common.active") : t("kitchenAdmin.common.suspended");
 }
 
 function parseSortOrder(value) {
@@ -65,6 +70,7 @@ function variantLabel(item) {
 }
 
 function StationCard({ station, selected, onSelect }) {
+  const { t } = useI18n();
   return (
     <button
       type="button"
@@ -81,19 +87,19 @@ function StationCard({ station, selected, onSelect }) {
           </div>
           <div className="mt-1 truncate text-xs text-slate-400">{station.name}</div>
         </div>
-        <StatusBadge tone={statusTone(station.status)}>{station.status}</StatusBadge>
+        <StatusBadge tone={statusTone(station.status)}>{statusLabel(station.status, t)}</StatusBadge>
       </div>
       <div className="mt-3 grid grid-cols-3 gap-2 text-[11px]">
         <div className="rounded-lg bg-white/[0.03] p-2">
-          <div className="text-slate-500">Sort</div>
+          <div className="text-slate-500">{t("kitchenAdmin.card.sort")}</div>
           <div className="mt-1 font-semibold text-slate-200">{station.sortOrder}</div>
         </div>
         <div className="rounded-lg bg-white/[0.03] p-2">
-          <div className="text-slate-500">Routes</div>
+          <div className="text-slate-500">{t("kitchenAdmin.card.routes")}</div>
           <div className="mt-1 font-semibold text-slate-200">{station.routeCount}</div>
         </div>
         <div className="rounded-lg bg-white/[0.03] p-2">
-          <div className="text-slate-500">Created</div>
+          <div className="text-slate-500">{t("kitchenAdmin.card.created")}</div>
           <div className="mt-1 font-semibold text-slate-200">
             {formatDateTime(station.createdAtUtc)}
           </div>
@@ -112,6 +118,7 @@ function StationForm({
   onSubmit,
   onStatusChange,
 }) {
+  const { t } = useI18n();
   const nextStatus = selectedStation?.status === "Active" ? "Suspended" : "Active";
 
   return (
@@ -124,7 +131,7 @@ function StationForm({
     >
       <div className="grid gap-3 sm:grid-cols-[1fr_1fr_120px]">
         <label className="text-xs font-semibold text-slate-400">
-          Code
+          {t("kitchenAdmin.field.code")}
           <input
             value={form.code}
             onChange={(event) => setForm((draft) => ({ ...draft, code: event.target.value }))}
@@ -134,7 +141,7 @@ function StationForm({
           />
         </label>
         <label className="text-xs font-semibold text-slate-400">
-          Name
+          {t("kitchenAdmin.field.name")}
           <input
             value={form.name}
             onChange={(event) => setForm((draft) => ({ ...draft, name: event.target.value }))}
@@ -144,7 +151,7 @@ function StationForm({
           />
         </label>
         <label className="text-xs font-semibold text-slate-400">
-          Sort Order
+          {t("kitchenAdmin.field.sortOrder")}
           <input
             type="number"
             min="0"
@@ -157,7 +164,7 @@ function StationForm({
       </div>
       {!canManage && (
         <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
-          Kitchen.Manage permission is required for configuration changes.
+          {t("kitchenAdmin.notice.managePermissionRequired")}
         </div>
       )}
       <div className="flex flex-wrap gap-2">
@@ -167,7 +174,7 @@ function StationForm({
           className="flex h-10 items-center gap-2 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Pencil size={15} />
-          {isPending ? "Saving..." : "Save station"}
+          {isPending ? t("kitchenAdmin.common.saving") : t("kitchenAdmin.action.saveStation")}
         </button>
         {selectedStation && (
           <button
@@ -177,7 +184,7 @@ function StationForm({
             className="flex h-10 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-4 text-xs font-bold text-slate-100 transition hover:border-blue-400/40 hover:bg-blue-500/10 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {nextStatus === "Active" ? <CircleCheck size={15} /> : <CirclePause size={15} />}
-            {nextStatus === "Active" ? "Activate" : "Suspend"}
+            {nextStatus === "Active" ? t("kitchenAdmin.common.activate") : t("kitchenAdmin.common.suspend")}
           </button>
         )}
       </div>
@@ -186,6 +193,7 @@ function StationForm({
 }
 
 function RouteRow({ route, canManage, isPending, onDisable }) {
+  const { t } = useI18n();
   return (
     <div className="rounded-xl border border-white/10 bg-[#0d1728] p-3">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -195,15 +203,18 @@ function RouteRow({ route, canManage, isPending, onDisable }) {
             {route.kitchenStationCode} · {route.kitchenStationName}
           </div>
           <div className="mt-1 text-[11px] text-slate-500">
-            Sort {route.sortOrder} · Updated {formatDateTime(route.updatedAtUtc)}
+            {t("kitchenAdmin.route.sortUpdated", {
+              sort: route.sortOrder,
+              updated: formatDateTime(route.updatedAtUtc),
+            })}
           </div>
         </div>
         <div className="flex items-center gap-2">
           <StatusBadge tone={route.kitchenStationStatus === "Active" ? "success" : "warning"}>
-            {route.kitchenStationStatus}
+            {statusLabel(route.kitchenStationStatus, t)}
           </StatusBadge>
           <StatusBadge tone={route.isEnabled ? "info" : "neutral"}>
-            {route.isEnabled ? "Enabled" : "Disabled"}
+            {route.isEnabled ? t("kitchenAdmin.common.enabled") : t("kitchenAdmin.common.disabled")}
           </StatusBadge>
           {route.isEnabled && (
             <button
@@ -212,7 +223,7 @@ function RouteRow({ route, canManage, isPending, onDisable }) {
               onClick={onDisable}
               className="rounded-lg border border-white/10 bg-white/[0.035] px-2 py-1 text-[10px] font-bold text-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Disable
+              {t("kitchenAdmin.action.disable")}
             </button>
           )}
         </div>
@@ -222,6 +233,7 @@ function RouteRow({ route, canManage, isPending, onDisable }) {
 }
 
 export default function KitchenAdminPage() {
+  const { t } = useI18n();
   const { currentCompanyId } = useCompany();
   const { currentBranchId } = useBranch();
   const [tab, setTab] = useState("stations");
@@ -318,7 +330,7 @@ export default function KitchenAdminPage() {
   const submitStation = async () => {
     const sortOrder = parseSortOrder(stationForm.sortOrder);
     if (sortOrder === null) {
-      showNotice("Sort order must be zero or greater.");
+      showNotice(t("kitchenAdmin.notice.invalidSortOrder"));
       return;
     }
 
@@ -333,9 +345,9 @@ export default function KitchenAdminPage() {
         name: updated.name,
         sortOrder: String(updated.sortOrder),
       });
-      showNotice("Kitchen station updated.");
+      showNotice(t("kitchenAdmin.notice.stationUpdated"));
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
@@ -347,16 +359,20 @@ export default function KitchenAdminPage() {
         name: updated.name,
         sortOrder: String(updated.sortOrder),
       });
-      showNotice(`Kitchen station ${status.toLowerCase()}.`);
+      showNotice(
+        status === "Active"
+          ? t("kitchenAdmin.notice.stationActivated")
+          : t("kitchenAdmin.notice.stationSuspended"),
+      );
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
   const submitRoute = async () => {
     const sortOrder = parseSortOrder(routeForm.sortOrder);
     if (!routeForm.kitchenStationId || sortOrder === null) {
-      showNotice("Select an active station and valid sort order.");
+      showNotice(t("kitchenAdmin.notice.selectStationAndSort"));
       return;
     }
 
@@ -368,9 +384,9 @@ export default function KitchenAdminPage() {
           sortOrder,
         },
       });
-      showNotice("Kitchen route saved.");
+      showNotice(t("kitchenAdmin.notice.routeSaved"));
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
@@ -383,9 +399,9 @@ export default function KitchenAdminPage() {
           sortOrder: route.sortOrder,
         },
       });
-      showNotice("Kitchen route disabled.");
+      showNotice(t("kitchenAdmin.notice.routeDisabled"));
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
@@ -393,7 +409,7 @@ export default function KitchenAdminPage() {
     <AppLayout>
       <main className="space-y-4" dir="rtl">
         <PageHeader
-          title="Kitchen Configuration"
+          title={t("kitchenAdmin.pageTitle")}
           actions={
             <div className="flex flex-wrap gap-2">
               <button
@@ -402,7 +418,7 @@ export default function KitchenAdminPage() {
                 className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold text-slate-100"
               >
                 <RefreshCw size={14} />
-                Refresh
+                {t("kitchenAdmin.refresh")}
               </button>
             </div>
           }
@@ -416,8 +432,8 @@ export default function KitchenAdminPage() {
 
         <div className="flex gap-2 rounded-2xl border border-white/10 bg-[#0c1424] p-2">
           {[
-            ["stations", "Stations", ChefHat],
-            ["routing", "Routing", ArrowRightLeft],
+            ["stations", t("kitchenAdmin.tab.stations"), ChefHat],
+            ["routing", t("kitchenAdmin.tab.routing"), ArrowRightLeft],
           ].map(([id, label, Icon]) => (
             <button
               key={id}
@@ -435,15 +451,15 @@ export default function KitchenAdminPage() {
 
         {!currentCompanyId || !currentBranchId ? (
           <EmptyState
-            title="Company and branch required"
-            message="Select a company and branch to configure Kitchen."
+            title={t("kitchenAdmin.gate.companyRequired.title")}
+            message={t("kitchenAdmin.gate.companyRequired.message")}
           />
         ) : viewPermissionQuery.isLoading ? (
-          <LoadingState label="Checking Kitchen permissions..." />
+          <LoadingState label={t("kitchenAdmin.gate.checkingPermissions")} />
         ) : !viewPermissionQuery.hasPermission ? (
           <ErrorState
-            title="Permission required"
-            message="Kitchen.View permission is required to view Kitchen configuration."
+            title={t("kitchenAdmin.gate.permissionRequired.title")}
+            message={t("kitchenAdmin.gate.permissionRequired.message")}
           />
         ) : tab === "stations" ? (
           <div className="grid gap-4 xl:grid-cols-[420px_1fr]">
@@ -459,7 +475,7 @@ export default function KitchenAdminPage() {
                     onChange={(event) => setStationSearch(event.target.value)}
                     maxLength={100}
                     className="h-10 w-full rounded-xl border border-white/10 bg-black/20 pr-9 pl-3 text-xs text-white outline-none focus:border-blue-400/60"
-                    placeholder="Search code or name"
+                    placeholder={t("kitchenAdmin.field.searchCodeOrName")}
                   />
                 </label>
                 <select
@@ -467,25 +483,25 @@ export default function KitchenAdminPage() {
                   onChange={(event) => setStationStatus(event.target.value)}
                   className="h-10 rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none focus:border-blue-400/60"
                 >
-                  <option value="">All</option>
-                  <option value="Active">Active</option>
-                  <option value="Suspended">Suspended</option>
+                  <option value="">{t("kitchenAdmin.common.all")}</option>
+                  <option value="Active">{t("kitchenAdmin.common.active")}</option>
+                  <option value="Suspended">{t("kitchenAdmin.common.suspended")}</option>
                 </select>
               </div>
 
-              {stationsQuery.isLoading && <LoadingState label="Loading stations..." />}
+              {stationsQuery.isLoading && <LoadingState label={t("kitchenAdmin.loadingStations")} />}
               {stationsQuery.isError && (
                 <ErrorState
-                  title="Unable to load stations"
-                  message={getErrorMessage(stationsQuery.error)}
+                  title={t("kitchenAdmin.loadStationsError")}
+                  message={getErrorMessage(stationsQuery.error, t)}
                 />
               )}
               {!stationsQuery.isLoading &&
                 !stationsQuery.isError &&
                 stationsQuery.data?.length === 0 && (
                   <EmptyState
-                    title="No stations found"
-                    message="No kitchen stations match the current filters."
+                    title={t("kitchenAdmin.emptyStations.title")}
+                    message={t("kitchenAdmin.emptyStations.message")}
                   />
                 )}
               {!stationsQuery.isLoading &&
@@ -509,26 +525,29 @@ export default function KitchenAdminPage() {
                 <div>
                   <div className="flex items-center gap-2 text-xs text-slate-400">
                     <Power size={15} className="text-blue-300" />
-                    Station details
+                    {t("kitchenAdmin.stationDetails.label")}
                   </div>
                   <h2 className="mt-1 text-xl font-black text-white">
-                    {selectedStation?.code || (selectedStationId ? "Loading station" : "Select a station")}
+                    {selectedStation?.code ||
+                      (selectedStationId
+                        ? t("kitchenAdmin.stationDetails.loading")
+                        : t("kitchenAdmin.stationDetails.selectPrompt"))}
                   </h2>
                 </div>
                 {selectedStation && (
                   <StatusBadge tone={statusTone(selectedStation.status)}>
-                    {selectedStation.status}
+                    {statusLabel(selectedStation.status, t)}
                   </StatusBadge>
                 )}
               </div>
 
               {selectedStationId && stationDetailsQuery.isLoading && (
-                <LoadingState label="Loading station details..." />
+                <LoadingState label={t("kitchenAdmin.loadingStationDetails")} />
               )}
               {selectedStationId && stationDetailsQuery.isError && (
                 <ErrorState
-                  title="Unable to load station details"
-                  message={getErrorMessage(stationDetailsQuery.error)}
+                  title={t("kitchenAdmin.loadStationDetailsError")}
+                  message={getErrorMessage(stationDetailsQuery.error, t)}
                 />
               )}
               {selectedStation && (
@@ -536,19 +555,19 @@ export default function KitchenAdminPage() {
                   {selectedStation && (
                     <div className="grid gap-2 sm:grid-cols-3">
                       <div className="rounded-xl border border-white/10 bg-white/[0.025] p-3">
-                        <div className="text-[11px] text-slate-500">Name</div>
+                        <div className="text-[11px] text-slate-500">{t("kitchenAdmin.field.name")}</div>
                         <div className="mt-1 text-sm font-black text-white">
                           {selectedStation.name}
                         </div>
                       </div>
                       <div className="rounded-xl border border-white/10 bg-white/[0.025] p-3">
-                        <div className="text-[11px] text-slate-500">Created</div>
+                        <div className="text-[11px] text-slate-500">{t("kitchenAdmin.card.created")}</div>
                         <div className="mt-1 text-sm font-black text-white">
                           {formatDateTime(selectedStation.createdAtUtc)}
                         </div>
                       </div>
                       <div className="rounded-xl border border-white/10 bg-white/[0.025] p-3">
-                        <div className="text-[11px] text-slate-500">Routes</div>
+                        <div className="text-[11px] text-slate-500">{t("kitchenAdmin.card.routes")}</div>
                         <div className="mt-1 text-sm font-black text-white">
                           {selectedStation.routes.length}
                         </div>
@@ -570,12 +589,12 @@ export default function KitchenAdminPage() {
                     <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-3">
                       <div className="mb-2 flex items-center gap-2 text-sm font-black">
                         <Route size={16} className="text-blue-300" />
-                        Station route summary
+                        {t("kitchenAdmin.stationRouteSummary")}
                       </div>
                       {selectedStation.routes.length === 0 ? (
                         <EmptyState
-                          title="No routes"
-                          message="This station is not assigned to any product variants."
+                          title={t("kitchenAdmin.emptyRoutes.title")}
+                          message={t("kitchenAdmin.emptyRoutes.message")}
                         />
                       ) : (
                         <div className="max-h-72 space-y-2 overflow-y-auto pr-1 scrollbar-none">
@@ -591,11 +610,14 @@ export default function KitchenAdminPage() {
                                     {route.variantName ? ` - ${route.variantName}` : ""}
                                   </div>
                                   <div className="mt-1 text-[11px] text-slate-500">
-                                    {route.sku || "No SKU"} · Sort {route.sortOrder}
+                                    {t("kitchenAdmin.route.skuSort", {
+                                      sku: route.sku || t("kitchenAdmin.common.noSku"),
+                                      sort: route.sortOrder,
+                                    })}
                                   </div>
                                 </div>
                                 <StatusBadge tone={route.isEnabled ? "info" : "neutral"}>
-                                  {route.isEnabled ? "Enabled" : "Disabled"}
+                                  {route.isEnabled ? t("kitchenAdmin.common.enabled") : t("kitchenAdmin.common.disabled")}
                                 </StatusBadge>
                               </div>
                             </div>
@@ -620,21 +642,21 @@ export default function KitchenAdminPage() {
                   value={routeSearch}
                   onChange={(event) => setRouteSearch(event.target.value)}
                   className="h-10 w-full rounded-xl border border-white/10 bg-black/20 pr-9 pl-3 text-xs text-white outline-none focus:border-blue-400/60"
-                  placeholder="Search product, variant, or SKU"
+                  placeholder={t("kitchenAdmin.field.searchVariant")}
                 />
               </label>
 
-              {catalogQuery.isLoading && <LoadingState label="Loading sellable items..." />}
+              {catalogQuery.isLoading && <LoadingState label={t("kitchenAdmin.loadingVariants")} />}
               {catalogQuery.isError && (
                 <ErrorState
-                  title="Unable to load item selector"
-                  message={getErrorMessage(catalogQuery.error)}
+                  title={t("kitchenAdmin.loadVariantsError")}
+                  message={getErrorMessage(catalogQuery.error, t)}
                 />
               )}
               {!catalogQuery.isLoading && !catalogQuery.isError && variants.length === 0 && (
                 <EmptyState
-                  title="No variants found"
-                  message="No sellable product variants match the current search."
+                  title={t("kitchenAdmin.emptyVariants.title")}
+                  message={t("kitchenAdmin.emptyVariants.message")}
                 />
               )}
               {!catalogQuery.isLoading && !catalogQuery.isError && variants.length > 0 && (
@@ -655,7 +677,8 @@ export default function KitchenAdminPage() {
                     >
                       <div className="text-sm font-black text-white">{variantLabel(item)}</div>
                       <div className="mt-1 text-xs text-slate-500">
-                        {item.categoryName || "Uncategorized"} · {item.sku || "No SKU"}
+                        {item.categoryName || t("kitchenAdmin.common.uncategorized")} ·{" "}
+                        {item.sku || t("kitchenAdmin.common.noSku")}
                       </div>
                     </button>
                   ))}
@@ -667,24 +690,26 @@ export default function KitchenAdminPage() {
               <div className="mb-4">
                 <div className="flex items-center gap-2 text-xs text-slate-400">
                   <ArrowRightLeft size={15} className="text-blue-300" />
-                  Product Variant Kitchen Routes
+                  {t("kitchenAdmin.routing.heading")}
                 </div>
                 <h2 className="mt-1 text-xl font-black text-white">
-                  {selectedVariantId ? "Route assignment" : "Select a variant"}
+                  {selectedVariantId
+                    ? t("kitchenAdmin.routing.assignmentTitle")
+                    : t("kitchenAdmin.routing.selectVariantTitle")}
                 </h2>
               </div>
 
               {!selectedVariantId ? (
                 <EmptyState
-                  title="Select a product variant"
-                  message="Choose a sellable variant to inspect or change its kitchen routes."
+                  title={t("kitchenAdmin.emptySelectVariant.title")}
+                  message={t("kitchenAdmin.emptySelectVariant.message")}
                 />
               ) : (
                 <div className="space-y-4">
                   <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-3">
                     <div className="mb-3 grid gap-3 sm:grid-cols-[1fr_120px_auto]">
                       <label className="text-xs font-semibold text-slate-400">
-                        Kitchen Station
+                        {t("kitchenAdmin.field.kitchenStation")}
                         <select
                           value={routeForm.kitchenStationId}
                           onChange={(event) =>
@@ -696,7 +721,7 @@ export default function KitchenAdminPage() {
                           disabled={!canManage || routeMutation.isPending}
                           className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400/60 disabled:opacity-50"
                         >
-                          <option value="">Select active station</option>
+                          <option value="">{t("kitchenAdmin.field.selectActiveStation")}</option>
                           {activeStations.map((station) => (
                             <option
                               key={station.kitchenStationId}
@@ -708,7 +733,7 @@ export default function KitchenAdminPage() {
                         </select>
                       </label>
                       <label className="text-xs font-semibold text-slate-400">
-                        Sort
+                        {t("kitchenAdmin.field.sort")}
                         <input
                           type="number"
                           min="0"
@@ -730,28 +755,27 @@ export default function KitchenAdminPage() {
                         className="mt-auto flex h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <Route size={15} />
-                        Assign / enable
+                        {t("kitchenAdmin.action.assignEnable")}
                       </button>
                     </div>
                     <div className="text-[11px] text-slate-500">
-                      A variant can have zero routes. Disabling every route is valid and means no
-                      future kitchen ticket routing for that variant.
+                      {t("kitchenAdmin.routing.hint")}
                     </div>
                   </div>
 
-                  {routesQuery.isLoading && <LoadingState label="Loading routes..." />}
+                  {routesQuery.isLoading && <LoadingState label={t("kitchenAdmin.loadingRoutes")} />}
                   {routesQuery.isError && (
                     <ErrorState
-                      title="Unable to load routes"
-                      message={getErrorMessage(routesQuery.error)}
+                      title={t("kitchenAdmin.loadRoutesError")}
+                      message={getErrorMessage(routesQuery.error, t)}
                     />
                   )}
                   {!routesQuery.isLoading &&
                     !routesQuery.isError &&
                     routesQuery.data?.length === 0 && (
                       <EmptyState
-                        title="No kitchen routes"
-                        message="This product variant currently has zero kitchen routes."
+                        title={t("kitchenAdmin.emptyKitchenRoutes.title")}
+                        message={t("kitchenAdmin.emptyKitchenRoutes.message")}
                       />
                     )}
                   {!routesQuery.isLoading &&

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { httpClient } from "../api/httpClient";
 
 const OWN_API_IMAGE_ROUTE = /^\/api\/companies\/[^/]+\/catalog\/products\/[^/]+\/image$/;
+const OWN_API_LOGO_ROUTE = /^\/api\/companies\/[^/]+\/logo$/;
 
 // The product image endpoint requires authentication like every other catalog route, so a plain
 // <img src="..."> cannot reach it directly (browsers never attach custom auth headers to <img>
@@ -10,7 +11,7 @@ const OWN_API_IMAGE_ROUTE = /^\/api\/companies\/[^/]+\/catalog\/products\/[^/]+\
 // mirroring how registration document downloads already work. Any other src (an external URL
 // pasted in Cloud mode, or a static asset path) passes through unchanged, exactly as before.
 export function useResolvedImageSrc(src: string | null | undefined) {
-  const needsAuth = Boolean(src) && OWN_API_IMAGE_ROUTE.test(src as string);
+  const needsAuth = Boolean(src) && (OWN_API_IMAGE_ROUTE.test(src as string) || OWN_API_LOGO_ROUTE.test(src as string));
   const [resolvedSrc, setResolvedSrc] = useState<string | null>(needsAuth ? null : (src ?? null));
   const [failed, setFailed] = useState(false);
 

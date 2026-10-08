@@ -19,6 +19,7 @@ import {
   StatusBadge,
 } from "../../shared/components/ui";
 import { formatDateTime } from "../../shared/utils/formatters";
+import { useI18n } from "../../i18n/I18nContext";
 import { useBranch } from "../../features/branches/context/BranchContext";
 import { useCompany } from "../../features/companies/context/CompanyContext";
 import { useHasPermission } from "../../features/companies/hooks/useCompanies";
@@ -40,12 +41,16 @@ const RESTAURANT_MANAGE_PERMISSION = "Restaurant.Manage";
 const EMPTY_FLOOR_FORM = { name: "", sortOrder: "0" };
 const EMPTY_TABLE_FORM = { code: "", name: "", sortOrder: "0" };
 
-function getErrorMessage(error) {
-  return error?.message || "Request failed.";
+function getErrorMessage(error, t) {
+  return error?.message || t("restaurantAdmin.common.requestFailed");
 }
 
 function statusTone(status) {
   return status === "Active" ? "success" : "warning";
+}
+
+function statusLabel(status, t) {
+  return status === "Active" ? t("restaurantAdmin.common.active") : t("restaurantAdmin.common.suspended");
 }
 
 function parseSortOrder(value) {
@@ -62,6 +67,7 @@ const BULK_TABLE_MAX_COUNT = 100;
 // through the same create-table call the single-table form uses, one at a time, stopping at the
 // first failure. sortOrder = the table's number, so the floor shows them in order.
 function BulkCreateTables({ existingTables, createTable, disabled, onDone }) {
+  const { t } = useI18n();
   const [count, setCount] = useState(String(BULK_TABLE_DEFAULT_COUNT));
   const [progress, setProgress] = useState(null);
 
@@ -78,9 +84,11 @@ function BulkCreateTables({ existingTables, createTable, disabled, onDone }) {
   const run = async () => {
     if (!missingNumbers.length) return;
     const confirmed = window.confirm(
-      `Create ${missingNumbers.length} table(s): ${BULK_TABLE_PREFIX}${missingNumbers[0]} ... ${BULK_TABLE_PREFIX}${
-        missingNumbers[missingNumbers.length - 1]
-      }?`,
+      t("restaurantAdmin.bulk.confirmCreate", {
+        count: missingNumbers.length,
+        first: `${BULK_TABLE_PREFIX}${missingNumbers[0]}`,
+        last: `${BULK_TABLE_PREFIX}${missingNumbers[missingNumbers.length - 1]}`,
+      }),
     );
     if (!confirmed) return;
 
@@ -92,9 +100,14 @@ function BulkCreateTables({ existingTables, createTable, disabled, onDone }) {
         created += 1;
         setProgress({ done: created, total: missingNumbers.length });
       }
-      onDone(`${created} table(s) created.`);
+      onDone(t("restaurantAdmin.bulk.createdNotice", { count: created }));
     } catch (error) {
-      onDone(`${created} table(s) created, then stopped: ${getErrorMessage(error)}`);
+      onDone(
+        t("restaurantAdmin.bulk.partialStoppedNotice", {
+          count: created,
+          error: getErrorMessage(error, t),
+        }),
+      );
     } finally {
       setProgress(null);
     }
@@ -102,14 +115,13 @@ function BulkCreateTables({ existingTables, createTable, disabled, onDone }) {
 
   return (
     <div className="mb-4 rounded-xl border border-blue-400/20 bg-blue-500/[0.05] p-3">
-      <div className="text-xs font-black text-white">Fill floor with numbered tables</div>
+      <div className="text-xs font-black text-white">{t("restaurantAdmin.bulk.heading")}</div>
       <p className="mt-1 text-[11px] leading-5 text-slate-400">
-        Creates {BULK_TABLE_PREFIX}1, {BULK_TABLE_PREFIX}2 ... up to the number below. Tables that already
-        exist are skipped.
+        {t("restaurantAdmin.bulk.description", { prefix: BULK_TABLE_PREFIX })}
       </p>
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <label className="flex items-center gap-2 text-xs text-slate-300">
-          Up to
+          {t("restaurantAdmin.bulk.upTo")}
           <input
             type="number"
             min={1}
@@ -119,7 +131,7 @@ function BulkCreateTables({ existingTables, createTable, disabled, onDone }) {
             onChange={(event) => setCount(event.target.value)}
             className="h-9 w-20 rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none focus:border-blue-400/60"
           />
-          tables
+          {t("restaurantAdmin.bulk.tablesSuffix")}
         </label>
         <button
           type="button"
@@ -129,12 +141,12 @@ function BulkCreateTables({ existingTables, createTable, disabled, onDone }) {
         >
           <Plus size={14} />
           {isRunning
-            ? `Creating ${progress.done}/${progress.total}...`
+            ? t("restaurantAdmin.bulk.creatingProgress", { done: progress.done, total: progress.total })
             : missingNumbers.length
-              ? `Create ${missingNumbers.length} missing table(s)`
+              ? t("restaurantAdmin.bulk.createMissing", { count: missingNumbers.length })
               : isValidTarget
-                ? "All tables exist"
-                : `Enter 1-${BULK_TABLE_MAX_COUNT}`}
+                ? t("restaurantAdmin.bulk.allExist")
+                : t("restaurantAdmin.bulk.enterRange", { max: BULK_TABLE_MAX_COUNT })}
         </button>
       </div>
     </div>
@@ -142,6 +154,7 @@ function BulkCreateTables({ existingTables, createTable, disabled, onDone }) {
 }
 
 function FloorCard({ floor, selected, onSelect }) {
+  const { t } = useI18n();
   return (
     <button
       type="button"
@@ -156,17 +169,19 @@ function FloorCard({ floor, selected, onSelect }) {
             <Layers3 size={15} className="shrink-0 text-blue-300" />
             <div className="truncate text-sm font-black text-white">{floor.name}</div>
           </div>
-          <div className="mt-1 text-xs text-slate-500">Sort {floor.sortOrder}</div>
+          <div className="mt-1 text-xs text-slate-500">
+            {t("restaurantAdmin.floorCard.sortLine", { sort: floor.sortOrder })}
+          </div>
         </div>
-        <StatusBadge tone={statusTone(floor.status)}>{floor.status}</StatusBadge>
+        <StatusBadge tone={statusTone(floor.status)}>{statusLabel(floor.status, t)}</StatusBadge>
       </div>
       <div className="mt-3 grid grid-cols-2 gap-2 text-[11px]">
         <div className="rounded-lg bg-white/[0.03] p-2">
-          <div className="text-slate-500">Tables</div>
+          <div className="text-slate-500">{t("restaurantAdmin.card.tables")}</div>
           <div className="mt-1 font-semibold text-slate-200">{floor.tableCount}</div>
         </div>
         <div className="rounded-lg bg-white/[0.03] p-2">
-          <div className="text-slate-500">Created</div>
+          <div className="text-slate-500">{t("restaurantAdmin.card.created")}</div>
           <div className="mt-1 font-semibold text-slate-200">
             {formatDateTime(floor.createdAtUtc)}
           </div>
@@ -177,6 +192,7 @@ function FloorCard({ floor, selected, onSelect }) {
 }
 
 function TableCard({ table, selected, onSelect }) {
+  const { t } = useI18n();
   return (
     <button
       type="button"
@@ -192,18 +208,18 @@ function TableCard({ table, selected, onSelect }) {
             <div className="truncate text-sm font-black text-white">{table.code}</div>
           </div>
           <div className="mt-1 truncate text-xs text-slate-400">
-            {table.name || "Unnamed table"}
+            {table.name || t("restaurantAdmin.table.unnamed")}
           </div>
         </div>
-        <StatusBadge tone={statusTone(table.status)}>{table.status}</StatusBadge>
+        <StatusBadge tone={statusTone(table.status)}>{statusLabel(table.status, t)}</StatusBadge>
       </div>
       <div className="mt-3 grid grid-cols-2 gap-2 text-[11px]">
         <div className="rounded-lg bg-white/[0.03] p-2">
-          <div className="text-slate-500">Sort</div>
+          <div className="text-slate-500">{t("restaurantAdmin.card.sort")}</div>
           <div className="mt-1 font-semibold text-slate-200">{table.sortOrder}</div>
         </div>
         <div className="rounded-lg bg-white/[0.03] p-2">
-          <div className="text-slate-500">Created</div>
+          <div className="text-slate-500">{t("restaurantAdmin.card.created")}</div>
           <div className="mt-1 font-semibold text-slate-200">
             {formatDateTime(table.createdAtUtc)}
           </div>
@@ -223,6 +239,7 @@ function FloorForm({
   onSubmit,
   onStatusChange,
 }) {
+  const { t } = useI18n();
   const nextStatus = selectedFloor?.status === "Active" ? "Suspended" : "Active";
 
   return (
@@ -235,7 +252,7 @@ function FloorForm({
     >
       <div className="grid gap-3 sm:grid-cols-[1fr_140px]">
         <label className="text-xs font-semibold text-slate-400">
-          Floor name
+          {t("restaurantAdmin.field.floorName")}
           <input
             value={form.name}
             onChange={(event) => setForm((draft) => ({ ...draft, name: event.target.value }))}
@@ -245,7 +262,7 @@ function FloorForm({
           />
         </label>
         <label className="text-xs font-semibold text-slate-400">
-          Sort Order
+          {t("restaurantAdmin.field.sortOrder")}
           <input
             type="number"
             min="0"
@@ -260,7 +277,7 @@ function FloorForm({
       </div>
       {!canManage && (
         <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
-          Restaurant.Manage permission is required for configuration changes.
+          {t("restaurantAdmin.notice.managePermissionRequired")}
         </div>
       )}
       <div className="flex flex-wrap gap-2">
@@ -270,7 +287,11 @@ function FloorForm({
           className="flex h-10 items-center gap-2 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {mode === "edit" ? <Pencil size={15} /> : <Plus size={15} />}
-          {isPending ? "Saving..." : mode === "edit" ? "Save floor" : "Create floor"}
+          {isPending
+            ? t("restaurantAdmin.common.saving")
+            : mode === "edit"
+              ? t("restaurantAdmin.action.saveFloor")
+              : t("restaurantAdmin.action.createFloor")}
         </button>
         {mode === "edit" && selectedFloor && (
           <button
@@ -280,7 +301,7 @@ function FloorForm({
             className="flex h-10 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-4 text-xs font-bold text-slate-100 transition hover:border-blue-400/40 hover:bg-blue-500/10 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {nextStatus === "Active" ? <CircleCheck size={15} /> : <CirclePause size={15} />}
-            {nextStatus === "Active" ? "Activate" : "Suspend"}
+            {nextStatus === "Active" ? t("restaurantAdmin.common.activate") : t("restaurantAdmin.common.suspend")}
           </button>
         )}
       </div>
@@ -299,6 +320,7 @@ function TableForm({
   onSubmit,
   onStatusChange,
 }) {
+  const { t } = useI18n();
   const nextStatus = selectedTable?.status === "Active" ? "Suspended" : "Active";
 
   return (
@@ -311,7 +333,7 @@ function TableForm({
     >
       <div className="grid gap-3 sm:grid-cols-[1fr_1fr_140px]">
         <label className="text-xs font-semibold text-slate-400">
-          Code
+          {t("restaurantAdmin.field.code")}
           <input
             value={form.code}
             onChange={(event) => setForm((draft) => ({ ...draft, code: event.target.value }))}
@@ -321,7 +343,7 @@ function TableForm({
           />
         </label>
         <label className="text-xs font-semibold text-slate-400">
-          Name
+          {t("restaurantAdmin.field.name")}
           <input
             value={form.name}
             onChange={(event) => setForm((draft) => ({ ...draft, name: event.target.value }))}
@@ -331,7 +353,7 @@ function TableForm({
           />
         </label>
         <label className="text-xs font-semibold text-slate-400">
-          Sort Order
+          {t("restaurantAdmin.field.sortOrder")}
           <input
             type="number"
             min="0"
@@ -345,7 +367,9 @@ function TableForm({
         </label>
       </div>
       <div className="rounded-xl border border-white/10 bg-white/[0.025] px-3 py-2 text-xs text-slate-400">
-        Floor: {selectedFloor?.name || "Select a floor first"}. Floor moves are not exposed by the backend contract.
+        {t("restaurantAdmin.table.floorNotice", {
+          name: selectedFloor?.name || t("restaurantAdmin.table.selectFloorFirst"),
+        })}
       </div>
       <div className="flex flex-wrap gap-2">
         <button
@@ -354,7 +378,11 @@ function TableForm({
           className="flex h-10 items-center gap-2 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {mode === "edit" ? <Pencil size={15} /> : <Plus size={15} />}
-          {isPending ? "Saving..." : mode === "edit" ? "Save table" : "Create table"}
+          {isPending
+            ? t("restaurantAdmin.common.saving")
+            : mode === "edit"
+              ? t("restaurantAdmin.action.saveTable")
+              : t("restaurantAdmin.action.createTable")}
         </button>
         {mode === "edit" && selectedTable && (
           <button
@@ -364,7 +392,7 @@ function TableForm({
             className="flex h-10 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-4 text-xs font-bold text-slate-100 transition hover:border-blue-400/40 hover:bg-blue-500/10 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {nextStatus === "Active" ? <CircleCheck size={15} /> : <CirclePause size={15} />}
-            {nextStatus === "Active" ? "Activate" : "Suspend"}
+            {nextStatus === "Active" ? t("restaurantAdmin.common.activate") : t("restaurantAdmin.common.suspend")}
           </button>
         )}
       </div>
@@ -373,6 +401,7 @@ function TableForm({
 }
 
 export default function RestaurantAdminPage() {
+  const { t } = useI18n();
   const { currentCompanyId } = useCompany();
   const { currentBranchId } = useBranch();
   const [tab, setTab] = useState("floors");
@@ -498,7 +527,7 @@ export default function RestaurantAdminPage() {
   const submitFloor = async () => {
     const sortOrder = parseSortOrder(floorForm.sortOrder);
     if (sortOrder === null) {
-      showNotice("Sort order must be zero or greater.");
+      showNotice(t("restaurantAdmin.notice.invalidSortOrder"));
       return;
     }
 
@@ -511,7 +540,7 @@ export default function RestaurantAdminPage() {
         setFloorMode("edit");
         setSelectedFloorId(created.restaurantFloorId);
         setFloorForm({ name: created.name, sortOrder: String(created.sortOrder) });
-        showNotice("Restaurant floor created.");
+        showNotice(t("restaurantAdmin.notice.floorCreated"));
         return;
       }
 
@@ -520,9 +549,9 @@ export default function RestaurantAdminPage() {
         sortOrder,
       });
       setFloorForm({ name: updated.name, sortOrder: String(updated.sortOrder) });
-      showNotice("Restaurant floor updated.");
+      showNotice(t("restaurantAdmin.notice.floorUpdated"));
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
@@ -530,16 +559,20 @@ export default function RestaurantAdminPage() {
     try {
       const updated = await floorStatusMutation.mutateAsync({ status });
       setFloorForm({ name: updated.name, sortOrder: String(updated.sortOrder) });
-      showNotice(`Restaurant floor ${status.toLowerCase()}.`);
+      showNotice(
+        status === "Active"
+          ? t("restaurantAdmin.notice.floorActivated")
+          : t("restaurantAdmin.notice.floorSuspended"),
+      );
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
   const submitTable = async () => {
     const sortOrder = parseSortOrder(tableForm.sortOrder);
     if (sortOrder === null) {
-      showNotice("Sort order must be zero or greater.");
+      showNotice(t("restaurantAdmin.notice.invalidSortOrder"));
       return;
     }
 
@@ -557,7 +590,7 @@ export default function RestaurantAdminPage() {
           name: created.name || "",
           sortOrder: String(created.sortOrder),
         });
-        showNotice("Restaurant table created.");
+        showNotice(t("restaurantAdmin.notice.tableCreated"));
         return;
       }
 
@@ -571,9 +604,9 @@ export default function RestaurantAdminPage() {
         name: updated.name || "",
         sortOrder: String(updated.sortOrder),
       });
-      showNotice("Restaurant table updated.");
+      showNotice(t("restaurantAdmin.notice.tableUpdated"));
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
@@ -585,9 +618,13 @@ export default function RestaurantAdminPage() {
         name: updated.name || "",
         sortOrder: String(updated.sortOrder),
       });
-      showNotice(`Restaurant table ${status.toLowerCase()}.`);
+      showNotice(
+        status === "Active"
+          ? t("restaurantAdmin.notice.tableActivated")
+          : t("restaurantAdmin.notice.tableSuspended"),
+      );
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
@@ -595,7 +632,7 @@ export default function RestaurantAdminPage() {
     <AppLayout>
       <main className="space-y-4" dir="rtl">
         <PageHeader
-          title="Restaurant Configuration"
+          title={t("restaurantAdmin.pageTitle")}
           actions={
             <div className="flex flex-wrap gap-2">
               <button
@@ -607,7 +644,7 @@ export default function RestaurantAdminPage() {
                 className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold text-slate-100"
               >
                 <RefreshCw size={14} />
-                Refresh
+                {t("restaurantAdmin.refresh")}
               </button>
               <button
                 type="button"
@@ -615,7 +652,7 @@ export default function RestaurantAdminPage() {
                 className="flex items-center gap-2 rounded-xl bg-blue-600 px-3 py-2 text-xs font-bold text-white"
               >
                 <Plus size={14} />
-                New floor
+                {t("restaurantAdmin.action.newFloor")}
               </button>
             </div>
           }
@@ -629,8 +666,8 @@ export default function RestaurantAdminPage() {
 
         <div className="flex gap-2 rounded-2xl border border-white/10 bg-[#0c1424] p-2">
           {[
-            ["floors", "Floors", Layers3],
-            ["tables", "Tables", LayoutGrid],
+            ["floors", t("restaurantAdmin.tab.floors"), Layers3],
+            ["tables", t("restaurantAdmin.tab.tables"), LayoutGrid],
           ].map(([id, label, Icon]) => (
             <button
               key={id}
@@ -648,15 +685,15 @@ export default function RestaurantAdminPage() {
 
         {!currentCompanyId || !currentBranchId ? (
           <EmptyState
-            title="Company and branch required"
-            message="Select a company and branch to configure restaurant floors and tables."
+            title={t("restaurantAdmin.gate.companyRequired.title")}
+            message={t("restaurantAdmin.gate.companyRequired.message")}
           />
         ) : viewPermissionQuery.isLoading ? (
-          <LoadingState label="Checking Restaurant permissions..." />
+          <LoadingState label={t("restaurantAdmin.gate.checkingPermissions")} />
         ) : !viewPermissionQuery.hasPermission ? (
           <ErrorState
-            title="Permission required"
-            message="Restaurant.View permission is required to view restaurant configuration."
+            title={t("restaurantAdmin.gate.permissionRequired.title")}
+            message={t("restaurantAdmin.gate.permissionRequired.message")}
           />
         ) : tab === "floors" ? (
           <div className="grid gap-4 xl:grid-cols-[420px_1fr]">
@@ -667,17 +704,17 @@ export default function RestaurantAdminPage() {
                   onChange={(event) => setFloorStatus(event.target.value)}
                   className="h-10 rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none focus:border-blue-400/60"
                 >
-                  <option value="">All floors</option>
-                  <option value="Active">Active</option>
-                  <option value="Suspended">Suspended</option>
+                  <option value="">{t("restaurantAdmin.field.allFloors")}</option>
+                  <option value="Active">{t("restaurantAdmin.common.active")}</option>
+                  <option value="Suspended">{t("restaurantAdmin.common.suspended")}</option>
                 </select>
               </div>
-              {floorsQuery.isLoading && <LoadingState label="Loading floors..." />}
+              {floorsQuery.isLoading && <LoadingState label={t("restaurantAdmin.loadingFloors")} />}
               {floorsQuery.isError && (
-                <ErrorState title="Unable to load floors" message={getErrorMessage(floorsQuery.error)} />
+                <ErrorState title={t("restaurantAdmin.loadFloorsError")} message={getErrorMessage(floorsQuery.error, t)} />
               )}
               {!floorsQuery.isLoading && !floorsQuery.isError && floorsQuery.data?.length === 0 && (
-                <EmptyState title="No floors found" message="No restaurant floors match the current filter." />
+                <EmptyState title={t("restaurantAdmin.emptyFloors.title")} message={t("restaurantAdmin.emptyFloors.message")} />
               )}
               {!floorsQuery.isLoading && !floorsQuery.isError && Boolean(floorsQuery.data?.length) && (
                 <div className="max-h-[calc(100vh-350px)] min-h-[360px] space-y-2 overflow-y-auto pr-1 scrollbar-none">
@@ -698,40 +735,44 @@ export default function RestaurantAdminPage() {
                 <div>
                   <div className="flex items-center gap-2 text-xs text-slate-400">
                     <Power size={15} className="text-blue-300" />
-                    {floorMode === "create" ? "Create floor" : "Floor details"}
+                    {floorMode === "create"
+                      ? t("restaurantAdmin.floorDetails.createLabel")
+                      : t("restaurantAdmin.floorDetails.detailsLabel")}
                   </div>
                   <h2 className="mt-1 text-xl font-black text-white">
-                    {floorMode === "create" ? "New floor" : selectedFloor?.name || "Loading floor"}
+                    {floorMode === "create"
+                      ? t("restaurantAdmin.floorDetails.newFloorTitle")
+                      : selectedFloor?.name || t("restaurantAdmin.floorDetails.loadingFloorTitle")}
                   </h2>
                 </div>
                 {selectedFloor && (
                   <StatusBadge tone={statusTone(selectedFloor.status)}>
-                    {selectedFloor.status}
+                    {statusLabel(selectedFloor.status, t)}
                   </StatusBadge>
                 )}
               </div>
               {floorMode === "edit" && floorDetailsQuery.isLoading && (
-                <LoadingState label="Loading floor details..." />
+                <LoadingState label={t("restaurantAdmin.loadingFloorDetails")} />
               )}
               {floorMode === "edit" && floorDetailsQuery.isError && (
-                <ErrorState title="Unable to load floor details" message={getErrorMessage(floorDetailsQuery.error)} />
+                <ErrorState title={t("restaurantAdmin.loadFloorDetailsError")} message={getErrorMessage(floorDetailsQuery.error, t)} />
               )}
               {(floorMode === "create" || selectedFloor) && (
                 <div className="space-y-4">
                   {selectedFloor && (
                     <div className="grid gap-2 sm:grid-cols-3">
                       <div className="rounded-xl border border-white/10 bg-white/[0.025] p-3">
-                        <div className="text-[11px] text-slate-500">Created</div>
+                        <div className="text-[11px] text-slate-500">{t("restaurantAdmin.card.created")}</div>
                         <div className="mt-1 text-sm font-black text-white">
                           {formatDateTime(selectedFloor.createdAtUtc)}
                         </div>
                       </div>
                       <div className="rounded-xl border border-white/10 bg-white/[0.025] p-3">
-                        <div className="text-[11px] text-slate-500">Sort Order</div>
+                        <div className="text-[11px] text-slate-500">{t("restaurantAdmin.field.sortOrder")}</div>
                         <div className="mt-1 text-sm font-black text-white">{selectedFloor.sortOrder}</div>
                       </div>
                       <div className="rounded-xl border border-white/10 bg-white/[0.025] p-3">
-                        <div className="text-[11px] text-slate-500">Tables</div>
+                        <div className="text-[11px] text-slate-500">{t("restaurantAdmin.card.tables")}</div>
                         <div className="mt-1 text-sm font-black text-white">{selectedFloor.tables.length}</div>
                       </div>
                     </div>
@@ -753,9 +794,9 @@ export default function RestaurantAdminPage() {
         ) : (
           <div className="grid gap-4 xl:grid-cols-[360px_380px_1fr]">
             <section className="rounded-2xl border border-white/10 bg-[#0c1424] p-3">
-              <div className="mb-3 text-sm font-black text-white">Floor</div>
+              <div className="mb-3 text-sm font-black text-white">{t("restaurantAdmin.floorHeading")}</div>
               <div className="max-h-[calc(100vh-330px)] min-h-[320px] space-y-2 overflow-y-auto pr-1 scrollbar-none">
-                {floorsQuery.isLoading && <LoadingState label="Loading floors..." />}
+                {floorsQuery.isLoading && <LoadingState label={t("restaurantAdmin.loadingFloors")} />}
                 {!floorsQuery.isLoading && floorsQuery.data?.map((floor) => (
                   <FloorCard
                     key={floor.restaurantFloorId}
@@ -769,25 +810,25 @@ export default function RestaurantAdminPage() {
 
             <section className="rounded-2xl border border-white/10 bg-[#0c1424] p-3">
               <div className="mb-3 flex items-center justify-between gap-2">
-                <div className="text-sm font-black text-white">Tables</div>
+                <div className="text-sm font-black text-white">{t("restaurantAdmin.tablesHeading")}</div>
                 <select
                   value={tableStatus}
                   onChange={(event) => setTableStatus(event.target.value)}
                   className="h-9 rounded-xl border border-white/10 bg-black/20 px-3 text-xs text-white outline-none"
                 >
-                  <option value="">All</option>
-                  <option value="Active">Active</option>
-                  <option value="Suspended">Suspended</option>
+                  <option value="">{t("restaurantAdmin.common.all")}</option>
+                  <option value="Active">{t("restaurantAdmin.common.active")}</option>
+                  <option value="Suspended">{t("restaurantAdmin.common.suspended")}</option>
                 </select>
               </div>
               {!selectedFloorId ? (
-                <EmptyState title="Select a floor" message="Choose a floor to manage its tables." />
+                <EmptyState title={t("restaurantAdmin.emptySelectFloor.title")} message={t("restaurantAdmin.emptySelectFloor.message")} />
               ) : tablesQuery.isLoading ? (
-                <LoadingState label="Loading tables..." />
+                <LoadingState label={t("restaurantAdmin.loadingTables")} />
               ) : tablesQuery.isError ? (
-                <ErrorState title="Unable to load tables" message={getErrorMessage(tablesQuery.error)} />
+                <ErrorState title={t("restaurantAdmin.loadTablesError")} message={getErrorMessage(tablesQuery.error, t)} />
               ) : tablesQuery.data?.length === 0 ? (
-                <EmptyState title="No tables found" message="No tables match the current filter." />
+                <EmptyState title={t("restaurantAdmin.emptyTables.title")} message={t("restaurantAdmin.emptyTables.message")} />
               ) : (
                 <div className="max-h-[calc(100vh-360px)] min-h-[320px] space-y-2 overflow-y-auto pr-1 scrollbar-none">
                   {tablesQuery.data.map((table) => (
@@ -807,10 +848,14 @@ export default function RestaurantAdminPage() {
                 <div>
                   <div className="flex items-center gap-2 text-xs text-slate-400">
                     <Armchair size={15} className="text-blue-300" />
-                    {tableMode === "create" ? "Create table" : "Table details"}
+                    {tableMode === "create"
+                      ? t("restaurantAdmin.tableDetails.createLabel")
+                      : t("restaurantAdmin.tableDetails.detailsLabel")}
                   </div>
                   <h2 className="mt-1 text-xl font-black text-white">
-                    {tableMode === "create" ? "New table" : selectedTable?.code || "Loading table"}
+                    {tableMode === "create"
+                      ? t("restaurantAdmin.tableDetails.newTableTitle")
+                      : selectedTable?.code || t("restaurantAdmin.tableDetails.loadingTableTitle")}
                   </h2>
                 </div>
                 <button
@@ -823,7 +868,7 @@ export default function RestaurantAdminPage() {
                   className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold text-slate-100"
                 >
                   <Plus size={14} />
-                  New table
+                  {t("restaurantAdmin.action.newTable")}
                 </button>
               </div>
               {canManage && selectedFloor && (
@@ -836,10 +881,10 @@ export default function RestaurantAdminPage() {
                 />
               )}
               {tableMode === "edit" && tableDetailsQuery.isLoading && (
-                <LoadingState label="Loading table details..." />
+                <LoadingState label={t("restaurantAdmin.loadingTableDetails")} />
               )}
               {tableMode === "edit" && tableDetailsQuery.isError && (
-                <ErrorState title="Unable to load table details" message={getErrorMessage(tableDetailsQuery.error)} />
+                <ErrorState title={t("restaurantAdmin.loadTableDetailsError")} message={getErrorMessage(tableDetailsQuery.error, t)} />
               )}
               {(tableMode === "create" || selectedTable) && (
                 <TableForm
@@ -855,8 +900,7 @@ export default function RestaurantAdminPage() {
                 />
               )}
               <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.025] p-3 text-xs leading-5 text-slate-400">
-                Occupancy is backend-derived from open DineIn Draft/Confirmed sales orders.
-                Admin does not own occupy/release state.
+                {t("restaurantAdmin.occupancyNotice")}
               </div>
             </section>
           </div>

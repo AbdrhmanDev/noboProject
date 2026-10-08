@@ -9,6 +9,7 @@ import { useBranch } from "../../features/branches/context/BranchContext";
 import { useHasPermission } from "../../features/companies/hooks/useCompanies";
 import { useDraftSalesOrderDetails } from "../../features/sales-orders/hooks/useDraftSalesOrder";
 import { useSalesOrderPayments } from "../../features/payments/hooks/usePayments";
+import { ReceiptPrintPanel } from "../../features/payments/components/ReceiptPrintPanel";
 import { ListView } from "../../shared/components/odoo/ListView";
 import { StatusBar, StatusPill } from "../../shared/components/odoo/StatusBar";
 import {
@@ -176,6 +177,10 @@ export default function SalesOrderDetailsPage() {
                   </FieldRow>
                 </dl>
               </div>
+
+              {order.status !== "Draft" && (
+                <ReceiptPrintPanel companyId={currentCompanyId} branchId={currentBranchId} salesOrderId={orderId} />
+              )}
 
               {/* Notebook */}
               <div>

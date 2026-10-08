@@ -62,8 +62,8 @@ const EMPTY_ACCESS = {
   selectedBranchIds: [],
 };
 
-function getErrorMessage(error) {
-  return error?.message || "Request failed.";
+function getErrorMessage(error, t) {
+  return error?.message || t("usersAccess.common.requestFailed");
 }
 
 function statusTone(status) {
@@ -74,9 +74,24 @@ function statusTone(status) {
   return "neutral";
 }
 
-function summarizeBranches(mode, branches) {
-  if (mode === "AllBranches") return "All Branches";
-  if (!branches?.length) return "No branches selected";
+const STATUS_LABEL_KEYS = {
+  Active: "usersAccess.status.active",
+  Suspended: "usersAccess.status.suspended",
+  Revoked: "usersAccess.status.revoked",
+  Pending: "usersAccess.status.pending",
+  Accepted: "usersAccess.status.accepted",
+  Cancelled: "usersAccess.status.cancelled",
+  Expired: "usersAccess.status.expired",
+};
+
+function statusLabel(status, t) {
+  const key = STATUS_LABEL_KEYS[status];
+  return key ? t(key) : status;
+}
+
+function summarizeBranches(t, mode, branches) {
+  if (mode === "AllBranches") return t("usersAccess.branchAccess.allBranches");
+  if (!branches?.length) return t("usersAccess.branchAccess.noneSelected");
   return branches.map((branch) => branch.name).join(", ");
 }
 
@@ -101,6 +116,7 @@ function canActorGrantRole(actorPermissions, role) {
 }
 
 function Dialog({ title, children, onClose }) {
+  const { t } = useI18n();
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
       <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-xl border border-line bg-surface p-5 shadow-2xl">
@@ -111,7 +127,7 @@ function Dialog({ title, children, onClose }) {
             onClick={onClose}
             className="rounded-xl border border-line px-3 py-2 text-sm font-bold text-ink"
           >
-            Close
+            {t("usersAccess.dialog.close")}
           </button>
         </div>
         {children}
@@ -127,6 +143,7 @@ function RolePicker({
   disabled,
   actorPermissions,
 }) {
+  const { t } = useI18n();
   return (
     <div className="grid gap-2 sm:grid-cols-2">
       {roles.map((role) => {
@@ -158,12 +175,12 @@ function RolePicker({
               <span className="ms-2 text-sm text-subtle">{role.code}</span>
               {role.isSystem && (
                 <span className="ms-2 rounded-full bg-accent-soft px-2 py-0.5 text-xs font-bold text-accent">
-                  System Role
+                  {t("usersAccess.role.systemRoleBadge")}
                 </span>
               )}
               {!grantable && (
                 <span className="ms-2 text-xs text-warning">
-                  Requires permissions you don't have
+                  {t("usersAccess.role.notGrantable")}
                 </span>
               )}
             </span>
@@ -183,10 +200,11 @@ function BranchAccessPicker({
   disabled,
   owner,
 }) {
+  const { t } = useI18n();
   if (owner) {
     return (
       <div className="rounded-xl border border-accent-line bg-accent-soft p-3 text-sm text-accent">
-        Company Owners always have access to all branches.
+        {t("usersAccess.branchAccess.ownerNotice")}
       </div>
     );
   }
@@ -202,7 +220,9 @@ function BranchAccessPicker({
             onClick={() => setMode(value)}
             className={`rounded-xl border px-3 py-2 text-sm font-bold ${mode === value ? "border-accent-line bg-accent-soft text-ink" : "border-line bg-raised text-muted"}`}
           >
-            {value === "AllBranches" ? "All Branches" : "Selected Branches"}
+            {value === "AllBranches"
+              ? t("usersAccess.branchAccess.allBranches")
+              : t("usersAccess.branchAccess.selectedBranches")}
           </button>
         ))}
       </div>
@@ -366,7 +386,7 @@ function MemberAccessSummary({ member, roles: allRoles }) {
         <div>
           <div className="text-xs font-bold text-subtle">{t("usersAccess.accessSummary.branchAccess")}</div>
           <div className="mt-1 text-sm text-muted">
-            {summarizeBranches(member.branchAccessMode, member.selectedBranches)}
+            {summarizeBranches(t, member.branchAccessMode, member.selectedBranches)}
           </div>
         </div>
         <div>
@@ -422,7 +442,7 @@ function AccessDialog({
       branchAccessMode === "SelectedBranches" &&
       selectedBranchIds.length === 0
     ) {
-      setError("Select at least one branch.");
+      setError(t("usersAccess.validation.selectBranch"));
       return;
     }
     setError("");
@@ -436,7 +456,7 @@ function AccessDialog({
     } catch (mutationError) {
       // The dialog is a full-screen overlay (Section 17: never "nothing happened") -- a failed
       // mutation must surface here, since the page's own ErrorState banner is hidden behind it.
-      setError(getErrorMessage(mutationError));
+      setError(getErrorMessage(mutationError, t));
     }
   };
 
@@ -448,25 +468,25 @@ function AccessDialog({
           <section className="grid gap-3 rounded-xl border border-line bg-raised p-3 sm:grid-cols-2">
             <div>
               <div className="text-xs font-bold text-subtle">
-                Identity
+                {t("usersAccess.dialog.identity")}
               </div>
               <div className="font-bold text-ink">{member.displayName}</div>
               <div className="text-sm text-muted">{member.email}</div>
             </div>
             <div>
-              <div className="text-xs font-bold text-subtle">Status</div>
+              <div className="text-xs font-bold text-subtle">{t("usersAccess.dialog.status")}</div>
               <div className="mt-1 flex flex-wrap gap-2">
                 <StatusBadge tone={statusTone(member.status)}>
-                  {member.status}
+                  {statusLabel(member.status, t)}
                 </StatusBadge>
-                {member.isOwner && <StatusBadge tone="info">Owner</StatusBadge>}
+                {member.isOwner && <StatusBadge tone="info">{t("usersAccess.common.owner")}</StatusBadge>}
               </div>
             </div>
           </section>
         )}
         {member && <MemberAccessSummary member={member} roles={roles} />}
         <section>
-          <h3 className="mb-2 text-sm font-black text-ink">Roles</h3>
+          <h3 className="mb-2 text-sm font-black text-ink">{t("usersAccess.dialog.rolesHeading")}</h3>
           <RolePicker
             roles={roles}
             selectedIds={roleIds}
@@ -476,7 +496,7 @@ function AccessDialog({
           />
         </section>
         <section>
-          <h3 className="mb-2 text-sm font-black text-ink">Branch Access</h3>
+          <h3 className="mb-2 text-sm font-black text-ink">{t("usersAccess.dialog.branchAccessHeading")}</h3>
           <BranchAccessPicker
             branches={branches}
             mode={branchAccessMode}
@@ -541,7 +561,7 @@ function AccessDialog({
         )}
         {!canSave && (
           <div className="rounded-xl border border-warning bg-warning-soft p-3 text-sm text-warning">
-            Manage permission is required.
+            {t("usersAccess.notice.managePermissionRequired")}
           </div>
         )}
         <button
@@ -550,7 +570,7 @@ function AccessDialog({
           onClick={submit}
           className="h-11 rounded-xl bg-accent px-5 text-sm font-black text-white disabled:opacity-50"
         >
-          {pending ? "Saving..." : "Save access"}
+          {pending ? t("usersAccess.common.saving") : t("usersAccess.action.saveAccess")}
         </button>
       </div>
     </Dialog>
@@ -566,30 +586,31 @@ function InviteDialog({
   onClose,
   pending,
 }) {
+  const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [access, setAccess] = useState(EMPTY_ACCESS);
   const [error, setError] = useState("");
 
   const submit = async () => {
-    if (!email.trim()) return setError("Email is required.");
+    if (!email.trim()) return setError(t("usersAccess.validation.emailRequired"));
     if (
       access.branchAccessMode === "SelectedBranches" &&
       access.selectedBranchIds.length === 0
     )
-      return setError("Select at least one branch.");
+      return setError(t("usersAccess.validation.selectBranch"));
     setError("");
     try {
       await onSubmit({ email: email.trim(), ...access });
     } catch (mutationError) {
-      setError(getErrorMessage(mutationError));
+      setError(getErrorMessage(mutationError, t));
     }
   };
 
   return (
-    <Dialog title="Invite User" onClose={onClose}>
+    <Dialog title={t("usersAccess.invite.dialogTitle")} onClose={onClose}>
       <div className="space-y-5">
         <label className="block text-sm font-bold text-muted">
-          Email
+          {t("usersAccess.field.email")}
           <input
             value={email}
             onChange={(event) => setEmail(event.target.value)}
@@ -597,7 +618,7 @@ function InviteDialog({
           />
         </label>
         <section>
-          <h3 className="mb-2 text-sm font-black text-ink">Roles</h3>
+          <h3 className="mb-2 text-sm font-black text-ink">{t("usersAccess.dialog.rolesHeading")}</h3>
           <RolePicker
             roles={roles}
             selectedIds={access.roleIds}
@@ -609,7 +630,7 @@ function InviteDialog({
           />
         </section>
         <section>
-          <h3 className="mb-2 text-sm font-black text-ink">Branch Access</h3>
+          <h3 className="mb-2 text-sm font-black text-ink">{t("usersAccess.dialog.branchAccessHeading")}</h3>
           <BranchAccessPicker
             branches={branches}
             mode={access.branchAccessMode}
@@ -634,7 +655,7 @@ function InviteDialog({
           onClick={submit}
           className="h-11 rounded-xl bg-accent px-5 text-sm font-black text-white disabled:opacity-50"
         >
-          {pending ? "Sending..." : "Send invitation"}
+          {pending ? t("usersAccess.common.sending") : t("usersAccess.action.sendInvitation")}
         </button>
       </div>
     </Dialog>
@@ -654,6 +675,7 @@ function CreateMemberDirectlyDialog({
   onClose,
   pending,
 }) {
+  const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
@@ -661,15 +683,15 @@ function CreateMemberDirectlyDialog({
   const [error, setError] = useState("");
 
   const submit = async () => {
-    if (!email.trim()) return setError("Email is required.");
-    if (!displayName.trim()) return setError("Name is required.");
+    if (!email.trim()) return setError(t("usersAccess.validation.emailRequired"));
+    if (!displayName.trim()) return setError(t("usersAccess.validation.nameRequired"));
     if (!password || password.length < 8)
-      return setError("Password must be at least 8 characters.");
+      return setError(t("usersAccess.validation.passwordLength"));
     if (
       access.branchAccessMode === "SelectedBranches" &&
       access.selectedBranchIds.length === 0
     )
-      return setError("Select at least one branch.");
+      return setError(t("usersAccess.validation.selectBranch"));
     setError("");
     try {
       await onSubmit({
@@ -679,20 +701,19 @@ function CreateMemberDirectlyDialog({
         ...access,
       });
     } catch (mutationError) {
-      setError(getErrorMessage(mutationError));
+      setError(getErrorMessage(mutationError, t));
     }
   };
 
   return (
-    <Dialog title="Create Account Directly" onClose={onClose}>
+    <Dialog title={t("usersAccess.createMember.dialogTitle")} onClose={onClose}>
       <div className="space-y-5">
         <div className="rounded-xl border border-blue-400/20 bg-blue-500/10 p-3 text-xs text-blue-100">
-          No email is sent. The account is active immediately -- give the email and password you
-          set here to the new user yourself.
+          {t("usersAccess.createMember.infoNotice")}
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="text-xs font-bold text-slate-400">
-            Name
+            {t("usersAccess.field.name")}
             <input
               value={displayName}
               onChange={(event) => setDisplayName(event.target.value)}
@@ -701,7 +722,7 @@ function CreateMemberDirectlyDialog({
             />
           </label>
           <label className="text-xs font-bold text-slate-400">
-            Email
+            {t("usersAccess.field.email")}
             <input
               value={email}
               onChange={(event) => setEmail(event.target.value)}
@@ -711,18 +732,18 @@ function CreateMemberDirectlyDialog({
           </label>
         </div>
         <label className="block text-xs font-bold text-slate-400">
-          Password
+          {t("usersAccess.field.password")}
           <input
             type="text"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             disabled={!canManage || pending}
-            placeholder="At least 8 characters"
+            placeholder={t("usersAccess.field.passwordPlaceholder")}
             className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400 disabled:opacity-50"
           />
         </label>
         <section>
-          <h3 className="mb-2 text-sm font-black text-white">Roles</h3>
+          <h3 className="mb-2 text-sm font-black text-white">{t("usersAccess.dialog.rolesHeading")}</h3>
           <RolePicker
             roles={roles}
             selectedIds={access.roleIds}
@@ -734,7 +755,7 @@ function CreateMemberDirectlyDialog({
           />
         </section>
         <section>
-          <h3 className="mb-2 text-sm font-black text-white">Branch Access</h3>
+          <h3 className="mb-2 text-sm font-black text-white">{t("usersAccess.dialog.branchAccessHeading")}</h3>
           <BranchAccessPicker
             branches={branches}
             mode={access.branchAccessMode}
@@ -759,7 +780,7 @@ function CreateMemberDirectlyDialog({
           onClick={submit}
           className="h-11 rounded-xl bg-blue-600 px-5 text-sm font-black text-white disabled:opacity-50"
         >
-          {pending ? "Creating..." : "Create account"}
+          {pending ? t("usersAccess.common.creating") : t("usersAccess.action.createAccount")}
         </button>
       </div>
     </Dialog>
@@ -769,31 +790,35 @@ function CreateMemberDirectlyDialog({
 // New password only -- the current one is never fetched or shown (the backend never exposes it
 // either). The caller then hands the new password to the member out of band.
 function ResetPasswordDialog({ member, onSubmit, onClose, pending }) {
+  const { t } = useI18n();
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
   const submit = async () => {
     if (!password || password.length < 8)
-      return setError("Password must be at least 8 characters.");
+      return setError(t("usersAccess.validation.passwordLength"));
     setError("");
     try {
       await onSubmit(password);
     } catch (mutationError) {
-      setError(getErrorMessage(mutationError));
+      setError(getErrorMessage(mutationError, t));
     }
   };
 
   return (
-    <Dialog title={`Reset password for ${member.displayName}`} onClose={onClose}>
+    <Dialog
+      title={t("usersAccess.resetPassword.dialogTitle", { name: member.displayName })}
+      onClose={onClose}
+    >
       <div className="space-y-5">
         <label className="block text-xs font-bold text-slate-400">
-          New password
+          {t("usersAccess.field.newPassword")}
           <input
             type="text"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             disabled={pending}
-            placeholder="At least 8 characters"
+            placeholder={t("usersAccess.field.passwordPlaceholder")}
             className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-blue-400 disabled:opacity-50"
           />
         </label>
@@ -808,7 +833,7 @@ function ResetPasswordDialog({ member, onSubmit, onClose, pending }) {
           onClick={submit}
           className="h-11 rounded-xl bg-blue-600 px-5 text-sm font-black text-white disabled:opacity-50"
         >
-          {pending ? "Saving..." : "Set new password"}
+          {pending ? t("usersAccess.common.saving") : t("usersAccess.action.setNewPassword")}
         </button>
       </div>
     </Dialog>
@@ -824,6 +849,7 @@ function RoleDialog({
   onClose,
   pending,
 }) {
+  const { t } = useI18n();
   const [name, setName] = useState(role?.name || "");
   const [code, setCode] = useState(role?.code || "");
   const [permissions, setPermissions] = useState(role?.permissions || []);
@@ -839,7 +865,7 @@ function RoleDialog({
     try {
       await onSubmit({ code: code.trim(), name: name.trim(), permissions });
     } catch (mutationError) {
-      setError(getErrorMessage(mutationError));
+      setError(getErrorMessage(mutationError, t));
     }
   };
   const grouped = USER_ACCESS_PERMISSIONS.reduce((accumulator, permission) => {
@@ -852,13 +878,13 @@ function RoleDialog({
 
   return (
     <Dialog
-      title={isEdit ? "Edit Custom Role" : "Create Custom Role"}
+      title={isEdit ? t("usersAccess.role.editTitle") : t("usersAccess.role.createTitle")}
       onClose={onClose}
     >
       <div className="space-y-5">
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="text-sm font-bold text-muted">
-            Name
+            {t("usersAccess.field.name")}
             <input
               value={name}
               onChange={(event) => setName(event.target.value)}
@@ -867,7 +893,7 @@ function RoleDialog({
             />
           </label>
           <label className="text-sm font-bold text-muted">
-            Code
+            {t("usersAccess.field.code")}
             <input
               value={code}
               onChange={(event) => setCode(event.target.value)}
@@ -920,12 +946,12 @@ function RoleDialog({
                       {permission.label}
                       {unavailable && (
                         <span className="ms-2 text-xs text-warning">
-                          Unavailable
+                          {t("usersAccess.role.unavailable")}
                         </span>
                       )}
                       {!unavailable && notGrantable && (
                         <span className="ms-2 text-xs text-warning">
-                          You don't have this permission
+                          {t("usersAccess.role.notGrantablePermission")}
                         </span>
                       )}
                     </span>
@@ -937,7 +963,7 @@ function RoleDialog({
         ))}
         {role?.isSystem && (
           <div className="rounded-xl border border-accent-line bg-accent-soft p-3 text-sm text-accent">
-            System roles are assignable and readable, but not editable.
+            {t("usersAccess.role.systemNotice")}
           </div>
         )}
         {error && (
@@ -951,7 +977,11 @@ function RoleDialog({
           onClick={submit}
           className="h-11 rounded-xl bg-accent px-5 text-sm font-black text-white disabled:opacity-50"
         >
-          {pending ? "Saving..." : isEdit ? "Save role" : "Create role"}
+          {pending
+            ? t("usersAccess.common.saving")
+            : isEdit
+              ? t("usersAccess.action.saveRole")
+              : t("usersAccess.action.createRoleSubmit")}
         </button>
       </div>
     </Dialog>
@@ -1082,36 +1112,36 @@ export default function UsersAccessPage() {
       });
     }
     setDialog(null);
-    setNotice("Member access updated.");
+    setNotice(t("usersAccess.notice.memberAccessUpdated"));
   };
 
   const tabs = [
-    { key: "members", label: "Members", visible: canViewUsers },
-    { key: "invitations", label: "Invitations", visible: canViewUsers },
-    { key: "roles", label: "Roles", visible: canViewRoles },
+    { key: "members", label: t("usersAccess.tab.members"), visible: canViewUsers },
+    { key: "invitations", label: t("usersAccess.tab.invitations"), visible: canViewUsers },
+    { key: "roles", label: t("usersAccess.tab.roles"), visible: canViewRoles },
   ].filter((item) => item.visible);
 
   if (!currentCompanyId)
     return (
       <AppLayout>
         <EmptyState
-          title="Select a company"
-          message="Choose a company before managing tenant access."
+          title={t("usersAccess.gate.selectCompany.title")}
+          message={t("usersAccess.gate.selectCompany.message")}
         />
       </AppLayout>
     );
   if (permissionsQuery.isLoading)
     return (
       <AppLayout>
-        <LoadingState label="Checking access..." />
+        <LoadingState label={t("usersAccess.gate.checkingAccess")} />
       </AppLayout>
     );
   if (!canOpen)
     return (
       <AppLayout>
         <EmptyState
-          title="Users & Access is unavailable"
-          message="Users.View or Roles.View is required."
+          title={t("usersAccess.gate.unavailable.title")}
+          message={t("usersAccess.gate.unavailable.message")}
         />
       </AppLayout>
     );
@@ -1119,7 +1149,7 @@ export default function UsersAccessPage() {
   return (
     <AppLayout>
       <PageHeader
-        title="Users & Access"
+        title={t("usersAccess.pageTitle")}
         actions={
           <>
             {canManageUsers && (
@@ -1128,17 +1158,17 @@ export default function UsersAccessPage() {
                 className="flex h-10 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-black text-white"
               >
                 <UserPlus size={15} />
-                Invite User
+                {t("usersAccess.action.inviteUser")}
               </button>
             )}
             {canManageUsers && (
               <button
                 onClick={() => setDialog({ type: "createMember" })}
-                title="Creates an active account immediately, with a password you set -- no email required."
+                title={t("usersAccess.createMember.buttonTooltip")}
                 className="flex h-10 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 text-xs font-black text-white"
               >
                 <UserCog size={15} />
-                Create Account Directly
+                {t("usersAccess.action.createAccountDirectly")}
               </button>
             )}
             {canManageRoles && (
@@ -1147,14 +1177,14 @@ export default function UsersAccessPage() {
                 className="flex h-10 items-center gap-2 rounded-xl border border-line bg-raised px-4 text-sm font-black text-ink"
               >
                 <ShieldCheck size={15} />
-                Create Role
+                {t("usersAccess.action.createRoleButton")}
               </button>
             )}
           </>
         }
       />
       <p className="mb-4 text-sm text-muted">
-        Manage members, roles, permissions, and branch access.
+        {t("usersAccess.pageDescription")}
       </p>
       {notice && (
         <div className="mb-4 rounded-xl border border-success bg-success-soft p-3 text-sm text-success">
@@ -1163,8 +1193,8 @@ export default function UsersAccessPage() {
       )}
       {showError && (
         <ErrorState
-          title="Users & Access failed"
-          message={getErrorMessage(showError)}
+          title={t("usersAccess.error.title")}
+          message={getErrorMessage(showError, t)}
         />
       )}
 
@@ -1188,7 +1218,7 @@ export default function UsersAccessPage() {
               <input
                 value={memberSearch}
                 onChange={(e) => setMemberSearch(e.target.value)}
-                placeholder="Search name or email"
+                placeholder={t("usersAccess.field.searchNameOrEmail")}
                 className="w-full bg-transparent text-sm text-ink outline-none"
               />
             </div>
@@ -1197,14 +1227,14 @@ export default function UsersAccessPage() {
               onChange={(e) => setMemberStatus(e.target.value)}
               className="h-10 rounded-xl border border-line bg-canvas px-3 text-sm text-ink"
             >
-              <option value="">All statuses</option>
-              <option>Active</option>
-              <option>Suspended</option>
-              <option>Revoked</option>
+              <option value="">{t("usersAccess.common.allStatuses")}</option>
+              <option value="Active">{t("usersAccess.status.active")}</option>
+              <option value="Suspended">{t("usersAccess.status.suspended")}</option>
+              <option value="Revoked">{t("usersAccess.status.revoked")}</option>
             </select>
           </div>
           {membershipsQuery.isLoading ? (
-            <LoadingState label="Loading members..." />
+            <LoadingState label={t("usersAccess.loadingMembers")} />
           ) : membershipsQuery.data?.items.length ? (
             <div className="overflow-hidden rounded-xl border border-line">
               {membershipsQuery.data.items.map((member) => (
@@ -1220,18 +1250,19 @@ export default function UsersAccessPage() {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <StatusBadge tone={statusTone(member.status)}>
-                      {member.status}
+                      {statusLabel(member.status, t)}
                     </StatusBadge>
                     {member.isOwner && (
-                      <StatusBadge tone="info">Owner</StatusBadge>
+                      <StatusBadge tone="info">{t("usersAccess.common.owner")}</StatusBadge>
                     )}
                   </div>
                   <div className="text-sm text-muted">
                     {member.roles.map((role) => role.name).join(", ") ||
-                      "No roles"}
+                      t("usersAccess.accessSummary.noRoles")}
                   </div>
                   <div className="text-sm text-muted">
                     {summarizeBranches(
+                      t,
                       member.branchAccessMode,
                       member.selectedBranches,
                     )}
@@ -1245,7 +1276,7 @@ export default function UsersAccessPage() {
                     </button>
                     {canManageUsers && (
                       <button
-                        title="Reset password"
+                        title={t("usersAccess.action.resetPasswordTooltip")}
                         onClick={() => setDialog({ type: "resetPassword", member })}
                         className="rounded-lg border border-white/10 px-3 py-2 text-xs font-bold text-white"
                       >
@@ -1264,8 +1295,8 @@ export default function UsersAccessPage() {
                         onClick={() =>
                           window.confirm(
                             member.isOwner
-                              ? "Suspend this Company Owner? This is only possible if another active owner exists. Temporary access block; history is preserved."
-                              : "Suspend this member? Temporary access block; history is preserved.",
+                              ? t("usersAccess.confirm.suspendOwner")
+                              : t("usersAccess.confirm.suspendMember"),
                           ) &&
                           changeStatus.mutate({
                             membershipId: member.membershipId,
@@ -1295,8 +1326,8 @@ export default function UsersAccessPage() {
                         onClick={() =>
                           window.confirm(
                             member.isOwner
-                              ? "Revoke this Company Owner? This is only possible if another active owner exists. Future company access is removed; historical records remain."
-                              : "Revoke this member? Future company access is removed; historical records remain.",
+                              ? t("usersAccess.confirm.revokeOwner")
+                              : t("usersAccess.confirm.revokeMember"),
                           ) &&
                           changeStatus.mutate({
                             membershipId: member.membershipId,
@@ -1314,8 +1345,8 @@ export default function UsersAccessPage() {
             </div>
           ) : (
             <EmptyState
-              title="No members found"
-              message="No company memberships match the current filters."
+              title={t("usersAccess.emptyMembers.title")}
+              message={t("usersAccess.emptyMembers.message")}
             />
           )}
         </section>
@@ -1329,7 +1360,7 @@ export default function UsersAccessPage() {
               <input
                 value={inviteSearch}
                 onChange={(e) => setInviteSearch(e.target.value)}
-                placeholder="Search email"
+                placeholder={t("usersAccess.field.searchEmail")}
                 className="w-full bg-transparent text-sm text-ink outline-none"
               />
             </div>
@@ -1338,15 +1369,15 @@ export default function UsersAccessPage() {
               onChange={(e) => setInviteStatus(e.target.value)}
               className="h-10 rounded-xl border border-line bg-canvas px-3 text-sm text-ink"
             >
-              <option value="">All statuses</option>
-              <option>Pending</option>
-              <option>Accepted</option>
-              <option>Cancelled</option>
-              <option>Expired</option>
+              <option value="">{t("usersAccess.common.allStatuses")}</option>
+              <option value="Pending">{t("usersAccess.status.pending")}</option>
+              <option value="Accepted">{t("usersAccess.status.accepted")}</option>
+              <option value="Cancelled">{t("usersAccess.status.cancelled")}</option>
+              <option value="Expired">{t("usersAccess.status.expired")}</option>
             </select>
           </div>
           {invitationsQuery.isLoading ? (
-            <LoadingState label="Loading invitations..." />
+            <LoadingState label={t("usersAccess.loadingInvitations")} />
           ) : invitationsQuery.data?.items.length ? (
             <div className="grid gap-3">
               {invitationsQuery.data.items.map((invite) => (
@@ -1360,23 +1391,26 @@ export default function UsersAccessPage() {
                         {invite.email}
                       </div>
                       <div className="text-sm text-subtle">
-                        Invited {formatDateTime(invite.createdAtUtc)} · Expires{" "}
-                        {formatDateTime(invite.expiresAtUtc)}
+                        {t("usersAccess.invite.invitedExpires", {
+                          invited: formatDateTime(invite.createdAtUtc),
+                          expires: formatDateTime(invite.expiresAtUtc),
+                        })}
                       </div>
                     </div>
                     <StatusBadge tone={statusTone(invite.effectiveStatus)}>
-                      {invite.effectiveStatus}
+                      {statusLabel(invite.effectiveStatus, t)}
                     </StatusBadge>
                   </div>
                   <div className="mt-3 grid gap-2 text-sm text-muted md:grid-cols-2">
                     <div>
-                      Roles:{" "}
+                      {t("usersAccess.invite.rolesPrefix")}{" "}
                       {invite.roles.map((role) => role.name).join(", ") ||
-                        "No roles"}
+                        t("usersAccess.accessSummary.noRoles")}
                     </div>
                     <div>
-                      Branches:{" "}
+                      {t("usersAccess.invite.branchesPrefix")}{" "}
                       {summarizeBranches(
+                        t,
                         invite.branchAccessMode,
                         invite.selectedBranches,
                       )}
@@ -1400,8 +1434,8 @@ export default function UsersAccessPage() {
                             );
                             setNotice(
                               result.emailSent
-                                ? "Invitation resent."
-                                : "Invitation updated, but email delivery was not confirmed.",
+                                ? t("usersAccess.notice.invitationResent")
+                                : t("usersAccess.notice.invitationUpdatedNoEmail"),
                             );
                           } catch {
                             /* surfaced via showError above (resendInvite.isError) */
@@ -1413,9 +1447,8 @@ export default function UsersAccessPage() {
                       </button>
                       <button
                         onClick={() =>
-                          window.confirm(
-                            "Cancel this invitation? This invalidates the link and does not affect memberships.",
-                          ) && cancelInvite.mutate(invite.invitationId)
+                          window.confirm(t("usersAccess.confirm.cancelInvitation")) &&
+                          cancelInvite.mutate(invite.invitationId)
                         }
                         className="rounded-lg border border-danger px-3 py-2 text-sm font-bold text-danger"
                       >
@@ -1428,8 +1461,8 @@ export default function UsersAccessPage() {
             </div>
           ) : (
             <EmptyState
-              title="No invitations found"
-              message="No invitations match the current filters."
+              title={t("usersAccess.emptyInvitations.title")}
+              message={t("usersAccess.emptyInvitations.message")}
             />
           )}
         </section>
@@ -1442,12 +1475,12 @@ export default function UsersAccessPage() {
             <input
               value={roleSearch}
               onChange={(e) => setRoleSearch(e.target.value)}
-              placeholder="Search roles"
+              placeholder={t("usersAccess.field.searchRoles")}
               className="w-full bg-transparent text-sm text-ink outline-none"
             />
           </div>
           {rolesQuery.isLoading ? (
-            <LoadingState label="Loading roles..." />
+            <LoadingState label={t("usersAccess.loadingRoles")} />
           ) : filteredRoles.length ? (
             <div className="grid gap-3 lg:grid-cols-2">
               {filteredRoles.map((role) => (
@@ -1468,19 +1501,19 @@ export default function UsersAccessPage() {
                     </div>
                     <div className="flex gap-2">
                       {role.isSystem && (
-                        <StatusBadge tone="info">System Role</StatusBadge>
+                        <StatusBadge tone="info">{t("usersAccess.role.systemRoleBadge")}</StatusBadge>
                       )}
                       <StatusBadge tone={statusTone(role.status)}>
-                        {role.status}
+                        {statusLabel(role.status, t)}
                       </StatusBadge>
                     </div>
                   </div>
                   <div className="mt-3 text-sm text-muted">
-                    {role.permissions.length} permissions
+                    {t("usersAccess.role.permissionsCount", { count: role.permissions.length })}
                   </div>
                   {role.isSystem && (
                     <div className="mt-2 text-sm text-subtle">
-                      Assignable and readable; not editable.
+                      {t("usersAccess.role.systemShortNotice")}
                     </div>
                   )}
                 </button>
@@ -1488,8 +1521,8 @@ export default function UsersAccessPage() {
             </div>
           ) : (
             <EmptyState
-              title="No roles found"
-              message="No roles match the current search."
+              title={t("usersAccess.emptyRoles.title")}
+              message={t("usersAccess.emptyRoles.message")}
             />
           )}
         </section>
@@ -1508,8 +1541,8 @@ export default function UsersAccessPage() {
             setDialog(null);
             setNotice(
               result.emailSent
-                ? "Invitation sent."
-                : "Invitation created, but email delivery was not confirmed.",
+                ? t("usersAccess.notice.invitationSent")
+                : t("usersAccess.notice.invitationCreatedNoEmail"),
             );
           }}
         />
@@ -1525,7 +1558,7 @@ export default function UsersAccessPage() {
           onSubmit={async (payload) => {
             await createMemberDirectly.mutateAsync(payload);
             setDialog(null);
-            setNotice("Account created. Share the email and password with the new user yourself.");
+            setNotice(t("usersAccess.notice.accountCreated"));
           }}
         />
       )}
@@ -1540,13 +1573,13 @@ export default function UsersAccessPage() {
               payload: { newPassword },
             });
             setDialog(null);
-            setNotice(`Password reset for ${dialog.member.displayName}.`);
+            setNotice(t("usersAccess.notice.passwordReset", { name: dialog.member.displayName }));
           }}
         />
       )}
       {dialog?.type === "member" && (
         <AccessDialog
-          title={`Manage ${dialog.member.displayName}`}
+          title={t("usersAccess.accessDialog.manageTitle", { name: dialog.member.displayName })}
           member={dialog.member}
           roles={roles}
           branches={branches}
@@ -1575,7 +1608,7 @@ export default function UsersAccessPage() {
       )}
       {dialog?.type === "invitation" && (
         <AccessDialog
-          title={`Edit invitation ${dialog.invitation.email}`}
+          title={t("usersAccess.accessDialog.editInvitationTitle", { email: dialog.invitation.email })}
           roles={roles}
           branches={branches}
           canSave={canManageUsers}
@@ -1595,7 +1628,7 @@ export default function UsersAccessPage() {
               payload,
             });
             setDialog(null);
-            setNotice("Invitation access updated.");
+            setNotice(t("usersAccess.notice.invitationAccessUpdated"));
           }}
         />
       )}
@@ -1619,7 +1652,7 @@ export default function UsersAccessPage() {
               });
             else await createRole.mutateAsync(payload);
             setDialog(null);
-            setNotice(dialog.role ? "Role updated." : "Role created.");
+            setNotice(dialog.role ? t("usersAccess.notice.roleUpdated") : t("usersAccess.notice.roleCreated"));
           }}
         />
       )}

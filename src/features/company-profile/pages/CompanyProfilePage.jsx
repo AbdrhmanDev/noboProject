@@ -1,11 +1,19 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FileClock, FilePenLine, History, ShieldCheck } from "lucide-react";
+import { FileClock, FilePenLine, History, Package, ShieldCheck } from "lucide-react";
 import AppLayout from "../../../components/AppLayout";
 import { EmptyState, ErrorState, LoadingState, PageHeader, StatusBadge } from "../../../shared/components/ui";
 import { formatDateTime } from "../../../shared/utils/formatters";
+import { useResolvedImageSrc } from "../../../shared/hooks/useResolvedImageSrc";
 import { useCompany } from "../../companies/context/CompanyContext";
-import { useCompanyPermissions, useHasPermission } from "../../companies/hooks/useCompanies";
+import {
+  useCompanyDetails,
+  useCompanyPermissions,
+  useDeleteCompanyLogo,
+  useHasPermission,
+  useSetCompanyReceiptContactLines,
+  useUploadCompanyLogo,
+} from "../../companies/hooks/useCompanies";
 import { COMPANY_PROFILE_VIEW_PERMISSION } from "../../authorization/constants/applicationPermissions";
 import { ROUTES } from "../../../utils/routes";
 import {
@@ -15,8 +23,150 @@ import {
 } from "../hooks/useCompanyProfile";
 import { useAmendments } from "../hooks/useAmendments";
 
+// Company-administration functionality -- gated on the existing Company.Manage permission, same
+// convention as ApprovalPoliciesPage.jsx's local COMPANY_MANAGE_PERMISSION constant.
+const COMPANY_MANAGE_PERMISSION = "Company.Manage";
+
 function getErrorMessage(error) {
   return error?.message || "Request failed.";
+}
+
+// The logo printed at the top of the POS customer receipt. Independent of the read-only, amendment-
+// versioned profile fields below it -- this is a plain mutable upload/delete, not part of that flow.
+function CompanyLogoCard({ companyId, canManage }) {
+  const fileInputRef = useRef(null);
+  const [notice, setNotice] = useState("");
+  const detailsQuery = useCompanyDetails(companyId);
+  const uploadMutation = useUploadCompanyLogo(companyId);
+  const deleteMutation = useDeleteCompanyLogo(companyId);
+  const { src: logoPreviewSrc, failed: logoPreviewFailed } = useResolvedImageSrc(detailsQuery.data?.logoUrl);
+
+  if (detailsQuery.isError) return null;
+
+  const showNotice = (message) => {
+    setNotice(message);
+    window.setTimeout(() => setNotice(""), 3000);
+  };
+
+  const pickLogoFile = (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    uploadMutation.mutate(file, {
+      onSuccess: () => showNotice("Logo updated."),
+      onError: (error) => showNotice(getErrorMessage(error)),
+    });
+  };
+
+  const removeLogo = () => {
+    deleteMutation.mutate(undefined, {
+      onSuccess: () => showNotice("Logo removed."),
+      onError: (error) => showNotice(getErrorMessage(error)),
+    });
+  };
+
+  const hasLogo = Boolean(detailsQuery.data?.logoUrl);
+
+  return (
+    <div className="rounded-xl border border-line bg-surface p-4">
+      <div className="mb-2 text-sm font-bold text-muted">Receipt logo</div>
+      <p className="mb-3 text-xs text-subtle">Printed at the top of every POS customer receipt.</p>
+      <div className="flex items-center gap-3">
+        <div className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-xl border border-line bg-raised">
+          {logoPreviewSrc && !logoPreviewFailed ? (
+            <img src={logoPreviewSrc} alt="" className="h-full w-full object-contain" />
+          ) : (
+            <Package size={20} className="text-subtle" />
+          )}
+        </div>
+        {canManage && (
+          <>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className="hidden"
+              onChange={pickLogoFile}
+            />
+            <button
+              type="button"
+              disabled={uploadMutation.isPending}
+              onClick={() => fileInputRef.current?.click()}
+              className="flex h-11 items-center gap-1.5 rounded-xl border border-line bg-canvas px-3 text-sm font-semibold text-ink disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {uploadMutation.isPending ? "Uploading..." : hasLogo ? "Replace" : "Upload"}
+            </button>
+            {hasLogo && (
+              <button
+                type="button"
+                disabled={deleteMutation.isPending}
+                onClick={removeLogo}
+                className="flex h-11 items-center gap-1.5 rounded-xl border border-line px-3 text-sm font-semibold text-muted disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {deleteMutation.isPending ? "Removing..." : "Remove"}
+              </button>
+            )}
+          </>
+        )}
+      </div>
+      {notice && <div className="mt-3 rounded-xl border border-accent-line bg-accent-soft px-3 py-2 text-sm text-accent">{notice}</div>}
+    </div>
+  );
+}
+
+// Free-text lines (e.g. a branch/delivery phone number) printed just above "Thank you" on the
+// receipt. One line per entry; the backend trims/drops blanks and caps count and length.
+function ReceiptContactLinesCard({ companyId, canManage }) {
+  const [notice, setNotice] = useState("");
+  const [draft, setDraft] = useState(null);
+  const detailsQuery = useCompanyDetails(companyId);
+  const saveMutation = useSetCompanyReceiptContactLines(companyId);
+
+  if (detailsQuery.isError || !canManage) return null;
+
+  const savedText = (detailsQuery.data?.receiptContactLines || []).join("\n");
+  const text = draft ?? savedText;
+  const isDirty = draft !== null && draft !== savedText;
+
+  const showNotice = (message) => {
+    setNotice(message);
+    window.setTimeout(() => setNotice(""), 3000);
+  };
+
+  const save = () => {
+    saveMutation.mutate(text.trim() === "" ? null : text, {
+      onSuccess: () => {
+        setDraft(null);
+        showNotice("Saved.");
+      },
+      onError: (error) => showNotice(getErrorMessage(error)),
+    });
+  };
+
+  return (
+    <div className="rounded-xl border border-line bg-surface p-4">
+      <div className="mb-2 text-sm font-bold text-muted">Receipt contact lines</div>
+      <p className="mb-3 text-xs text-subtle">
+        Printed just above "Thank you" on the receipt, one per line (e.g. a delivery or branch phone number).
+      </p>
+      <textarea
+        value={text}
+        onChange={(event) => setDraft(event.target.value)}
+        rows={3}
+        placeholder={"Delivery: 0555555555\nBranch: 0111111111"}
+        className="w-full rounded-xl border border-line bg-raised px-3 py-2 text-sm text-ink"
+      />
+      <button
+        type="button"
+        disabled={!isDirty || saveMutation.isPending}
+        onClick={save}
+        className="mt-2 flex h-11 items-center gap-1.5 rounded-xl border border-line bg-canvas px-3 text-sm font-semibold text-ink disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {saveMutation.isPending ? "Saving..." : "Save"}
+      </button>
+      {notice && <div className="mt-3 rounded-xl border border-accent-line bg-accent-soft px-3 py-2 text-sm text-accent">{notice}</div>}
+    </div>
+  );
 }
 
 function FieldRow({ label, value }) {
@@ -163,9 +313,11 @@ export function CompanyProfilePage() {
   const navigate = useNavigate();
   const { currentCompanyId } = useCompany();
   const viewPermissionQuery = useHasPermission(currentCompanyId, COMPANY_PROFILE_VIEW_PERMISSION);
+  const manageCompanyQuery = useHasPermission(currentCompanyId, COMPANY_MANAGE_PERMISSION);
   const permissionsQuery = useCompanyPermissions(currentCompanyId);
   const isOwner = Boolean(permissionsQuery.data?.isOwner);
   const canView = viewPermissionQuery.hasPermission;
+  const canManageCompany = manageCompanyQuery.hasPermission;
 
   const profileQuery = useApprovedCompanyProfile(currentCompanyId, canView);
   const amendmentsQuery = useAmendments(currentCompanyId, isOwner);
@@ -192,6 +344,9 @@ export function CompanyProfilePage() {
             )
           }
         />
+
+        {currentCompanyId && <CompanyLogoCard companyId={currentCompanyId} canManage={canManageCompany} />}
+        {currentCompanyId && <ReceiptContactLinesCard companyId={currentCompanyId} canManage={canManageCompany} />}
 
         {!currentCompanyId ? (
           <EmptyState title="Company required" message="Select a company to see its profile." />
@@ -227,7 +382,14 @@ export function CompanyProfilePage() {
                 profileQuery.isLoading ? (
                   <LoadingState label="Loading company profile..." />
                 ) : profileQuery.isError ? (
-                  <ErrorState title="Unable to load profile" message={getErrorMessage(profileQuery.error)} />
+                  profileQuery.error?.code === "CompanyProfile.NotFound" ? (
+                    <EmptyState
+                      title="No approved profile yet"
+                      message="This company has no approved profile yet. An approved profile is created once a customer registration for this company is reviewed and approved."
+                    />
+                  ) : (
+                    <ErrorState title="Unable to load profile" message={getErrorMessage(profileQuery.error)} />
+                  )
                 ) : (
                   <>
                     <div className="mb-4 flex flex-wrap items-center gap-2">

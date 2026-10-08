@@ -12,7 +12,7 @@ import { useI18n } from "../i18n/I18nContext";
 import { useAuth } from "../features/auth/hooks/useAuth";
 import { useCurrentUserProfile } from "../features/auth/hooks/useCurrentUserProfile";
 import { useBranch } from "../features/branches/context/BranchContext";
-import { isBranchEnterable, useBranches } from "../features/branches/hooks/useBranches";
+import { isBranchEnterable, useMyBranches } from "../features/branches/hooks/useBranches";
 import { useCurrentBranch } from "../features/branches/hooks/useCurrentBranch";
 import {
   getCompanyDisplayName,
@@ -106,7 +106,9 @@ export default function AppLayout({ children, onLogout }) {
   const { currentCompanyId, clearCompany } = useCompany();
   const { clearBranch } = useBranch();
   const { data: companies = [] } = useMyCompanies();
-  const { data: branches = [] } = useBranches(currentCompanyId);
+  // Self-scoped (no Branches.View required) -- the top-bar branch switcher must work for a
+  // cashier-only role too.
+  const { data: branches = [] } = useMyBranches(currentCompanyId);
   const currentBranch = useCurrentBranch();
   const handleLogout = onLogout || logout;
   const currentCompany = companies.find((company) => company.companyId === currentCompanyId);
@@ -165,6 +167,7 @@ export default function AppLayout({ children, onLogout }) {
           permission={item.permission}
           permissions={item.permissions}
           entitlement={item.entitlement}
+          hideWhenOwnSalesScope={item.hideWhenOwnSalesScope}
           activePath={activePath}
           navigate={go}
           shortcutAction={item.shortcutAction}
@@ -388,12 +391,16 @@ export default function AppLayout({ children, onLogout }) {
           </button>
           <NoboLogo className="h-7 w-auto" />
         </div>
-        {/* On the POS route the clock/theme/logout/shortcuts controls move down and merge into the
-            footer's own status line (Header `bare` inside Footer's `children`, below) instead of
-            taking a row of their own at the top — that row is prime real estate for the actual
-            workspace (product grid / basket / payment) on a screen where every pixel of vertical
-            space matters for how fast the cashier can work. Every other route keeps it at the top,
-            in its own full row, exactly as before. */}
+        {/* On the POS route the clock/theme/logout/shortcuts controls move down into PosStatusBar's
+            own fixed bottom bar (POSPage.jsx) instead of taking a row of their own at the top --
+            that row is prime real estate for the actual workspace (product grid / basket /
+            payment) on a screen where every pixel of vertical space matters for how fast the
+            cashier can work. (Previously this route also rendered a second, normal-flow copy of
+            those controls here via Footer's `children` -- that copy and PosStatusBar's own fixed
+            bar both ended up claiming the same strip at the bottom of the screen, and the fixed
+            one simply covered the other, hiding logout/theme entirely. Dropped here now that
+            PosStatusBar renders them for real.) Every other route keeps this row at the top, in
+            its own full row, exactly as before. */}
         {!isPos && (
           <Header
             onLogout={handleLogout}
@@ -404,9 +411,7 @@ export default function AppLayout({ children, onLogout }) {
           />
         )}
         {children}
-        <Footer compact={isPos}>
-          {isPos && <Header bare onLogout={handleLogout} />}
-        </Footer>
+        {!isPos && <Footer />}
       </main>
     </div>
   );

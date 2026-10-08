@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Layers, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { EmptyState, ErrorState, LoadingState } from "../../../shared/components/ui";
+import { useI18n } from "../../../i18n/I18nContext";
 import { useActiveUnitsOfMeasure } from "../../catalog/hooks/useCatalog";
 import {
   useActiveInventoryItems,
@@ -11,11 +12,12 @@ import {
 import { parsePositiveQuantity } from "../utils/inventoryQuantity";
 import { ProductVariantPicker } from "./ProductVariantPicker";
 
-function getErrorMessage(error) {
-  return error?.message || "Request failed.";
+function getErrorMessage(error, t) {
+  return error?.message || t("inventory.common.requestFailed");
 }
 
 export function VariantConsumptionPanel({ companyId, canView, canConfigure }) {
+  const { t } = useI18n();
   const [productId, setProductId] = useState(null);
   const [productVariantId, setProductVariantId] = useState(null);
   const [selectedInventoryItemId, setSelectedInventoryItemId] = useState("");
@@ -60,7 +62,7 @@ export function VariantConsumptionPanel({ companyId, canView, canConfigure }) {
 
   const submitComponent = async (inventoryItemId, quantityValue) => {
     if (!inventoryItemId) {
-      showNotice("Select an inventory item.");
+      showNotice(t("inventory.variantConsumption.validation.selectItem"));
       return;
     }
 
@@ -82,18 +84,18 @@ export function VariantConsumptionPanel({ companyId, canView, canConfigure }) {
       });
       setSelectedInventoryItemId("");
       setQuantityInput("");
-      showNotice("Consumption component saved.");
+      showNotice(t("inventory.variantConsumption.notice.componentSaved"));
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
   const removeComponent = async (inventoryItemId) => {
     try {
       await removeComponentMutation.mutateAsync({ inventoryItemId });
-      showNotice("Consumption component removed.");
+      showNotice(t("inventory.variantConsumption.notice.componentRemoved"));
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
@@ -106,7 +108,7 @@ export function VariantConsumptionPanel({ companyId, canView, canConfigure }) {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-sm font-bold text-ink">Variant Consumption</h2>
+        <h2 className="text-sm font-bold text-ink">{t("inventory.variantConsumption.heading")}</h2>
         {productVariantId && (
           <button
             type="button"
@@ -114,7 +116,7 @@ export function VariantConsumptionPanel({ companyId, canView, canConfigure }) {
             className="flex items-center gap-2 rounded-xl border border-line bg-raised px-3 py-2 text-sm font-bold text-ink"
           >
             <RefreshCw size={14} />
-            Refresh
+            {t("inventory.common.refresh")}
           </button>
         )}
       </div>
@@ -138,21 +140,21 @@ export function VariantConsumptionPanel({ companyId, canView, canConfigure }) {
 
       {!productVariantId ? (
         <EmptyState
-          title="Select a product variant"
-          message="Choose a product and variant to view its inventory consumption components."
+          title={t("inventory.variantConsumption.emptySelectVariant.title")}
+          message={t("inventory.variantConsumption.emptySelectVariant.message")}
         />
       ) : (
         <section className="rounded-xl border border-line bg-surface p-4">
           <div className="mb-3 flex items-center gap-2 text-sm text-muted">
             <Layers size={15} className="text-accent" />
-            Components consumed per one sales unit of this variant
+            {t("inventory.variantConsumption.subheading")}
           </div>
 
-          {consumptionQuery.isLoading && <LoadingState label="Loading consumption components..." />}
+          {consumptionQuery.isLoading && <LoadingState label={t("inventory.variantConsumption.loading")} />}
           {consumptionQuery.isError && (
             <ErrorState
-              title="Unable to load consumption components"
-              message={getErrorMessage(consumptionQuery.error)}
+              title={t("inventory.variantConsumption.loadError")}
+              message={getErrorMessage(consumptionQuery.error, t)}
             />
           )}
 
@@ -160,7 +162,7 @@ export function VariantConsumptionPanel({ companyId, canView, canConfigure }) {
             <div className="space-y-2">
               {components.length === 0 && (
                 <div className="rounded-xl border border-dashed border-line p-4 text-center text-sm text-subtle">
-                  No consumption components configured for this variant yet.
+                  {t("inventory.variantConsumption.emptyComponents")}
                 </div>
               )}
               {components.map((component) => (
@@ -204,14 +206,14 @@ export function VariantConsumptionPanel({ companyId, canView, canConfigure }) {
           {canConfigure && (
             <div className="mt-4 flex flex-wrap items-end gap-2 border-t border-line pt-4">
               <label className="text-sm font-semibold text-muted">
-                Add inventory item
+                {t("inventory.variantConsumption.field.addItem")}
                 <select
                   value={selectedInventoryItemId}
                   onChange={(event) => setSelectedInventoryItemId(event.target.value)}
                   disabled={activeItemsQuery.isLoading}
                   className="mt-1 h-10 w-56 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
                 >
-                  <option value="">Select item...</option>
+                  <option value="">{t("inventory.variantConsumption.field.selectItemPlaceholder")}</option>
                   {availableItemsToAdd.map((item) => (
                     <option key={item.inventoryItemId} value={item.inventoryItemId}>
                       {item.name} ({item.baseUnitOfMeasure.symbol})
@@ -220,7 +222,7 @@ export function VariantConsumptionPanel({ companyId, canView, canConfigure }) {
                 </select>
               </label>
               <label className="text-sm font-semibold text-muted">
-                Quantity per sales unit
+                {t("inventory.variantConsumption.field.quantityPerSalesUnit")}
                 <input
                   type="text"
                   inputMode="decimal"
@@ -237,13 +239,13 @@ export function VariantConsumptionPanel({ companyId, canView, canConfigure }) {
                 className="flex h-10 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Plus size={15} />
-                Add component
+                {t("inventory.variantConsumption.action.addComponent")}
               </button>
             </div>
           )}
           {!canConfigure && (
             <div className="mt-4 rounded-xl border border-warning bg-warning-soft px-3 py-2 text-sm text-warning">
-              Inventory.Configure permission is required to change consumption components.
+              {t("inventory.variantConsumption.notice.configurePermissionRequired")}
             </div>
           )}
         </section>

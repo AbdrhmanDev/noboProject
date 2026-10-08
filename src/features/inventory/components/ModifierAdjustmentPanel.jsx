@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ExternalLink, Plus, RefreshCw, SlidersHorizontal, Trash2 } from "lucide-react";
 import { EmptyState, ErrorState, LoadingState } from "../../../shared/components/ui";
+import { useI18n } from "../../../i18n/I18nContext";
 import { ROUTES } from "../../../utils/routes";
 import {
   useActiveUnitsOfMeasure,
@@ -17,11 +18,12 @@ import {
 import { parseNonZeroQuantity } from "../utils/inventoryQuantity";
 import { ProductVariantPicker } from "./ProductVariantPicker";
 
-function getErrorMessage(error) {
-  return error?.message || "Request failed.";
+function getErrorMessage(error, t) {
+  return error?.message || t("inventory.common.requestFailed");
 }
 
 function ManageModifiersEmptyState({ title, message, onManageModifiers }) {
+  const { t } = useI18n();
   return (
     <div className="rounded-xl border border-dashed border-line bg-raised p-5 text-center">
       <h3 className="text-sm font-bold text-ink">{title}</h3>
@@ -32,13 +34,14 @@ function ManageModifiersEmptyState({ title, message, onManageModifiers }) {
         className="mt-3 inline-flex items-center gap-2 rounded-xl border border-accent-line bg-accent-soft px-4 py-2 text-sm font-bold text-accent transition hover:bg-accent-strong/20"
       >
         <ExternalLink size={14} />
-        Manage Modifiers
+        {t("inventory.modifierAdjustment.manageModifiers")}
       </button>
     </div>
   );
 }
 
 export function ModifierAdjustmentPanel({ companyId, canView, canConfigure }) {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [productId, setProductId] = useState(null);
   const [productVariantId, setProductVariantId] = useState(null);
@@ -116,7 +119,7 @@ export function ModifierAdjustmentPanel({ companyId, canView, canConfigure }) {
 
   const submitAdjustment = async (inventoryItemId, quantityValue) => {
     if (!inventoryItemId) {
-      showNotice("Select an inventory item.");
+      showNotice(t("inventory.modifierAdjustment.validation.selectItem"));
       return;
     }
 
@@ -138,18 +141,18 @@ export function ModifierAdjustmentPanel({ companyId, canView, canConfigure }) {
       });
       setSelectedInventoryItemId("");
       setQuantityInput("");
-      showNotice("Modifier inventory adjustment saved.");
+      showNotice(t("inventory.modifierAdjustment.notice.adjustmentSaved"));
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
   const removeAdjustment = async (inventoryItemId) => {
     try {
       await removeAdjustmentMutation.mutateAsync({ inventoryItemId });
-      showNotice("Modifier inventory adjustment removed.");
+      showNotice(t("inventory.modifierAdjustment.notice.adjustmentRemoved"));
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
@@ -172,7 +175,7 @@ export function ModifierAdjustmentPanel({ companyId, canView, canConfigure }) {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-sm font-bold text-ink">Modifier Inventory Adjustments</h2>
+        <h2 className="text-sm font-bold text-ink">{t("inventory.modifierAdjustment.heading")}</h2>
         {modifierOptionId && (
           <button
             type="button"
@@ -180,7 +183,7 @@ export function ModifierAdjustmentPanel({ companyId, canView, canConfigure }) {
             className="flex items-center gap-2 rounded-xl border border-line bg-raised px-3 py-2 text-sm font-bold text-ink"
           >
             <RefreshCw size={14} />
-            Refresh
+            {t("inventory.common.refresh")}
           </button>
         )}
       </div>
@@ -202,14 +205,14 @@ export function ModifierAdjustmentPanel({ companyId, canView, canConfigure }) {
         />
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="text-sm font-semibold text-muted">
-            Modifier group
+            {t("inventory.modifierAdjustment.field.modifierGroup")}
             <select
               value={modifierGroupId || ""}
               onChange={(event) => selectModifierGroup(event.target.value)}
               disabled={!productVariantId || variantModifierGroupsQuery.isLoading}
               className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
             >
-              <option value="">Select modifier group...</option>
+              <option value="">{t("inventory.modifierAdjustment.field.selectModifierGroupPlaceholder")}</option>
               {enabledModifierGroups.map((group) => (
                 <option key={group.modifierGroupId} value={group.modifierGroupId}>
                   {group.modifierGroupName}
@@ -217,18 +220,18 @@ export function ModifierAdjustmentPanel({ companyId, canView, canConfigure }) {
               ))}
             </select>
             {!productVariantId && (
-              <p className="mt-1 text-xs text-subtle">Select a variant first</p>
+              <p className="mt-1 text-xs text-subtle">{t("inventory.modifierAdjustment.hint.selectVariantFirst")}</p>
             )}
           </label>
           <label className="text-sm font-semibold text-muted">
-            Modifier option
+            {t("inventory.modifierAdjustment.field.modifierOption")}
             <select
               value={modifierOptionId || ""}
               onChange={(event) => selectModifierOption(event.target.value)}
               disabled={!modifierGroupId || modifierGroupDetailsQuery.isLoading}
               className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
             >
-              <option value="">Select modifier option...</option>
+              <option value="">{t("inventory.modifierAdjustment.field.selectModifierOptionPlaceholder")}</option>
               {modifierOptions.map((option) => (
                 <option key={option.modifierOptionId} value={option.modifierOptionId}>
                   {option.name}
@@ -236,7 +239,7 @@ export function ModifierAdjustmentPanel({ companyId, canView, canConfigure }) {
               ))}
             </select>
             {!modifierGroupId && productVariantId && (
-              <p className="mt-1 text-xs text-subtle">Select a modifier group first</p>
+              <p className="mt-1 text-xs text-subtle">{t("inventory.modifierAdjustment.hint.selectGroupFirst")}</p>
             )}
           </label>
         </div>
@@ -245,8 +248,8 @@ export function ModifierAdjustmentPanel({ companyId, canView, canConfigure }) {
           enabledModifierGroups.length === 0 &&
           !variantModifierGroupsQuery.isLoading && (
             <ManageModifiersEmptyState
-              title="No modifier options available"
-              message="This variant has no enabled modifier groups yet. Modifier options are created and managed in Catalog before they can be linked to inventory adjustments."
+              title={t("inventory.modifierAdjustment.emptyOptions.title")}
+              message={t("inventory.modifierAdjustment.emptyOptions.messageNoGroups")}
               onManageModifiers={goToManageModifiers}
             />
           )}
@@ -255,8 +258,8 @@ export function ModifierAdjustmentPanel({ companyId, canView, canConfigure }) {
           modifierOptions.length === 0 &&
           !modifierGroupDetailsQuery.isLoading && (
             <ManageModifiersEmptyState
-              title="No modifier options available"
-              message="This modifier group has no active modifier options yet. Modifier options are created and managed in Catalog before they can be linked to inventory adjustments."
+              title={t("inventory.modifierAdjustment.emptyOptions.title")}
+              message={t("inventory.modifierAdjustment.emptyOptions.messageNoOptions")}
               onManageModifiers={goToManageModifiers}
             />
           )}
@@ -264,22 +267,21 @@ export function ModifierAdjustmentPanel({ companyId, canView, canConfigure }) {
 
       {!modifierOptionId ? (
         <EmptyState
-          title="Select a modifier option"
-          message="Choose a product, variant, modifier group, and option to view its inventory adjustments."
+          title={t("inventory.modifierAdjustment.emptySelectOption.title")}
+          message={t("inventory.modifierAdjustment.emptySelectOption.message")}
         />
       ) : (
         <section className="rounded-xl border border-line bg-surface p-4">
           <div className="mb-3 flex items-center gap-2 text-sm text-muted">
             <SlidersHorizontal size={15} className="text-accent" />
-            Adjustment applied on top of the variant&apos;s base consumption when this option is
-            selected (positive adds, negative reduces)
+            {t("inventory.modifierAdjustment.subheading")}
           </div>
 
-          {adjustmentsQuery.isLoading && <LoadingState label="Loading inventory adjustments..." />}
+          {adjustmentsQuery.isLoading && <LoadingState label={t("inventory.modifierAdjustment.loading")} />}
           {adjustmentsQuery.isError && (
             <ErrorState
-              title="Unable to load inventory adjustments"
-              message={getErrorMessage(adjustmentsQuery.error)}
+              title={t("inventory.modifierAdjustment.loadError")}
+              message={getErrorMessage(adjustmentsQuery.error, t)}
             />
           )}
 
@@ -287,7 +289,7 @@ export function ModifierAdjustmentPanel({ companyId, canView, canConfigure }) {
             <div className="space-y-2">
               {adjustments.length === 0 && (
                 <div className="rounded-xl border border-dashed border-line p-4 text-center text-sm text-subtle">
-                  No inventory adjustments configured for this modifier option yet.
+                  {t("inventory.modifierAdjustment.emptyAdjustments")}
                 </div>
               )}
               {adjustments.map((adjustment) => (
@@ -337,14 +339,14 @@ export function ModifierAdjustmentPanel({ companyId, canView, canConfigure }) {
           {canConfigure && (
             <div className="mt-4 flex flex-wrap items-end gap-2 border-t border-line pt-4">
               <label className="text-sm font-semibold text-muted">
-                Add inventory item
+                {t("inventory.modifierAdjustment.field.addItem")}
                 <select
                   value={selectedInventoryItemId}
                   onChange={(event) => setSelectedInventoryItemId(event.target.value)}
                   disabled={activeItemsQuery.isLoading}
                   className="mt-1 h-10 w-56 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
                 >
-                  <option value="">Select item...</option>
+                  <option value="">{t("inventory.modifierAdjustment.field.selectItemPlaceholder")}</option>
                   {availableItemsToAdd.map((item) => (
                     <option key={item.inventoryItemId} value={item.inventoryItemId}>
                       {item.name} ({item.baseUnitOfMeasure.symbol})
@@ -353,14 +355,14 @@ export function ModifierAdjustmentPanel({ companyId, canView, canConfigure }) {
                 </select>
               </label>
               <label className="text-sm font-semibold text-muted">
-                Quantity delta (+/-)
+                {t("inventory.modifierAdjustment.field.quantityDelta")}
                 <input
                   type="text"
                   inputMode="decimal"
                   value={quantityInput}
                   onChange={(event) => setQuantityInput(event.target.value)}
                   className="mt-1 h-10 w-40 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line"
-                  placeholder="e.g. 0.5 or -0.5"
+                  placeholder={t("inventory.modifierAdjustment.field.quantityDeltaPlaceholder")}
                 />
               </label>
               <button
@@ -370,13 +372,13 @@ export function ModifierAdjustmentPanel({ companyId, canView, canConfigure }) {
                 className="flex h-10 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Plus size={15} />
-                Add adjustment
+                {t("inventory.modifierAdjustment.action.addAdjustment")}
               </button>
             </div>
           )}
           {!canConfigure && (
             <div className="mt-4 rounded-xl border border-warning bg-warning-soft px-3 py-2 text-sm text-warning">
-              Inventory.Configure permission is required to change modifier adjustments.
+              {t("inventory.modifierAdjustment.notice.configurePermissionRequired")}
             </div>
           )}
         </section>

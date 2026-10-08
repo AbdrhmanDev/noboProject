@@ -1,10 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { changeBranchStatus, createBranch, getBranchDetails, getBranches, updateBranch } from "../api/branchesApi";
+import {
+  changeBranchStatus,
+  createBranch,
+  getBranchDetails,
+  getBranches,
+  getMyBranches,
+  updateBranch,
+} from "../api/branchesApi";
 import type { Branch, ChangeBranchStatusRequest, CreateBranchRequest, UpdateBranchRequest } from "../types/branch.types";
 
 export const branchQueryKeys = {
   all: ["branches"] as const,
   byCompany: (companyId: string) => ["branches", companyId] as const,
+  mineByCompany: (companyId: string) => ["branches", "mine", companyId] as const,
   details: (companyId: string, branchId: string) => ["branches", companyId, branchId] as const,
 };
 
@@ -19,6 +27,19 @@ export function useBranches(
   return useQuery({
     queryKey: branchQueryKeys.byCompany(companyId || ""),
     queryFn: () => getBranches(companyId as string),
+    enabled: Boolean(companyId) && enabled,
+  });
+}
+
+// Self-scoped (no Branches.View required) -- use for resolving/selecting the current member's own
+// working branch (BranchContext/POS), not for the Branches admin list.
+export function useMyBranches(
+  companyId: string | null | undefined,
+  enabled = true,
+) {
+  return useQuery({
+    queryKey: branchQueryKeys.mineByCompany(companyId || ""),
+    queryFn: () => getMyBranches(companyId as string),
     enabled: Boolean(companyId) && enabled,
   });
 }

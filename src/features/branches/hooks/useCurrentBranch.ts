@@ -1,11 +1,14 @@
 import { useCompany } from "../../companies/context/CompanyContext";
 import { useBranch } from "../context/BranchContext";
-import { useBranches } from "./useBranches";
+import { useMyBranches } from "./useBranches";
 
 export function useCurrentBranch() {
   const { currentBranchId } = useBranch();
   const { currentCompanyId } = useCompany();
-  const { data: branches = [] } = useBranches(
+  // Self-scoped (no Branches.View required) -- this hook runs inside AppLayout on every
+  // authenticated page, including POS, so a cashier-only role must be able to resolve their
+  // branch name here too.
+  const { data: branches = [] } = useMyBranches(
     currentCompanyId,
     Boolean(currentCompanyId),
   );

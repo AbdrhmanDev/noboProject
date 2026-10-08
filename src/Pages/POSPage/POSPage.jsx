@@ -132,7 +132,7 @@ export default function POSPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { t } = useI18n();
-  const { status, session } = useAuth();
+  const { status, session, logout } = useAuth();
   const currentUserProfileQuery = useCurrentUserProfile();
   // Real authenticated cashier identity only (Cashier Real Identity task) -- displayName once
   // /api/auth/me resolves, the session's own real email as an immediate fallback. Never a
@@ -1669,13 +1669,16 @@ export default function POSPage() {
     // modifiers) funnels through here. When a Variant/Modifier dialog was
     // involved, its focused option is now gone and focus is left sitting on
     // <body> with no obvious way back in without the mouse — recover into
-    // the Product Grid. When nothing was involved (single variant, no
-    // modifiers: the product card itself never lost focus), leave it alone
-    // rather than yanking focus to the first card regardless of which one
-    // was actually clicked.
+    // the Product Grid. Checked against <body> specifically (not "is this a
+    // recognized roving grid item"): the back-face qty stepper and size
+    // circles are real, still-mounted buttons the tap legitimately keeps
+    // focus on, but they aren't tagged [data-roving-item] -- treating that
+    // tag as the signal previously misfired on every one of those taps and
+    // yanked focus (and the whole grid's scroll position) back to the first
+    // card.
     if (fromCart) return;
-    const items = getFocusableGridItems(productGridRef.current, ROVING_ITEM_SELECTOR);
-    if (!items.includes(document.activeElement)) {
+    if (document.activeElement === document.body) {
+      const items = getFocusableGridItems(productGridRef.current, ROVING_ITEM_SELECTOR);
       items[0]?.focus();
     }
   };
@@ -1860,28 +1863,6 @@ export default function POSPage() {
       return;
     }
     addItem(product);
-  };
-  // Size circle on a product card -- one size at a time per card:
-  //  - product not in the cart yet -> add it in that size;
-  //  - tapping the size it already has (its most recently added line) -> remove that line;
-  //  - tapping a different size -> switch that SAME line to the new size (quantity unchanged).
-  // A second line of the same product in another size is made from the cart (see OrderLines).
-  const selectProductSize = (product, variant) => {
-    if (!canEditDraft || !variant) return;
-
-    const lines = draftLinesByProductId.get(product.productId)?.lines ?? [];
-    const line = lines[lines.length - 1];
-    if (!line) {
-      addItem(product, variant);
-      return;
-    }
-
-    setActiveProductId(product.productId);
-    if (line.productVariantId === variant.productVariantId) {
-      removeDraftLine(line.salesOrderLineId);
-      return;
-    }
-    changeLineVariant(line, variant);
   };
   // Touch-first redesign: the card-level +/- (whether that's a simple card's own stepper, or the
   // inline variant/modifier configurator's "Add"/qty controls) all funnel through these two. Adding
@@ -2256,12 +2237,12 @@ export default function POSPage() {
                 <button
                   type="button"
                   onClick={() => navigate(ROUTES.POS_SHIFT_HISTORY)}
-                  aria-label="Transactions"
-                  title="Transactions"
+                  aria-label={t("pos.transactions")}
+                  title={t("pos.transactions")}
                   className="pos-control pos-fs-name flex shrink-0 items-center gap-2 border border-pos-border bg-pos-card px-3 text-pos-text transition hover:border-pos-primary hover:bg-pos-tint sm:px-4"
                 >
                   <History size={16} />
-                  <span className="hidden sm:inline">Transactions</span>
+                  <span className="hidden sm:inline">{t("pos.transactions")}</span>
                 </button>
               </>
             )}
@@ -2294,7 +2275,6 @@ export default function POSPage() {
               taxSetupRequired={taxSetupRequired}
               canEditDraft={canEditDraft}
               onTapProduct={tapProduct}
-              onSelectProductSize={selectProductSize}
               query={query}
               productGridRef={productGridRef}
               draftLinesByProductId={draftLinesByProductId}
@@ -2316,6 +2296,7 @@ export default function POSPage() {
           <PosStatusBar
             cashierName={currentCashierName}
             onCloseShift={hasOpenShift ? () => setModal("closeShift") : undefined}
+            onLogout={logout}
           />
 
           <OrderBottomSheet open={isCartOpen} onClose={() => setIsCartOpen(false)}>
@@ -2489,7 +2470,7 @@ export default function POSPage() {
             <button
               type="button"
               onClick={() => setToast(null)}
-              aria-label="Dismiss"
+              aria-label={t("pos.dismiss")}
               className="shrink-0 rounded-pos p-1 text-pos-muted transition hover:bg-pos-tint hover:text-pos-text"
             >
               <X size={16} />

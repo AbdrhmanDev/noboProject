@@ -68,7 +68,7 @@
      (auto-fill + minmax already does that column math from this one value). Floor kept just above
      what the always-52px +/- stepper pill (two 52px circles + the qty digit) actually needs so it
      never overflows the card at the narrowest columns the clamp can produce. */
-  --pos-card-min-w: clamp(124px, 8vw, 148px);
+  --pos-card-min-w: clamp(140px, 9vw, 168px);
   /* Explicit, stable card height (3rd pass fix for "cards jumping"; sized up in the 13th pass to
      match the wider card -- see PosProductCard's own h-20 image). PosProductCard uses this for BOTH
      its front and back face (each `absolute inset-0` inside a box of this height), so every card in
@@ -76,8 +76,8 @@
      -- content that doesn't fit is clamped/truncated, never grows the box. */
   /* Flip card: full-photo front; back holds name + price, S/M/L, the +/- stepper and stock (see
      PosProductCard.jsx). */
-  --pos-card-h: 176px;
-  --pos-fs-card-name: 13px;
+  --pos-card-h: 340px;
+  --pos-fs-card-name: 15px;
   --pos-fs-card-price: 13px;
   --pos-shadow-hover: 0 4px 12px rgb(0 0 0 / 0.1);
   /* Thin info strip (time, date, cashier) fixed at the very bottom -- see PosStatusBar.jsx. */
@@ -316,7 +316,7 @@ html[lang="ar"] .pos-root {
 }
 /* Keeps a full-bleed product photo's name legible on any image. */
 .pos-photo-scrim {
-  background: linear-gradient(to top, rgb(0 0 0 / 0.72), rgb(0 0 0 / 0.35) 60%, transparent);
+  background: linear-gradient(to top, var(--pos-card), color-mix(in srgb, var(--pos-card) 75%, transparent) 65%, transparent);
 }
 
 /* Product image tile: a soft frame instead of a flat white square, and a tinted circle behind the

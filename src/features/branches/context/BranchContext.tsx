@@ -11,17 +11,16 @@ import {
 } from "react";
 import { useAuth } from "../../auth/hooks/useAuth";
 import { useCompany } from "../../companies/context/CompanyContext";
-import { useHasPermission } from "../../companies/hooks/useCompanies";
-import { branchQueryKeys, isBranchEnterable, useBranches } from "../hooks/useBranches";
+import { branchQueryKeys, isBranchEnterable, useMyBranches } from "../hooks/useBranches";
 
 const STORAGE_KEY = "nobo.currentBranchId";
-const BRANCHES_VIEW_PERMISSION = "Branches.View";
 
 type BranchContextValue = {
   currentBranchId: string | null;
   selectBranch: (branchId: string) => void;
   clearBranch: () => void;
   isBranchContextReady: boolean;
+  debug?: unknown;
 };
 
 const BranchContext = createContext<BranchContextValue | null>(null);
@@ -58,17 +57,21 @@ export function BranchProvider({ children }: BranchProviderProps) {
   const { status } = useAuth();
   const queryClient = useQueryClient();
   const { currentCompanyId, isCompanyContextReady } = useCompany();
-  const permissionQuery = useHasPermission(currentCompanyId, BRANCHES_VIEW_PERMISSION);
-  const canLoadBranches =
-    status === "authenticated" &&
-    isCompanyContextReady &&
-    Boolean(currentCompanyId) &&
-    !permissionQuery.isLoading &&
-    !permissionQuery.isError &&
-    permissionQuery.hasPermission;
-  const { data: branches } = useBranches(currentCompanyId, canLoadBranches);
+  // Deliberately the SAME enabled condition BranchGate.tsx uses for its own useMyBranches call
+  // (isCompanyContextReady && Boolean(currentCompanyId), no extra auth-status check here) --
+  // isCompanyContextReady can only become true once already authenticated (CompanyContext requires
+  // status === "authenticated" to populate it), so the check was redundant. Keeping the two
+  // "enabled" expressions textually different was enough to desync their TanStack Query observers:
+  // one would report status "pending"/fetchStatus "fetching" forever while the other, reading the
+  // identical queryKey, had already resolved to "success" with data -- a timing/enabled mismatch
+  // between two useQuery() calls for the same key, not a server or data problem.
+  const canLoadBranches = isCompanyContextReady && Boolean(currentCompanyId);
+  // Self-scoped (no Branches.View required) -- a cashier-only role must be able to resolve their
+  // own working branch without being granted Branches.View, which would also surface the Branches
+  // admin nav item for them.
+  const branchesQuery = useMyBranches(currentCompanyId, canLoadBranches);
+  const { data: branches, isSuccess: branchesLoaded, isError: branchesErrored } = branchesQuery;
   const [currentBranchId, setCurrentBranchId] = useState<string | null>(null);
-  const [isBranchContextReady, setIsBranchContextReady] = useState(false);
   const previousCompanyId = useRef<string | null>(null);
 
   const clearBranch = useCallback(() => {
@@ -84,88 +87,75 @@ export function BranchProvider({ children }: BranchProviderProps) {
   useEffect(() => {
     if (previousCompanyId.current !== currentCompanyId) {
       clearBranch();
-      setIsBranchContextReady(false);
-      queryClient.removeQueries({ queryKey: branchQueryKeys.all });
+      // invalidateQueries, NOT removeQueries: removeQueries destroys the Query object outright,
+      // which can orphan an already-mounted useQuery() observer (e.g. this provider's own
+      // useMyBranches call, alive for the app's whole lifetime) from the fresh Query object a
+      // later/different observer (e.g. BranchGate's) creates for the same key -- producing two
+      // observers of the "same" key stuck reporting different states (one permanently
+      // pending/fetching, the other success) forever. invalidateQueries marks the existing Query
+      // stale and refetches it in place, so every existing observer stays correctly bound.
+      queryClient.invalidateQueries({ queryKey: branchQueryKeys.all });
       previousCompanyId.current = currentCompanyId;
     }
   }, [clearBranch, currentCompanyId, queryClient]);
 
   useEffect(() => {
-    if (status === "checking") {
-      setIsBranchContextReady(false);
-      return;
-    }
-
     if (status === "anonymous") {
       clearBranch();
       queryClient.removeQueries({ queryKey: branchQueryKeys.all });
-      setIsBranchContextReady(false);
-      return;
     }
+  }, [clearBranch, queryClient, status]);
 
-    if (!currentCompanyId || !isCompanyContextReady) {
-      setIsBranchContextReady(false);
-      return;
-    }
-
-    if (permissionQuery.isLoading) {
-      setIsBranchContextReady(false);
-      return;
-    }
-
-    if (permissionQuery.isError || !permissionQuery.hasPermission) {
-      clearBranch();
-      setIsBranchContextReady(true);
-      return;
-    }
-
-    if (!branches) return;
+  // Auto-selects a branch once the list is known. Deliberately NOT part of readiness below --
+  // readiness only needs to know the branches QUERY has settled, not that a branch was picked
+  // (zero/multiple active branches is a valid settled state, handled by BranchGate's own render).
+  useEffect(() => {
+    if (!branches || !currentCompanyId) return;
 
     const activeBranches = branches.filter(isBranchEnterable);
     const currentIsValid =
-      currentBranchId &&
-      activeBranches.some((branch) => branch.branchId === currentBranchId);
-    const persistedBranchId = readPersistedBranchId();
-    const persistedBranch = activeBranches.find(
-      (branch) =>
-        branch.branchId === persistedBranchId &&
-        branch.companyId === currentCompanyId,
-    );
+      currentBranchId && activeBranches.some((branch) => branch.branchId === currentBranchId);
 
     if (currentIsValid) {
-      persistBranchId(currentBranchId);
-      setIsBranchContextReady(true);
+      persistBranchId(currentBranchId as string);
       return;
     }
+
+    const persistedBranchId = readPersistedBranchId();
+    const persistedBranch = activeBranches.find(
+      (branch) => branch.branchId === persistedBranchId && branch.companyId === currentCompanyId,
+    );
 
     if (persistedBranch) {
       setCurrentBranchId(persistedBranch.branchId);
       persistBranchId(persistedBranch.branchId);
-      setIsBranchContextReady(true);
       return;
     }
 
     if (activeBranches.length === 1) {
       setCurrentBranchId(activeBranches[0].branchId);
       persistBranchId(activeBranches[0].branchId);
-      setIsBranchContextReady(true);
       return;
     }
 
-    setCurrentBranchId(null);
-    removePersistedBranchId();
-    setIsBranchContextReady(true);
-  }, [
-    branches,
-    clearBranch,
-    currentBranchId,
-    currentCompanyId,
-    isCompanyContextReady,
-    permissionQuery.hasPermission,
-    permissionQuery.isError,
-    permissionQuery.isLoading,
-    status,
-  ]);
+    if (currentBranchId !== null) {
+      setCurrentBranchId(null);
+      removePersistedBranchId();
+    }
+  }, [branches, currentBranchId, currentCompanyId]);
+
+  // Derived directly from this render's own values (not a separately-scheduled effect+setState
+  // pair) so there is no timing window where fresh query data and a stale "ready" flag coexist.
+  const isBranchContextReady =
+    status === "checking"
+      ? false
+      : status === "anonymous"
+        ? false
+        : !isCompanyContextReady
+          ? false
+          : !currentCompanyId
+            ? true
+            : branchesLoaded || branchesErrored;
 
   const value = useMemo<BranchContextValue>(
     () => ({
@@ -173,8 +163,33 @@ export function BranchProvider({ children }: BranchProviderProps) {
       selectBranch,
       clearBranch,
       isBranchContextReady,
+      debug: {
+        authStatus: status,
+        isCompanyContextReady,
+        currentCompanyId,
+        canLoadBranches,
+        queryStatus: branchesQuery.status,
+        queryFetchStatus: branchesQuery.fetchStatus,
+        branchesLoaded,
+        branchesErrored,
+        branchesLen: branches?.length ?? null,
+      },
     }),
-    [clearBranch, currentBranchId, isBranchContextReady, selectBranch],
+    [
+      clearBranch,
+      currentBranchId,
+      isBranchContextReady,
+      selectBranch,
+      status,
+      isCompanyContextReady,
+      currentCompanyId,
+      canLoadBranches,
+      branchesQuery.status,
+      branchesQuery.fetchStatus,
+      branchesLoaded,
+      branchesErrored,
+      branches,
+    ],
   );
 
   return <BranchContext.Provider value={value}>{children}</BranchContext.Provider>;

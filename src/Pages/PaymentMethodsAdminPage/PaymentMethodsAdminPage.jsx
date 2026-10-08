@@ -20,6 +20,7 @@ import {
   StatusBadge,
 } from "../../shared/components/ui";
 import { formatDateTime } from "../../shared/utils/formatters";
+import { useI18n } from "../../i18n/I18nContext";
 import { useCompany } from "../../features/companies/context/CompanyContext";
 import { useHasPermission } from "../../features/companies/hooks/useCompanies";
 import {
@@ -39,12 +40,28 @@ const EMPTY_METHOD_FORM = {
   sortOrder: "0",
 };
 
-function getErrorMessage(error) {
-  return error?.message || "Request failed.";
+function getErrorMessage(error, t) {
+  return error?.message || t("paymentMethodsAdmin.common.requestFailed");
 }
 
 function statusTone(status) {
   return status === "Active" ? "success" : "warning";
+}
+
+function statusLabel(status, t) {
+  return status === "Active" ? t("paymentMethodsAdmin.common.active") : t("paymentMethodsAdmin.common.suspended");
+}
+
+const KIND_LABEL_KEYS = {
+  Cash: "paymentMethodsAdmin.kind.cash",
+  Card: "paymentMethodsAdmin.kind.card",
+  BankTransfer: "paymentMethodsAdmin.kind.bankTransfer",
+  Other: "paymentMethodsAdmin.kind.other",
+};
+
+function kindLabel(kind, t) {
+  const key = KIND_LABEL_KEYS[kind];
+  return key ? t(key) : kind;
 }
 
 function parseSortOrder(value) {
@@ -65,6 +82,7 @@ function PaymentKindIcon({ kind }) {
 }
 
 function PaymentMethodCard({ method, selected, onSelect }) {
+  const { t } = useI18n();
   return (
     <button
       type="button"
@@ -81,18 +99,18 @@ function PaymentMethodCard({ method, selected, onSelect }) {
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted">
             <span className="font-semibold text-muted">{method.code}</span>
-            <span>{method.kind}</span>
+            <span>{kindLabel(method.kind, t)}</span>
           </div>
         </div>
-        <StatusBadge tone={statusTone(method.status)}>{method.status}</StatusBadge>
+        <StatusBadge tone={statusTone(method.status)}>{statusLabel(method.status, t)}</StatusBadge>
       </div>
       <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
         <div className="rounded-lg bg-raised p-2">
-          <div className="text-subtle">Sort</div>
+          <div className="text-subtle">{t("paymentMethodsAdmin.card.sort")}</div>
           <div className="mt-1 font-semibold text-ink">{method.sortOrder}</div>
         </div>
         <div className="rounded-lg bg-raised p-2">
-          <div className="text-subtle">Created</div>
+          <div className="text-subtle">{t("paymentMethodsAdmin.card.created")}</div>
           <div className="mt-1 font-semibold text-ink">
             {formatDateTime(method.createdAtUtc)}
           </div>
@@ -112,6 +130,7 @@ function MethodForm({
   onSubmit,
   onStatusChange,
 }) {
+  const { t } = useI18n();
   const nextStatus = selectedMethod?.status === "Active" ? "Suspended" : "Active";
 
   return (
@@ -124,7 +143,7 @@ function MethodForm({
     >
       <div className="grid gap-3 sm:grid-cols-[1fr_1fr_170px_140px]">
         <label className="text-sm font-semibold text-muted">
-          Code
+          {t("paymentMethodsAdmin.field.code")}
           <input
             value={form.code}
             onChange={(event) => setForm((draft) => ({ ...draft, code: event.target.value }))}
@@ -134,7 +153,7 @@ function MethodForm({
           />
         </label>
         <label className="text-sm font-semibold text-muted">
-          Name
+          {t("paymentMethodsAdmin.field.name")}
           <input
             value={form.name}
             onChange={(event) => setForm((draft) => ({ ...draft, name: event.target.value }))}
@@ -144,7 +163,7 @@ function MethodForm({
           />
         </label>
         <label className="text-sm font-semibold text-muted">
-          Kind
+          {t("paymentMethodsAdmin.field.kind")}
           {mode === "create" ? (
             <select
               value={form.kind}
@@ -154,18 +173,18 @@ function MethodForm({
             >
               {PAYMENT_METHOD_KINDS.map((kind) => (
                 <option key={kind} value={kind}>
-                  {kind}
+                  {kindLabel(kind, t)}
                 </option>
               ))}
             </select>
           ) : (
             <div className="mt-1 flex h-11 items-center rounded-xl border border-line bg-raised px-3 text-sm text-ink">
-              {selectedMethod?.kind || form.kind}
+              {kindLabel(selectedMethod?.kind || form.kind, t)}
             </div>
           )}
         </label>
         <label className="text-sm font-semibold text-muted">
-          Sort Order
+          {t("paymentMethodsAdmin.field.sortOrder")}
           <input
             type="number"
             min="0"
@@ -179,11 +198,11 @@ function MethodForm({
         </label>
       </div>
       <div className="rounded-xl border border-line bg-raised px-3 py-2 text-sm text-muted">
-        Kind is selected on create and is read-only after creation.
+        {t("paymentMethodsAdmin.kindReadOnlyNotice")}
       </div>
       {!canManage && (
         <div className="rounded-xl border border-warning bg-warning-soft px-3 py-2 text-sm text-warning">
-          Payments.Configure permission is required for payment method changes.
+          {t("paymentMethodsAdmin.notice.managePermissionRequired")}
         </div>
       )}
       <div className="flex flex-wrap gap-2">
@@ -193,7 +212,11 @@ function MethodForm({
           className="flex h-10 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {mode === "edit" ? <Pencil size={15} /> : <Plus size={15} />}
-          {isPending ? "Saving..." : mode === "edit" ? "Save method" : "Create method"}
+          {isPending
+            ? t("paymentMethodsAdmin.common.saving")
+            : mode === "edit"
+              ? t("paymentMethodsAdmin.action.saveMethod")
+              : t("paymentMethodsAdmin.action.createMethod")}
         </button>
         {mode === "edit" && selectedMethod && (
           <button
@@ -203,7 +226,7 @@ function MethodForm({
             className="flex h-10 items-center gap-2 rounded-xl border border-line bg-raised px-4 text-sm font-bold text-ink transition hover:border-accent-line hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-50"
           >
             {nextStatus === "Active" ? <CircleCheck size={15} /> : <CirclePause size={15} />}
-            {nextStatus === "Active" ? "Activate" : "Suspend"}
+            {nextStatus === "Active" ? t("paymentMethodsAdmin.common.activate") : t("paymentMethodsAdmin.common.suspend")}
           </button>
         )}
       </div>
@@ -212,6 +235,7 @@ function MethodForm({
 }
 
 export default function PaymentMethodsAdminPage() {
+  const { t } = useI18n();
   const { currentCompanyId } = useCompany();
   const [status, setStatus] = useState("");
   const [kind, setKind] = useState("");
@@ -271,7 +295,7 @@ export default function PaymentMethodsAdminPage() {
   const submitMethod = async () => {
     const sortOrder = parseSortOrder(form.sortOrder);
     if (sortOrder === null) {
-      showNotice("Sort order must be zero or greater.");
+      showNotice(t("paymentMethodsAdmin.notice.invalidSortOrder"));
       return;
     }
 
@@ -291,7 +315,7 @@ export default function PaymentMethodsAdminPage() {
           kind: created.kind,
           sortOrder: String(created.sortOrder),
         });
-        showNotice("Payment method created.");
+        showNotice(t("paymentMethodsAdmin.notice.methodCreated"));
         return;
       }
 
@@ -306,9 +330,9 @@ export default function PaymentMethodsAdminPage() {
         kind: updated.kind,
         sortOrder: String(updated.sortOrder),
       });
-      showNotice("Payment method updated.");
+      showNotice(t("paymentMethodsAdmin.notice.methodUpdated"));
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
@@ -321,9 +345,13 @@ export default function PaymentMethodsAdminPage() {
         kind: updated.kind,
         sortOrder: String(updated.sortOrder),
       });
-      showNotice(`Payment method ${nextStatus.toLowerCase()}.`);
+      showNotice(
+        nextStatus === "Active"
+          ? t("paymentMethodsAdmin.notice.methodActivated")
+          : t("paymentMethodsAdmin.notice.methodSuspended"),
+      );
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
@@ -331,7 +359,7 @@ export default function PaymentMethodsAdminPage() {
     <AppLayout>
       <main className="odoo-root space-y-3" dir="rtl">
         <PageHeader
-          title="Payment Methods"
+          title={t("paymentMethodsAdmin.pageTitle")}
           actions={
             <div className="flex flex-wrap gap-2">
               <button
@@ -340,7 +368,7 @@ export default function PaymentMethodsAdminPage() {
                 className="flex items-center gap-2 rounded-xl border border-line bg-raised px-3 py-2 text-sm font-bold text-ink"
               >
                 <RefreshCw size={14} />
-                Refresh
+                {t("paymentMethodsAdmin.refresh")}
               </button>
               <button
                 type="button"
@@ -348,7 +376,7 @@ export default function PaymentMethodsAdminPage() {
                 className="flex items-center gap-2 rounded-xl bg-accent px-3 py-2 text-sm font-bold text-white"
               >
                 <Plus size={14} />
-                New method
+                {t("paymentMethodsAdmin.action.newMethod")}
               </button>
             </div>
           }
@@ -362,15 +390,15 @@ export default function PaymentMethodsAdminPage() {
 
         {!currentCompanyId ? (
           <EmptyState
-            title="Company required"
-            message="Select a company to configure payment methods."
+            title={t("paymentMethodsAdmin.gate.companyRequired.title")}
+            message={t("paymentMethodsAdmin.gate.companyRequired.message")}
           />
         ) : configurePermissionQuery.isLoading ? (
-          <LoadingState label="Checking Payments permissions..." />
+          <LoadingState label={t("paymentMethodsAdmin.gate.checkingPermissions")} />
         ) : !configurePermissionQuery.hasPermission ? (
           <ErrorState
-            title="Permission required"
-            message="Payments.Configure permission is required to manage payment methods."
+            title={t("paymentMethodsAdmin.gate.permissionRequired.title")}
+            message={t("paymentMethodsAdmin.gate.permissionRequired.message")}
           />
         ) : (
           <div className="grid gap-4 xl:grid-cols-[420px_1fr]">
@@ -385,7 +413,7 @@ export default function PaymentMethodsAdminPage() {
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
                     maxLength={100}
-                    placeholder="Search code or name"
+                    placeholder={t("paymentMethodsAdmin.field.searchCodeOrName")}
                     className="h-10 w-full rounded-xl border border-line bg-canvas pr-9 pl-3 text-sm text-ink outline-none focus:border-accent-line"
                   />
                 </label>
@@ -394,37 +422,37 @@ export default function PaymentMethodsAdminPage() {
                   onChange={(event) => setStatus(event.target.value)}
                   className="h-10 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line"
                 >
-                  <option value="">All status</option>
-                  <option value="Active">Active</option>
-                  <option value="Suspended">Suspended</option>
+                  <option value="">{t("paymentMethodsAdmin.common.allStatus")}</option>
+                  <option value="Active">{t("paymentMethodsAdmin.common.active")}</option>
+                  <option value="Suspended">{t("paymentMethodsAdmin.common.suspended")}</option>
                 </select>
                 <select
                   value={kind}
                   onChange={(event) => setKind(event.target.value)}
                   className="h-10 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line"
                 >
-                  <option value="">All kinds</option>
+                  <option value="">{t("paymentMethodsAdmin.common.allKinds")}</option>
                   {PAYMENT_METHOD_KINDS.map((methodKind) => (
                     <option key={methodKind} value={methodKind}>
-                      {methodKind}
+                      {kindLabel(methodKind, t)}
                     </option>
                   ))}
                 </select>
               </div>
 
-              {methodsQuery.isLoading && <LoadingState label="Loading payment methods..." />}
+              {methodsQuery.isLoading && <LoadingState label={t("paymentMethodsAdmin.loadingMethods")} />}
               {methodsQuery.isError && (
                 <ErrorState
-                  title="Unable to load payment methods"
-                  message={getErrorMessage(methodsQuery.error)}
+                  title={t("paymentMethodsAdmin.loadMethodsError")}
+                  message={getErrorMessage(methodsQuery.error, t)}
                 />
               )}
               {!methodsQuery.isLoading &&
                 !methodsQuery.isError &&
                 methodsQuery.data?.length === 0 && (
                   <EmptyState
-                    title="No payment methods found"
-                    message="No methods match the current filters."
+                    title={t("paymentMethodsAdmin.emptyMethods.title")}
+                    message={t("paymentMethodsAdmin.emptyMethods.message")}
                   />
                 )}
               {!methodsQuery.isLoading &&
@@ -448,26 +476,30 @@ export default function PaymentMethodsAdminPage() {
                 <div>
                   <div className="flex items-center gap-2 text-sm text-muted">
                     <Power size={15} className="text-accent" />
-                    {mode === "create" ? "Create method" : "Method details"}
+                    {mode === "create"
+                      ? t("paymentMethodsAdmin.methodDetails.createLabel")
+                      : t("paymentMethodsAdmin.methodDetails.detailsLabel")}
                   </div>
                   <h2 className="mt-1 text-xl font-black text-ink">
-                    {mode === "create" ? "New payment method" : selectedMethod?.name || "Loading method"}
+                    {mode === "create"
+                      ? t("paymentMethodsAdmin.methodDetails.newMethodTitle")
+                      : selectedMethod?.name || t("paymentMethodsAdmin.methodDetails.loadingMethodTitle")}
                   </h2>
                 </div>
                 {selectedMethod && (
                   <StatusBadge tone={statusTone(selectedMethod.status)}>
-                    {selectedMethod.status}
+                    {statusLabel(selectedMethod.status, t)}
                   </StatusBadge>
                 )}
               </div>
 
               {mode === "edit" && detailsQuery.isLoading && (
-                <LoadingState label="Loading payment method details..." />
+                <LoadingState label={t("paymentMethodsAdmin.loadingMethodDetails")} />
               )}
               {mode === "edit" && detailsQuery.isError && (
                 <ErrorState
-                  title="Unable to load method details"
-                  message={getErrorMessage(detailsQuery.error)}
+                  title={t("paymentMethodsAdmin.loadMethodDetailsError")}
+                  message={getErrorMessage(detailsQuery.error, t)}
                 />
               )}
               {(mode === "create" || selectedMethod) && (
@@ -475,23 +507,25 @@ export default function PaymentMethodsAdminPage() {
                   {selectedMethod && (
                     <div className="grid gap-2 sm:grid-cols-4">
                       <div className="rounded-xl border border-line bg-raised p-3">
-                        <div className="text-xs text-subtle">Kind</div>
-                        <div className="mt-1 text-sm font-black text-ink">{selectedMethod.kind}</div>
+                        <div className="text-xs text-subtle">{t("paymentMethodsAdmin.field.kind")}</div>
+                        <div className="mt-1 text-sm font-black text-ink">{kindLabel(selectedMethod.kind, t)}</div>
                       </div>
                       <div className="rounded-xl border border-line bg-raised p-3">
-                        <div className="text-xs text-subtle">Sort Order</div>
+                        <div className="text-xs text-subtle">{t("paymentMethodsAdmin.field.sortOrder")}</div>
                         <div className="mt-1 text-sm font-black text-ink">
                           {selectedMethod.sortOrder}
                         </div>
                       </div>
                       <div className="rounded-xl border border-line bg-raised p-3">
-                        <div className="text-xs text-subtle">Operational</div>
+                        <div className="text-xs text-subtle">{t("paymentMethodsAdmin.detail.operational")}</div>
                         <div className="mt-1 text-sm font-black text-ink">
-                          {selectedMethod.isActive ? "Available" : "Suspended"}
+                          {selectedMethod.isActive
+                            ? t("paymentMethodsAdmin.detail.available")
+                            : t("paymentMethodsAdmin.common.suspended")}
                         </div>
                       </div>
                       <div className="rounded-xl border border-line bg-raised p-3">
-                        <div className="text-xs text-subtle">Created</div>
+                        <div className="text-xs text-subtle">{t("paymentMethodsAdmin.card.created")}</div>
                         <div className="mt-1 text-sm font-black text-ink">
                           {formatDateTime(selectedMethod.createdAtUtc)}
                         </div>

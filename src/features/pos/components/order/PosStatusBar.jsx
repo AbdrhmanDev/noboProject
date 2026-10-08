@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { CalendarDays, Clock3, Power, UserRound } from "lucide-react";
+import { CalendarDays, Clock3, Keyboard, LogOut, Moon, Power, Sun, UserRound } from "lucide-react";
 import { useI18n } from "../../../../i18n/I18nContext";
+import { useShortcutContext } from "../../../shortcuts/useShortcuts";
 
 // Thin info strip pinned to the very bottom of the order screen: live time,
 // today's date and the signed-in cashier's name. Display only -- reads the cashier name POSPage
@@ -8,8 +9,24 @@ import { useI18n } from "../../../../i18n/I18nContext";
 // Height is --pos-status-bar-h (pos-theme.css). Also hosts the close-shift button (moved here from
 // the top toolbar): `onCloseShift` opens POSPage's existing "closeShift" dialog, and is only passed
 // while a shift is open.
-export function PosStatusBar({ cashierName, onCloseShift }) {
+//
+// Also hosts the theme toggle / shortcuts / logout controls (`onLogout`): AppLayout used to render
+// those as a SEPARATE normal-flow row (Header `bare`) meant to merge into "the footer's own status
+// line" on this route, but that row and this fixed bar both ended up claiming the same strip at the
+// bottom of the screen -- this bar (fixed, higher z-index) simply covered the other one, hiding
+// logout/theme entirely. Rendering them for real inside this one actual bar is the fix.
+export function PosStatusBar({ cashierName, onCloseShift, onLogout }) {
   const { lang, t } = useI18n();
+  const { openHelp } = useShortcutContext();
+  const [isDark, setIsDark] = useState(() =>
+    typeof window !== "undefined" ? localStorage.getItem("nobo-theme") !== "light" : true,
+  );
+
+  useEffect(() => {
+    const theme = isDark ? "dark" : "light";
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem("nobo-theme", theme);
+  }, [isDark]);
   const now = useNow();
   const locale = lang === "ar" ? "ar-EG" : lang;
 
@@ -60,6 +77,35 @@ export function PosStatusBar({ cashierName, onCloseShift }) {
             >
               <Power size={14} />
               <span className="hidden sm:inline">{t("pos.statusBar.closeShift")}</span>
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => setIsDark((prev) => !prev)}
+            aria-label={isDark ? t("header.lightMode") : t("header.darkMode")}
+            title={isDark ? t("header.lightMode") : t("header.darkMode")}
+            className="flex shrink-0 items-center transition hover:text-pos-text"
+          >
+            {isDark ? <Moon size={15} /> : <Sun size={15} />}
+          </button>
+          <button
+            type="button"
+            onClick={openHelp}
+            aria-label={t("header.shortcuts")}
+            title={t("header.shortcuts")}
+            className="flex shrink-0 items-center transition hover:text-pos-text"
+          >
+            <Keyboard size={15} />
+          </button>
+          {onLogout && (
+            <button
+              type="button"
+              onClick={onLogout}
+              aria-label={t("header.logout")}
+              title={t("header.logout")}
+              className="flex shrink-0 items-center transition hover:text-pos-danger-text"
+            >
+              <LogOut size={15} />
             </button>
           )}
         </div>

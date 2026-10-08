@@ -33,7 +33,6 @@ export function CatalogPanel({
   taxSetupRequired,
   canEditDraft,
   onTapProduct,
-  onSelectProductSize,
   query,
   productGridRef,
   // Touch-first redesign: per-product cart state + the card-level add/adjust handlers. All keyed
@@ -52,7 +51,11 @@ export function CatalogPanel({
   const [flippedProductId, setFlippedProductId] = useState(null);
 
   return (
-    <section className="flex min-w-0 gap-2 rounded-pos-lg border border-pos-border bg-pos-bg p-2 xl:h-[calc(100dvh-var(--pos-chrome))]">
+    // md:h-[...] (not xl:) -- CategorySidebar itself is `hidden md:flex`, so the internal scroller
+    // below has to become height-bound at that same breakpoint, otherwise (xl and up only) the
+    // page as a whole scrolls between md and xl and drags the "fixed" category sidebar along with
+    // it, which is exactly the bug this was meant to prevent.
+    <section className="flex min-w-0 gap-2 rounded-pos-lg border border-pos-border bg-pos-bg p-2 md:h-[calc(100dvh-var(--pos-chrome))]">
       <div className="flex min-w-0 flex-1 flex-col gap-2">
       {/* Responsive: below md the side category column would eat a third of a phone's width, so
           the same categories become a horizontal scrolling bar above the products instead. */}
@@ -182,7 +185,6 @@ export function CatalogPanel({
                       setFlippedProductId((current) => (current === product.productId ? null : product.productId))
                     }
                     onAddDefault={() => onTapProduct(product)}
-                    onSelectSize={(variant) => onSelectProductSize(product, variant)}
                     onIncrement={onIncrementProductLine}
                     onDecrement={onDecrementProductLine}
                   />

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import AppLayout from "../../components/AppLayout";
 import { EmptyState, ErrorState, LoadingState } from "../../shared/components/ui";
+import { useI18n } from "../../i18n/I18nContext";
 import { useCompany } from "../../features/companies/context/CompanyContext";
 import { useBranch } from "../../features/branches/context/BranchContext";
 import { useHasPermission } from "../../features/companies/hooks/useCompanies";
@@ -13,6 +14,7 @@ const INVENTORY_VIEW_PERMISSION = "Inventory.View";
 const INVENTORY_ADJUST_STOCK_PERMISSION = "Inventory.AdjustStock";
 
 export default function InventoryPage() {
+  const { t } = useI18n();
   const { currentCompanyId } = useCompany();
   const { currentBranchId } = useBranch();
   const [tab, setTab] = useState("overview");
@@ -62,15 +64,15 @@ export default function InventoryPage() {
 
         {!currentCompanyId || !currentBranchId ? (
           <EmptyState
-            title="Company and branch required"
-            message="Select a company and branch to view inventory operations."
+            title={t("inventory.gate.companyRequired.title")}
+            message={t("inventory.gate.companyRequired.message")}
           />
         ) : viewPermissionQuery.isLoading ? (
-          <LoadingState label="Checking Inventory permissions..." />
+          <LoadingState label={t("inventory.gate.checkingPermissions")} />
         ) : !canView ? (
           <ErrorState
-            title="Permission required"
-            message="Inventory.View permission is required to view inventory operations."
+            title={t("inventory.gate.permissionRequired.title")}
+            message={t("inventory.gate.permissionRequired.message")}
           />
         ) : tab === "overview" ? (
           <InventoryOverviewPanel

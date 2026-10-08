@@ -1,6 +1,6 @@
 import {
   Home, ScanLine, ChefHat, ShoppingBag, ShoppingCart, Boxes,
-  Settings, MoreHorizontal, Package,
+  Package,
   Coins, ReceiptText, WalletCards, Armchair, Printer, ShieldCheck, ShieldAlert, UsersRound, FileText,
   Building2, Cpu, ShieldHalf,
 } from "lucide-react";
@@ -28,7 +28,11 @@ export const NAV_ITEMS = [
   { icon: Printer, labelKey: "nav.devices", kind: "group", module: "devices" },
   { icon: Armchair, labelKey: "nav.restaurant", kind: "group", module: "restaurant" },
   { icon: Boxes, labelKey: "nav.inventory", kind: "group", module: "inventory" },
-  { icon: ShoppingBag, labelKey: "nav.sales", to: ROUTES.SALES, permission: SALES_ORDERS_VIEW_PERMISSION },
+  // hideWhenOwnSalesScope: a member whose own CompanyMembership.SalesOrderVisibilityScope is "Own"
+  // (set in Users & Access) already gets SalesOrders.View restricted to their own orders server-side
+  // -- this hides the broader all-orders admin page for them specifically, so granting SalesOrders.View
+  // for POS's F6 order-retrieval doesn't also unlock the full Sales tab for a cashier-only role.
+  { icon: ShoppingBag, labelKey: "nav.sales", to: ROUTES.SALES, permission: SALES_ORDERS_VIEW_PERMISSION, hideWhenOwnSalesScope: true },
   { icon: ShoppingCart, labelKey: "nav.purchases", kind: "group", module: "procurement" },
   // NOBO-internal Control Plane -- NOT a Commercial App and NOT gated by company
   // entitlement/permission at all (see PlatformNavGroup); visible only to platform staff.
@@ -39,6 +43,4 @@ export const NAV_ITEMS = [
   // is shown to someone who could plausibly be an approver. The backend independently re-checks
   // permission/branch/entitlement/PIN on every approve attempt regardless (never trust this gate).
   { icon: ShieldAlert, labelKey: "nav.approvals", to: ROUTES.APPROVALS, permissions: [PAYMENTS_REFUND_PERMISSION, SALES_ORDERS_APPLY_DISCOUNT_PERMISSION], entitlement: ENTITLEMENT_POS },
-  { icon: Settings, labelKey: "nav.settings", to: ROUTES.SETTINGS },
-  { icon: MoreHorizontal, labelKey: "nav.more", to: ROUTES.MORE },
 ];

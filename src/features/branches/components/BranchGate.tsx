@@ -1,13 +1,10 @@
 import type { ReactNode } from "react";
-import { EmptyState, ErrorState, LoadingState } from "../../../shared/components/ui";
+import { ErrorState, LoadingState } from "../../../shared/components/ui";
 import { useCompany } from "../../companies/context/CompanyContext";
-import { useHasPermission } from "../../companies/hooks/useCompanies";
 import { useBranch } from "../context/BranchContext";
-import { isBranchEnterable, useBranches } from "../hooks/useBranches";
+import { isBranchEnterable, useMyBranches } from "../hooks/useBranches";
 import { BranchOnboarding } from "./BranchOnboarding";
 import { BranchSelector } from "./BranchSelector";
-
-const BRANCHES_VIEW_PERMISSION = "Branches.View";
 
 type BranchGateProps = {
   children: ReactNode;
@@ -24,46 +21,38 @@ function BranchGateShell({ children }: { children: ReactNode }) {
 
 export function BranchGate({ children }: BranchGateProps) {
   const { currentCompanyId, isCompanyContextReady } = useCompany();
-  const { currentBranchId, isBranchContextReady } = useBranch();
-  const permissionQuery = useHasPermission(currentCompanyId, BRANCHES_VIEW_PERMISSION);
-  const canLoadBranches =
-    isCompanyContextReady &&
-    Boolean(currentCompanyId) &&
-    !permissionQuery.isLoading &&
-    !permissionQuery.isError &&
-    permissionQuery.hasPermission;
+  const { currentBranchId, isBranchContextReady, debug } = useBranch();
+  const canLoadBranches = isCompanyContextReady && Boolean(currentCompanyId);
+  // Self-scoped (no Branches.View required) -- see BranchContext.tsx for why: a cashier-only role
+  // must be able to pass this gate without being granted Branches.View.
   const {
     data: branches,
     isLoading: branchesLoading,
     isError: branchesError,
-  } = useBranches(currentCompanyId, canLoadBranches);
+  } = useMyBranches(currentCompanyId, canLoadBranches);
 
-  if (permissionQuery.isLoading || !isBranchContextReady) {
+  if (!isBranchContextReady) {
     return (
       <BranchGateShell>
         <LoadingState label="Preparing branch context..." />
-      </BranchGateShell>
-    );
-  }
-
-  if (permissionQuery.isError) {
-    return (
-      <BranchGateShell>
-        <ErrorState
-          title="Permissions unavailable"
-          message="Unable to confirm branch access."
-        />
-      </BranchGateShell>
-    );
-  }
-
-  if (!permissionQuery.hasPermission) {
-    return (
-      <BranchGateShell>
-        <EmptyState
-          title="Branch access unavailable"
-          message="Your current role cannot view branches for this company."
-        />
+        <pre style={{ color: "white", fontSize: 11, marginTop: 12, direction: "ltr", textAlign: "left" }}>
+          {JSON.stringify(
+            {
+              fromContext: debug,
+              fromGate: {
+                isCompanyContextReady,
+                currentCompanyId,
+                canLoadBranches,
+                branchesLoading,
+                branchesError,
+                branchesCount: branches?.length ?? null,
+              },
+              isBranchContextReady,
+            },
+            null,
+            2,
+          )}
+        </pre>
       </BranchGateShell>
     );
   }

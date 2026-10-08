@@ -13,6 +13,7 @@ import {
   Trash2,
 } from "lucide-react";
 import AppLayout from "../../components/AppLayout";
+import { useI18n } from "../../i18n/I18nContext";
 import {
   EmptyState,
   ErrorState,
@@ -49,8 +50,8 @@ const EMPTY_PRICE_LIST_FORM = { name: "", isDefault: false, taxMode: "Inclusive"
 const EMPTY_VARIANT_PRICE_FORM = { amount: "" };
 const EMPTY_MODIFIER_PRICE_FORM = { amountAdjustment: "" };
 
-function getErrorMessage(error) {
-  return error?.message || "Request failed.";
+function getErrorMessage(error, t) {
+  return error?.message || t("pricingAdmin.requestFailed");
 }
 
 function statusTone(status) {
@@ -63,17 +64,17 @@ function getDecimalScale(value) {
   return normalized.split(".")[1]?.length || 0;
 }
 
-function parseMoneyInput(value, { allowNegative = false } = {}) {
+function parseMoneyInput(value, t, { allowNegative = false } = {}) {
   const normalized = String(value).trim();
-  if (!normalized) return { error: "Amount is required." };
+  if (!normalized) return { error: t("pricingAdmin.amount.required") };
   if (!/^-?\d+(\.\d+)?$/.test(normalized)) {
-    return { error: "Amount must be a valid decimal number." };
+    return { error: t("pricingAdmin.amount.invalid") };
   }
   if (!allowNegative && normalized.startsWith("-")) {
-    return { error: "Amount cannot be negative." };
+    return { error: t("pricingAdmin.amount.negative") };
   }
   if (getDecimalScale(normalized) > 4) {
-    return { error: "Amount supports at most 4 decimal places before backend currency validation." };
+    return { error: t("pricingAdmin.amount.tooManyDecimals") };
   }
 
   return { value: Number(normalized) };
@@ -84,10 +85,12 @@ function formatConfiguredAmount(value, currencyCode) {
 }
 
 function PriceBadge({ item, currencyCode }) {
+  const { t } = useI18n();
+
   if (!item?.isConfigured) {
     return (
       <span className="rounded-full border border-warning bg-warning-soft px-2 py-1 text-xs font-bold text-warning">
-        No price
+        {t("pricingAdmin.noPrice")}
       </span>
     );
   }
@@ -100,6 +103,7 @@ function PriceBadge({ item, currencyCode }) {
 }
 
 function PriceListCard({ priceList, selected, onSelect }) {
+  const { t } = useI18n();
   return (
     <button
       type="button"
@@ -116,14 +120,14 @@ function PriceListCard({ priceList, selected, onSelect }) {
           </div>
           <div className="mt-1 flex flex-wrap gap-2 text-sm text-muted">
             <span>{priceList.currencyCode}</span>
-            <span>{priceList.taxMode || "No tax mode"}</span>
-            {priceList.isDefault && <span className="text-accent">Default</span>}
+            <span>{priceList.taxMode || t("pricingAdmin.noTaxMode")}</span>
+            {priceList.isDefault && <span className="text-accent">{t("pricingAdmin.defaultBadge")}</span>}
           </div>
         </div>
         <StatusBadge tone={statusTone(priceList.status)}>{priceList.status}</StatusBadge>
       </div>
       <div className="mt-3 text-xs text-subtle">
-        Created {formatDateTime(priceList.createdAtUtc)}
+        {t("pricingAdmin.common.createdOn", { date: formatDateTime(priceList.createdAtUtc) })}
       </div>
     </button>
   );
@@ -154,6 +158,7 @@ function InfoTile({ label, value }) {
 }
 
 export default function PricingAdminPage() {
+  const { t } = useI18n();
   const { currentCompanyId } = useCompany();
   const { currentBranchId } = useBranch();
   const [priceListStatus, setPriceListStatus] = useState("");
@@ -336,7 +341,7 @@ export default function PricingAdminPage() {
           isDefault: created.isDefault,
           taxMode: created.taxMode || "Inclusive",
         });
-        showNotice("Price list created.");
+        showNotice(t("pricingAdmin.notice.priceListCreated"));
         return;
       }
 
@@ -360,9 +365,9 @@ export default function PricingAdminPage() {
         isDefault: result.isDefault,
         taxMode: taxMode || "Inclusive",
       });
-      showNotice("Price list updated.");
+      showNotice(t("pricingAdmin.notice.priceListUpdated"));
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
@@ -371,66 +376,70 @@ export default function PricingAdminPage() {
     const status = selectedPriceList.status === "Active" ? "Suspended" : "Active";
     try {
       await statusMutation.mutateAsync({ status });
-      showNotice(`Price list ${status.toLowerCase()}.`);
+      showNotice(
+        status === "Active"
+          ? t("pricingAdmin.notice.priceListActivated")
+          : t("pricingAdmin.notice.priceListSuspended"),
+      );
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
   const submitTaxMode = async () => {
     try {
       await taxModeMutation.mutateAsync({ taxMode: priceListForm.taxMode });
-      showNotice("Tax mode updated.");
+      showNotice(t("pricingAdmin.notice.taxModeUpdated"));
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
   const submitVariantPrice = async () => {
-    const parsed = parseMoneyInput(variantPriceForm.amount);
+    const parsed = parseMoneyInput(variantPriceForm.amount, t);
     if (parsed.error) return showNotice(parsed.error);
     try {
       await setVariantPriceMutation.mutateAsync({ amount: parsed.value });
-      showNotice("Variant price saved.");
+      showNotice(t("pricingAdmin.notice.variantPriceSaved"));
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
   const removeVariantPrice = async () => {
-    if (!window.confirm("Delete configured variant price? This is not the same as setting price to 0.")) {
+    if (!window.confirm(t("pricingAdmin.confirm.deleteVariantPrice"))) {
       return;
     }
     try {
       await removeVariantPriceMutation.mutateAsync();
       setVariantPriceForm(EMPTY_VARIANT_PRICE_FORM);
-      showNotice("Variant price deleted.");
+      showNotice(t("pricingAdmin.notice.variantPriceDeleted"));
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
   const submitModifierPrice = async () => {
-    const parsed = parseMoneyInput(modifierPriceForm.amountAdjustment, { allowNegative: true });
+    const parsed = parseMoneyInput(modifierPriceForm.amountAdjustment, t, { allowNegative: true });
     if (parsed.error) return showNotice(parsed.error);
     try {
       await setModifierPriceMutation.mutateAsync({ amountAdjustment: parsed.value });
-      showNotice("Modifier price saved.");
+      showNotice(t("pricingAdmin.notice.modifierPriceSaved"));
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
   const removeModifierPrice = async () => {
-    if (!window.confirm("Delete configured modifier price? This is not the same as setting adjustment to 0.")) {
+    if (!window.confirm(t("pricingAdmin.confirm.deleteModifierPrice"))) {
       return;
     }
     try {
       await removeModifierPriceMutation.mutateAsync();
       setModifierPriceForm(EMPTY_MODIFIER_PRICE_FORM);
-      showNotice("Modifier price deleted.");
+      showNotice(t("pricingAdmin.notice.modifierPriceDeleted"));
     } catch (error) {
-      showNotice(getErrorMessage(error));
+      showNotice(getErrorMessage(error, t));
     }
   };
 
@@ -438,7 +447,7 @@ export default function PricingAdminPage() {
     <AppLayout>
       <main className="odoo-root space-y-3" dir="rtl">
         <PageHeader
-          title="Pricing"
+          title={t("pricingAdmin.pageTitle")}
           actions={
             <div className="flex flex-wrap gap-2">
               <button
@@ -451,7 +460,7 @@ export default function PricingAdminPage() {
                 className="flex items-center gap-2 rounded-xl border border-line bg-raised px-3 py-2 text-sm font-bold text-ink"
               >
                 <RefreshCw size={14} />
-                Refresh
+                {t("pricingAdmin.refresh")}
               </button>
               <button
                 type="button"
@@ -459,7 +468,7 @@ export default function PricingAdminPage() {
                 className="flex items-center gap-2 rounded-xl bg-accent px-3 py-2 text-sm font-bold text-white"
               >
                 <Plus size={14} />
-                New price list
+                {t("pricingAdmin.newPriceList")}
               </button>
             </div>
           }
@@ -472,11 +481,11 @@ export default function PricingAdminPage() {
         )}
 
         {!currentCompanyId ? (
-          <EmptyState title="Company required" message="Select a company to manage pricing." />
+          <EmptyState title={t("pricingAdmin.gate.companyRequired.title")} message={t("pricingAdmin.gate.companyRequired.message")} />
         ) : viewPermissionQuery.isLoading ? (
-          <LoadingState label="Checking Pricing permissions..." />
+          <LoadingState label={t("pricingAdmin.gate.checkingPermissions")} />
         ) : !viewPermissionQuery.hasPermission ? (
-          <ErrorState title="Permission required" message="Pricing.View permission is required." />
+          <ErrorState title={t("pricingAdmin.gate.permissionRequired.title")} message={t("pricingAdmin.gate.permissionRequired.message")} />
         ) : (
           <div className="grid gap-4 2xl:grid-cols-[380px_1fr]">
             <section className="rounded-xl border border-line bg-surface p-3">
@@ -487,7 +496,7 @@ export default function PricingAdminPage() {
                     value={priceListSearch}
                     onChange={(event) => setPriceListSearch(event.target.value)}
                     maxLength={100}
-                    placeholder="Search price lists"
+                    placeholder={t("pricingAdmin.searchPriceLists")}
                     className="h-10 w-full rounded-xl border border-line bg-canvas pr-9 pl-3 text-sm text-ink outline-none"
                   />
                 </label>
@@ -496,17 +505,17 @@ export default function PricingAdminPage() {
                   onChange={(event) => setPriceListStatus(event.target.value)}
                   className="h-10 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none"
                 >
-                  <option value="">All status</option>
-                  <option value="Active">Active</option>
-                  <option value="Suspended">Suspended</option>
+                  <option value="">{t("pricingAdmin.field.allStatus")}</option>
+                  <option value="Active">{t("pricingAdmin.common.active")}</option>
+                  <option value="Suspended">{t("pricingAdmin.common.suspended")}</option>
                 </select>
               </div>
-              {priceListsQuery.isLoading && <LoadingState label="Loading price lists..." />}
+              {priceListsQuery.isLoading && <LoadingState label={t("pricingAdmin.loadingPriceLists")} />}
               {priceListsQuery.isError && (
-                <ErrorState title="Unable to load price lists" message={getErrorMessage(priceListsQuery.error)} />
+                <ErrorState title={t("pricingAdmin.loadPriceListsError")} message={getErrorMessage(priceListsQuery.error, t)} />
               )}
               {!priceListsQuery.isLoading && !priceListsQuery.isError && priceLists.length === 0 && (
-                <EmptyState title="No price lists found" message="No price lists match the current filters." />
+                <EmptyState title={t("pricingAdmin.noPriceLists.title")} message={t("pricingAdmin.noPriceLists.message")} />
               )}
               {!priceListsQuery.isLoading && !priceListsQuery.isError && priceLists.length > 0 && (
                 <div className="max-h-[calc(100vh-320px)] min-h-[360px] space-y-2 overflow-y-auto pr-1 scrollbar-none">
@@ -526,13 +535,13 @@ export default function PricingAdminPage() {
               <div className="rounded-xl border border-line bg-surface p-4">
                 <PanelTitle
                   icon={<Power size={15} className="text-accent" />}
-                  eyebrow={priceListMode === "create" ? "Create price list" : "Price list configuration"}
-                  title={priceListMode === "create" ? "New price list" : selectedPriceList?.name || "Loading price list"}
+                  eyebrow={priceListMode === "create" ? t("pricingAdmin.createEyebrow") : t("pricingAdmin.configEyebrow")}
+                  title={priceListMode === "create" ? t("pricingAdmin.newPriceList") : selectedPriceList?.name || t("pricingAdmin.common.loading")}
                   status={selectedPriceList?.status}
                 />
-                {priceListMode === "edit" && priceListDetailsQuery.isLoading && <LoadingState label="Loading price list..." />}
+                {priceListMode === "edit" && priceListDetailsQuery.isLoading && <LoadingState label={t("pricingAdmin.loadingPriceList")} />}
                 {priceListMode === "edit" && priceListDetailsQuery.isError && (
-                  <ErrorState title="Unable to load price list" message={getErrorMessage(priceListDetailsQuery.error)} />
+                  <ErrorState title={t("pricingAdmin.loadPriceListError")} message={getErrorMessage(priceListDetailsQuery.error, t)} />
                 )}
                 {(priceListMode === "create" || selectedPriceList) && (
                   <form
@@ -544,15 +553,15 @@ export default function PricingAdminPage() {
                   >
                     {selectedPriceList && (
                       <div className="grid gap-2 md:grid-cols-4">
-                        <InfoTile label="Currency" value={selectedPriceList.currencyCode} />
-                        <InfoTile label="Default" value={selectedPriceList.isDefault ? "Yes" : "No"} />
-                        <InfoTile label="Tax mode" value={selectedPriceList.taxMode || "None"} />
-                        <InfoTile label="Created" value={formatDateTime(selectedPriceList.createdAtUtc)} />
+                        <InfoTile label={t("pricingAdmin.field.currency")} value={selectedPriceList.currencyCode} />
+                        <InfoTile label={t("pricingAdmin.field.default")} value={selectedPriceList.isDefault ? t("pricingAdmin.common.yes") : t("pricingAdmin.common.no")} />
+                        <InfoTile label={t("pricingAdmin.field.taxMode")} value={selectedPriceList.taxMode || t("pricingAdmin.common.none")} />
+                        <InfoTile label={t("pricingAdmin.common.created")} value={formatDateTime(selectedPriceList.createdAtUtc)} />
                       </div>
                     )}
                     <div className="grid gap-3 md:grid-cols-[1fr_170px_170px]">
                       <label className="text-sm font-semibold text-muted">
-                        Name
+                        {t("pricingAdmin.field.name")}
                         <input
                           value={priceListForm.name}
                           onChange={(event) => setPriceListForm((draft) => ({ ...draft, name: event.target.value }))}
@@ -562,7 +571,7 @@ export default function PricingAdminPage() {
                         />
                       </label>
                       <label className="text-sm font-semibold text-muted">
-                        Tax Mode
+                        {t("pricingAdmin.field.taxMode")}
                         <select
                           value={priceListForm.taxMode}
                           onChange={(event) => setPriceListForm((draft) => ({ ...draft, taxMode: event.target.value }))}
@@ -571,7 +580,7 @@ export default function PricingAdminPage() {
                         >
                           {TAX_MODES.map((mode) => (
                             <option key={mode} value={mode}>
-                              {mode}
+                              {mode === "Inclusive" ? t("pricingAdmin.taxMode.inclusive") : t("pricingAdmin.taxMode.exclusive")}
                             </option>
                           ))}
                         </select>
@@ -584,20 +593,15 @@ export default function PricingAdminPage() {
                           disabled={priceListMode === "edit" || !canManage || priceListPending}
                           className="h-4 w-4 rounded border-line-strong bg-canvas"
                         />
-                        Default on create
+                        {t("pricingAdmin.defaultOnCreate")}
                       </label>
                     </div>
                     <div className="rounded-xl border border-line bg-raised px-3 py-2 text-sm text-muted">
-                      Currency and default selection are fixed at creation and cannot be changed
-                      afterward — create another price list if you need different values. Tax mode
-                      can be changed here; it is saved automatically together with the name
-                      (backend applies it through a separate tax-mode update, so the "Save tax
-                      mode" button below is only needed if you want to change tax mode without
-                      touching the name).
+                      {t("pricingAdmin.priceListNote")}
                     </div>
                     {!canManage && (
                       <div className="rounded-xl border border-warning bg-warning-soft px-3 py-2 text-sm text-warning">
-                        Pricing.Manage permission is required for pricing changes.
+                        {t("pricingAdmin.manageRequired")}
                       </div>
                     )}
                     <div className="flex flex-wrap gap-2">
@@ -607,7 +611,7 @@ export default function PricingAdminPage() {
                         className="flex h-10 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-bold text-white disabled:opacity-50"
                       >
                         {priceListMode === "edit" ? <Pencil size={15} /> : <Plus size={15} />}
-                        {priceListPending ? "Saving..." : priceListMode === "edit" ? "Save price list" : "Create price list"}
+                        {priceListPending ? t("pricingAdmin.common.saving") : priceListMode === "edit" ? t("pricingAdmin.savePriceList") : t("pricingAdmin.createPriceList")}
                       </button>
                       {priceListMode === "edit" && selectedPriceList && (
                         <>
@@ -618,7 +622,7 @@ export default function PricingAdminPage() {
                             className="flex h-10 items-center gap-2 rounded-xl border border-line bg-raised px-4 text-sm font-bold text-ink disabled:opacity-50"
                           >
                             <Banknote size={15} />
-                            Save tax mode
+                            {t("pricingAdmin.saveTaxMode")}
                           </button>
                           <button
                             type="button"
@@ -627,7 +631,7 @@ export default function PricingAdminPage() {
                             className="flex h-10 items-center gap-2 rounded-xl border border-line bg-raised px-4 text-sm font-bold text-ink disabled:opacity-50"
                           >
                             {selectedPriceList.status === "Active" ? <CirclePause size={15} /> : <CircleCheck size={15} />}
-                            {selectedPriceList.status === "Active" ? "Suspend" : "Activate"}
+                            {selectedPriceList.status === "Active" ? t("pricingAdmin.common.suspendAction") : t("pricingAdmin.common.activateAction")}
                           </button>
                         </>
                       )}
@@ -639,11 +643,11 @@ export default function PricingAdminPage() {
               <div className="rounded-xl border border-line bg-surface p-4">
                 <PanelTitle
                   icon={<Coins size={15} className="text-accent" />}
-                  eyebrow="Variant prices"
-                  title={selectedPriceList?.name || "Select a price list"}
+                  eyebrow={t("pricingAdmin.variantPricesEyebrow")}
+                  title={selectedPriceList?.name || t("pricingAdmin.selectPriceListFallback")}
                 />
                 {!selectedPriceListId ? (
-                  <EmptyState title="Select a price list" message="Choose a price list to configure ProductVariant prices." />
+                  <EmptyState title={t("pricingAdmin.selectPriceList.title")} message={t("pricingAdmin.selectPriceList.message")} />
                 ) : (
                   <div className="space-y-4">
                     <div className="grid gap-2 lg:grid-cols-[1fr_150px_180px_160px]">
@@ -656,7 +660,7 @@ export default function PricingAdminPage() {
                             setVariantPage(1);
                           }}
                           maxLength={100}
-                          placeholder="Search variants"
+                          placeholder={t("pricingAdmin.searchVariants")}
                           className="h-10 w-full rounded-xl border border-line bg-canvas pr-9 pl-3 text-sm text-ink outline-none"
                         />
                       </label>
@@ -668,9 +672,9 @@ export default function PricingAdminPage() {
                         }}
                         className="h-10 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none"
                       >
-                        <option value="">All</option>
-                        <option value="configured">Configured</option>
-                        <option value="missing">Missing</option>
+                        <option value="">{t("pricingAdmin.common.all")}</option>
+                        <option value="configured">{t("pricingAdmin.common.configured")}</option>
+                        <option value="missing">{t("pricingAdmin.common.missing")}</option>
                       </select>
                       <select
                         value={variantCategoryId}
@@ -681,7 +685,7 @@ export default function PricingAdminPage() {
                         }}
                         className="h-10 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none"
                       >
-                        <option value="">All categories</option>
+                        <option value="">{t("pricingAdmin.field.allCategories")}</option>
                         {(categoriesQuery.data || []).map((category) => (
                           <option key={category.categoryId} value={category.categoryId}>
                             {category.name}
@@ -696,7 +700,7 @@ export default function PricingAdminPage() {
                         }}
                         className="h-10 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none"
                       >
-                        <option value="">All products</option>
+                        <option value="">{t("pricingAdmin.field.allProducts")}</option>
                         {(productsQuery.data?.items || []).map((product) => (
                           <option key={product.productId} value={product.productId}>
                             {product.name}
@@ -705,14 +709,14 @@ export default function PricingAdminPage() {
                       </select>
                     </div>
                     {variantPricesQuery.isLoading ? (
-                      <LoadingState label="Loading variant prices..." />
+                      <LoadingState label={t("pricingAdmin.loadingVariantPrices")} />
                     ) : variantPricesQuery.isError ? (
-                      <ErrorState title="Unable to load variant prices" message={getErrorMessage(variantPricesQuery.error)} />
+                      <ErrorState title={t("pricingAdmin.loadVariantPricesError")} message={getErrorMessage(variantPricesQuery.error, t)} />
                     ) : (
                       <div className="grid gap-4 xl:grid-cols-[380px_1fr]">
                         <div className="max-h-[360px] space-y-2 overflow-y-auto pr-1 scrollbar-none">
                           {(variantPricesQuery.data?.items || []).length === 0 ? (
-                            <EmptyState title="No variants found" message="No variants match the current pricing filters." />
+                            <EmptyState title={t("pricingAdmin.noVariantsFound.title")} message={t("pricingAdmin.noVariantsFound.message")} />
                           ) : (
                             variantPricesQuery.data.items.map((item) => (
                               <button
@@ -739,7 +743,7 @@ export default function PricingAdminPage() {
                           )}
                           <div className="flex items-center justify-between gap-2 pt-2 text-sm text-muted">
                             <span>
-                              Page {variantPricesQuery.data?.pageNumber || 1} / {variantPricesQuery.data?.totalPages || 0}
+                              {t("pricingAdmin.common.pageOf", { current: variantPricesQuery.data?.pageNumber || 1, total: variantPricesQuery.data?.totalPages || 0 })}
                             </span>
                             <div className="flex gap-2">
                               <button
@@ -748,7 +752,7 @@ export default function PricingAdminPage() {
                                 onClick={() => setVariantPage((page) => Math.max(1, page - 1))}
                                 className="rounded-lg border border-line px-3 py-1 disabled:opacity-40"
                               >
-                                Prev
+                                {t("pricingAdmin.common.prev")}
                               </button>
                               <button
                                 type="button"
@@ -756,7 +760,7 @@ export default function PricingAdminPage() {
                                 onClick={() => setVariantPage((page) => page + 1)}
                                 className="rounded-lg border border-line px-3 py-1 disabled:opacity-40"
                               >
-                                Next
+                                {t("pricingAdmin.common.next")}
                               </button>
                             </div>
                           </div>
@@ -764,11 +768,11 @@ export default function PricingAdminPage() {
 
                         <div className="space-y-4">
                           {!selectedVariantId ? (
-                            <EmptyState title="Select a variant" message="Choose a ProductVariant to set, update, or delete its configured price." />
+                            <EmptyState title={t("pricingAdmin.selectVariant.title")} message={t("pricingAdmin.selectVariant.setMessage")} />
                           ) : variantPriceDetailsQuery.isLoading ? (
-                            <LoadingState label="Loading variant price details..." />
+                            <LoadingState label={t("pricingAdmin.loadingVariantPriceDetails")} />
                           ) : variantPriceDetailsQuery.isError ? (
-                            <ErrorState title="Unable to load variant price" message={getErrorMessage(variantPriceDetailsQuery.error)} />
+                            <ErrorState title={t("pricingAdmin.loadVariantPriceError")} message={getErrorMessage(variantPriceDetailsQuery.error, t)} />
                           ) : (
                             <form
                               onSubmit={(event) => {
@@ -778,12 +782,12 @@ export default function PricingAdminPage() {
                               className="space-y-3"
                             >
                               <div className="grid gap-2 md:grid-cols-3">
-                                <InfoTile label="Variant" value={selectedVariantPrice?.variantName || ""} />
-                                <InfoTile label="Current" value={selectedVariantPrice?.isConfigured ? formatConfiguredAmount(selectedVariantPrice.amount ?? 0, selectedVariantPrice.currencyCode) : "No price"} />
-                                <InfoTile label="Status" value={selectedVariantPrice?.variantStatus || ""} />
+                                <InfoTile label={t("pricingAdmin.field.variant")} value={selectedVariantPrice?.variantName || ""} />
+                                <InfoTile label={t("pricingAdmin.field.current")} value={selectedVariantPrice?.isConfigured ? formatConfiguredAmount(selectedVariantPrice.amount ?? 0, selectedVariantPrice.currencyCode) : t("pricingAdmin.noPrice")} />
+                                <InfoTile label={t("pricingAdmin.field.status")} value={selectedVariantPrice?.variantStatus || ""} />
                               </div>
                               <label className="block text-sm font-semibold text-muted">
-                                Amount
+                                {t("pricingAdmin.field.amount")}
                                 <input
                                   value={variantPriceForm.amount}
                                   onChange={(event) => setVariantPriceForm({ amount: event.target.value })}
@@ -793,7 +797,7 @@ export default function PricingAdminPage() {
                                 />
                               </label>
                               <div className="rounded-xl border border-line bg-raised px-3 py-2 text-sm text-muted">
-                                Missing price is different from an explicit 0 price. No rounding is applied; backend currency precision remains authoritative.
+                                {t("pricingAdmin.variantPriceNote")}
                               </div>
                               <div className="flex flex-wrap gap-2">
                                 <button
@@ -802,7 +806,7 @@ export default function PricingAdminPage() {
                                   className="flex h-10 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-bold text-white disabled:opacity-50"
                                 >
                                   <Pencil size={15} />
-                                  Save variant price
+                                  {t("pricingAdmin.saveVariantPrice")}
                                 </button>
                                 <button
                                   type="button"
@@ -811,7 +815,7 @@ export default function PricingAdminPage() {
                                   className="flex h-10 items-center gap-2 rounded-xl border border-danger bg-danger-soft px-4 text-sm font-bold text-danger disabled:opacity-50"
                                 >
                                   <Trash2 size={15} />
-                                  Delete configured price
+                                  {t("pricingAdmin.deleteConfiguredPrice")}
                                 </button>
                               </div>
                             </form>
@@ -826,20 +830,20 @@ export default function PricingAdminPage() {
               <div className="rounded-xl border border-line bg-surface p-4">
                 <PanelTitle
                   icon={<BadgeDollarSign size={15} className="text-accent" />}
-                  eyebrow="Modifier prices"
-                  title={selectedVariantPrice?.variantName || "Select a variant"}
+                  eyebrow={t("pricingAdmin.modifierPricesEyebrow")}
+                  title={selectedVariantPrice?.variantName || t("pricingAdmin.selectVariant.title")}
                 />
                 {!selectedVariantId ? (
-                  <EmptyState title="Select a variant" message="Modifier prices are configured for a selected PriceList and ProductVariant." />
+                  <EmptyState title={t("pricingAdmin.selectVariant.title")} message={t("pricingAdmin.selectVariant.modifierMessage")} />
                 ) : modifierPricesQuery.isLoading ? (
-                  <LoadingState label="Loading modifier prices..." />
+                  <LoadingState label={t("pricingAdmin.loadingModifierPrices")} />
                 ) : modifierPricesQuery.isError ? (
-                  <ErrorState title="Unable to load modifier prices" message={getErrorMessage(modifierPricesQuery.error)} />
+                  <ErrorState title={t("pricingAdmin.loadModifierPricesError")} message={getErrorMessage(modifierPricesQuery.error, t)} />
                 ) : (
                   <div className="grid gap-4 xl:grid-cols-[380px_1fr]">
                     <div className="max-h-[320px] space-y-2 overflow-y-auto pr-1 scrollbar-none">
                       {modifierPrices.length === 0 ? (
-                        <EmptyState title="No modifier assignments" message="This variant has no modifier options available for pricing." />
+                        <EmptyState title={t("pricingAdmin.noModifierAssignments.title")} message={t("pricingAdmin.noModifierAssignments.message")} />
                       ) : (
                         modifierPrices.map((item) => (
                           <button
@@ -865,11 +869,11 @@ export default function PricingAdminPage() {
                       )}
                     </div>
                     {!selectedModifier ? (
-                      <EmptyState title="Select a modifier option" message="Choose an option to set, update, or delete its adjustment." />
+                      <EmptyState title={t("pricingAdmin.selectModifierOption.title")} message={t("pricingAdmin.selectModifierOption.message")} />
                     ) : modifierPriceDetailsQuery.isLoading ? (
-                      <LoadingState label="Loading modifier price details..." />
+                      <LoadingState label={t("pricingAdmin.loadingModifierPriceDetails")} />
                     ) : modifierPriceDetailsQuery.isError ? (
-                      <ErrorState title="Unable to load modifier price" message={getErrorMessage(modifierPriceDetailsQuery.error)} />
+                      <ErrorState title={t("pricingAdmin.loadModifierPriceError")} message={getErrorMessage(modifierPriceDetailsQuery.error, t)} />
                     ) : (
                       <form
                         onSubmit={(event) => {
@@ -879,12 +883,12 @@ export default function PricingAdminPage() {
                         className="space-y-3"
                       >
                         <div className="grid gap-2 md:grid-cols-3">
-                          <InfoTile label="Group" value={selectedModifierPrice?.modifierGroupName || ""} />
-                          <InfoTile label="Option" value={selectedModifierPrice?.modifierOptionName || ""} />
-                          <InfoTile label="Current" value={selectedModifierPrice?.isConfigured ? formatConfiguredAmount(selectedModifierPrice.amountAdjustment ?? 0, selectedModifierPrice.currencyCode) : "No price"} />
+                          <InfoTile label={t("pricingAdmin.field.group")} value={selectedModifierPrice?.modifierGroupName || ""} />
+                          <InfoTile label={t("pricingAdmin.field.option")} value={selectedModifierPrice?.modifierOptionName || ""} />
+                          <InfoTile label={t("pricingAdmin.field.current")} value={selectedModifierPrice?.isConfigured ? formatConfiguredAmount(selectedModifierPrice.amountAdjustment ?? 0, selectedModifierPrice.currencyCode) : t("pricingAdmin.noPrice")} />
                         </div>
                         <label className="block text-sm font-semibold text-muted">
-                          Amount Adjustment
+                          {t("pricingAdmin.field.amountAdjustment")}
                           <input
                             value={modifierPriceForm.amountAdjustment}
                             onChange={(event) => setModifierPriceForm({ amountAdjustment: event.target.value })}
@@ -894,7 +898,7 @@ export default function PricingAdminPage() {
                           />
                         </label>
                         <div className="rounded-xl border border-line bg-raised px-3 py-2 text-sm text-muted">
-                          Missing modifier price is different from an explicit 0 adjustment. Deleting may remove the option from future sellable catalog responses.
+                          {t("pricingAdmin.modifierPriceNote")}
                         </div>
                         <div className="flex flex-wrap gap-2">
                           <button
@@ -903,7 +907,7 @@ export default function PricingAdminPage() {
                             className="flex h-10 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-bold text-white disabled:opacity-50"
                           >
                             <Pencil size={15} />
-                            Save modifier price
+                            {t("pricingAdmin.saveModifierPrice")}
                           </button>
                           <button
                             type="button"
@@ -912,7 +916,7 @@ export default function PricingAdminPage() {
                             className="flex h-10 items-center gap-2 rounded-xl border border-danger bg-danger-soft px-4 text-sm font-bold text-danger disabled:opacity-50"
                           >
                             <Trash2 size={15} />
-                            Delete modifier price
+                            {t("pricingAdmin.deleteModifierPrice")}
                           </button>
                         </div>
                       </form>

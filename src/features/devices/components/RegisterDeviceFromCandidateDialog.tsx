@@ -37,10 +37,16 @@ export function RegisterDeviceFromCandidateDialog({
   const posTerminalsQuery = usePosTerminals(companyId, branchId, true);
   const kitchenStationsQuery = useKitchenStations(companyId, branchId);
 
+  // candidate.deviceCategoryGuess is a free-text hint from the edge agent (e.g. "Unknown" when it
+  // couldn't guess), never guaranteed to be one of the real DeviceType values below -- submitting
+  // it unvalidated is exactly what caused Device.DeviceTypeInvalid on confirm for every candidate
+  // whose guess wasn't an exact enum match. Only ever pre-select it when it actually is one.
   const [code, setCode] = useState("");
   const [name, setName] = useState(candidate.displayName || "");
   const [deviceType, setDeviceType] = useState<DeviceType>(
-    candidate.deviceCategoryGuess || "ReceiptPrinter",
+    (DEVICE_TYPES as readonly string[]).includes(candidate.deviceCategoryGuess || "")
+      ? (candidate.deviceCategoryGuess as DeviceType)
+      : "ReceiptPrinter",
   );
   const [posTerminalId, setPosTerminalId] = useState("");
   const [kitchenStationId, setKitchenStationId] = useState("");
@@ -86,7 +92,7 @@ export function RegisterDeviceFromCandidateDialog({
   return (
     <DevicesModal title={t("devices.discovery.registerNew")} onClose={onClose} size="lg">
       <div className="space-y-3">
-        {candidate.deviceCategoryGuess && (
+        {candidate.deviceCategoryGuess && (DEVICE_TYPES as readonly string[]).includes(candidate.deviceCategoryGuess) && (
           <div className="rounded-xl border border-blue-400/20 bg-blue-500/10 px-3 py-2 text-xs text-blue-100">
             {t("devices.discovery.categoryGuessHint", {
               guess: t(

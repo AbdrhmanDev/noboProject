@@ -17,7 +17,27 @@ export type MyCompany = {
   createdAtUtc: string;
 };
 
-export type CompanyDetails = unknown;
+export type CompanyDetails = {
+  companyId: string;
+  legalName: string;
+  tradeName: string | null;
+  taxNumber: string | null;
+  commercialRegistrationNumber: string | null;
+  businessSectorId: string;
+  businessSectorCode: string;
+  businessSectorName: string;
+  defaultCurrency: string;
+  defaultLanguage: string;
+  timeZone: string;
+  status: CompanyStatus;
+  registeredAddress: CompanyAddress;
+  createdAtUtc: string;
+  // The uploaded logo's served path (/api/companies/{id}/logo), printed at the top of the POS
+  // customer receipt -- see useCompanyLogo.ts. Null when the company has no logo.
+  logoUrl: string | null;
+  // Free-text lines (e.g. a delivery phone number) printed just above "Thank you" on the receipt.
+  receiptContactLines: string[];
+};
 
 export type CompanyRoleSummary = {
   roleId: string;
@@ -29,6 +49,9 @@ export type EffectivePermissions = {
   isOwner: boolean;
   permissions: string[];
   roles: CompanyRoleSummary[];
+  // The caller's OWN CompanyMembership.SalesOrderVisibilityScope ("Own" | "Branch" | null). Used to
+  // hide the all-orders Sales nav item for a member scoped to "Own" -- see navItems.jsx.
+  salesOrderVisibilityScope: string | null;
 };
 
 export type CompanyPermissions = EffectivePermissions;

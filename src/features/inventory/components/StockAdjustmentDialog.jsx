@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { ArrowRight, CircleCheck } from "lucide-react";
+import { useI18n } from "../../../i18n/I18nContext";
 import { useActiveUnitsOfMeasure } from "../../catalog/hooks/useCatalog";
 import {
   useInventoryLocationStock,
@@ -8,8 +9,8 @@ import {
 import { parseNonZeroQuantity } from "../utils/inventoryQuantity";
 import { InventoryModal } from "./InventoryModal";
 
-function getErrorMessage(error) {
-  return error?.message || "Request failed.";
+function getErrorMessage(error, t) {
+  return error?.message || t("inventory.common.requestFailed");
 }
 
 export function StockAdjustmentDialog({
@@ -28,6 +29,7 @@ export function StockAdjustmentDialog({
   const [reason, setReason] = useState("");
   const [step, setStep] = useState("form");
   const [formError, setFormError] = useState("");
+  const { t } = useI18n();
 
   const unitsOfMeasureQuery = useActiveUnitsOfMeasure();
   const stockQuery = useInventoryLocationStock(
@@ -54,12 +56,12 @@ export function StockAdjustmentDialog({
 
   const goToConfirm = () => {
     if (!locationId) {
-      setFormError("Select an inventory location.");
+      setFormError(t("inventory.adjustDialog.validation.selectLocation"));
       return;
     }
 
     if (!inventoryItemId) {
-      setFormError("Select an inventory item.");
+      setFormError(t("inventory.adjustDialog.validation.selectItem"));
       return;
     }
 
@@ -69,12 +71,12 @@ export function StockAdjustmentDialog({
     }
 
     if (parsedQuantity.amount === null) {
-      setFormError(parsedQuantity.error || "Enter a valid adjustment quantity.");
+      setFormError(parsedQuantity.error || t("inventory.adjustDialog.validation.enterValidQuantity"));
       return;
     }
 
     if (reason.trim().length > 500) {
-      setFormError("Reason must be 500 characters or fewer.");
+      setFormError(t("inventory.adjustDialog.validation.reasonTooLong"));
       return;
     }
 
@@ -90,10 +92,10 @@ export function StockAdjustmentDialog({
         reason: reason.trim() || null,
         lines: [{ inventoryItemId, quantityDelta: parsedQuantity.amount }],
       });
-      onSuccess("Stock adjustment recorded.");
+      onSuccess(t("inventory.adjustDialog.notice.adjustmentRecorded"));
       onClose();
     } catch (error) {
-      setFormError(getErrorMessage(error));
+      setFormError(getErrorMessage(error, t));
       setStep("form");
     }
   };
@@ -103,7 +105,7 @@ export function StockAdjustmentDialog({
     parsedQuantity.amount !== null ? currentQuantity + parsedQuantity.amount : currentQuantity;
 
   return (
-    <InventoryModal title="Adjust Stock" onClose={onClose}>
+    <InventoryModal title={t("inventory.adjustDialog.title")} onClose={onClose}>
       {formError && (
         <div className="mb-3 rounded-xl border border-danger bg-danger-soft px-3 py-2 text-sm text-danger">
           {formError}
@@ -119,7 +121,7 @@ export function StockAdjustmentDialog({
           className="space-y-3"
         >
           <label className="block text-sm font-semibold text-muted">
-            Inventory location
+            {t("inventory.adjustDialog.field.location")}
             <select
               value={locationId}
               onChange={(event) => {
@@ -128,7 +130,7 @@ export function StockAdjustmentDialog({
               }}
               className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line"
             >
-              <option value="">Select location...</option>
+              <option value="">{t("inventory.adjustDialog.field.selectLocationPlaceholder")}</option>
               {locations.map((location) => (
                 <option key={location.inventoryLocationId} value={location.inventoryLocationId}>
                   {location.name} ({location.code})
@@ -138,7 +140,7 @@ export function StockAdjustmentDialog({
           </label>
 
           <label className="block text-sm font-semibold text-muted">
-            Inventory item
+            {t("inventory.adjustDialog.field.item")}
             <select
               value={inventoryItemId}
               onChange={(event) => {
@@ -147,7 +149,7 @@ export function StockAdjustmentDialog({
               }}
               className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line"
             >
-              <option value="">Select item...</option>
+              <option value="">{t("inventory.adjustDialog.field.selectItemPlaceholder")}</option>
               {items.map((item) => (
                 <option key={item.inventoryItemId} value={item.inventoryItemId}>
                   {item.name} ({item.baseUnitOfMeasure.symbol})
@@ -159,22 +161,22 @@ export function StockAdjustmentDialog({
           {locationId && inventoryItemId && (
             <div className="rounded-xl border border-line bg-raised px-3 py-2 text-sm text-muted">
               {stockQuery.isLoading ? (
-                "Loading current stock..."
+                t("inventory.adjustDialog.stock.loading")
               ) : currentStockEntry ? (
                 <>
-                  Current stock:{" "}
+                  {t("inventory.adjustDialog.stock.current")}{" "}
                   <span className="font-bold text-ink">
                     {currentStockEntry.quantityOnHand} {currentStockEntry.baseUnitOfMeasure.symbol}
                   </span>
                 </>
               ) : (
-                "Not yet tracked at this location (treated as 0)."
+                t("inventory.adjustDialog.stock.notTracked")
               )}
             </div>
           )}
 
           <label className="block text-sm font-semibold text-muted">
-            Quantity delta (+/-)
+            {t("inventory.adjustDialog.field.quantityDelta")}
             <input
               type="text"
               inputMode="decimal"
@@ -183,16 +185,16 @@ export function StockAdjustmentDialog({
                 setQuantityInput(event.target.value);
                 setFormError("");
               }}
-              placeholder="e.g. 10 or -3"
+              placeholder={t("inventory.adjustDialog.field.quantityDeltaPlaceholder")}
               className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line"
             />
             <span className="mt-1 block text-xs font-normal text-subtle">
-              Positive adds stock, negative removes stock.
+              {t("inventory.adjustDialog.field.quantityDeltaHint")}
             </span>
           </label>
 
           <label className="block text-sm font-semibold text-muted">
-            Reason (optional)
+            {t("inventory.adjustDialog.field.reason")}
             <textarea
               value={reason}
               onChange={(event) => setReason(event.target.value)}
@@ -205,7 +207,7 @@ export function StockAdjustmentDialog({
             type="submit"
             className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-accent text-sm font-bold text-white transition hover:brightness-110"
           >
-            Review adjustment
+            {t("inventory.adjustDialog.action.reviewAdjustment")}
             <ArrowRight size={16} />
           </button>
         </form>
@@ -213,23 +215,25 @@ export function StockAdjustmentDialog({
         <div className="space-y-3">
           <div className="space-y-2 rounded-xl border border-line bg-raised p-3 text-sm">
             <div className="flex justify-between gap-3">
-              <span className="text-subtle">Item</span>
+              <span className="text-subtle">{t("inventory.adjustDialog.confirm.item")}</span>
               <span className="font-bold text-ink">{selectedItem?.name}</span>
             </div>
             <div className="flex justify-between gap-3">
-              <span className="text-subtle">Location</span>
+              <span className="text-subtle">{t("inventory.adjustDialog.confirm.location")}</span>
               <span className="font-bold text-ink">{selectedLocation?.name}</span>
             </div>
             <div className="flex justify-between gap-3">
-              <span className="text-subtle">Current stock</span>
+              <span className="text-subtle">{t("inventory.adjustDialog.confirm.currentStock")}</span>
               <span className="font-bold text-ink">
                 {currentStockEntry
                   ? `${currentStockEntry.quantityOnHand} ${currentStockEntry.baseUnitOfMeasure.symbol}`
-                  : `Not tracked yet (0 ${selectedItem?.baseUnitOfMeasure.symbol || ""})`}
+                  : t("inventory.adjustDialog.confirm.notTrackedYet", {
+                      symbol: selectedItem?.baseUnitOfMeasure.symbol || "",
+                    })}
               </span>
             </div>
             <div className="flex justify-between gap-3">
-              <span className="text-subtle">Adjustment</span>
+              <span className="text-subtle">{t("inventory.adjustDialog.confirm.adjustment")}</span>
               <span
                 className={`font-bold ${parsedQuantity.amount > 0 ? "text-success" : "text-danger"}`}
               >
@@ -238,19 +242,19 @@ export function StockAdjustmentDialog({
               </span>
             </div>
             <div className="flex justify-between gap-3 border-t border-line pt-2">
-              <span className="text-subtle">Expected result</span>
+              <span className="text-subtle">{t("inventory.adjustDialog.confirm.expectedResult")}</span>
               <span className="font-bold text-accent">
                 {expectedQuantity} {selectedItem?.baseUnitOfMeasure.symbol}
               </span>
             </div>
             {reason.trim() && (
               <div className="border-t border-line pt-2">
-                <span className="text-subtle">Reason</span>
+                <span className="text-subtle">{t("inventory.adjustDialog.confirm.reason")}</span>
                 <p className="mt-1 text-muted">{reason.trim()}</p>
               </div>
             )}
             <p className="text-xs text-subtle">
-              Expected result is informational only; the server balance is authoritative.
+              {t("inventory.adjustDialog.confirm.disclaimer")}
             </p>
           </div>
 
@@ -261,7 +265,7 @@ export function StockAdjustmentDialog({
               disabled={adjustMutation.isPending}
               className="flex h-11 flex-1 items-center justify-center rounded-xl border border-line bg-raised text-sm font-bold text-ink disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Back
+              {t("inventory.adjustDialog.action.back")}
             </button>
             <button
               type="button"
@@ -270,7 +274,9 @@ export function StockAdjustmentDialog({
               className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-success text-sm font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <CircleCheck size={16} />
-              {adjustMutation.isPending ? "Saving..." : "Confirm adjustment"}
+              {adjustMutation.isPending
+                ? t("inventory.common.saving")
+                : t("inventory.adjustDialog.action.confirmAdjustment")}
             </button>
           </div>
         </div>

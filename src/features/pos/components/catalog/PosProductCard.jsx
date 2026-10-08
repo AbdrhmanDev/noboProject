@@ -9,17 +9,21 @@ import {
   abbreviateModifierLabel,
   getStockLevel,
   sortVariantsBySize,
-  variantSizeLabel,
 } from "../../utils/posFormatters";
 
-// Flip card (15th pass). Two faces in a real 3D flip (.pos-flip in pos-theme.css):
+// Flip card (16th pass). Two faces in a real 3D flip (.pos-flip in pos-theme.css):
 //  - FRONT: the product photo filling the whole card, its price in the top-right corner, the name
-//    on a scrim along the bottom, and the in-cart quantity in the top-left. Tapping it ONLY flips
-//    the card (`onFlip`) -- nothing is added to the order.
-//  - BACK: name + price, the S / M / L size circles (one size at a time, POSPage's
-//    selectProductSize via `onSelectSize`), the [-] qty [+] stepper, and the product's stock.
-//    "+" adds the default size when the product isn't in the cart yet (`onAddDefault`), otherwise
-//    adjusts the most recently added variant + modifier combination (`onIncrement`/`onDecrement`).
+//    on a scrim along the bottom, and the in-cart quantity in the top-left -- a single number for
+//    one variant, or a small stacked "size×qty" breakdown once more than one size is in the cart
+//    (`variantBreakdown`), so flipping back to this face (e.g. because another card was opened)
+//    still shows exactly what was ordered. Tapping it ONLY flips the card (`onFlip`) -- nothing is
+//    added to the order.
+//  - BACK (multi-variant products): one compact [-] qty [+] row PER size (`VariantQuantityRow`),
+//    so "2 Medium + 1 Small" of the same product is two taps on two rows, not a flip-select-flip-
+//    select dance through a single shared stepper. Each row's +/- targets that exact variant with
+//    no modifiers (`onIncrement`/`onDecrement`), same simplification the old single-size-at-a-time
+//    circle picker already made. (Single-variant products keep the one shared QtyStepper below --
+//    there's only one size, nothing to pick.)
 // Only one card is flipped at a time (CatalogPanel owns `isFlipped`).
 export function PosProductCard({
   product,
@@ -32,7 +36,6 @@ export function PosProductCard({
   inventory,
   onFlip,
   onAddDefault,
-  onSelectSize,
   onIncrement,
   onDecrement,
 }) {
@@ -59,6 +62,28 @@ export function PosProductCard({
     if (representativeVariant) onDecrement(representativeVariant, representativeModifierOptionIds);
   };
 
+  // Quantity shown on a size row: every cart line for that exact variant, regardless of modifiers
+  // (mirrors the old circle picker, which also never distinguished by modifiers).
+  const quantityForVariant = (variantId) =>
+    (cartInfo?.lines ?? [])
+      .filter((line) => line.productVariantId === variantId)
+      .reduce((sum, line) => sum + Number(line.quantity), 0);
+
+  // Per-variant breakdown for the FRONT face's badge: when another card is flipped open, this one
+  // flips back to its front automatically (CatalogPanel only keeps one flipped at a time) -- without
+  // this, the only thing left visible would be the plain total count, with no way to tell "2
+  // Medium + 1 Small" apart from "3 of whatever size I last touched".
+  const variantQuantities = new Map();
+  for (const line of cartInfo?.lines ?? []) {
+    variantQuantities.set(line.productVariantId, (variantQuantities.get(line.productVariantId) ?? 0) + Number(line.quantity));
+  }
+  const variantBreakdown = [...variantQuantities.entries()]
+    .map(([variantId, qty]) => {
+      const variant = product.variants.find((entry) => entry.productVariantId === variantId);
+      return variant && qty > 0 ? { variant, qty } : null;
+    })
+    .filter(Boolean);
+
   return (
     <div
       style={accentStyle}
@@ -83,13 +108,26 @@ export function PosProductCard({
           <span className="pos-num pos-fs-label absolute right-1.5 top-1.5 rounded-pos bg-pos-card/95 px-1.5 py-0.5 font-bold text-pos-text shadow-sm">
             {price}
           </span>
-          {quantityInCart > 0 && (
+          {variantBreakdown.length === 1 && (
             <span className="pos-num absolute left-1.5 top-1.5 grid h-6 min-w-6 place-items-center rounded-full bg-pos-primary-strong px-1.5 text-[11px] font-bold text-white shadow-sm">
-              {quantityInCart}
+              {variantBreakdown[0].qty}
             </span>
           )}
+          {variantBreakdown.length > 1 && (
+            <div className="absolute left-1.5 top-1.5 flex max-w-[80%] flex-col items-start gap-0.5">
+              {variantBreakdown.map(({ variant, qty }) => (
+                <span
+                  key={variant.productVariantId}
+                  className="flex max-w-full items-center gap-1 rounded-pos bg-pos-primary-strong px-1.5 py-0.5 text-[10px] font-bold text-white shadow-sm"
+                >
+                  <span className="min-w-0 break-words">{variant.variantName}</span>
+                  <span className="pos-num shrink-0">×{qty}</span>
+                </span>
+              ))}
+            </div>
+          )}
           <span className="pos-photo-scrim absolute inset-x-0 bottom-0 px-2 pb-1.5 pt-6">
-            <span className="pos-fs-card-name line-clamp-2 text-white">{product.productName}</span>
+            <span className="pos-fs-card-name line-clamp-2 text-pos-text">{product.productName}</span>
           </span>
         </button>
 
@@ -109,36 +147,26 @@ export function PosProductCard({
               tabIndex={isFlipped ? 0 : -1}
               aria-label={t("pos.catalog.flipBack")}
               title={t("pos.catalog.flipBack")}
-              className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-pos-border bg-pos-card text-pos-muted transition hover:text-pos-text"
+              className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-pos-border bg-pos-card text-pos-muted transition hover:text-pos-text"
             >
-              <RotateCcw size={13} />
+              <RotateCcw size={14} />
             </button>
           </div>
 
           {sizeVariants.length > 0 && (
-            <div role="group" aria-label={t("pos.catalog.size")} className="flex flex-wrap items-center justify-center gap-1">
-              {sizeVariants.map((entry) => {
-                const selected = representativeLine?.productVariantId === entry.productVariantId;
-                return (
-                  <button
-                    key={entry.productVariantId}
-                    type="button"
-                    disabled={disabled}
-                    tabIndex={isFlipped ? 0 : -1}
-                    aria-pressed={selected}
-                    title={`${entry.variantName} · ${formatMoney(entry.price, currencyCode, 2)}`}
-                    aria-label={entry.variantName}
-                    onClick={() => onSelectSize(entry)}
-                    className={`pos-num grid h-7 min-w-7 place-items-center rounded-full border px-1 text-[11px] font-bold transition active:scale-90 disabled:cursor-not-allowed disabled:opacity-50 ${
-                      selected
-                        ? "border-pos-primary-strong bg-pos-primary-strong text-white"
-                        : "border-pos-border bg-pos-card text-pos-muted hover:border-pos-primary hover:text-pos-primary-text"
-                    }`}
-                  >
-                    {variantSizeLabel(entry.variantName)}
-                  </button>
-                );
-              })}
+            <div role="group" aria-label={t("pos.catalog.size")} className="flex flex-col gap-1">
+              {sizeVariants.map((entry) => (
+                <VariantQuantityRow
+                  key={entry.productVariantId}
+                  variant={entry}
+                  quantity={quantityForVariant(entry.productVariantId)}
+                  currencyCode={currencyCode}
+                  disabled={disabled}
+                  focusable={isFlipped}
+                  onIncrement={() => onIncrement(entry, [])}
+                  onDecrement={() => onDecrement(entry, [])}
+                />
+              ))}
             </div>
           )}
 
@@ -167,16 +195,18 @@ export function PosProductCard({
 
           <StockLine variant={stockVariant} inventory={inventory} active={isFlipped} />
 
-          <div className="mt-auto flex flex-col gap-1.5">
-            <QtyStepper
-              quantity={Number(representativeLine?.quantity ?? 0)}
-              disabled={disabled}
-              focusable={isFlipped}
-              canDecrement={Boolean(representativeVariant)}
-              onDecrement={decrement}
-              onIncrement={increment}
-            />
-          </div>
+          {sizeVariants.length === 0 && (
+            <div className="mt-auto flex flex-col gap-1.5">
+              <QtyStepper
+                quantity={Number(representativeLine?.quantity ?? 0)}
+                disabled={disabled}
+                focusable={isFlipped}
+                canDecrement={Boolean(representativeVariant)}
+                onDecrement={decrement}
+                onIncrement={increment}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -296,7 +326,7 @@ function QtyStepper({ quantity, disabled, focusable, canDecrement, onDecrement, 
   const { t } = useI18n();
 
   return (
-    <div className="flex h-9 items-center justify-between rounded-full border border-pos-border bg-pos-card p-0.5 shadow-sm">
+    <div className="flex h-11 items-center justify-between rounded-full border border-pos-border bg-pos-card p-0.5 shadow-sm">
       <button
         type="button"
         onClick={onDecrement}
@@ -305,7 +335,7 @@ function QtyStepper({ quantity, disabled, focusable, canDecrement, onDecrement, 
         aria-label={t("pos.catalog.decrement")}
         className="grid h-full aspect-square shrink-0 place-items-center rounded-full text-pos-muted transition hover:bg-pos-bg hover:text-pos-text active:scale-90 disabled:cursor-not-allowed disabled:opacity-40"
       >
-        <Minus size={15} />
+        <Minus size={17} />
       </button>
       <span className="pos-num flex-1 text-center text-base font-bold text-pos-text">{quantity}</span>
       <button
@@ -316,8 +346,63 @@ function QtyStepper({ quantity, disabled, focusable, canDecrement, onDecrement, 
         aria-label={t("pos.catalog.increment")}
         className="grid h-full aspect-square shrink-0 place-items-center rounded-full bg-pos-primary-strong text-white shadow-sm transition hover:bg-pos-primary-strong-hover active:scale-90 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        <Plus size={15} />
+        <Plus size={17} />
       </button>
+    </div>
+  );
+}
+
+// One size's own [-] qty [+] row (multi-variant products): the full variant name on its own line
+// (wraps up to 2 lines instead of truncating -- a one-line layout left so little horizontal room
+// for the name next to the price/stepper that most real names got cut off), price + a compact
+// stepper on the line below. "2 Medium + 1 Small" is one tap on the Medium row's "+" twice and the
+// Small row's "+" once, no flip-select-flip-select round trip through a single shared stepper.
+function VariantQuantityRow({ variant, quantity, currencyCode, disabled, focusable, onIncrement, onDecrement }) {
+  const { t } = useI18n();
+  const hasQuantity = quantity > 0;
+
+  return (
+    <div
+      className={`flex flex-col gap-0.5 rounded-pos border px-1.5 py-1 transition ${
+        hasQuantity ? "border-pos-primary-strong bg-pos-primary-strong/10" : "border-pos-border bg-pos-card"
+      }`}
+    >
+      <span className="line-clamp-2 text-xs font-bold leading-tight text-pos-text">{variant.variantName}</span>
+      <div className="flex items-center justify-between gap-1">
+        <span className="pos-num shrink-0 text-[10px] text-pos-muted">{formatMoney(variant.price, currencyCode, 2)}</span>
+        <div className="flex shrink-0 items-center gap-1">
+          {/* "-" and the qty number stay mounted (just hidden) even at 0: toggling them in/out of
+              the DOM changed this row's width every time and shoved the rest of the line around. */}
+          <button
+            type="button"
+            onClick={onDecrement}
+            disabled={disabled || !hasQuantity}
+            tabIndex={focusable && hasQuantity ? 0 : -1}
+            aria-hidden={!hasQuantity}
+            aria-label={t("pos.catalog.decrement")}
+            className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-pos-muted transition hover:bg-pos-bg hover:text-pos-text active:scale-90 disabled:cursor-not-allowed disabled:opacity-40 ${
+              hasQuantity ? "" : "invisible"
+            }`}
+          >
+            <Minus size={13} />
+          </button>
+          <span
+            className={`pos-num w-4 shrink-0 text-center text-xs font-black text-pos-text ${hasQuantity ? "" : "invisible"}`}
+          >
+            {quantity}
+          </span>
+          <button
+            type="button"
+            onClick={onIncrement}
+            disabled={disabled}
+            tabIndex={focusable ? 0 : -1}
+            aria-label={t("pos.catalog.increment")}
+            className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-pos-primary-strong text-white shadow-sm transition hover:bg-pos-primary-strong-hover active:scale-90 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Plus size={13} />
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

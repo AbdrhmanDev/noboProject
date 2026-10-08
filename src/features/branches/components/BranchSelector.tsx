@@ -2,12 +2,12 @@ import { MapPin } from "lucide-react";
 import { EmptyState, ErrorState, LoadingState } from "../../../shared/components/ui";
 import { useCompany } from "../../companies/context/CompanyContext";
 import { useBranch } from "../context/BranchContext";
-import { isBranchEnterable, useBranches } from "../hooks/useBranches";
+import { isBranchEnterable, useMyBranches } from "../hooks/useBranches";
 
 export function BranchSelector() {
   const { currentCompanyId } = useCompany();
   const { selectBranch } = useBranch();
-  const { data: branches, isLoading, isError } = useBranches(currentCompanyId);
+  const { data: branches, isLoading, isError } = useMyBranches(currentCompanyId);
 
   if (isLoading) return <LoadingState label="Loading branches..." />;
   if (isError) {

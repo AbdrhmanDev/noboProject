@@ -15,6 +15,17 @@ export async function getBranches(companyId: string) {
   return response.data;
 }
 
+// Self-scoped to the caller's own membership branch access -- no Branches.View required. Use this
+// (not getBranches) anywhere a member just needs to resolve/select their own working branch (e.g.
+// POS), so a cashier-only role never needs Branches.View just to pick a branch.
+export async function getMyBranches(companyId: string) {
+  const response = await httpClient.get<Branch[]>(
+    `/api/companies/${companyId}/branches/mine`,
+  );
+
+  return response.data;
+}
+
 // GET .../branches/{branchId}: same BranchResponse shape as a list row (Branch type covers both --
 // there is no separate, richer "details" DTO on the backend).
 export async function getBranchDetails(companyId: string, branchId: string) {
