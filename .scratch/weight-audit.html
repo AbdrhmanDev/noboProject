@@ -1,0 +1,434 @@
+<title>Variable-Weight Products Audit</title>
+<style>
+/* Layout: single-column report, left rail TOC on wide screens, collapses to a top nav on phone. */
+:root{
+  --bg:#f7f5f1; --panel:#ffffff; --ink:#1d1b18; --muted:#6b6457; --line:#e4ddd1;
+  --accent:#8a5a2b; --accent-soft:#f1e4d3; --verified:#2f6b4f; --verified-soft:#e3efe8;
+  --proposed:#7a4fae; --proposed-soft:#efe6f7; --risk:#a63d3d; --risk-soft:#f6e4e1; --code-bg:#f1efe9;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1a1814; --panel:#242019; --ink:#eee8dd; --muted:#a69a87; --line:#3a332a;
+    --accent:#d59a5c; --accent-soft:#3a2d1c; --verified:#7fcba3; --verified-soft:#20332a;
+    --proposed:#c4a2e6; --proposed-soft:#312a40; --risk:#e68a8a; --risk-soft:#3a2420; --code-bg:#211d16;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1a1814; --panel:#242019; --ink:#eee8dd; --muted:#a69a87; --line:#3a332a;
+  --accent:#d59a5c; --accent-soft:#3a2d1c; --verified:#7fcba3; --verified-soft:#20332a;
+  --proposed:#c4a2e6; --proposed-soft:#312a40; --risk:#e68a8a; --risk-soft:#3a2420; --code-bg:#211d16;
+  color-scheme: dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg); color:var(--ink); font-family:'Source Sans 3',Arial,sans-serif; line-height:1.55; padding:0 16px;}
+h1,h2,h3{font-family:'Source Serif 4',Georgia,serif; text-wrap:balance; color:var(--ink);}
+code,.mono{font-family:'JetBrains Mono',Consolas,monospace; font-size:0.86em;}
+a{color:var(--accent)}
+.layout{display:flex; gap:2.5rem; max-width:1200px; margin:0 auto; align-items:flex-start;}
+.toc{position:sticky; top:1.5rem; width:230px; flex-shrink:0; padding:1rem 0 2rem; font-size:0.85rem; display:none;}
+@media (min-width:900px){ .toc{display:block;} }
+.toc a{display:block; color:var(--muted); text-decoration:none; padding:0.2rem 0; border-left:2px solid transparent; padding-left:0.6rem;}
+.toc a:hover{color:var(--ink); border-left-color:var(--accent);}
+.main{flex:1; min-width:0; max-width:760px; padding:2rem 0 5rem;}
+header.hero{padding:2.5rem 0 1.5rem; border-bottom:1px solid var(--line); margin-bottom:2rem;}
+header.hero .eyebrow{color:var(--accent); font-weight:600; letter-spacing:0.08em; text-transform:uppercase; font-size:0.78rem;}
+header.hero h1{font-size:2.1rem; margin:0.4rem 0 0.6rem;}
+header.hero p{color:var(--muted); max-width:620px; margin:0;}
+.badge{display:inline-flex; align-items:center; gap:0.3em; font-size:0.72rem; font-weight:700; letter-spacing:0.03em; text-transform:uppercase; padding:0.15em 0.6em; border-radius:999px;}
+.badge.verified{background:var(--verified-soft); color:var(--verified);}
+.badge.proposed{background:var(--proposed-soft); color:var(--proposed);}
+.badge.risk{background:var(--risk-soft); color:var(--risk);}
+section{margin-bottom:2.6rem; scroll-margin-top:1rem;}
+section h2{font-size:1.4rem; border-bottom:1px solid var(--line); padding-bottom:0.5rem; margin-bottom:1rem; display:flex; align-items:baseline; gap:0.6rem;}
+section h2 .letter{color:var(--accent); font-family:'Source Serif 4',serif; font-weight:700;}
+h3{font-size:1.05rem; margin:1.4rem 0 0.5rem;}
+p{margin:0.6rem 0;}
+ul,ol{padding-left:1.3rem; margin:0.5rem 0;}
+li{margin:0.35rem 0;}
+.card{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:1rem 1.2rem; margin:0.8rem 0;}
+.bottom-line{background:var(--accent-soft); border:1px solid var(--line); border-radius:10px; padding:1rem 1.2rem; margin:0.8rem 0; font-weight:600;}
+table{width:100%; border-collapse:collapse; margin:0.8rem 0; font-size:0.88rem;}
+th,td{text-align:left; padding:0.45rem 0.6rem; border-bottom:1px solid var(--line); vertical-align:top;}
+th{color:var(--muted); font-weight:600; font-size:0.78rem; text-transform:uppercase; letter-spacing:0.02em;}
+.tablewrap{overflow-x:auto;}
+.filelist{background:var(--code-bg); border:1px solid var(--line); border-radius:8px; padding:0.8rem 1rem; font-size:0.8rem; columns:1; }
+@media (min-width:640px){ .filelist{columns:2; column-gap:1.5rem;} }
+.filelist div{margin-bottom:0.3rem; break-inside:avoid;}
+.phase{border:1px solid var(--line); border-radius:10px; padding:1rem 1.2rem; margin:0.9rem 0; background:var(--panel);}
+.phase h3{margin-top:0; display:flex; align-items:center; gap:0.5rem;}
+.phase .meta{display:flex; flex-wrap:wrap; gap:0.4rem 1rem; font-size:0.82rem; color:var(--muted); margin-top:0.5rem;}
+.phase .meta strong{color:var(--ink);}
+.risklist{list-style:none; padding:0; margin:0;}
+.risklist li{background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:0.6rem 0.9rem; margin:0.5rem 0; display:flex; gap:0.6rem;}
+.risklist li .n{font-family:'Source Serif 4',serif; color:var(--accent); font-weight:700; flex-shrink:0;}
+footer{border-top:1px solid var(--line); padding-top:1.2rem; color:var(--muted); font-size:0.85rem;}
+hr.div{border:none; border-top:1px solid var(--line); margin:1.5rem 0;}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,700&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+<div class="layout">
+  <nav class="toc" aria-label="Sections">
+    <a href="#a">A. Product / Variant model</a>
+    <a href="#b">B. Units of measure</a>
+    <a href="#c">C. Price lists &amp; calculation</a>
+    <a href="#d">D. Sales order &amp; line</a>
+    <a href="#e">E. POS cart &amp; selection</a>
+    <a href="#f">F. Manual weight entry</a>
+    <a href="#g">G. Electronic scale / Edge Agent</a>
+    <a href="#h">H. Inventory</a>
+    <a href="#i">I. Kitchen / receipt / invoice</a>
+    <a href="#j">J. Database &amp; migrations</a>
+    <a href="#k">K. Security &amp; compatibility</a>
+    <a href="#l">L. Files &amp; classes</a>
+    <a href="#m">M. Phased plan</a>
+    <a href="#n">N. Risks &amp; open questions</a>
+    <a href="#o">O. Confirmation</a>
+  </nav>
+
+  <main class="main">
+    <header class="hero">
+      <div class="eyebrow">Read-only audit · no code changed</div>
+      <h1>Variable-Weight Products</h1>
+      <p>Can NOBO sell fish, meat and cheese by measured weight — manually entered, and later from an electronic scale — without breaking anything that sells by the piece today? This report traces the actual code to answer that, section by section, before a single line is written.</p>
+    </header>
+
+    <div class="bottom-line">
+      You can already sell 1.350 kg of fish at 250 EGP/kg today, with zero migration. Create a variant whose sales unit is <code>KG</code> (fractional quantities already allowed) and price it at 250 in the price list — the server multiplies price × decimal quantity correctly and stores 1.3500 safely. What's genuinely missing: an explicit marker that a sale <em>is</em> a weighed sale, a same-dimension check between the sales unit and the stock unit, a modifier-pricing decision for weighed items, a unit price on the printed receipt, and — for the scale half of this — a way for a reading to travel from any local device into the cloud and back to the POS, which doesn't exist on any path today.
+    </div>
+
+    <section id="a">
+      <h2><span class="letter">A.</span> Product / Variant model</h2>
+      <span class="badge verified">Verified</span>
+      <p><code>Product</code> (<code>src/Nobo.Domain/Catalog/Products/Product.cs</code>) carries no unit, price or weight field — just identity, category, tax category, name/description/image, sort order and status.</p>
+      <p>The selling unit lives one level down, on <code>ProductVariant</code> (<code>src/Nobo.Domain/Catalog/Products/Variants/ProductVariant.cs</code>): a required <code>SalesUnitOfMeasureId</code>. It's fixed at creation — <code>UpdateDetails(name, sku, sortOrder)</code> cannot change it, and <code>UpdateProductVariantCommand</code> has no unit field either. <code>CreateProductVariantHandler</code> checks the unit exists and is active, but never looks at its dimension.</p>
+      <p>The selling unit and the <em>inventory</em> unit are genuinely separate things: inventory lives on <code>InventoryItem.BaseUnitOfMeasureId</code>, linked to the variant only through <code>ProductVariantInventoryComponent.QuantityPerSalesUnit</code> (see <a href="#h">H</a>).</p>
+      <p>There is no "sold by weight" concept anywhere in the domain — confirmed by a repo-wide search for <code>SoldByWeight</code>, <code>SellingMode</code>, <code>PricingMode</code>, <code>IsWeighed</code>, <code>ByWeight</code>, <code>ConversionFactor</code> (nothing outside migrations). Quantity validation already requires a decimal &gt; 0, at most 4 decimal places, and a whole number only when the unit's <code>AllowsFractionalQuantity</code> is false (<code>ValidateQuantity</code> in both <code>CreateDraftSalesOrderHandler</code> and <code>UpdateDraftSalesOrderHandler</code>).</p>
+      <h3>Answers</h3>
+      <p><strong>A.</strong> There is no dedicated place for this distinction today — it would be new. <strong>B.</strong> The model can <em>represent</em> a weighed product today purely by giving it a fractional unit (KG/G), but it can't <em>say</em> it's weighed — that's implicit, derived from the unit, not an explicit fact anywhere. <strong>C.</strong> The natural home is the variant (one variant = one selling mode + one unit, already the case), not the product (a product can have piece and weighed variants side by side) and not the price list (which just holds an amount). <strong>D.</strong> Any new column defaults to the existing per-piece behavior (e.g. a <code>SellingMode</code> enum defaulting to <code>PerUnit = 1</code>) — every existing variant and historical line is untouched.</p>
+    </section>
+
+    <section id="b">
+      <h2><span class="letter">B.</span> Units of measure</h2>
+      <span class="badge verified">Verified</span>
+      <p><code>UnitOfMeasure</code> (<code>src/Nobo.Domain/ReferenceData/UnitsOfMeasure/UnitOfMeasure.cs</code>) has no <code>CompanyId</code> — units are global, not per-company. It has Code, Name, Symbol, <code>MeasurementDimension</code>, <code>AllowsFractionalQuantity</code>, <code>IsActive</code> — no conversion factor, no base-unit link.</p>
+      <div class="tablewrap"><table>
+        <tr><th>Code</th><th>Dimension</th><th>Fractional?</th></tr>
+        <tr><td>EA</td><td>Count</td><td>No</td></tr>
+        <tr><td>KG</td><td>Mass</td><td>Yes</td></tr>
+        <tr><td>G</td><td>Mass</td><td>Yes</td></tr>
+        <tr><td>L / ML</td><td>Volume</td><td>Yes</td></tr>
+        <tr><td>M / CM</td><td>Length</td><td>Yes</td></tr>
+        <tr><td>HR</td><td>Time</td><td>Yes</td></tr>
+      </table></div>
+      <p>Seeded by <code>UnitOfMeasureReferenceDataSeeder.cs</code> with fixed GUIDs. <code>MeasurementDimension</code> (Count / Mass / Volume / Length / Time) already separates mass from everything else — but nothing in the code <em>reads</em> it today for validation or conversion.</p>
+      <p>A product's selling unit can already differ from its inventory unit — sell in KG, stock in G is representable right now — but nothing enforces that the two even measure the same thing (a KG sale against an EA-tracked item is accepted silently).</p>
+      <p><span class="badge risk">Minor bug found</span> <code>SalesOrderPricingQuery.GetSellableVariantsAsync</code> joins <code>UnitsOfMeasure</code> without filtering <code>IsActive</code> — unrelated to this feature, worth a one-line fix regardless.</p>
+      <p><strong>Recommendation:</strong> add a same-dimension check where <code>ProductVariantInventoryComponent</code> is configured, and/or a real conversion-factor column on <code>UnitOfMeasure</code> if cross-dimension precision ever matters. Minimum safe version for kg/g: nothing — they already exist, seeded, fractional.</p>
+    </section>
+
+    <section id="c">
+      <h2><span class="letter">C.</span> Price lists &amp; calculation</h2>
+      <span class="badge verified">Verified</span>
+      <p><code>PriceListItem</code> holds a flat <code>Amount</code> (<code>numeric(18,4)</code>) per (price list, variant) — implicitly "per one sales unit," never stated explicitly. The line subtotal is computed server-side, in plain decimal arithmetic, in both <code>CreateDraftSalesOrderHandler</code> (~line 518) and <code>UpdateDraftSalesOrderHandler</code> (~line 538):</p>
+      <div class="card"><code>unitPrice = variant.BaseUnitPrice + modifierUnitAdjustmentTotal;<br>lineSubtotalAmount = unitPrice * input.Quantity;</code></div>
+      <p>Nothing here assumes an integer piece count — 250 × 1.350 already comes out to 337.50 correctly today.</p>
+      <p><strong>Snapshotting:</strong> <code>SalesOrderLine</code> copies <code>BaseUnitPrice</code>, <code>ModifierUnitAdjustmentTotal</code>, <code>UnitPrice</code>, <code>LineSubtotalAmount</code> at the moment of sale; <code>SalesOrder.PriceListNameSnapshot</code> records the list's name too. A later price-list edit never touches a past line.</p>
+      <p><strong>Rounding:</strong> <code>SalesOrderDiscountCalculator.RoundSnapshotAmount</code> rounds to 8 decimal places, <code>MidpointRounding.AwayFromZero</code>, used for discount allocation and tax. <code>SettlementMonetaryRoundingPolicy.Round</code> rounds only the final <code>PayableAmount</code> to the currency's own decimal digits. No banker's rounding anywhere.</p>
+      <p><span class="badge proposed">Inferred risk</span> A weight like 1.3333 kg × 250 gives 333.325, kept at 8 decimals; only the order's payable gets rounded to currency digits. Line-level displays can therefore fail to add up to the payable to the last digit — already true today for any fractional-unit sale, but weighed sales will make it common and visible.</p>
+      <h3>Answers</h3>
+      <p>A price-per-kg is already representable with zero change (just price the variant). The amount is not tied to a unit explicitly — if a variant's unit could ever change post-creation, an existing price would silently change meaning (it can't change today, which is the only reason this is safe). The server always computes the final line amount; the client only ever sends quantity. Rounding currently has no fixed policy for permitted fractional weights — this should be decided, not assumed.</p>
+    </section>
+
+    <section id="d">
+      <h2><span class="letter">D.</span> Sales order &amp; sales order line</h2>
+      <span class="badge verified">Verified</span>
+      <div class="tablewrap"><table>
+        <tr><th>Field</th><th>Precision</th></tr>
+        <tr><td><code>sales_order_lines.quantity</code></td><td>(18,4)</td></tr>
+        <tr><td><code>base_unit_price</code> / <code>unit_price</code> / <code>modifier_unit_adjustment_total</code></td><td>(18,4)</td></tr>
+        <tr><td><code>line_subtotal_amount</code></td><td>(28,8)</td></tr>
+        <tr><td>order totals / discount / tax amounts</td><td>(28,8)</td></tr>
+      </table></div>
+      <h3>Answers (A–J)</h3>
+      <ul>
+        <li><strong>A/B.</strong> Quantity is already <code>decimal</code>, at <code>numeric(18,4)</code> — 1.350 fits comfortably.</li>
+        <li><strong>C.</strong> Unit prices are (18,4); monetary totals are (28,8).</li>
+        <li><strong>D.</strong> No <code>[Range]</code> attribute, no DB check constraint anywhere restricts quantity to a whole number. The only integer rule is <code>ValidateQuantity</code> consulting the unit's <code>AllowsFractionalQuantity</code> — purely unit-driven, not hardcoded.</li>
+        <li><strong>E.</strong> Yes — 1.350 is safely representable today (3 of the 4 available decimal places). A quantity with 5+ decimals is <em>rejected</em>, not silently rounded.</li>
+        <li><strong>F.</strong> No — the line has no flag or snapshot that says "this was weighed." The only hint is the unit snapshot (code/name/symbol), not a dimension or mode marker.</li>
+        <li><strong>G.</strong> Product/variant/SKU names, unit identity, quantity, all three price fields, line subtotal, tax category identity and rate, plus modifier names/amounts — all copied at <code>SalesOrder.AddLine</code>.</li>
+        <li><strong>H.</strong> The server always computes the total. <code>CreateDraftSalesOrderLineInput</code> carries only <code>(ProductVariantId, Quantity, ModifierOptionIds)</code> — no price, no total, ever accepted from a client.</li>
+        <li><strong>I.</strong> Discounts are allocated proportionally to pre-discount line subtotal (<code>SalesOrderDiscountCalculator</code>), rounded to 8 decimals, remainder to the last eligible line. Tax is grouped per category, inclusive/exclusive modes both handled.</li>
+        <li><strong>J.</strong> Yes — the existing pipeline accommodates decimal/weighed quantities with minimal changes; the gaps are all about <em>marking</em> and <em>displaying</em> a weighed sale, not about the arithmetic.</li>
+      </ul>
+      <p><span class="badge proposed">Inferred risk</span> Modifier adjustments are added to unit price <em>before</em> multiplying by quantity — a "+5 EGP sauce" on 1.350 kg of fish bills 6.75 EGP, not 5. Weighed variants likely need per-line (not per-weight-unit) modifiers, or no modifiers at all — a product decision, not a code fact.</p>
+    </section>
+
+    <section id="e">
+      <h2><span class="letter">E.</span> POS cart &amp; product-selection flow</h2>
+      <span class="badge verified">Verified</span>
+      <p>Every add-to-cart path — a plain card tap, the per-variant quantity rows, a barcode scan — funnels through one function: <strong><code>addSellableVariant</code></strong> in <code>src/Pages/POSPage/POSPage.jsx</code> (~line 1627). Today it hardcodes the delta to exactly <strong>+1</strong>:</p>
+      <div class="card"><code>if (existing) { existing.quantity = Number(existing.quantity) + 1; }<br>else { requestLines.push({ productVariantId, quantity: 1, modifierOptionIds }); }</code></div>
+      <p>The commit path is a serialized queue (<code>useDraftLineEditor.js</code>, <code>enqueue</code>/<code>changeQuantity</code>) that batches rapid clicks for 280ms, then <code>PUT /sales-orders/{id}/draft</code>. It is <strong>delta-based only</strong> — there is no "set this line to exactly X" call anywhere in the frontend.</p>
+      <p><strong>The catalog data already carries what's needed to detect a weighed product:</strong> every variant object the card handles already has <code>salesUnitOfMeasure: { id, code, name, symbol, allowsFractionalQuantity }</code> (<code>features/pos/types/sellableCatalog.types.ts</code>) — from the same <code>GET /catalog/sellable</code> response the card already consumes.</p>
+      <p><strong>A reusable numeric-entry dialog already exists and is already used</strong> for editing a cart line's quantity: <code>NumericKeypadModal.jsx</code> → <code>NumericKeypadCore.jsx</code>, with props for <code>allowDecimal</code>, <code>maxDecimalPlaces</code> (currently used at 2, with <code>allowDecimal={false}</code> for the existing quantity-edit flow) and a <code>unitLabel</code> that's already wired up but unused for this purpose. The quantity model in the cart line type (<code>DraftSalesOrderLine.quantity: number</code>) and the request type (<code>DraftSalesOrderLineInput.quantity: number</code>) already accept a decimal — nothing stops a fractional value from being sent today except the UI never producing one.</p>
+      <p><span class="badge verified">Verified</span> A now-unused variant/modifiers picker dialog (<code>OrderDialogs.jsx</code>, <code>modal === "variant"</code> / <code>"modifiers"</code>) is still fully built and rendered, just never opened from the product grid anymore (confirmed: no call-site sets that modal state from the grid). Its dialog shell (<code>PosModal</code>, <code>ModalHeroImage</code>) is a ready-made frame a weight-entry dialog could reuse.</p>
+      <p>The product/variant admin form (<code>CatalogAdminPage.jsx</code>) already has a <strong>Sales UoM dropdown on create</strong> — but it's read-only after creation, and there is no "sold by weight" toggle or price-per-unit field anywhere in that form; a weighed variant is only implied by choosing KG/G as its unit.</p>
+    </section>
+
+    <section id="f">
+      <h2><span class="letter">F.</span> Manual weight-entry proposal</h2>
+      <span class="badge proposed">Proposed — not built</span>
+      <ol>
+        <li><strong>Trigger:</strong> a variant counts as weighed when <code>salesUnitOfMeasure.allowsFractionalQuantity === true</code> (and, once Phase B lands, an explicit <code>sellingMode</code> flag from the backend rather than inferring it from the unit).</li>
+        <li><strong>New dialog</strong> (e.g. <code>WeightEntryDialog.jsx</code>) built from the existing <code>PosModal</code> + <code>NumericKeypadCore</code>, with <code>allowDecimal: true, maxDecimalPlaces: 3</code> (2 is not enough for 1.350 kg). Shows price/unit and an <em>indicative</em> price × weight preview, clearly labelled as an estimate — the authoritative number always comes back from the server. Or, as a smaller first step, reuse <code>NumericKeypadModal</code> as-is with <code>maxDecimalPlaces=3</code> — no new component, just no subtotal preview and some hardcoded Arabic strings to fix along the way.</li>
+        <li><strong>Backend call:</strong> extend <code>addSellableVariant</code> to accept an explicit quantity instead of the hardcoded <code>1</code>/<code>+1</code>; each weighing most likely becomes its own cart line (skip the "existing line, +1" merge for weighed variants, since two separately-weighed pieces of the same fish are not interchangeable).</li>
+        <li><strong>Card UI:</strong> for a weighed variant, replace the ±1 stepper/row with a single "Weigh" action that opens the dialog, and display quantity with its unit symbol and fixed decimals instead of a raw float.</li>
+        <li><strong>Cart editing:</strong> the existing quantity-edit dialog (<code>POSPage.jsx</code>, <code>modal === "editQuantity"</code>) is hardcoded to <code>allowDecimal={false}</code> — this needs to read the line's unit. Because it's currently delta-based, editing a weight (e.g. 1.35 → 1.20) risks floating-point drift; adding a true <code>setQuantity(lineId, absoluteValue)</code> to <code>useDraftLineEditor</code> is the cleaner fix.</li>
+        <li><strong>No new API contract is needed on the frontend side</strong> if the backend already accepts a decimal quantity (it does) — this is a UI-and-wiring change, not a contract change.</li>
+      </ol>
+      <p><span class="badge risk">Open risk</span> The inventory stock indicator on the product card currently floors to whole units (<code>Math.floor</code>) — not meaningful for weighed stock and needs its own display logic.</p>
+    </section>
+
+    <section id="g">
+      <h2><span class="letter">G.</span> Electronic scale / Edge Agent integration</h2>
+      <span class="badge verified">Verified</span>
+      <p><strong>In one line: the Edge Agent can already find a scale's port or USB descriptor, but it cannot read a byte of data from any device, and there is no channel at all — today — for a reading to travel from the agent to the POS.</strong> Every style below except keyboard-wedge needs new plumbing in both directions.</p>
+      <p>The agent is a pull-only Windows Service: it polls <code>/heartbeat</code> and <code>/configuration</code> every 30s, and <code>/print-jobs/next</code> every 5s. It hosts no local server of any kind — a browser on the same machine cannot talk to it directly. A code comment explicitly rules out SignalR: <em>"reuse the existing mechanism, no aggressive polling, no SignalR."</em></p>
+      <p><strong>The backend's device model is already generic enough.</strong> <code>DeviceType.Scale = 8</code> already exists in <code>src/Nobo.Domain/Devices/DeviceType.cs</code> — a scale can be registered, bound to a serial/USB/network candidate, and delivered to the agent today with zero domain change. <code>DeviceHardwareBinding</code> already stores serial settings (BaudRate, DataBits, Parity, StopBits) via <code>SetDeviceSerialSettings</code> — but a code comment there admits <em>"nothing in the Edge Agent reads these values yet,"</em> and <code>EdgeRuntimeConfigurationQuery</code> doesn't even forward them to the agent's runtime snapshot yet.</p>
+      <div class="tablewrap"><table>
+        <tr><th>Style</th><th>Reusable today</th><th>Net-new</th><th>Verdict</th></tr>
+        <tr><td><strong>A. Keyboard-wedge</strong></td><td><code>useKeyboardWedgeScanner.ts</code> (frontend) already detects fast keystroke bursts; ignores keys while an input is focused.</td><td>Just the weight-entry dialog's input field as the target.</td><td>Works with <em>no Edge Agent change at all</em> — but a scale burst ending in Enter with no input focused could be <em>misread as a barcode scan</em>. Needs the dialog to be a focus-trapping modal.</td></tr>
+        <tr><td><strong>B. USB-Serial/RS-232</strong></td><td><code>System.IO.Ports</code> package, <code>SerialPortDiscoveryProvider</code> (lists COM ports), serial binding storage, <code>DeviceType.Scale</code>.</td><td>Actual serial open/read code (none exists — discovery only confirms the port <em>exists</em>, never that anything meaningful is on it), a parser, an input-side adapter (everything existing is output-only), the full reading channel to the POS.</td><td>Most groundwork of the three hardware styles, but the actual "read a byte" part is 100% unbuilt.</td></tr>
+        <tr><td><strong>C. HID / vendor USB</strong></td><td>WMI metadata enumeration only (VID/PID/HID flag, a text-match "Scale" guess) — never opens a device handle.</td><td>Everything: raw HID report reading (no HID library present), or a vendor SDK/driver — plus the reading channel.</td><td>Only discovery exists; a vendor SDK running inside a Windows Service session is a real risk on its own.</td></tr>
+        <tr><td><strong>D. Network (TCP/IP)</strong></td><td><code>NetworkEndpointDiscoveryProvider</code> (connect-and-probe only), <code>RawTcpPrinterTransport</code>'s connect pattern (write-only, never reads a response).</td><td>Actually reading from the socket, a protocol handler, a parser, the reading channel.</td><td>Only discovery/connect exists; reading is unbuilt.</td></tr>
+      </table></div>
+      <p><strong>The shared, unavoidable gap for B/C/D:</strong> nothing in the agent-to-cloud channel can carry a measurement (heartbeat is every 30s — far too slow for a live weight), and there is no agent-to-POS path of any kind. A reading has to travel through <em>something new</em> — either a new cloud-relay endpoint modelled on the print-job claim/result pattern, or a new local listener inside the agent (neither exists today).</p>
+      <p>No scale vendor or protocol is referenced anywhere in this repository. For any of B/C/D, the manufacturer must supply: baud rate/parity/frame format (B), HID report descriptors or an SDK (C), or the network protocol and port (D) — plus, for all three, how the device signals a <em>stable</em> reading vs. one still in motion.</p>
+    </section>
+
+    <section id="h">
+      <h2><span class="letter">H.</span> Inventory implications</h2>
+      <span class="badge verified">Verified</span>
+      <p><code>ProductVariantInventoryComponent.QuantityPerSalesUnit</code> (<code>numeric(28,8)</code>, must be &gt; 0) is the only link between a variant's selling unit and an inventory item's stock unit. <code>SetProductVariantInventoryComponentHandler</code> checks the inventory item's own fractional-quantity rule against this value — but <strong>never compares the variant's sales unit to the item's base unit, and never checks dimension</strong>. A KG sale against a stock item tracked in G works only if someone configures <code>QuantityPerSalesUnit = 1000</code> correctly; nothing catches a wrong factor, and a KG sale against an EA-tracked item is accepted with no error at all.</p>
+      <p>Consumption, in <code>ConfirmSalesOrderHandler.ApplyInventoryConsumptionAsync</code>, computes <code>requiredQuantity = requirement.Quantity * line.Quantity</code> — already decimal-safe. 1.350 kg deducts correctly once the component factor is right. If the stock unit isn't fractional and the result isn't a whole number, confirmation fails cleanly with <code>Inventory.QuantityPrecisionInvalid</code>.</p>
+      <p><strong>Insufficient stock</strong> is handled by a guarded single UPDATE (<code>quantity_on_hand &gt;= qty</code>) — stock can never go negative, and a short debit fails the whole confirmation with <code>Inventory.InsufficientStock</code>, atomically.</p>
+      <p><strong>F (wastage/trimming/cooking loss):</strong> not a current capability at all — today's model deducts exactly the measured sale weight, with no concept of a separate "raw weight bought vs. sellable weight after trimming." That's a legitimate future enhancement, clearly out of scope for this feature.</p>
+    </section>
+
+    <section id="i">
+      <h2><span class="letter">I.</span> Kitchen / receipt / invoice / refund</h2>
+      <span class="badge verified">Verified</span>
+      <p>The customer receipt renderer (<code>CustomerReceiptEscPosRenderer.cs</code>) prints <code>"{qty} {symbol} x {name} ... {total}"</code> — quantity formatted as <code>"0.####"</code>, so 1.350 kg prints as "1.35 kg". <strong>It never prints the unit price</strong>, even though it's present in the payload — so "@ 250.00 EGP/kg" is simply not shown today. The kitchen ticket behaves the same way for quantity/symbol and should already work correctly for a weighed item.</p>
+      <p><strong>Invoice lines</strong> use higher precision (<code>numeric(28,8)</code>) and format values with plain <code>ToString(InvariantCulture)</code> — no fixed decimal count — so a weighed invoice line could print something like "1.35000000 kg" or "250.00000000 EGP/kg" unless this is fixed.</p>
+      <p><strong>Credit notes / refunds</strong> (<code>CreditNotePlanner</code>) already take a decimal partial quantity (&gt; 0, ≤ remaining), prorate amounts, and round to currency digits — <strong>partial-weight refunds already work as-is.</strong></p>
+      <p><span class="badge risk">What would need to change</span> Only the receipt renderer (to print the unit price) and the invoice formatter (to fix the decimal places) — the data itself is already complete and correctly snapshotted everywhere; nothing is silently lost, just under-displayed.</p>
+    </section>
+
+    <section id="j">
+      <h2><span class="letter">J.</span> Database &amp; migration assessment</h2>
+      <span class="badge verified">Verified</span>
+      <div class="tablewrap"><table>
+        <tr><th>Column</th><th>Precision</th></tr>
+        <tr><td><code>sales_order_lines.quantity / base_unit_price / unit_price / modifier_unit_adjustment_total</code></td><td>18,4</td></tr>
+        <tr><td><code>sales_order_lines.line_subtotal_amount</code>, order totals, tax/discount amounts</td><td>28,8</td></tr>
+        <tr><td><code>price_list_items.amount</code>, modifier price adjustments, line modifier amounts</td><td>18,4</td></tr>
+        <tr><td><code>customer_receipt_lines</code> quantity/prices</td><td>18,4</td></tr>
+        <tr><td><code>customer_receipt_lines</code> subtotal/total, <code>invoice_lines</code> (all)</td><td>28,8</td></tr>
+        <tr><td><code>kitchen_ticket_items.quantity</code></td><td>18,4</td></tr>
+        <tr><td><code>inventory_stock_balances.quantity_on_hand</code>, <code>...transaction_lines.quantity_delta</code></td><td>28,8</td></tr>
+        <tr><td><code>product_variant_inventory_components.quantity_per_sales_unit</code></td><td>28,8</td></tr>
+      </table></div>
+      <p><strong>Plain manual-entry weighed selling needs zero migration</strong> — every precision above already comfortably fits a 3-decimal-place kilogram weight.</p>
+      <p>A migration becomes necessary only for new, <em>explicit</em> semantics, and only this minimal version:</p>
+      <ol>
+        <li><code>ProductVariant</code>: add <code>SellingMode</code> (int, not null, default <code>1 = PerUnit</code>; <code>2 = ByWeight</code>) — <em>or</em> derive it from the unit's dimension being Mass, which needs no column but stays implicit.</li>
+        <li><code>SalesOrderLine</code>: snapshot the selling mode (or unit dimension) at sale time — int, not null, default 1. Optionally add a nullable weight-source column (Manual/Scale) for audit.</li>
+        <li>Optionally mirror the same snapshot onto <code>CustomerReceiptLine</code> and <code>KitchenTicketItem</code>.</li>
+        <li>Only if real cross-dimension unit conversion is wanted: a <code>ToBaseFactor numeric(28,8)</code> on <code>UnitOfMeasure</code> plus seed updates — the alternative is to keep relying on the existing <code>QuantityPerSalesUnit</code> and add validation only, no schema change.</li>
+      </ol>
+      <p>Every existing record stays fully compatible: a default of <code>PerUnit</code> on every column leaves every historical row's meaning unchanged, and the existing price × quantity formula already produces the correct weighed result with no formula change.</p>
+    </section>
+
+    <section id="k">
+      <h2><span class="letter">K.</span> Security &amp; backward compatibility</h2>
+      <span class="badge verified">Verified</span>
+      <div class="tablewrap"><table>
+        <tr><th>Action</th><th>Permission</th></tr>
+        <tr><td>Create/update product or variant</td><td><code>Catalog.Manage</code></td></tr>
+        <tr><td>Set a price-list amount</td><td><code>Pricing.Manage</code></td></tr>
+        <tr><td>Configure an inventory component</td><td><code>Inventory.Configure</code></td></tr>
+        <tr><td>Create / edit a draft order</td><td><code>SalesOrders.Create</code> / <code>EditDraft</code></td></tr>
+        <tr><td>Confirm an order</td><td><code>SalesOrders.Confirm</code></td></tr>
+        <tr><td>Apply a discount</td><td><code>SalesOrders.ApplyDiscount</code></td></tr>
+      </table></div>
+      <p>Selling a product never touches product/price configuration — those boundaries are already clean and would stay that way. <strong>The client cannot dictate its own unit price or line total today</strong> — the add-line command carries only variant id, quantity, and modifier option ids; every price comes from the database inside the handler, and the payable amount is always server-computed. The client <em>does</em> control quantity — i.e., the weight — today bounded only by "&gt; 0, ≤ 4 decimals, whole-number-if-the-unit-says-so." There's no upper bound and no record of where that number came from (typed by the cashier vs. reported by a scale) — worth deciding deliberately once a scale exists, so a disconnected or stale scale can't silently let an old/garbage reading through unflagged.</p>
+      <p><strong>Default behavior for every existing unit-based product, exactly as it is today:</strong> an EA variant has <code>AllowsFractionalQuantity = false</code>, so only whole quantities are ever accepted; subtotal = (price + modifiers) × quantity; consumption = <code>QuantityPerSalesUnit</code> × quantity. None of this changes under the proposed design — new behavior only activates behind a new, defaulted-to-off flag.</p>
+    </section>
+
+    <section id="l">
+      <h2><span class="letter">L.</span> Exact files &amp; classes involved</h2>
+      <span class="badge verified">Verified — every path below was read directly</span>
+      <h3>Domain</h3>
+      <div class="filelist">
+        <div>Catalog/Products/Product.cs</div>
+        <div>Catalog/Products/Variants/ProductVariant.cs</div>
+        <div>ReferenceData/UnitsOfMeasure/UnitOfMeasure.cs</div>
+        <div>ReferenceData/UnitsOfMeasure/MeasurementDimension.cs</div>
+        <div>Pricing/PriceLists/PriceListItem.cs</div>
+        <div>Sales/SalesOrders/SalesOrder.cs</div>
+        <div>Sales/SalesOrders/SalesOrderLine.cs</div>
+        <div>Sales/CustomerReceipts/CustomerReceiptLine.cs</div>
+        <div>Inventory/Consumption/ProductVariantInventoryComponent.cs</div>
+        <div>Inventory/Items/InventoryItem.cs</div>
+        <div>Inventory/Stock/InventoryStockBalance.cs</div>
+        <div>Inventory/Stock/InventoryStockTransactionLine.cs</div>
+        <div>Invoicing/CreditNotePlanner.cs</div>
+        <div>Devices/DeviceType.cs (Scale = 8, already exists)</div>
+        <div>Devices/Bindings/DeviceHardwareBinding.cs</div>
+      </div>
+      <h3>Application</h3>
+      <div class="filelist">
+        <div>Catalog/.../CreateProductVariantHandler.cs</div>
+        <div>Catalog/.../UpdateProductVariantHandler.cs</div>
+        <div>Pricing/.../SetProductVariantPriceHandler.cs</div>
+        <div>Pricing/ConfiguredMoneyPrecisionValidator.cs</div>
+        <div>Sales/SalesOrders/CreateDraftSalesOrder/CreateDraftSalesOrderHandler.cs</div>
+        <div>Sales/SalesOrders/UpdateDraftSalesOrder/UpdateDraftSalesOrderHandler.cs</div>
+        <div>Sales/SalesOrders/SalesOrderDiscountCalculator.cs</div>
+        <div>Sales/SalesOrders/ConfirmSalesOrder/ConfirmSalesOrderHandler.cs</div>
+        <div>Monetary/SettlementMonetaryRoundingPolicy.cs</div>
+        <div>Inventory/Consumption/SetProductVariantInventoryComponentHandler.cs</div>
+        <div>Invoicing/Templates/InvoiceRenderModelBuilder.cs</div>
+        <div>Authorization/ApplicationPermissions.cs</div>
+        <div>Devices/SetDeviceSerialSettings/</div>
+      </div>
+      <h3>Infrastructure</h3>
+      <div class="filelist">
+        <div>Persistence/Queries/SalesOrderPricingQuery.cs</div>
+        <div>Persistence/Queries/EdgeRuntimeConfigurationQuery.cs</div>
+        <div>Persistence/ReferenceData/UnitOfMeasureReferenceDataSeeder.cs</div>
+        <div>Persistence/InventoryStockBalanceDebitWriter.cs</div>
+        <div>Persistence/Configurations/*.cs (one per entity above)</div>
+      </div>
+      <h3>Edge Agent</h3>
+      <div class="filelist">
+        <div>Program.cs, EdgeAgentWorker.cs, EdgeCloudClient.cs</div>
+        <div>EdgeRuntimeSnapshot.cs</div>
+        <div>Printing/PrintJobWorker.cs</div>
+        <div>Printing/RawTcpPrinterTransport.cs</div>
+        <div>Printing/CustomerReceiptEscPosRenderer.cs</div>
+        <div>Printing/KitchenTicketEscPosRenderer.cs</div>
+        <div>Discovery/SerialPortDiscoveryProvider.cs</div>
+        <div>Discovery/WindowsUsbDiscoveryProvider.cs</div>
+        <div>Discovery/NetworkEndpointDiscoveryProvider.cs</div>
+        <div>Discovery/WindowsPrinterQueueDiscoveryProvider.cs</div>
+      </div>
+      <h3>Frontend (noboProject)</h3>
+      <div class="filelist">
+        <div>Pages/POSPage/POSPage.jsx</div>
+        <div>features/pos/components/catalog/PosProductCard.jsx</div>
+        <div>features/pos/components/catalog/CatalogPanel.jsx</div>
+        <div>features/pos/hooks/useDraftLineEditor.js</div>
+        <div>features/pos/components/keypad/NumericKeypadModal.jsx (+Core, +state)</div>
+        <div>features/pos/components/order/OrderDialogs.jsx</div>
+        <div>features/pos/components/order/OrderLines.jsx</div>
+        <div>features/pos/types/sellableCatalog.types.ts</div>
+        <div>features/sales-orders/types/draftSalesOrder.types.ts</div>
+        <div>features/sales-orders/api/draftSalesOrdersApi.ts</div>
+        <div>features/inventory/utils/inventoryQuantity.ts</div>
+        <div>features/scanning/hooks/useKeyboardWedgeScanner.ts</div>
+        <div>Pages/CatalogAdminPage/CatalogAdminPage.jsx</div>
+        <div>i18n/translations.js, i18n/I18nContext.jsx</div>
+      </div>
+    </section>
+
+    <section id="m">
+      <h2><span class="letter">M.</span> Minimum phased implementation plan</h2>
+      <span class="badge proposed">Proposed</span>
+
+      <div class="phase">
+        <h3>Phase A — Model &amp; unit/pricing decisions</h3>
+        <p>No code. Decide: explicit <code>SellingMode</code> column vs. inferring from unit dimension; modifier policy for weighed items (per-line vs. none vs. per-weight-unit); whether a same-dimension check becomes mandatory between sales unit and stock unit.</p>
+        <div class="meta"><span><strong>Migration:</strong> none</span><span><strong>Tests:</strong> none</span><span><strong>Acceptance:</strong> a written decision, not code</span></div>
+      </div>
+
+      <div class="phase">
+        <h3>Phase B — Manual weight entry: backend model &amp; validation</h3>
+        <p>Add <code>ProductVariant.SellingMode</code> + snapshot it onto <code>SalesOrderLine</code>. Both default to <code>PerUnit</code>. No change needed to <code>ValidateQuantity</code>'s arithmetic — it already handles decimals correctly; only the explicit marker is new.</p>
+        <div class="meta"><span><strong>Files:</strong> ProductVariant.cs, CreateProductVariantHandler.cs, SalesOrderLine.cs</span><span><strong>Migration:</strong> yes — 2 int columns, both defaulted</span><span><strong>Acceptance:</strong> existing EA products behave identically; a new KG variant priced and sold via the API at quantity 1.350 produces subtotal 337.50</span></div>
+      </div>
+
+      <div class="phase">
+        <h3>Phase C — Sales-order &amp; calculation integration</h3>
+        <p>Enforce the Phase A modifier decision; add the sales-unit/stock-unit dimension check to <code>SetProductVariantInventoryComponentHandler</code>; decide and implement a per-line rounding policy if the team wants receipt lines to always sum exactly to the total.</p>
+        <div class="meta"><span><strong>Files:</strong> SetProductVariantInventoryComponentHandler.cs, SalesOrderDiscountCalculator.cs</span><span><strong>Migration:</strong> none expected</span><span><strong>Acceptance:</strong> a mismatched-dimension inventory component is rejected; a weighed line's modifier behavior matches the Phase A decision</span></div>
+      </div>
+
+      <div class="phase">
+        <h3>Phase D — Inventory, kitchen, invoice, receipt &amp; refund compatibility</h3>
+        <p>Print the unit price on the customer receipt; fix invoice-line decimal formatting to a fixed place count; confirm (via a test) that credit-note partial-weight refunds already work as-is.</p>
+        <div class="meta"><span><strong>Files:</strong> CustomerReceiptEscPosRenderer.cs, InvoiceRenderModelBuilder.cs</span><span><strong>Migration:</strong> none</span><span><strong>Acceptance:</strong> a printed receipt for a weighed line reads "1.350 kg × 250.00 EGP/kg = 337.50 EGP"; invoice amounts print at a fixed decimal count</span></div>
+      </div>
+
+      <div class="phase">
+        <h3>Phase E — Manual weight-entry UI in the POS</h3>
+        <p>New weight-entry dialog (3 decimal places); <code>addSellableVariant</code> takes an explicit quantity; a "Weigh" action on weighed-variant cards; a true <code>setQuantity(lineId, value)</code> on the draft-line editor instead of delta-only; fix the stock indicator's <code>Math.floor</code> for fractional stock; i18n keys in all 4 locales.</p>
+        <div class="meta"><span><strong>Depends on:</strong> Phase B (needs the SellingMode flag to trigger reliably)</span><span><strong>Migration:</strong> none beyond B</span><span><strong>Acceptance:</strong> a cashier taps a weighed product, types 1.350, and a correctly-priced line appears</span></div>
+      </div>
+
+      <div class="phase">
+        <h3>Phase F — Electronic-scale integration boundary (protocol-agnostic)</h3>
+        <p>Forward the already-stored serial settings (BaudRate/DataBits/Parity/StopBits) into the Edge Agent's runtime snapshot (currently dropped by <code>EdgeRuntimeConfigurationQuery</code>); design and build the new reading channel — either a cloud-relay endpoint modelled on the print-job claim/result pattern, or a local listener inside the agent. Recommend deciding based on whether the POS must keep working with no internet (SelfHosted installs favor a local channel).</p>
+        <div class="meta"><span><strong>Migration:</strong> yes, only if cloud-relay is chosen (a table/columns to hold a submitted reading: device, company, branch, weight, unit, timestamp, source)</span><span><strong>Acceptance:</strong> a stubbed/fake reading can flow end-to-end into the POS with no real scale attached yet</span></div>
+      </div>
+
+      <div class="phase">
+        <h3>Phase G — Real scale protocol (once a specific model is known)</h3>
+        <p>The actual serial/HID/TCP reader and parser for one named manufacturer's protocol, wired into Phase F's channel. Cannot start before the manufacturer's documentation (baud/frame format, or SDK, or network protocol, plus stability/zero/tare signaling) is in hand.</p>
+        <div class="meta"><span><strong>Depends on:</strong> Phase F + manufacturer documentation</span><span><strong>Acceptance:</strong> a real scale's reading reaches the POS and matches its physical display</span></div>
+      </div>
+
+      <div class="phase">
+        <h3>Phase H — End-to-end tests</h3>
+        <p>Regression coverage proving every existing EA/piece-based product is completely unaffected, plus full-flow tests for manual weight entry (and, once built, the scale path).</p>
+      </div>
+    </section>
+
+    <section id="n">
+      <h2><span class="letter">N.</span> Risks, blockers &amp; open questions</h2>
+      <ol class="risklist">
+        <li><span class="n">1</span><span>Modifier pricing policy for weighed items is undecided — a per-weight-unit adjustment multiplies oddly against a fractional quantity.</span></li>
+        <li><span class="n">2</span><span>No check today that a variant's sales unit and its linked inventory item's stock unit even measure the same thing — a wrong <code>QuantityPerSalesUnit</code> factor fails silently.</span></li>
+        <li><span class="n">3</span><span>No field anywhere records that a sale was weighed, or where the weight came from (manual vs. scale) — matters for audit once a scale exists.</span></li>
+        <li><span class="n">4</span><span>No upper bound on quantity/weight, and no tare-weight concept.</span></li>
+        <li><span class="n">5</span><span>Line subtotals aren't rounded to currency digits (only the order payable is) — receipt lines can fail to sum exactly to the printed total.</span></li>
+        <li><span class="n">6</span><span>The printed customer receipt omits the unit price entirely; invoice amounts may print with 8 raw decimal places.</span></li>
+        <li><span class="n">7</span><span><code>GetSellableVariantsAsync</code> doesn't filter inactive units — an unrelated small bug found along the way.</span></li>
+        <li><span class="n">8</span><span>A variant's sales unit is fixed forever at creation — converting an existing piece-based product to weighed means creating a new variant, not editing the old one.</span></li>
+        <li><span class="n">9</span><span><code>PriceListItem.Amount</code> never records which unit it's priced per — safe only because the unit can't change today.</span></li>
+        <li><span class="n">10</span><span>The existing quantity-edit keypad defaults to 2 decimal places and has several hardcoded Arabic strings outside the i18n system.</span></li>
+        <li><span class="n">11</span><span>Every quantity control in the POS today is delta-based (±1); there is no "set to this exact value" call, risking float drift when editing a weight.</span></li>
+        <li><span class="n">12</span><span>A keyboard-wedge scale's output, ending in Enter, could be misread by the existing barcode-wedge detector if no input is focused when it fires.</span></li>
+        <li><span class="n">13</span><span>The product card's stock indicator floors to whole units — not meaningful once stock itself is weighed.</span></li>
+        <li><span class="n">14</span><span>Every Edge Agent↔cloud channel is slow-polling (30s heartbeat) or purpose-built for print jobs only — nothing can carry a live measurement without new plumbing, and no reading reaches the POS by any existing path.</span></li>
+        <li><span class="n">15</span><span>A stored serial binding is keyed only by COM port number, which Windows can reassign on a USB replug — the binding would silently point at the wrong port.</span></li>
+        <li><span class="n">16</span><span>No scale vendor or protocol is implemented or known; Phase G cannot start until a specific manufacturer's documentation is in hand.</span></li>
+        <li><span class="n">17</span><span>Whether "sold by weight" should be an explicit column or inferred from the unit's dimension is a real design choice with different blast radii — Phase A should settle it before any code is written.</span></li>
+      </ol>
+    </section>
+
+    <section id="o">
+      <h2><span class="letter">O.</span> Confirmation</h2>
+      <span class="badge verified">Confirmed</span>
+      <p>This was a read-only audit from end to end. No file in <code>G:\Projects\Nobo</code> or in the <code>noboProject</code> frontend repo was created, edited or deleted. No EF Core migration was added or run. No database row, table or schema was touched. No IIS, deployment, environment or secret configuration was changed. No test data, products, users or orders were created. The three investigations that produced this report were dispatched as read-only exploration agents with no write access, and their findings were only read and synthesized here — nothing beyond that happened.</p>
+    </section>
+
+    <footer>
+      Audit compiled from three parallel read-only investigations (backend domain/pricing/inventory, POS frontend, Edge Agent/device integration) against the live repository on 2026-10-09. File paths and precision figures were read directly from the code; everything marked "Proposed" or "Inferred" is a recommendation, not a current fact.
+    </footer>
+  </main>
+</div>
