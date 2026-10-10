@@ -197,14 +197,30 @@ export function PosProductCard({
 
           {sizeVariants.length === 0 && (
             <div className="mt-auto flex flex-col gap-1.5">
-              <QtyStepper
-                quantity={Number(representativeLine?.quantity ?? 0)}
-                disabled={disabled}
-                focusable={isFlipped}
-                canDecrement={Boolean(representativeVariant)}
-                onDecrement={decrement}
-                onIncrement={increment}
-              />
+              {product.variants[0]?.sellingMode === "ByWeight" ? (
+                // Single-variant ByWeight product: no stepper at all -- tapping always opens the
+                // weight-entry dialog for a brand new line (addSellableVariant's interception),
+                // whether or not anything of this product is already in the cart.
+                <button
+                  type="button"
+                  onClick={increment}
+                  disabled={disabled}
+                  tabIndex={isFlipped ? 0 : -1}
+                  className="flex h-11 items-center justify-center gap-1.5 rounded-full bg-pos-primary-strong text-sm font-bold text-white shadow-sm transition hover:bg-pos-primary-strong-hover active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Plus size={15} />
+                  {t("pos.catalog.weigh")}
+                </button>
+              ) : (
+                <QtyStepper
+                  quantity={Number(representativeLine?.quantity ?? 0)}
+                  disabled={disabled}
+                  focusable={isFlipped}
+                  canDecrement={Boolean(representativeVariant)}
+                  onDecrement={decrement}
+                  onIncrement={increment}
+                />
+              )}
             </div>
           )}
         </div>
@@ -360,6 +376,7 @@ function QtyStepper({ quantity, disabled, focusable, canDecrement, onDecrement, 
 function VariantQuantityRow({ variant, quantity, currencyCode, disabled, focusable, onIncrement, onDecrement }) {
   const { t } = useI18n();
   const hasQuantity = quantity > 0;
+  const isByWeight = variant.sellingMode === "ByWeight";
 
   return (
     <div
@@ -369,39 +386,61 @@ function VariantQuantityRow({ variant, quantity, currencyCode, disabled, focusab
     >
       <span className="line-clamp-2 text-xs font-bold leading-tight text-pos-text">{variant.variantName}</span>
       <div className="flex items-center justify-between gap-1">
-        <span className="pos-num shrink-0 text-[10px] text-pos-muted">{formatMoney(variant.price, currencyCode, 2)}</span>
-        <div className="flex shrink-0 items-center gap-1">
-          {/* "-" and the qty number stay mounted (just hidden) even at 0: toggling them in/out of
-              the DOM changed this row's width every time and shoved the rest of the line around. */}
-          <button
-            type="button"
-            onClick={onDecrement}
-            disabled={disabled || !hasQuantity}
-            tabIndex={focusable && hasQuantity ? 0 : -1}
-            aria-hidden={!hasQuantity}
-            aria-label={t("pos.catalog.decrement")}
-            className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-pos-muted transition hover:bg-pos-bg hover:text-pos-text active:scale-90 disabled:cursor-not-allowed disabled:opacity-40 ${
-              hasQuantity ? "" : "invisible"
-            }`}
-          >
-            <Minus size={13} />
-          </button>
-          <span
-            className={`pos-num w-4 shrink-0 text-center text-xs font-black text-pos-text ${hasQuantity ? "" : "invisible"}`}
-          >
-            {quantity}
-          </span>
+        <span className="pos-num shrink-0 text-[10px] text-pos-muted">
+          {formatMoney(variant.price, currencyCode, 2)}
+          {isByWeight && `/${variant.salesUnitOfMeasure?.symbol ?? ""}`}
+        </span>
+        {isByWeight ? (
+          // ByWeight: no decrement (a measured weight isn't a count to step down) and no running
+          // total shown here (several separately-weighed lines of the same size are never summed
+          // into one number) -- a single "weigh" action that always opens the weight-entry dialog
+          // for a brand new line, same as this row's onIncrement already does for addSellableVariant.
           <button
             type="button"
             onClick={onIncrement}
             disabled={disabled}
             tabIndex={focusable ? 0 : -1}
-            aria-label={t("pos.catalog.increment")}
-            className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-pos-primary-strong text-white shadow-sm transition hover:bg-pos-primary-strong-hover active:scale-90 disabled:cursor-not-allowed disabled:opacity-50"
+            aria-label={t("pos.catalog.weigh")}
+            className="flex h-6 shrink-0 items-center gap-1 rounded-full bg-pos-primary-strong px-2 text-[10px] font-bold text-white shadow-sm transition hover:bg-pos-primary-strong-hover active:scale-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <Plus size={13} />
+            <Plus size={11} />
+            {t("pos.catalog.weigh")}
           </button>
-        </div>
+        ) : (
+          <div className="flex shrink-0 items-center gap-1">
+            {/* "-" and the qty number stay mounted (just hidden) even at 0: toggling them in/out
+                of the DOM changed this row's width every time and shoved the rest of the line
+                around. */}
+            <button
+              type="button"
+              onClick={onDecrement}
+              disabled={disabled || !hasQuantity}
+              tabIndex={focusable && hasQuantity ? 0 : -1}
+              aria-hidden={!hasQuantity}
+              aria-label={t("pos.catalog.decrement")}
+              className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-pos-muted transition hover:bg-pos-bg hover:text-pos-text active:scale-90 disabled:cursor-not-allowed disabled:opacity-40 ${
+                hasQuantity ? "" : "invisible"
+              }`}
+            >
+              <Minus size={13} />
+            </button>
+            <span
+              className={`pos-num w-4 shrink-0 text-center text-xs font-black text-pos-text ${hasQuantity ? "" : "invisible"}`}
+            >
+              {quantity}
+            </span>
+            <button
+              type="button"
+              onClick={onIncrement}
+              disabled={disabled}
+              tabIndex={focusable ? 0 : -1}
+              aria-label={t("pos.catalog.increment")}
+              className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-pos-primary-strong text-white shadow-sm transition hover:bg-pos-primary-strong-hover active:scale-90 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Plus size={13} />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

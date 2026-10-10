@@ -88,6 +88,10 @@ const EMPTY_VARIANT_FORM = {
   sku: "",
   salesUnitOfMeasureId: "",
   sortOrder: "0",
+  // "PerUnit" | "ByWeight" (Variable-Weight Products Phase E.2). Fixed at creation -- the backend
+  // has no way to change it afterward (ProductVariant.SellingMode has no setter), so this only
+  // ever matters on the create form; the edit form shows it read-only.
+  sellingMode: "PerUnit",
 };
 const EMPTY_MODIFIER_GROUP_FORM = { name: "" };
 const EMPTY_MODIFIER_OPTION_FORM = { name: "", sortOrder: "0" };
@@ -444,6 +448,12 @@ function VariantForm({
 }) {
   const { t } = useI18n();
   const nextStatus = selectedVariant?.status === "Active" ? "Suspended" : "Active";
+  const isByWeight = form.sellingMode === "ByWeight";
+  // The backend rejects ByWeight with anything but an active unit that measures mass and allows
+  // a fractional reading (CreateProductVariantHandler) -- filtering the picker to only those
+  // units is pure UX help; the server remains the authority that actually enforces this.
+  const massUnits = units.filter((unit) => unit.dimension === "Mass" && unit.allowsFractionalQuantity);
+  const visibleUnits = mode === "create" && isByWeight ? massUnits : units;
 
   return (
     <form
@@ -486,7 +496,7 @@ function VariantForm({
               className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
             >
               <option value="">{t("catalogAdmin.field.selectUnit")}</option>
-              {units.map((unit) => (
+              {visibleUnits.map((unit) => (
                 <option key={unit.id} value={unit.id}>
                   {unit.code} - {unit.name}
                 </option>
@@ -516,6 +526,60 @@ function VariantForm({
       </div>
       <div className="rounded-xl border border-line bg-raised px-3 py-2 text-sm text-muted">
         {t("catalogAdmin.variant.uomReadonlyNote")}
+      </div>
+      <div>
+        <span className="text-sm font-semibold text-muted">{t("catalogAdmin.field.sellingMode")}</span>
+        {mode === "create" ? (
+          <>
+            <div role="radiogroup" className="mt-1 flex flex-wrap gap-2">
+              {["PerUnit", "ByWeight"].map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  role="radio"
+                  aria-checked={form.sellingMode === option}
+                  disabled={!canManage || isPending || !selectedProduct}
+                  onClick={() =>
+                    setForm((draft) => {
+                      // Switching ByWeight<->PerUnit: a unit already valid for the OLD mode may
+                      // not be valid for the new one (e.g. EA is fine for PerUnit, meaningless
+                      // for ByWeight) -- clear it rather than silently keep an invalid selection
+                      // the dropdown no longer even lists.
+                      const stillValid =
+                        option !== "ByWeight" ||
+                        massUnits.some((unit) => unit.id === draft.salesUnitOfMeasureId);
+                      return {
+                        ...draft,
+                        sellingMode: option,
+                        salesUnitOfMeasureId: stillValid ? draft.salesUnitOfMeasureId : "",
+                      };
+                    })
+                  }
+                  className={`h-10 rounded-full border px-4 text-sm font-semibold transition ${
+                    form.sellingMode === option
+                      ? "border-accent-line bg-accent text-white"
+                      : "border-line bg-canvas text-ink hover:border-accent-line"
+                  } disabled:cursor-not-allowed disabled:opacity-50`}
+                >
+                  {t(`catalogAdmin.sellingMode.${option}`)}
+                </button>
+              ))}
+            </div>
+            <p className="mt-1 text-xs text-muted">
+              {isByWeight ? t("catalogAdmin.sellingMode.byWeightHint") : t("catalogAdmin.sellingMode.perUnitHint")}
+            </p>
+            {isByWeight && massUnits.length === 0 && (
+              <p className="mt-1 text-xs text-warning">{t("catalogAdmin.sellingMode.noMassUnits")}</p>
+            )}
+          </>
+        ) : (
+          <>
+            <div className="mt-1 flex h-11 items-center rounded-xl border border-line bg-raised px-3 text-sm text-ink">
+              {selectedVariant ? t(`catalogAdmin.sellingMode.${selectedVariant.sellingMode}`) : t("catalogAdmin.common.loading")}
+            </div>
+            <p className="mt-1 text-xs text-muted">{t("catalogAdmin.sellingMode.readonlyNote")}</p>
+          </>
+        )}
       </div>
       <ActionRow
         mode={mode}
@@ -1671,6 +1735,9 @@ export default function CatalogAdminPage() {
       sku: variant.sku || "",
       salesUnitOfMeasureId: variant.salesUnitOfMeasureId,
       sortOrder: String(variant.sortOrder),
+      // Display only in edit mode -- there is no backend operation that changes it afterward
+      // (see submitVariant, which never sends this field on update).
+      sellingMode: variant.sellingMode || "PerUnit",
     });
   };
 
@@ -1776,6 +1843,9 @@ export default function CatalogAdminPage() {
           ? await createVariantMutation.mutateAsync({
               ...payload,
               salesUnitOfMeasureId: variantForm.salesUnitOfMeasureId,
+              // Never sent on update -- the backend has no operation that changes an existing
+              // variant's selling mode (ProductVariant.SellingMode has no setter).
+              sellingMode: variantForm.sellingMode,
             })
           : await updateVariantMutation.mutateAsync(payload);
       setVariantMode("edit");
@@ -1785,6 +1855,7 @@ export default function CatalogAdminPage() {
         sku: result.sku || "",
         salesUnitOfMeasureId: result.salesUnitOfMeasureId,
         sortOrder: String(result.sortOrder),
+        sellingMode: result.sellingMode || "PerUnit",
       });
       showNotice(
         variantMode === "create"

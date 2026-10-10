@@ -3,7 +3,7 @@ import { ChevronDown, Minus, Plus, ShoppingCart, SlidersHorizontal, Trash2 } fro
 import { formatMoney } from "../../../../shared/utils/formatters";
 import { useI18n } from "../../../../i18n/I18nContext";
 import { brandAccentStyle } from "../../utils/brandAccents";
-import { variantSizeLabel } from "../../utils/posFormatters";
+import { formatQuantity, variantSizeLabel } from "../../utils/posFormatters";
 
 // Next modifier-option set for a line when one option chip is tapped in the inline extras editor,
 // honouring the group's own min/max: a single-choice group (max 1) swaps its option, a multi-choice
@@ -25,6 +25,46 @@ function toggleModifierOption(line, group, optionId) {
   return [...current, optionId];
 }
 
+// ByWeight counterpart of toggleModifierOption (Variable-Weight Products Phase E): selections are
+// {modifierOptionId, quantity}[] instead of plain ids, since each one carries its own independent
+// count. Toggling off removes the selection entirely; toggling on defaults it to quantity 1 ("a
+// selected modifier defaults to quantity 1"). Group min/max still counts DISTINCT selected
+// options, never a sum of quantities -- identical rule to the PerUnit path above.
+function toggleModifierSelection(line, group, optionId) {
+  const current = line.modifiers.map((modifier) => ({
+    modifierOptionId: modifier.modifierOptionId,
+    quantity: modifier.quantity,
+  }));
+  const groupOptionIds = new Set(group.options.map((option) => option.modifierOptionId));
+  const selectedInGroup = current.filter((selection) => groupOptionIds.has(selection.modifierOptionId));
+
+  if (current.some((selection) => selection.modifierOptionId === optionId)) {
+    if (selectedInGroup.length <= group.minSelections) return null;
+    return current.filter((selection) => selection.modifierOptionId !== optionId);
+  }
+
+  if (group.maxSelections === 1) {
+    return [
+      ...current.filter((selection) => !groupOptionIds.has(selection.modifierOptionId)),
+      { modifierOptionId: optionId, quantity: 1 },
+    ];
+  }
+  if (group.maxSelections > 0 && selectedInGroup.length >= group.maxSelections) return null;
+  return [...current, { modifierOptionId: optionId, quantity: 1 }];
+}
+
+// Adjusts one already-selected option's own quantity, never below 1, leaving every other
+// selection (and the product's own weight) completely untouched.
+function adjustModifierSelectionQuantity(line, optionId, delta) {
+  return line.modifiers.map((modifier) => ({
+    modifierOptionId: modifier.modifierOptionId,
+    quantity:
+      modifier.modifierOptionId === optionId
+        ? Math.max(1, modifier.quantity + delta)
+        : modifier.quantity,
+  }));
+}
+
 export function OrderLines({
   draftLines,
   draftOrder,
@@ -40,6 +80,9 @@ export function OrderLines({
   // that commits a line's new modifier-option set (POSPage's changeLineModifiers).
   modifierGroupsByVariantId,
   onChangeLineModifiers,
+  // ByWeight counterpart of onChangeLineModifiers (Variable-Weight Products Phase E): commits a
+  // weighed line's modifier selections with their own independent quantities.
+  onChangeLineModifierSelections,
   // Inline size switcher: every variant of the line's product (size order) per productVariantId,
   // and the handler that moves a line to another variant (POSPage's changeLineVariant).
   sizeVariantsByVariantId,
@@ -89,10 +132,21 @@ export function OrderLines({
           draftOrder?.currencyCode || catalogCurrencyCode,
           draftOrder?.currencyMinorUnitDigits || 2,
         );
-        const modifierNames = item.modifiers.map((modifier) => modifier.modifierOptionName).join("، ");
+        const isByWeight = item.sellingMode === "ByWeight";
+        // ByWeight: each modifier shows its own independent quantity ("Sauce x2") -- a plain name
+        // list would hide the exact thing Phase 3 exists to make editable. PerUnit keeps the
+        // original flat name list unchanged.
+        const modifierNames = isByWeight
+          ? item.modifiers
+              .map((modifier) => `${modifier.modifierOptionName} ×${modifier.quantity}`)
+              .join("، ")
+          : item.modifiers.map((modifier) => modifier.modifierOptionName).join("، ");
         const modifierGroups = modifierGroupsByVariantId?.get(item.productVariantId) ?? [];
-        const canEditExtras = Boolean(onChangeLineModifiers) && modifierGroups.length > 0;
+        const canEditExtras =
+          Boolean(isByWeight ? onChangeLineModifierSelections : onChangeLineModifiers) &&
+          modifierGroups.length > 0;
         const extrasOpen = canEditExtras && extrasOpenIndex === index;
+        const unitRate = `${formatMoney(item.unitPrice, draftOrder?.currencyCode || catalogCurrencyCode, draftOrder?.currencyMinorUnitDigits || 2)} / ${item.salesUnitOfMeasure?.symbol ?? ""}`;
         const sizeVariants = onChangeLineVariant ? sizeVariantsByVariantId?.get(item.productVariantId) ?? [] : [];
         const addSizeOpen = Boolean(onAddLineInSize) && sizeVariants.length > 0 && addSizeOpenIndex === index;
 
@@ -104,7 +158,9 @@ export function OrderLines({
               className="flex items-center gap-2 rounded-pos border border-pos-border bg-pos-card px-2 py-1.5"
             >
               <span className="pos-num pos-chip shrink-0 rounded-pos px-1.5 py-0.5 text-[11px] font-black">
-                {Number(item.quantity)}×
+                {isByWeight
+                  ? `${formatQuantity(item.quantity)} ${item.salesUnitOfMeasure?.symbol ?? ""}`
+                  : `${Number(item.quantity)}×`}
               </span>
               <span className="pos-fs-line min-w-0 flex-1 truncate text-pos-text">
                 {item.productName}
@@ -149,6 +205,9 @@ export function OrderLines({
                 <Trash2 size={13} />
               </button>
             </div>
+            {isByWeight && (
+              <div className="pos-num pos-fs-label mt-0.5 text-pos-muted">{unitRate}</div>
+            )}
             {modifierNames && (
               <div className="pos-fs-label mt-0.5 line-clamp-2 text-pos-primary-text">+ {modifierNames}</div>
             )}
@@ -223,36 +282,55 @@ export function OrderLines({
             )}
 
             <div className="mt-1 flex items-center justify-between gap-2">
-              <div
-                className="flex h-11 shrink-0 items-center rounded-pos border border-pos-border bg-pos-card"
-                onClick={(event) => event.stopPropagation()}
-              >
+              {isByWeight ? (
+                // ByWeight: no +/-1 stepper at all -- a weight is an absolute measured value,
+                // never a count to increment/decrement by whole units. Tapping the value is the
+                // ONLY way to change it, and always opens the decimal weight keypad (see
+                // onEditQuantity in POSPage), never a simulated +1/-1 walk toward some target.
                 <button
                   type="button"
-                  onClick={() => changeQty(item.salesOrderLineId, -1)}
-                  disabled={!canEditDraft}
-                  className="grid h-11 w-11 place-items-center text-pos-muted hover:bg-pos-tint hover:text-pos-text disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <Minus size={15} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onEditQuantity?.(item.salesOrderLineId, Number(item.quantity))}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onEditQuantity?.(item);
+                  }}
                   disabled={!canEditDraft || !onEditQuantity}
                   aria-label={t("pos.lines.editQty")}
-                  className={`pos-fs-line min-w-9 px-1 text-center font-bold text-pos-text transition-opacity ${pending ? "opacity-60" : ""} ${onEditQuantity ? "hover:text-pos-primary-text" : ""}`}
+                  className={`pos-num flex h-11 shrink-0 items-center gap-1 rounded-pos border border-pos-border bg-pos-card px-3 font-bold text-pos-text transition-opacity ${pending ? "opacity-60" : ""} ${onEditQuantity ? "hover:border-pos-primary hover:text-pos-primary-text" : ""} disabled:cursor-not-allowed disabled:opacity-50`}
                 >
-                  {Number(item.quantity)}
+                  {formatQuantity(item.quantity)} {item.salesUnitOfMeasure?.symbol ?? ""}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => changeQty(item.salesOrderLineId, 1)}
-                  disabled={!canEditDraft}
-                  className="grid h-11 w-11 place-items-center text-pos-primary-text hover:bg-pos-tint disabled:cursor-not-allowed disabled:opacity-50"
+              ) : (
+                <div
+                  className="flex h-11 shrink-0 items-center rounded-pos border border-pos-border bg-pos-card"
+                  onClick={(event) => event.stopPropagation()}
                 >
-                  <Plus size={15} />
-                </button>
-              </div>
+                  <button
+                    type="button"
+                    onClick={() => changeQty(item.salesOrderLineId, -1)}
+                    disabled={!canEditDraft}
+                    className="grid h-11 w-11 place-items-center text-pos-muted hover:bg-pos-tint hover:text-pos-text disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <Minus size={15} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onEditQuantity?.(item)}
+                    disabled={!canEditDraft || !onEditQuantity}
+                    aria-label={t("pos.lines.editQty")}
+                    className={`pos-fs-line min-w-9 px-1 text-center font-bold text-pos-text transition-opacity ${pending ? "opacity-60" : ""} ${onEditQuantity ? "hover:text-pos-primary-text" : ""}`}
+                  >
+                    {Number(item.quantity)}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => changeQty(item.salesOrderLineId, 1)}
+                    disabled={!canEditDraft}
+                    className="grid h-11 w-11 place-items-center text-pos-primary-text hover:bg-pos-tint disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <Plus size={15} />
+                  </button>
+                </div>
+              )}
 
               {canEditExtras && (
                 <button
@@ -305,6 +383,73 @@ export function OrderLines({
                           .map((option) => {
                             const isSelected = selectedIds.has(option.modifierOptionId);
                             const adjustment = Number(option.amountAdjustment);
+                            const selectedModifier = item.modifiers.find(
+                              (modifier) => modifier.modifierOptionId === option.modifierOptionId,
+                            );
+
+                            if (isByWeight) {
+                              return (
+                                <div
+                                  key={option.modifierOptionId}
+                                  className={`pos-fs-label flex min-h-9 items-center gap-1 rounded-full border font-bold transition ${
+                                    isSelected
+                                      ? "border-pos-primary-strong bg-pos-primary-strong text-white"
+                                      : "border-pos-border bg-pos-card text-pos-text hover:border-pos-primary"
+                                  }`}
+                                >
+                                  <button
+                                    type="button"
+                                    aria-pressed={isSelected}
+                                    disabled={!canEditDraft}
+                                    onClick={() => {
+                                      const next = toggleModifierSelection(item, group, option.modifierOptionId);
+                                      if (next) onChangeLineModifierSelections?.(item, next);
+                                    }}
+                                    className="flex min-h-9 items-center gap-1 rounded-full px-3 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                                  >
+                                    {option.name}
+                                    {adjustment !== 0 && (
+                                      <span className={isSelected ? "pos-num text-white/80" : "pos-num text-pos-muted"}>
+                                        {adjustment > 0 ? "+" : ""}
+                                        {formatMoney(adjustment, draftOrder?.currencyCode || catalogCurrencyCode, 2)}
+                                      </span>
+                                    )}
+                                  </button>
+                                  {isSelected && (
+                                    <div className="flex items-center gap-1 rounded-full bg-black/10 px-1 py-0.5 pe-1.5">
+                                      <button
+                                        type="button"
+                                        disabled={!canEditDraft}
+                                        onClick={() => {
+                                          const next = adjustModifierSelectionQuantity(item, option.modifierOptionId, -1);
+                                          onChangeLineModifierSelections?.(item, next);
+                                        }}
+                                        aria-label={t("pos.catalog.decrement")}
+                                        className="grid h-6 w-6 place-items-center rounded-full hover:bg-black/10 active:scale-90 disabled:cursor-not-allowed disabled:opacity-50"
+                                      >
+                                        <Minus size={11} />
+                                      </button>
+                                      <span className="pos-num w-4 text-center text-xs font-black">
+                                        {selectedModifier?.quantity ?? 1}
+                                      </span>
+                                      <button
+                                        type="button"
+                                        disabled={!canEditDraft}
+                                        onClick={() => {
+                                          const next = adjustModifierSelectionQuantity(item, option.modifierOptionId, 1);
+                                          onChangeLineModifierSelections?.(item, next);
+                                        }}
+                                        aria-label={t("pos.catalog.increment")}
+                                        className="grid h-6 w-6 place-items-center rounded-full hover:bg-black/10 active:scale-90 disabled:cursor-not-allowed disabled:opacity-50"
+                                      >
+                                        <Plus size={11} />
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            }
+
                             return (
                               <button
                                 key={option.modifierOptionId}

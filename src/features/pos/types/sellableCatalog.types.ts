@@ -22,6 +22,10 @@ export type BranchSellableCatalogModifierGroup = {
   options: BranchSellableCatalogModifierOption[];
 };
 
+// "PerUnit" | "ByWeight" (Variable-Weight Products Phase B). A variant without this field (an
+// older cached response) is treated as "PerUnit" everywhere this is read.
+export type SellingMode = "PerUnit" | "ByWeight";
+
 export type BranchSellableCatalogItem = {
   categoryId: string | null;
   categoryName: string | null;
@@ -35,6 +39,7 @@ export type BranchSellableCatalogItem = {
   salesUnitOfMeasure: BranchSellableCatalogUnitOfMeasure;
   unitPrice: number;
   modifierGroups: BranchSellableCatalogModifierGroup[];
+  sellingMode: SellingMode;
 };
 
 export type BranchSellableCatalogResponse = {

@@ -45,6 +45,7 @@ export function OrderSidebar({
   onEditQuantity,
   modifierGroupsByVariantId,
   onChangeLineModifiers,
+  onChangeLineModifierSelections,
   sizeVariantsByVariantId,
   onChangeLineVariant,
   onAddLineInSize,
@@ -140,6 +141,7 @@ export function OrderSidebar({
         onEditQuantity={onEditQuantity}
         modifierGroupsByVariantId={modifierGroupsByVariantId}
         onChangeLineModifiers={onChangeLineModifiers}
+        onChangeLineModifierSelections={onChangeLineModifierSelections}
         sizeVariantsByVariantId={sizeVariantsByVariantId}
         onChangeLineVariant={onChangeLineVariant}
         onAddLineInSize={onAddLineInSize}

@@ -282,7 +282,15 @@ function normalizeDraftDetails(data: Record<string, any>): DraftSalesOrder {
         modifierOptionId: modifier.modifierOptionId,
         modifierOptionName: modifier.modifierOptionNameSnapshot,
         amountAdjustment: modifier.priceAdjustmentSnapshot,
+        // GetSalesOrderDetails (Variable-Weight Products Phase E backend addition): a modifier's
+        // own independent selection count and its extended amount. Defaults match the backend's
+        // own PerUnit defaults when an older cached response lacks these fields.
+        quantity: modifier.quantity ?? 1,
+        extendedAmount: modifier.extendedAmount ?? modifier.priceAdjustmentSnapshot,
       })),
+      // Same Phase E addition: which pricing/quantity semantics this line uses. Defaults to
+      // PerUnit, matching every line that predates SellingMode.
+      sellingMode: line.sellingMode ?? "PerUnit",
     })),
   };
 }

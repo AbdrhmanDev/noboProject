@@ -118,6 +118,10 @@ export type ProductImageResponse = {
   imageUrl: string;
 };
 
+// "PerUnit" | "ByWeight" (Variable-Weight Products Phase B). Fixed at creation -- there is no
+// backend operation that changes it afterward.
+export type SellingMode = "PerUnit" | "ByWeight";
+
 export type ProductVariantAdmin = {
   productVariantId: string;
   companyId: string;
@@ -133,6 +137,7 @@ export type ProductVariantAdmin = {
   sortOrder: number;
   status: CatalogAdminStatus;
   createdAtUtc: string;
+  sellingMode: SellingMode;
 };
 
 // Only barcodes with isActive=true are usable for scanning/label printing -- inactive rows are
@@ -191,6 +196,8 @@ export type CreateProductVariantRequest = {
   sku: string | null;
   salesUnitOfMeasureId: string;
   sortOrder: number;
+  // Omit for the existing piece-based default ("PerUnit").
+  sellingMode?: SellingMode;
 };
 
 export type CreateProductVariantResponse = {
@@ -203,6 +210,7 @@ export type CreateProductVariantResponse = {
   sortOrder: number;
   status: CatalogAdminStatus;
   createdAtUtc: string;
+  sellingMode: SellingMode;
 };
 
 export type UpdateProductVariantRequest = {

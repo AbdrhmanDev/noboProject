@@ -6,6 +6,7 @@ import { ROUTES } from "../../../../utils/routes";
 import { RestaurantSeatingOnboarding } from "../../../restaurant/components/RestaurantSeatingOnboarding";
 import { ShortcutHint } from "../../../shortcuts/components/ShortcutHint";
 import { ROVING_ITEM_SELECTOR, useGridArrowNav } from "../../../shortcuts/rovingFocus";
+import { getCartItemCount } from "../../utils/posFormatters";
 
 const ORDER_TYPES = ["Takeaway", "DineIn", "Delivery"];
 const ORDER_TYPE_SHORTCUT_ACTION = {
@@ -94,7 +95,7 @@ export function OrderHeader({
             </span>
           )}
           <span className="truncate text-[11px] text-pos-muted">
-            · {t("pos.cart.itemsCount", { count: draftLines.reduce((sum, item) => sum + Number(item.quantity), 0) })}
+            · {t("pos.cart.itemsCount", { count: getCartItemCount(draftLines) })}
           </span>
         </div>
         <button

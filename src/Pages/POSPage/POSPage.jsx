@@ -78,10 +78,12 @@ import { ShiftReportDialog } from "../../features/pos/components/shift/ShiftRepo
 import { PosMiscDialogs } from "../../features/pos/components/PosMiscDialogs";
 import { NumericKeypadModal } from "../../features/pos/components/keypad/NumericKeypadModal";
 import {
+  getCartItemCount,
   getCashMovementLabel,
   getDefaultVariant,
   parseMoneyInput,
   parseNonNegativeMoneyInput,
+  parseWeightInput,
   sortVariantsBySize,
 } from "../../features/pos/utils/posFormatters";
 import { getOrderPrimaryAction } from "../../features/pos/components/order/getOrderPrimaryAction";
@@ -432,6 +434,14 @@ export default function POSPage() {
   const [selectedVariantProduct, setSelectedVariantProduct] = useState(null);
   const [selectedModifierVariant, setSelectedModifierVariant] = useState(null);
   const [modifierSelections, setModifierSelections] = useState({});
+  // Variable-Weight Products Phase E: a ByWeight variant pending weight entry (opens the
+  // "weightEntry" modal instead of adding quantity 1), the weight once confirmed (carried through
+  // to the modifier picker when the variant has modifier groups), and each selected modifier
+  // option's own independent quantity for that weighed line (separate from modifierSelections'
+  // group-id-keyed shape above, which only ever tracked presence, never a count).
+  const [weightEntryVariant, setWeightEntryVariant] = useState(null);
+  const [pendingWeight, setPendingWeight] = useState(null);
+  const [modifierQuantities, setModifierQuantities] = useState({});
   const [countedCashInput, setCountedCashInput] = useState("");
   const [closingNoteInput, setClosingNoteInput] = useState("");
   const [lastClosedShift, setLastClosedShift] = useState(null);
@@ -740,12 +750,30 @@ export default function POSPage() {
     }
   };
 
+  // ByWeight lines must always re-serialize their modifiers as `modifierSelections` (option +
+  // independent quantity), never `modifierOptionIds` -- the latter would silently collapse a
+  // genuine "2 sauces" selection back down to a flat, quantity-less presence the moment ANY other
+  // line in the cart is edited (this endpoint fully replaces the whole line array on every
+  // request, so every line gets re-sent on every edit, not just the one actually changed).
   const mapDraftLinesToRequest = (lines = draftLines) =>
-    lines.map((line) => ({
-      productVariantId: line.productVariantId,
-      quantity: Number(line.quantity),
-      modifierOptionIds: line.modifiers.map((modifier) => modifier.modifierOptionId),
-    }));
+    lines.map((line) => {
+      const base = { productVariantId: line.productVariantId, quantity: Number(line.quantity) };
+
+      if (line.sellingMode === "ByWeight" && line.modifiers.length > 0) {
+        return {
+          ...base,
+          modifierSelections: line.modifiers.map((modifier) => ({
+            modifierOptionId: modifier.modifierOptionId,
+            quantity: Number(modifier.quantity),
+          })),
+        };
+      }
+
+      return {
+        ...base,
+        modifierOptionIds: line.modifiers.map((modifier) => modifier.modifierOptionId),
+      };
+    });
   const getDraftDiscountInput = () =>
     draftOrder?.discount
       ? {
@@ -1627,6 +1655,16 @@ export default function POSPage() {
   const addSellableVariant = async (variant, modifierOptionIds = [], { fromCart = false } = {}) => {
     if (!canEditDraft) return;
 
+    // Every add -- direct tap, variant picker, quick-modifier chip, barcode scan, the card's own
+    // +/- stepper, "+ another size" -- funnels through this one function (see its own comment
+    // below), so intercepting ByWeight here covers every one of those callers in a single place:
+    // none of them may add quantity 1 the way a PerUnit tap does. They land in the weight-entry
+    // dialog instead; nothing is added to the draft until the cashier confirms a valid weight.
+    if (variant.sellingMode === "ByWeight") {
+      openWeightEntry(variant);
+      return;
+    }
+
     setSelectedVariantProduct(null);
     setSelectedModifierVariant(null);
     setModifierSelections({});
@@ -1649,7 +1687,12 @@ export default function POSPage() {
       const existing = requestLines.find(
         (line) =>
           line.productVariantId === variant.productVariantId &&
-          line.modifierOptionIds.slice().sort().join("|") === modifierKey,
+          // A ByWeight line never has modifierOptionIds (it uses modifierSelections instead --
+          // see mapDraftLinesToRequest) and must never be matched as a merge target here: this
+          // merge-by-key path only ever applies to the PerUnit add flow (addSellableVariant
+          // returns early for ByWeight, before this ever runs for the thing being added, but the
+          // existing lines it scans over can still include one).
+          (line.modifierOptionIds ?? []).slice().sort().join("|") === modifierKey,
       );
 
       if (existing) {
@@ -1711,6 +1754,11 @@ export default function POSPage() {
   const selectVariantForDraft = (variant) => {
     if (!canEditDraft) return;
 
+    if (variant.sellingMode === "ByWeight") {
+      openWeightEntry(variant);
+      return;
+    }
+
     if (variant.modifierGroups?.length) {
       setSelectedModifierVariant(variant);
       setModifierSelections({});
@@ -1761,6 +1809,122 @@ export default function POSPage() {
   const changeLineModifiers = (line, nextModifierOptionIds) => {
     updateDraftLine(line, { productVariantId: line.productVariantId, modifierOptionIds: nextModifierOptionIds });
   };
+  // ByWeight counterpart of changeLineModifiers (Variable-Weight Products Phase E): replaces one
+  // weighed line's own modifier selections (option + independent quantity). Matched by
+  // salesOrderLineId and never merged into another line -- unlike updateDraftLine's PerUnit path,
+  // two weighed lines ending up with the same distinct option set must NOT be combined into one
+  // (that would silently sum their two separately-measured weights together).
+  const changeLineModifierSelections = (line, nextSelections) => {
+    if (!canEditDraft || !line) return;
+
+    lineEditor.enqueue((latestDraft) => {
+      const baseLines = latestDraft?.lines ?? [];
+      const index = baseLines.findIndex(
+        (candidate) => candidate.salesOrderLineId === line.salesOrderLineId,
+      );
+      if (index < 0) return null;
+
+      const requestLines = mapDraftLinesToRequest(baseLines);
+      requestLines[index] = {
+        productVariantId: requestLines[index].productVariantId,
+        quantity: requestLines[index].quantity,
+        modifierSelections: nextSelections,
+      };
+      return requestLines;
+    });
+  };
+  // Variable-Weight Products Phase E: submits a freshly-weighed line. Always pushes a NEW line --
+  // never matched against or merged into an existing one, even one with the exact same variant
+  // and modifier selections, because "merging" two independently-weighed portions would mean
+  // silently adding their weights together, which the cashier never asked for. "Weigh the same
+  // fish again" is always its own deliberate new line.
+  const addWeightedLine = async (variant, weight, selections) => {
+    if (!canEditDraft || !variant) return;
+
+    setActiveProductId(variant.productId ?? null);
+
+    await lineEditor.enqueue((latestDraft) => {
+      const requestLines = mapDraftLinesToRequest(latestDraft?.lines ?? []);
+      requestLines.push({
+        productVariantId: variant.productVariantId,
+        quantity: weight,
+        modifierSelections: selections,
+      });
+      return requestLines;
+    });
+  };
+  // Opens the weight-entry dialog for a ByWeight variant. The actual line is never added here --
+  // only after the cashier confirms a valid weight (see confirmWeightEntry) and, if the variant
+  // has modifier groups, after they've also confirmed those (see the "modifiers" dialog).
+  const openWeightEntry = (variant) => {
+    setSelectedVariantProduct(null);
+    setSelectedModifierVariant(null);
+    setModifierSelections({});
+    setModifierQuantities({});
+    setPendingWeight(null);
+    setWeightEntryVariant(variant);
+    setModal("weightEntry");
+  };
+  const confirmWeightEntry = (rawValue) => {
+    const { amount: weight, error } = parseWeightInput(rawValue);
+    if (error) {
+      notify(error);
+      return;
+    }
+
+    const variant = weightEntryVariant;
+    if (!variant) return;
+
+    if (variant.modifierGroups?.length) {
+      setPendingWeight(weight);
+      setSelectedModifierVariant(variant);
+      setModifierSelections({});
+      setModifierQuantities({});
+      setWeightEntryVariant(null);
+      setModal("modifiers");
+      return;
+    }
+
+    setWeightEntryVariant(null);
+    setModal(null);
+    addWeightedLine(variant, weight, []);
+  };
+  // Final submit of the "modifiers" dialog: a ByWeight variant (pendingWeight set) sends its
+  // selections as modifierSelections, with each option's own quantity from modifierQuantities
+  // (defaulting to 1 -- "default a selected modifier to quantity 1"); an ordinary PerUnit variant
+  // keeps using addSellableVariant exactly as before.
+  const confirmModifierDialog = () => {
+    if (!selectedModifierVariant) return;
+
+    if (pendingWeight !== null) {
+      const selections = selectedModifierOptionIds.map((modifierOptionId) => ({
+        modifierOptionId,
+        quantity: modifierQuantities[modifierOptionId] ?? 1,
+      }));
+      const variant = selectedModifierVariant;
+      const weight = pendingWeight;
+      setSelectedModifierVariant(null);
+      setModifierSelections({});
+      setModifierQuantities({});
+      setPendingWeight(null);
+      setModal(null);
+      addWeightedLine(variant, weight, selections);
+      return;
+    }
+
+    addSellableVariant(selectedModifierVariant, selectedModifierOptionIds);
+    setModal(null);
+  };
+  // Per-option quantity stepper in the "modifiers" dialog, ByWeight mode only. Selecting an option
+  // for the first time defaults it to quantity 1; the stepper only ever appears for an already-
+  // selected option, so there's nothing to clamp below 1 here (deselecting is still the toggle
+  // chip itself, same as PerUnit).
+  const changeModifierOptionQuantity = (modifierOptionId, delta) => {
+    setModifierQuantities((current) => ({
+      ...current,
+      [modifierOptionId]: Math.max(1, (current[modifierOptionId] ?? 1) + delta),
+    }));
+  };
   // Rewrites one cart line's variant and/or modifier options. Goes through the same serialized
   // lineEditor queue as every other line edit. The line is matched by variant + its CURRENT modifier
   // set (not salesOrderLineId, which may not survive an earlier queued commit). If another line
@@ -1769,7 +1933,11 @@ export default function POSPage() {
   const updateDraftLine = (line, { productVariantId, modifierOptionIds }) => {
     if (!canEditDraft || !line) return;
 
-    const keyOf = (ids) => ids.slice().sort().join("|");
+    // ?? [] guards a ByWeight line in the scanned array, which has no modifierOptionIds at all
+    // (see mapDraftLinesToRequest) -- it can never be a key match here, which is correct: this
+    // merge-by-key path is PerUnit-only (ByWeight modifier-quantity edits use
+    // changeLineModifierSelections below instead, which never merges lines).
+    const keyOf = (ids) => (ids ?? []).slice().sort().join("|");
     const currentKey = keyOf(line.modifiers.map((modifier) => modifier.modifierOptionId));
     const nextKey = keyOf(modifierOptionIds);
     if (productVariantId === line.productVariantId && currentKey === nextKey) return;
@@ -1887,6 +2055,12 @@ export default function POSPage() {
           .join("|") === key,
     );
     if (!line) return;
+
+    // A ByWeight line's quantity is a measured weight, not a count -- "-1" has no sensible
+    // meaning for it (the card never renders this stepper for one, see PosProductCard, but this
+    // guards the handler itself against any other caller). Removing or re-weighing a line stays
+    // the cart's own trash button / weight-edit keypad, never this stepper.
+    if (line.sellingMode === "ByWeight") return;
 
     if (Number(line.quantity) <= 1) {
       removeDraftLine(line.salesOrderLineId);
@@ -2286,7 +2460,7 @@ export default function POSPage() {
           </div>
 
           <FloatingOrderButton
-            itemCount={displayDraftLines.reduce((sum, line) => sum + Number(line.quantity), 0)}
+            itemCount={getCartItemCount(displayDraftLines)}
             total={total}
             currencyCode={settlementCurrencyCode}
             minorUnitDigits={settlementMinorUnitDigits}
@@ -2334,12 +2508,18 @@ export default function POSPage() {
               isLinePending={lineEditor.isLinePending}
               selectedLineId={effectiveSelectedLineId}
               onSelectLine={setSelectedLineId}
-              onEditQuantity={(lineId, currentQuantity) => {
-                setQuantityKeypadTarget({ lineId, initialValue: currentQuantity });
+              onEditQuantity={(line) => {
+                setQuantityKeypadTarget({
+                  lineId: line.salesOrderLineId,
+                  initialValue: line.quantity,
+                  isByWeight: line.sellingMode === "ByWeight",
+                  unitSymbol: line.salesUnitOfMeasure?.symbol,
+                });
                 setModal("editQuantity");
               }}
               modifierGroupsByVariantId={modifierGroupsByVariantId}
               onChangeLineModifiers={changeLineModifiers}
+              onChangeLineModifierSelections={changeLineModifierSelections}
               sizeVariantsByVariantId={sizeVariantsByVariantId}
               onChangeLineVariant={changeLineVariant}
               onAddLineInSize={addLineInSize}
@@ -2495,6 +2675,10 @@ export default function POSPage() {
           canEditDraft={canEditDraft}
           isDraftMutationPending={isDraftMutationPending}
           addSellableVariant={addSellableVariant}
+          pendingWeight={pendingWeight}
+          modifierQuantities={modifierQuantities}
+          onChangeModifierOptionQuantity={changeModifierOptionQuantity}
+          onConfirmModifierDialog={confirmModifierDialog}
           discountInput={discountInput}
           setDiscountInput={setDiscountInput}
           discountPermissionQuery={discountPermissionQuery}
@@ -2601,9 +2785,11 @@ export default function POSPage() {
 
         {modal === "editQuantity" && quantityKeypadTarget && (
           <NumericKeypadModal
-            title="تعديل الكمية"
+            title={quantityKeypadTarget.isByWeight ? "تعديل الوزن" : "تعديل الكمية"}
             initialValue={String(quantityKeypadTarget.initialValue)}
-            allowDecimal={false}
+            allowDecimal={quantityKeypadTarget.isByWeight}
+            maxDecimalPlaces={quantityKeypadTarget.isByWeight ? 4 : 2}
+            unitLabel={quantityKeypadTarget.isByWeight ? quantityKeypadTarget.unitSymbol : undefined}
             confirmLabel="تحديث"
             onCancel={() => {
               setModal(null);
@@ -2611,7 +2797,13 @@ export default function POSPage() {
             }}
             onConfirm={(value) => {
               const nextQuantity = Number(value);
-              if (Number.isFinite(nextQuantity)) {
+              // A single one-shot delta computed from the two already-known exact values (next
+              // minus the line's current quantity), sent as one commit -- never a sequence of
+              // repeated +1/-1 steps, so there's no room for the floating-point accumulation a
+              // real stepper loop could introduce. lineEditor.changeQuantity adds this delta back
+              // onto the SAME current value to produce the request's absolute quantity, so this
+              // reproduces `nextQuantity` exactly, fractional weight included.
+              if (Number.isFinite(nextQuantity) && nextQuantity > 0) {
                 const delta = nextQuantity - Number(quantityKeypadTarget.initialValue);
                 if (delta !== 0) {
                   changeQty(quantityKeypadTarget.lineId, delta);
@@ -2620,6 +2812,21 @@ export default function POSPage() {
               setModal(null);
               setQuantityKeypadTarget(null);
             }}
+          />
+        )}
+
+        {modal === "weightEntry" && weightEntryVariant && (
+          <NumericKeypadModal
+            title={`${weightEntryVariant.productName}${weightEntryVariant.variantName && weightEntryVariant.variantName !== weightEntryVariant.productName ? ` - ${weightEntryVariant.variantName}` : ""} — ${formatMoney(weightEntryVariant.unitPrice, catalogCurrencyCode, 2)} / ${weightEntryVariant.salesUnitOfMeasure?.symbol ?? ""}`}
+            allowDecimal
+            maxDecimalPlaces={4}
+            unitLabel={weightEntryVariant.salesUnitOfMeasure?.symbol}
+            confirmLabel="تحديد الوزن"
+            onCancel={() => {
+              setModal(null);
+              setWeightEntryVariant(null);
+            }}
+            onConfirm={confirmWeightEntry}
           />
         )}
       </main>

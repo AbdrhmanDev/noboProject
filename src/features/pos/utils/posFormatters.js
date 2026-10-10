@@ -47,6 +47,41 @@ export function parseMoneyInput(value, minorUnitDigits) {
   return { amount, error: "" };
 }
 
+// Variable-Weight Products Phase E: validates a cashier-entered measured weight. Mirrors the
+// existing parseMoneyInput/parseNonNegativeMoneyInput shape ({ amount, error }) and the backend's
+// own ByWeight precision (up to 4 fractional decimal places, same as SalesOrderLine.Quantity's
+// stored scale) -- rejects empty, zero, negative, non-numeric, and over-precision input.
+export function parseWeightInput(value, maxDecimalPlaces = 4) {
+  const normalized = String(value ?? "").trim();
+
+  if (!isPositiveDecimalInput(normalized)) {
+    return { amount: null, error: "أدخل وزناً صحيحاً أكبر من صفر." };
+  }
+
+  if (getDecimalScale(normalized) > maxDecimalPlaces) {
+    return { amount: null, error: `الوزن يدعم حتى ${maxDecimalPlaces} خانات عشرية.` };
+  }
+
+  const amount = Number(normalized);
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return { amount: null, error: "الوزن يجب أن يكون أكبر من صفر." };
+  }
+
+  return { amount, error: "" };
+}
+
+// Weight display (cart line, modifier-dialog subtitle): a whole number prints with no decimals,
+// anything fractional prints only as many decimal places as it actually has (up to 4) -- the same
+// convention the backend's own receipt/invoice renderers already use, so "2" never looks like a
+// truncated "2.0000" and "1.35" never grows unnecessary trailing zeros.
+export function formatQuantity(value) {
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) return String(value ?? "");
+  if (amount === Math.trunc(amount)) return String(amount);
+  return amount.toFixed(4).replace(/0+$/, "").replace(/\.$/, "");
+}
+
 export function parseNonNegativeMoneyInput(value, minorUnitDigits) {
   const normalized = String(value || "").trim();
 
@@ -139,6 +174,22 @@ export function variantSizeLabel(variantName) {
 // Variants in size order for the POS card circles: S, M, L first (by variantSizeLabel), then any
 // other variant by price. The catalog's own order is arbitrary (it can list Large first).
 const SIZE_RANK = { S: 0, M: 1, L: 2 };
+
+// Variable-Weight Products Phase E.3: the cart's displayed item count mixes two different kinds
+// of "quantity" -- an ordinary PerUnit line's quantity really is a count of identical items, but
+// a ByWeight line's quantity is a measured weight, not a count. Summing them together (e.g. 0.5
+// kg of fish + 1 burger = "1.5 items") is meaningless. Each PerUnit line contributes its own
+// quantity; each ByWeight line -- however many kilograms it is -- always contributes exactly 1
+// (it's one weighed portion, one line, one "item" for this display). A line with no sellingMode
+// field at all (an older cached response) is treated as PerUnit, same as everywhere else this
+// project reads SellingMode. This never changes the line's own quantity/weight, pricing, or
+// anything sent to the backend -- it only changes what this one summary number shows.
+export function getCartItemCount(lines = []) {
+  return lines.reduce(
+    (count, line) => count + (line.sellingMode === "ByWeight" ? 1 : Number(line.quantity) || 0),
+    0,
+  );
+}
 
 export function sortVariantsBySize(variants = []) {
   const rank = (variant) => SIZE_RANK[variantSizeLabel(variant.variantName)] ?? 3;

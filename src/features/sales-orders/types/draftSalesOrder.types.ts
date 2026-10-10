@@ -2,10 +2,23 @@ import type { SalesOrderPaymentHistoryItem } from "../../payments/types/payment.
 
 export type SalesOrderFulfillmentType = "DineIn" | "Takeaway" | "Delivery";
 
+// "PerUnit" | "ByWeight" (Variable-Weight Products Phase B).
+export type SellingMode = "PerUnit" | "ByWeight";
+
+// A per-modifier-selection quantity, independent of the line's own product quantity/weight
+// (Variable-Weight Products Phase C1). ONLY valid for a ByWeight line; a PerUnit line keeps using
+// modifierOptionIds. A request line uses exactly one of modifierOptionIds/modifierSelections,
+// never both -- the backend rejects a request that sends both as non-empty.
+export type ModifierSelectionInput = {
+  modifierOptionId: string;
+  quantity: number;
+};
+
 export type DraftSalesOrderLineInput = {
   productVariantId: string;
   quantity: number;
-  modifierOptionIds: string[];
+  modifierOptionIds?: string[];
+  modifierSelections?: ModifierSelectionInput[];
 };
 
 export type DraftSalesOrderDiscountInput = {
@@ -39,6 +52,11 @@ export type DraftSalesOrderLineModifier = {
   modifierOptionId: string;
   modifierOptionName: string;
   amountAdjustment: number;
+  // Independent selection count (Variable-Weight Products Phase C1). Always 1 for a PerUnit line.
+  quantity: number;
+  // amountAdjustment * quantity -- the modifier's own contribution to the line, independent of
+  // the product's own quantity/weight.
+  extendedAmount: number;
 };
 
 export type DraftSalesOrderLine = {
@@ -57,6 +75,9 @@ export type DraftSalesOrderLine = {
   discountAmount: number;
   discountedAmount: number;
   modifiers: DraftSalesOrderLineModifier[];
+  // "PerUnit" | "ByWeight" (Variable-Weight Products Phase B). For ByWeight, `quantity` is the
+  // measured weight in `salesUnitOfMeasure` and `unitPrice` is the price per that sales unit.
+  sellingMode: SellingMode;
 };
 
 export type DraftSalesOrderDiscount = {

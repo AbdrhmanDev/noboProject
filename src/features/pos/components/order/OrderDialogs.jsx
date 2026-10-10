@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from "react";
-import { AlertTriangle, Ban, Check, CircleCheckBig, Package, Plus, RotateCcw, ShieldAlert } from "lucide-react";
+import { AlertTriangle, Ban, Check, CircleCheckBig, Minus, Package, Plus, RotateCcw, ShieldAlert } from "lucide-react";
 import { formatMoney } from "../../../../shared/utils/formatters";
-import { formatPaymentDate } from "../../utils/posFormatters";
+import { formatPaymentDate, formatQuantity } from "../../utils/posFormatters";
 import { PosModal } from "../PosModal";
 import { Metric } from "../PosPrimitives";
 
@@ -62,11 +62,17 @@ export function OrderDialogs({
   modifierSelections,
   setModifierSelections,
   toggleModifierOption,
-  selectedModifierOptionIds,
   modifierSelectionIsValid,
   canEditDraft,
   isDraftMutationPending,
-  addSellableVariant,
+  // ByWeight modifier quantities (Variable-Weight Products Phase E): pendingWeight is set only
+  // when this dialog was opened after a weight entry, modifierQuantities holds each selected
+  // option's own independent count, onChangeModifierOptionQuantity adjusts one, and
+  // onConfirmModifierDialog is the single submit handler for BOTH modes (branches internally).
+  pendingWeight,
+  modifierQuantities,
+  onChangeModifierOptionQuantity,
+  onConfirmModifierDialog,
   // Discount
   discountInput,
   setDiscountInput,
@@ -129,21 +135,12 @@ export function OrderDialogs({
         binding: { code: "Enter", ctrlKey: true },
         onTrigger: () => {
           if (canEditDraft && modifierSelectionIsValid && !isDraftMutationPending) {
-            addSellableVariant(selectedModifierVariant, selectedModifierOptionIds);
-            setModal(null);
+            onConfirmModifierDialog();
           }
         },
       },
     ],
-    [
-      canEditDraft,
-      modifierSelectionIsValid,
-      isDraftMutationPending,
-      addSellableVariant,
-      selectedModifierVariant,
-      selectedModifierOptionIds,
-      setModal,
-    ],
+    [canEditDraft, modifierSelectionIsValid, isDraftMutationPending, onConfirmModifierDialog],
   );
   useShortcutScope({
     id: "pos-modifier-modal",
@@ -211,7 +208,11 @@ export function OrderDialogs({
           <ModalHeroImage
             imageUrl={selectedModifierVariant.productImageUrl}
             title={selectedModifierVariant.name || selectedModifierVariant.variantName}
-            subtitle={formatMoney(selectedModifierVariant.price, catalogCurrencyCode, 2)}
+            subtitle={
+              pendingWeight != null
+                ? `${formatQuantity(pendingWeight)} ${selectedModifierVariant.salesUnitOfMeasure?.symbol ?? ""} · ${formatMoney(selectedModifierVariant.price, catalogCurrencyCode, 2)} / ${selectedModifierVariant.salesUnitOfMeasure?.symbol ?? ""}`
+                : formatMoney(selectedModifierVariant.price, catalogCurrencyCode, 2)
+            }
           />
           <div ref={modifierOptionsRef} onKeyDown={handleModifierOptionsKeyDown} className="space-y-3">
             {selectedModifierVariant.modifierGroups.map((group) => (
@@ -229,27 +230,60 @@ export function OrderDialogs({
                     const checked = (
                       modifierSelections[group.modifierGroupId] || []
                     ).includes(option.modifierOptionId);
+                    // ByWeight mode: a checked option also gets its own [-] qty [+] stepper
+                    // (independent of the product's weight -- see POSPage's
+                    // changeModifierOptionQuantity), defaulting to quantity 1 the moment it's
+                    // first selected.
+                    const quantity = modifierQuantities?.[option.modifierOptionId] ?? 1;
 
                     return (
-                      <button
+                      <div
                         key={option.modifierOptionId}
-                        type="button"
-                        data-roving-item=""
-                        onClick={() => toggleModifierOption(group, option.modifierOptionId)}
-                        className={`flex h-11 items-center gap-1.5 rounded-full px-3.5 text-sm font-bold transition active:scale-95 ${
+                        className={`flex items-center gap-1.5 rounded-full text-sm font-bold transition ${
                           checked
                             ? "pos-chip shadow-sm"
                             : "border border-pos-border bg-pos-card text-pos-text hover:border-pos-primary"
-                        }`}
+                        } ${pendingWeight != null && checked ? "pe-1" : ""}`}
                       >
-                        {checked && <Check size={14} />}
-                        {option.name}
-                        {Number(option.amountAdjustment) !== 0 && (
-                          <span className="pos-num opacity-80">
-                            +{formatMoney(option.amountAdjustment, catalogCurrencyCode, 2)}
-                          </span>
+                        <button
+                          type="button"
+                          data-roving-item=""
+                          onClick={() => toggleModifierOption(group, option.modifierOptionId)}
+                          className="flex h-11 items-center gap-1.5 rounded-full px-3.5 active:scale-95"
+                        >
+                          {checked && <Check size={14} />}
+                          {option.name}
+                          {Number(option.amountAdjustment) !== 0 && (
+                            <span className="pos-num opacity-80">
+                              +{formatMoney(option.amountAdjustment, catalogCurrencyCode, 2)}
+                            </span>
+                          )}
+                        </button>
+                        {pendingWeight != null && checked && (
+                          <div
+                            className="flex h-8 items-center gap-1 rounded-full bg-pos-bg px-1"
+                            onClick={(event) => event.stopPropagation()}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => onChangeModifierOptionQuantity(option.modifierOptionId, -1)}
+                              aria-label={t("pos.catalog.decrement")}
+                              className="grid h-6 w-6 place-items-center rounded-full text-pos-muted hover:bg-pos-card active:scale-90"
+                            >
+                              <Minus size={12} />
+                            </button>
+                            <span className="pos-num w-4 text-center text-xs font-black">{quantity}</span>
+                            <button
+                              type="button"
+                              onClick={() => onChangeModifierOptionQuantity(option.modifierOptionId, 1)}
+                              aria-label={t("pos.catalog.increment")}
+                              className="grid h-6 w-6 place-items-center rounded-full bg-pos-primary-strong text-white active:scale-90"
+                            >
+                              <Plus size={12} />
+                            </button>
+                          </div>
                         )}
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
@@ -259,10 +293,7 @@ export function OrderDialogs({
           <button
             type="button"
             disabled={!canEditDraft || !modifierSelectionIsValid || isDraftMutationPending}
-            onClick={() => {
-              addSellableVariant(selectedModifierVariant, selectedModifierOptionIds);
-              setModal(null);
-            }}
+            onClick={onConfirmModifierDialog}
             className="mt-4 flex h-[52px] w-full items-center justify-center gap-2 rounded-full bg-pos-action font-black text-pos-on-action shadow-sm transition hover:bg-pos-action-hover active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Plus size={20} />
