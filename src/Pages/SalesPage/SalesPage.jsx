@@ -5,13 +5,14 @@ import { EmptyState, ErrorState, LoadingState } from "../../shared/components/ui
 import { useI18n } from "../../i18n/I18nContext";
 import { useCompany } from "../../features/companies/context/CompanyContext";
 import { useBranch } from "../../features/branches/context/BranchContext";
-import { useHasPermission } from "../../features/companies/hooks/useCompanies";
+import { useHasPermission, useMyCompanies } from "../../features/companies/hooks/useCompanies";
 import { SalesOverviewView } from "../../features/sales/components/overview/SalesOverviewView";
 import { SalesOrdersListView } from "../../features/sales/components/orders/SalesOrdersListView";
+import { OpportunitiesView } from "../../features/sales/opportunities/components/OpportunitiesView";
 import { ROUTES, salesOrderDetailsPath } from "../../utils/routes";
 import { SALES_ORDERS_VIEW_PERMISSION } from "../../features/authorization/constants/applicationPermissions";
 
-const TABS = ["overview", "orders"];
+const TABS = ["overview", "orders", "opportunities"];
 
 export default function SalesPage() {
   const { t } = useI18n();
@@ -20,7 +21,8 @@ export default function SalesPage() {
   const { currentCompanyId } = useCompany();
   const { currentBranchId } = useBranch();
 
-  const activeTab = searchParams.get("tab") === "orders" ? "orders" : "overview";
+  const requestedTab = searchParams.get("tab");
+  const activeTab = TABS.includes(requestedTab) ? requestedTab : "overview";
   const setActiveTab = (tab) => {
     const next = new URLSearchParams(searchParams);
     if (tab === "overview") next.delete("tab");
@@ -36,6 +38,8 @@ export default function SalesPage() {
     permissionQuery.hasPermission;
 
   const openOrder = (salesOrderId) => navigate(salesOrderDetailsPath(salesOrderId));
+  const myCompaniesQuery = useMyCompanies(Boolean(currentCompanyId));
+  const companyCurrency = myCompaniesQuery.data?.find((company) => company.companyId === currentCompanyId)?.defaultCurrency;
 
   return (
     <AppLayout activePath={ROUTES.SALES}>
@@ -77,6 +81,8 @@ export default function SalesPage() {
           />
         ) : activeTab === "overview" ? (
           <SalesOverviewView companyId={currentCompanyId} branchId={currentBranchId} canQuery={canQuery} />
+        ) : activeTab === "opportunities" ? (
+          <OpportunitiesView companyId={currentCompanyId} currencyCode={companyCurrency} />
         ) : (
           <SalesOrdersListView
             companyId={currentCompanyId}

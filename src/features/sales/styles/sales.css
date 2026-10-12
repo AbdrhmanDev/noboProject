@@ -1,0 +1,55 @@
+/*
+ * Sales module only (orders kanban + order form). Colours all come from the theme tokens the Odoo
+ * look already sets on .odoo-root -- nothing here introduces a new colour.
+ */
+
+/* Titles and big figures: Cairo (loaded in index.html). A SelfHosted build strips the Google Fonts
+   link, so it falls back to the page's normal font there. */
+.sales-display {
+  font-family: "Cairo", var(--app-font);
+}
+
+/* Loading placeholder blocks for the kanban skeleton. */
+.sales-skeleton {
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--nobo-inset) 0%, var(--nobo-hover) 45%, var(--nobo-inset) 90%);
+  background-size: 200% 100%;
+  animation: sales-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes sales-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sales-skeleton {
+    animation: none;
+  }
+}
+
+/* Order lines table (the shared ListView): alternating row tint plus a hover row, scoped to the
+   order form so other ListView users keep their look. */
+.sales-lines tbody tr:nth-child(even) {
+  background: var(--nobo-inset);
+}
+.sales-lines tbody tr:hover {
+  background: var(--nobo-hover);
+}
+
+/* Kanban card: a thin edge stripe in the payment-status colour (--sales-stripe), on the reading
+   start side so it mirrors in RTL. */
+.sales-card {
+  position: relative;
+  overflow: hidden;
+}
+.sales-card::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: 4px;
+  background: var(--sales-stripe, var(--nobo-line-strong));
+}

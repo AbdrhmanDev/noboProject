@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { LayoutGrid, List } from "lucide-react";
-import { EmptyState, ErrorState, LoadingState } from "../../../../shared/components/ui";
+import { ErrorState, LoadingState } from "../../../../shared/components/ui";
 import { formatDateTime, formatMoney } from "../../../../shared/utils/formatters";
 import { useI18n } from "../../../../i18n/I18nContext";
 import { ControlPanel } from "../../../../shared/components/odoo/ControlPanel";
 import { ListView } from "../../../../shared/components/odoo/ListView";
 import { StatusPill } from "../../../../shared/components/odoo/StatusBar";
 import { useSalesOrders } from "../../hooks/useSalesOrders";
+import { SalesOrdersKanban, SalesOrdersKanbanSkeleton, SalesOrdersSummary } from "./SalesOrdersKanban";
 import {
   derivePaymentStatus,
   fulfillmentLabelKey,
@@ -59,7 +60,8 @@ export function SalesOrdersListView({ companyId, branchId, canQuery, onOpenOrder
   const [searchInput, setSearchInput] = useState("");
   const [orderNumberSearch, setOrderNumberSearch] = useState("");
   const [groupBy, setGroupBy] = useState("");
-  const [view, setView] = useState("list");
+  // Kanban pipeline first, like Odoo's sales pipeline; the list stays one click away.
+  const [view, setView] = useState("kanban");
   const [pageNumber, setPageNumber] = useState(1);
 
   // Debounced, server-side order-number search -- never filters the fetched page client-side.
@@ -166,6 +168,20 @@ export function SalesOrdersListView({ companyId, branchId, canQuery, onOpenOrder
     return [...map.values()];
   }, [groupBy, orders, t]);
 
+  // Kanban columns: by default (or grouped by status) one pipeline column per status -- every status
+  // shows, even empty, unless a status filter narrows it to one; any other Group By uses its groups.
+  const kanbanColumns = useMemo(() => {
+    if (groups && groupBy !== "status") {
+      return groups.map((group) => ({ ...group, tone: "neutral" }));
+    }
+    return (status ? [status] : STATUSES).map((value) => ({
+      key: value,
+      label: t(statusKey(value)),
+      tone: SALES_STATUS_PILL_TONE[value],
+      rows: orders.filter((order) => order.status === value),
+    }));
+  }, [groups, groupBy, status, orders, t]);
+
   const total = page?.totalCount ?? 0;
   const start = total ? (pageNumber - 1) * PAGE_SIZE + 1 : 0;
   const end = Math.min(pageNumber * PAGE_SIZE, total);
@@ -248,7 +264,8 @@ export function SalesOrdersListView({ companyId, branchId, canQuery, onOpenOrder
         </div>
       )}
 
-      {ordersQuery.isLoading && <LoadingState label={t("salesOrders.loading")} />}
+      {ordersQuery.isLoading && (view === "kanban" ? <SalesOrdersKanbanSkeleton /> : <LoadingState label={t("salesOrders.loading")} />)}
+      {!ordersQuery.isLoading && !ordersQuery.isError && <SalesOrdersSummary orders={orders} totalCount={total} />}
       {ordersQuery.isError && (
         <ErrorState title={t("salesOrders.error.title")} message={ordersQuery.error?.message || t("salesOrders.error.message")} />
       )}
@@ -265,42 +282,12 @@ export function SalesOrdersListView({ companyId, branchId, canQuery, onOpenOrder
       )}
 
       {!ordersQuery.isLoading && !ordersQuery.isError && view === "kanban" && (
-        orders.length === 0 ? (
-          <EmptyState title={t("salesOrders.empty.title")} message={t("salesOrders.empty.message")} />
-        ) : (
-          <div className="space-y-4">
-            {(groups ?? [{ key: "all", label: null, rows: orders }]).map((group) => (
-              <div key={group.key}>
-                {group.label && (
-                  <div className="mb-2 flex items-center gap-2 text-sm font-bold text-ink">
-                    {group.label} <span className="pos-num font-normal text-subtle">({group.rows.length})</span>
-                  </div>
-                )}
-                <div className="grid grid-cols-[repeat(auto-fill,minmax(230px,1fr))] gap-2">
-                  {group.rows.map((order) => (
-                    <button
-                      key={order.salesOrderId}
-                      type="button"
-                      onClick={() => onOpenOrder(order.salesOrderId)}
-                      className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-3 text-start shadow-[var(--shadow-surface)] transition hover:border-accent-line hover:bg-hover"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <span className="font-bold text-ink">{orderNumberDisplay(order.orderNumber, order.orderNumberFormatted)}</span>
-                        <StatusPill tone={SALES_STATUS_PILL_TONE[order.status]}>{t(statusKey(order.status))}</StatusPill>
-                      </div>
-                      <div className="text-xs text-muted">{fulfillmentText(order, t)}</div>
-                      <div className="flex items-center justify-between gap-2">
-                        <OrderPaymentPill order={order} />
-                        <span className="pos-num text-base font-black text-ink">{money(order)}</span>
-                      </div>
-                      <div className="text-[11px] text-subtle">{formatDateTime(latestOrderTimestamp(order))}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        )
+        <SalesOrdersKanban
+          columns={kanbanColumns}
+          showStatus={Boolean(groupBy) && groupBy !== "status"}
+          statusLabelOf={(value) => t(statusKey(value))}
+          onOpenOrder={onOpenOrder}
+        />
       )}
     </div>
   );

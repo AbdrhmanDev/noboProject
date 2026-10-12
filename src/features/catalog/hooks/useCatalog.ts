@@ -37,6 +37,7 @@ import {
   uploadProductImage,
 } from "../api/catalogApi";
 import type {
+  CatalogAdminStatus,
   CatalogStatusFilter,
   BranchProductVariantAvailabilityFilters,
   ChangeCatalogStatusRequest,
@@ -47,6 +48,7 @@ import type {
   CreateProductVariantRequest,
   ModifierGroupFilters,
   ProductAdminFilters,
+  ProductAdminListItem,
   SetBranchProductVariantAvailabilityRequest,
   SetProductVariantModifierGroupRequest,
   UpdateCategoryRequest,
@@ -813,4 +815,44 @@ export function useSetProductVariantModifierGroup(
         productVariantId,
       ),
   });
+}
+
+// Bulk actions for the products list (Odoo-style multi-select). The API only has single-product
+// endpoints, so each runs once per selected product (in parallel) and the catalog caches are
+// invalidated once at the end. Resolves to { succeeded, failed } so the caller can report partial
+// failures instead of all-or-nothing.
+export function useBulkProductActions(
+  companyId: string | null | undefined,
+  branchId: string | null | undefined,
+) {
+  const queryClient = useQueryClient();
+
+  const runAll = async <T>(items: T[], run: (item: T) => Promise<unknown>) => {
+    const results = await Promise.allSettled(items.map(run));
+    invalidateCatalogAdmin(queryClient, companyId, branchId);
+    const failed = results.filter((result) => result.status === "rejected").length;
+    return { succeeded: results.length - failed, failed };
+  };
+
+  const changeStatus = useMutation({
+    mutationFn: ({ productIds, status }: { productIds: string[]; status: CatalogAdminStatus }) =>
+      runAll(productIds, (productId) => changeProductStatus(companyId as string, productId, { status })),
+  });
+
+  // Re-sends each product's own current fields with only the category swapped (the update endpoint
+  // takes the full product), so nothing else about the product changes.
+  const changeCategory = useMutation({
+    mutationFn: ({ products, categoryId }: { products: ProductAdminListItem[]; categoryId: string | null }) =>
+      runAll(products, (product) =>
+        updateProduct(companyId as string, product.productId, {
+          name: product.name,
+          description: product.description,
+          categoryId,
+          sortOrder: product.sortOrder,
+          imageUrl: product.imageUrl,
+        }),
+      ),
+  });
+
+  return { changeStatus, changeCategory };
 }

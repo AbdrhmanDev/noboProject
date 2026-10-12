@@ -2468,6 +2468,7 @@ export default function POSPage() {
               activeProductId={activeProductId}
               onIncrementProductLine={incrementProductLine}
               onDecrementProductLine={decrementProductLine}
+              onChangeLineVariant={changeLineVariant}
               inventory={productInventory}
             />
           </div>

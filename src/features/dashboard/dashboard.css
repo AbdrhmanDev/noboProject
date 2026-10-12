@@ -1,0 +1,5 @@
+/* Home dashboard: headings and big figures in Cairo (loaded in index.html). A SelfHosted build strips
+   the Google Fonts link, so it falls back to the page's normal font there. */
+.dash-display {
+  font-family: "Cairo", var(--app-font);
+}

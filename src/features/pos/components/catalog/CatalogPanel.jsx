@@ -41,6 +41,8 @@ export function CatalogPanel({
   activeProductId,
   onIncrementProductLine,
   onDecrementProductLine,
+  // Moves an existing cart line to another size (POSPage changeLineVariant) -- the card's size rows.
+  onChangeLineVariant,
   // Stock shown on a flipped card's back: { enabled, companyId, stockByItemId, isLoading, isError }.
   inventory,
 }) {
@@ -187,6 +189,7 @@ export function CatalogPanel({
                     onAddDefault={() => onTapProduct(product)}
                     onIncrement={onIncrementProductLine}
                     onDecrement={onDecrementProductLine}
+                    onChangeVariant={onChangeLineVariant}
                   />
                 );
               })}

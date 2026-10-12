@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { CalendarClock, CalendarPlus, CircleDot, ShoppingBag, Tags, User, Utensils, Wallet } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import AppLayout from "../../components/AppLayout";
 import { EmptyState, ErrorState, LoadingState } from "../../shared/components/ui";
@@ -20,26 +21,64 @@ import {
   shortOrderReference,
 } from "../../features/sales/utils/salesOrderFormatters";
 import { ROUTES } from "../../utils/routes";
+import "../../features/sales/styles/sales.css";
 import { SALES_ORDERS_VIEW_PERMISSION } from "../../features/authorization/constants/applicationPermissions";
 
 const STAGES = ["Draft", "Confirmed", "Closed"];
 const statusKey = (status) => `salesOrders.status.${status.charAt(0).toLowerCase()}${status.slice(1)}`;
 
-// Odoo form-view field: bold label column + value, one per row.
-function FieldRow({ label, children }) {
+// Odoo form-view field: icon + label beside a read-only, input-like box holding the value. On a
+// phone the label sits above the box so the value gets the full width.
+function FieldRow({ icon: Icon, label, children }) {
   return (
-    <div className="grid grid-cols-[minmax(7rem,40%)_1fr] items-baseline gap-3 border-b border-line py-1.5 last:border-0">
-      <dt className="text-sm font-bold text-ink">{label}</dt>
-      <dd className="min-w-0 text-sm text-ink">{children ?? <span className="text-subtle">—</span>}</dd>
+    <div className="grid grid-cols-1 gap-1 py-1.5 sm:grid-cols-[minmax(6.5rem,35%)_1fr] sm:items-center sm:gap-3">
+      <dt className="flex items-center gap-1.5 text-sm font-bold text-muted">
+        {Icon && <Icon size={15} className="shrink-0 text-subtle" />}
+        {label}
+      </dt>
+      <dd className="flex min-h-9 min-w-0 items-center gap-2 rounded-md border border-line bg-canvas px-3 py-1.5 text-sm text-ink">
+        {children ?? <span className="text-subtle">—</span>}
+      </dd>
     </div>
   );
 }
 
-function TotalRow({ label, value, strong }) {
+// Round initial badge beside a name (the customer field).
+function Initial({ name }) {
+  const letter = name?.trim().charAt(0).toUpperCase();
+  if (!letter) return null;
   return (
-    <div className={`flex items-center justify-between gap-6 py-1 ${strong ? "mt-1 border-t border-line-strong pt-2 text-base font-black" : "text-sm"}`}>
-      <span className={strong ? "text-ink" : "text-muted"}>{label}</span>
-      <span className="pos-num text-ink">{value}</span>
+    <span aria-hidden="true" className="sales-display grid h-6 w-6 shrink-0 place-items-center rounded-full bg-accent text-xs font-extrabold text-surface">
+      {letter}
+    </span>
+  );
+}
+
+function TotalRow({ label, value }) {
+  return (
+    <div className="flex items-center justify-between gap-6 py-1 text-sm">
+      <span className="text-muted">{label}</span>
+      <span className="pos-num font-bold text-ink">{value}</span>
+    </div>
+  );
+}
+
+// The grand total, set apart in its own tinted band like the reference form's "الإجمالي".
+function GrandTotal({ label, value }) {
+  return (
+    <div className="my-2 flex items-center justify-between gap-6 rounded-lg bg-accent-soft px-3 py-2.5">
+      <span className="sales-display text-lg font-black text-ink">{label}</span>
+      <span className="sales-display pos-num text-2xl font-black text-accent">{value}</span>
+    </div>
+  );
+}
+
+// How much of the total is paid, as a thin bar under the totals.
+function PaidBar({ paid, total }) {
+  const ratio = Number(total) > 0 ? Math.min(1, Math.max(0, Number(paid) / Number(total))) : 0;
+  return (
+    <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-inset" role="presentation">
+      <div className="h-full rounded-full bg-success transition-[width]" style={{ width: `${ratio * 100}%` }} />
     </div>
   );
 }
@@ -91,19 +130,23 @@ export default function SalesOrderDetailsPage() {
   return (
     <AppLayout activePath={ROUTES.SALES}>
       <main className="odoo-root space-y-3" dir="rtl">
-        {/* Breadcrumb bar: the parent levels go back to the orders list. */}
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-line bg-surface px-4 py-2.5 shadow-[var(--shadow-surface)]">
-          <nav aria-label="breadcrumb" className="flex min-w-0 items-center gap-1.5 text-base">
-            <button type="button" onClick={() => navigate(ROUTES.SALES)} className="odoo-link hover:underline">
-              {t("nav.sales")}
-            </button>
-            <span className="text-subtle">/</span>
-            <button type="button" onClick={() => navigate(`${ROUTES.SALES}?tab=orders`)} className="odoo-link hover:underline">
-              {t("salesOrders.tabs.orders")}
-            </button>
-            <span className="text-subtle">/</span>
-            <span className="truncate font-bold text-ink">{orderTitle}</span>
-          </nav>
+        {/* Header: breadcrumb (parent levels go back) over the record title; read-only badge on
+            the other side. */}
+        <div className="flex flex-wrap items-end justify-between gap-3 rounded-xl border border-line bg-surface px-4 py-3 shadow-[var(--shadow-surface)]">
+          <div className="min-w-0">
+            <nav aria-label="breadcrumb" className="flex min-w-0 items-center gap-1.5 text-sm">
+              <button type="button" onClick={() => navigate(ROUTES.SALES)} className="odoo-link hover:underline">
+                {t("nav.sales")}
+              </button>
+              <span className="text-subtle">/</span>
+              <button type="button" onClick={() => navigate(`${ROUTES.SALES}?tab=orders`)} className="odoo-link hover:underline">
+                {t("salesOrders.tabs.orders")}
+              </button>
+              <span className="text-subtle">/</span>
+              <span className="pos-num truncate text-muted">{orderTitle}</span>
+            </nav>
+            <h1 className="sales-display pos-num mt-0.5 truncate text-2xl font-black text-ink">{orderTitle}</h1>
+          </div>
           <StatusPill>{t("salesOrders.details.readOnlyBadge")}</StatusPill>
         </div>
 
@@ -124,18 +167,18 @@ export default function SalesOrderDetailsPage() {
           <EmptyState title={t("salesOrders.details.notFound.title")} message={t("salesOrders.details.notFound.message")} />
         ) : (
           <>
-            <StatusBar
-              stages={STAGES.map((stage) => ({ id: stage, label: t(statusKey(stage)) }))}
-              current={order.status}
-              exception={order.status === "Cancelled" ? t(statusKey("Cancelled")) : null}
-            />
-
-            {/* The sheet */}
-            <article className="mx-auto w-full max-w-5xl space-y-5 rounded-xl border border-line bg-surface p-4 shadow-[var(--shadow-surface)] sm:p-6">
-              <div>
-                <div className="text-xs font-bold text-muted">{t("salesOrders.details.salesOrder")}</div>
-                <h1 className="pos-num text-3xl font-black text-ink">{orderTitle}</h1>
+            {/* The sheet: its top strip carries the record type and the stage bar. */}
+            <article className="w-full space-y-5 overflow-hidden rounded-xl border border-line bg-surface shadow-[var(--shadow-surface)]">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-raised px-4 py-2.5 sm:px-6">
+                <div className="text-sm font-bold text-muted">{t("salesOrders.details.salesOrder")}</div>
+                <StatusBar
+                  stages={STAGES.map((stage) => ({ id: stage, label: t(statusKey(stage)) }))}
+                  current={order.status}
+                  exception={order.status === "Cancelled" ? t(statusKey("Cancelled")) : null}
+                />
               </div>
+
+              <div className="space-y-5 px-4 pb-5 sm:px-6">
 
               {order.status === "Draft" && (
                 <div className="rounded-lg border border-accent-line bg-accent-soft px-3 py-2 text-sm text-accent">
@@ -145,32 +188,33 @@ export default function SalesOrderDetailsPage() {
 
               <div className="grid gap-x-10 md:grid-cols-2">
                 <dl>
-                  <FieldRow label={t("salesOrders.details.customer")}>
+                  <FieldRow icon={User} label={t("salesOrders.details.customer")}>
+                    <Initial name={order.customer?.name || t("salesOrders.overview.rankings.walkIn")} />
                     {order.customer?.name || t("salesOrders.overview.rankings.walkIn")}
                   </FieldRow>
-                  <FieldRow label={t("salesOrders.details.type")}>{typeLabel}</FieldRow>
-                  <FieldRow label={t("salesOrders.details.table")}>
+                  <FieldRow icon={ShoppingBag} label={t("salesOrders.details.type")}>{typeLabel}</FieldRow>
+                  <FieldRow icon={Utensils} label={t("salesOrders.details.table")}>
                     {order.fulfillmentType === "DineIn" && order.restaurantTable
                       ? `${order.restaurantTable.code}${order.restaurantTable.name ? ` · ${order.restaurantTable.name}` : ""}`
                       : null}
                   </FieldRow>
-                  <FieldRow label={t("salesOrders.details.priceList")}>{order.priceListName}</FieldRow>
+                  <FieldRow icon={Tags} label={t("salesOrders.details.priceList")}>{order.priceListName}</FieldRow>
                 </dl>
                 <dl>
-                  <FieldRow label={t("salesOrders.details.created")}>
+                  <FieldRow icon={CalendarPlus} label={t("salesOrders.details.created")}>
                     {order.createdAtUtc ? formatDateTime(order.createdAtUtc) : null}
                   </FieldRow>
-                  <FieldRow label={t("salesOrders.details.updated")}>
+                  <FieldRow icon={CalendarClock} label={t("salesOrders.details.updated")}>
                     {order.closedAtUtc || order.cancelledAtUtc || order.confirmedAtUtc
                       ? formatDateTime(order.closedAtUtc || order.cancelledAtUtc || order.confirmedAtUtc)
                       : null}
                   </FieldRow>
-                  <FieldRow label={t("salesOrders.table.status")}>
+                  <FieldRow icon={CircleDot} label={t("salesOrders.table.status")}>
                     <StatusPill tone={order.status === "Cancelled" ? "danger" : order.status === "Draft" ? "info" : "success"}>
                       {t(statusKey(order.status))}
                     </StatusPill>
                   </FieldRow>
-                  <FieldRow label={t("salesOrders.table.payment")}>
+                  <FieldRow icon={Wallet} label={t("salesOrders.table.payment")}>
                     {paymentStatus ? (
                       <StatusPill tone={PAYMENT_STATUS_TONE[paymentStatus]}>{t(`salesOrders.payment.${paymentStatus}`)}</StatusPill>
                     ) : null}
@@ -193,64 +237,85 @@ export default function SalesOrderDetailsPage() {
                       aria-selected={tab === value}
                       onClick={() => setTab(value)}
                       className={`-mb-px rounded-t-md border px-4 py-2 text-sm font-bold transition ${
-                        tab === value ? "border-line border-b-surface bg-surface text-ink" : "border-transparent text-muted hover:text-ink"
+                        tab === value
+                          ? "border-line border-t-2 border-t-accent border-b-surface bg-surface text-accent"
+                          : "border-transparent text-muted hover:bg-hover hover:text-ink"
                       }`}
                     >
-                      {t(`salesOrders.details.tabs.${value}`)}
+                      <span className="inline-flex items-center gap-1.5">
+                        {t(`salesOrders.details.tabs.${value}`)}
+                        {value === "lines" && (
+                          <span className="sales-display pos-num rounded-full bg-inset px-2 text-[11px] font-extrabold text-muted">
+                            {order.lines?.length ?? 0}
+                          </span>
+                        )}
+                      </span>
                     </button>
                   ))}
                 </div>
 
                 <div className="pt-3">
                   {tab === "lines" ? (
-                    <div className="space-y-3">
-                      <ListView
-                        columns={[
-                          {
-                            key: "product",
-                            header: t("salesOrders.details.product"),
-                            render: (line) => (
-                              <div>
-                                <div className="font-bold">{line.productName}</div>
-                                <div className="text-xs text-subtle">
-                                  {line.variantName}
-                                  {line.sku ? ` · ${line.sku}` : ""}
-                                </div>
-                                {line.modifiers?.length > 0 && (
-                                  <div className="mt-1 flex flex-wrap gap-1">
-                                    {line.modifiers.map((modifier) => (
-                                      <span key={modifier.modifierOptionId} className="rounded bg-accent-soft px-1.5 py-0.5 text-[11px] text-accent">
-                                        {modifier.modifierOptionName}
-                                      </span>
-                                    ))}
+                    // Lines beside the totals on wide screens; the totals card stays in view (sticky)
+                    // while a long order scrolls.
+                    <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+                      <div className="sales-lines min-w-0">
+                        <ListView
+                          columns={[
+                            {
+                              key: "index",
+                              header: "#",
+                              render: (line) => (
+                                <span className="pos-num text-subtle">{(order.lines ?? []).indexOf(line) + 1}</span>
+                              ),
+                            },
+                            {
+                              key: "product",
+                              header: t("salesOrders.details.product"),
+                              render: (line) => (
+                                <div>
+                                  <div className="font-bold">{line.productName}</div>
+                                  <div className="text-xs text-subtle">
+                                    {line.variantName}
+                                    {line.sku ? ` · ${line.sku}` : ""}
                                   </div>
-                                )}
-                              </div>
-                            ),
-                          },
-                          { key: "qty", header: t("salesOrders.details.qty"), align: "end", render: (line) => line.quantity },
-                          { key: "price", header: t("salesOrders.details.unitPrice"), align: "end", render: (line) => money(line.unitPrice) },
-                          {
-                            key: "total",
-                            header: t("salesOrders.details.lineTotal"),
-                            align: "end",
-                            render: (line) => <span className="font-bold">{money(line.lineSubtotalAmount)}</span>,
-                          },
-                        ]}
-                        rows={order.lines ?? []}
-                        getRowKey={(line) => line.salesOrderLineId}
-                        emptyLabel={t("salesOrders.details.noLines")}
-                      />
+                                  {line.modifiers?.length > 0 && (
+                                    <div className="mt-1 flex flex-wrap gap-1">
+                                      {line.modifiers.map((modifier) => (
+                                        <span key={modifier.modifierOptionId} className="rounded-full border border-line-strong px-2 py-0.5 text-[11px] font-bold text-muted">
+                                          {modifier.modifierOptionName}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              ),
+                            },
+                            { key: "qty", header: t("salesOrders.details.qty"), align: "end", render: (line) => line.quantity },
+                            { key: "price", header: t("salesOrders.details.unitPrice"), align: "end", render: (line) => money(line.unitPrice) },
+                            {
+                              key: "total",
+                              header: t("salesOrders.details.lineTotal"),
+                              align: "end",
+                              render: (line) => <span className="font-bold">{money(line.lineSubtotalAmount)}</span>,
+                            },
+                          ]}
+                          rows={order.lines ?? []}
+                          getRowKey={(line) => line.salesOrderLineId}
+                          emptyLabel={t("salesOrders.details.noLines")}
+                        />
+                      </div>
 
-                      <div className="ms-auto w-full max-w-xs">
+                      <div className="ms-auto w-full max-w-sm rounded-xl border border-line bg-raised p-3 lg:sticky lg:top-4 lg:max-w-none">
                         <TotalRow label={t("salesOrders.details.subtotal")} value={money(order.subtotalAmount)} />
                         <TotalRow label={t("salesOrders.details.discount")} value={money(order.discountAmount)} />
                         <TotalRow label={t("salesOrders.details.tax")} value={money(order.taxAmount)} />
-                        <TotalRow label={t("salesOrders.details.total")} value={money(order.payableAmount)} strong />
+                        <GrandTotal label={t("salesOrders.details.total")} value={money(order.payableAmount)} />
                         {paymentState && (
                           <>
                             <TotalRow label={t("salesOrders.details.paid")} value={money(paymentState.netPaidAmount)} />
                             <TotalRow label={t("salesOrders.details.remaining")} value={money(paymentState.remainingAmount)} />
+                            <PaidBar paid={paymentState.netPaidAmount} total={order.payableAmount} />
                           </>
                         )}
                       </div>
@@ -327,6 +392,7 @@ export default function SalesOrderDetailsPage() {
                     </div>
                   )}
                 </div>
+              </div>
               </div>
             </article>
           </>

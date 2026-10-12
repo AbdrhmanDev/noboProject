@@ -11,20 +11,17 @@ import {
   sortVariantsBySize,
 } from "../../utils/posFormatters";
 
-// Flip card (16th pass). Two faces in a real 3D flip (.pos-flip in pos-theme.css):
-//  - FRONT: the product photo filling the whole card, its price in the top-right corner, the name
-//    on a scrim along the bottom, and the in-cart quantity in the top-left -- a single number for
-//    one variant, or a small stacked "size×qty" breakdown once more than one size is in the cart
-//    (`variantBreakdown`), so flipping back to this face (e.g. because another card was opened)
-//    still shows exactly what was ordered. Tapping it ONLY flips the card (`onFlip`) -- nothing is
-//    added to the order.
-//  - BACK (multi-variant products): one compact [-] qty [+] row PER size (`VariantQuantityRow`),
-//    so "2 Medium + 1 Small" of the same product is two taps on two rows, not a flip-select-flip-
-//    select dance through a single shared stepper. Each row's +/- targets that exact variant with
-//    no modifiers (`onIncrement`/`onDecrement`), same simplification the old single-size-at-a-time
-//    circle picker already made. (Single-variant products keep the one shared QtyStepper below --
-//    there's only one size, nothing to pick.)
-// Only one card is flipped at a time (CatalogPanel owns `isFlipped`).
+// Three-band card: name on top, a flipping middle, price at the bottom. Only the middle turns over
+// (.pos-flip in pos-theme.css):
+//  - FRONT: the product photo, with the in-cart quantity in its corner -- a single number for one
+//    variant, or a small stacked "size×qty" breakdown once more than one size is in the cart.
+//  - BACK: the stock lights (StockLine) and the quantity controls -- one tap-to-add row PER size
+//    (`VariantQuantityRow`) for multi-variant products, else the one shared QtyStepper (or the
+//    "weigh" button for a ByWeight product).
+// Turning the middle over ALSO adds one unit (`increment`: the size last put in the cart, else the
+// default one; a ByWeight product opens the weight-entry dialog instead). Turning it back adds
+// nothing. Tapping the name/price bands does the same as tapping the middle. Only one card is
+// flipped at a time (CatalogPanel owns `isFlipped`).
 export function PosProductCard({
   product,
   cartInfo,
@@ -38,6 +35,7 @@ export function PosProductCard({
   onAddDefault,
   onIncrement,
   onDecrement,
+  onChangeVariant,
 }) {
   const { t } = useI18n();
   const quantityInCart = cartInfo?.quantity ?? 0;
@@ -62,17 +60,39 @@ export function PosProductCard({
     if (representativeVariant) onDecrement(representativeVariant, representativeModifierOptionIds);
   };
 
-  // Quantity shown on a size row: every cart line for that exact variant, regardless of modifiers
-  // (mirrors the old circle picker, which also never distinguished by modifiers).
+  // Size rows pick ONE size for the card's line instead of adding another line: not in the cart yet
+  // -> add one of that size; in the cart in another size -> move that same line (same quantity) to
+  // this size (changeLineVariant); already this size -> nothing. A second size alongside is added
+  // from the cart. ByWeight on either side can't be "moved" (a weight isn't a count), so that
+  // falls back to a plain add, which opens the weight-entry dialog.
+  const selectVariant = (variant) => {
+    if (!representativeLine || !representativeVariant) {
+      onIncrement(variant, []);
+      return;
+    }
+    if (representativeVariant.productVariantId === variant.productVariantId) return;
+    if (variant.sellingMode === "ByWeight" || representativeVariant.sellingMode === "ByWeight") {
+      onIncrement(variant, []);
+      return;
+    }
+    onChangeVariant(representativeLine, variant);
+  };
+
+  // Front -> back: flip AND add one. Back -> front: just flip back.
+  const toggleFlip = () => {
+    if (disabled) return;
+    onFlip();
+    if (!isFlipped) increment();
+  };
+
+  // Quantity shown on a size row: every cart line for that exact variant, regardless of modifiers.
   const quantityForVariant = (variantId) =>
     (cartInfo?.lines ?? [])
       .filter((line) => line.productVariantId === variantId)
       .reduce((sum, line) => sum + Number(line.quantity), 0);
 
-  // Per-variant breakdown for the FRONT face's badge: when another card is flipped open, this one
-  // flips back to its front automatically (CatalogPanel only keeps one flipped at a time) -- without
-  // this, the only thing left visible would be the plain total count, with no way to tell "2
-  // Medium + 1 Small" apart from "3 of whatever size I last touched".
+  // Per-variant breakdown for the photo's badge, so "2 Medium + 1 Small" stays readable instead of
+  // collapsing into a plain total once the card turns back to its photo.
   const variantQuantities = new Map();
   for (const line of cartInfo?.lines ?? []) {
     variantQuantities.set(line.productVariantId, (variantQuantities.get(line.productVariantId) ?? 0) + Number(line.quantity));
@@ -84,163 +104,150 @@ export function PosProductCard({
     })
     .filter(Boolean);
 
+  const bandClassName = `shrink-0 ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`;
+
   return (
     <div
       style={accentStyle}
-      data-flipped={isFlipped ? "true" : "false"}
-      className="pos-flip pos-product-card relative h-[var(--pos-card-h)] rounded-pos-lg"
+      className={`pos-product-card flex h-[var(--pos-card-h)] flex-col overflow-hidden rounded-pos-lg border bg-pos-card ${
+        disabled ? "opacity-50" : ""
+      } ${isActive && quantityInCart > 0 ? "border-2 border-pos-primary" : "border-pos-border"}`}
     >
-      <div className="pos-flip-inner">
-        {/* FRONT */}
-        <button
-          type="button"
-          onClick={onFlip}
-          disabled={disabled}
-          data-roving-item=""
-          aria-label={`${product.productName} · ${price}`}
-          aria-expanded={isFlipped}
-          tabIndex={isFlipped ? -1 : 0}
-          className={`pos-flip-face overflow-hidden rounded-pos-lg border bg-pos-card text-start disabled:opacity-50 ${
-            isActive && quantityInCart > 0 ? "border-2 border-pos-primary" : "border-pos-border"
-          }`}
-        >
-          <ProductPhoto imageUrl={product.imageUrl} />
-          <span className="pos-num pos-fs-label absolute right-1.5 top-1.5 rounded-pos bg-pos-card/95 px-1.5 py-0.5 font-bold text-pos-text shadow-sm">
-            {price}
-          </span>
-          {variantBreakdown.length === 1 && (
-            <span className="pos-num absolute left-1.5 top-1.5 grid h-6 min-w-6 place-items-center rounded-full bg-pos-primary-strong px-1.5 text-[11px] font-bold text-white shadow-sm">
-              {variantBreakdown[0].qty}
-            </span>
-          )}
-          {variantBreakdown.length > 1 && (
-            <div className="absolute left-1.5 top-1.5 flex max-w-[80%] flex-col items-start gap-0.5">
-              {variantBreakdown.map(({ variant, qty }) => (
-                <span
-                  key={variant.productVariantId}
-                  className="flex max-w-full items-center gap-1 rounded-pos bg-pos-primary-strong px-1.5 py-0.5 text-[10px] font-bold text-white shadow-sm"
-                >
-                  <span className="min-w-0 break-words">{variant.variantName}</span>
-                  <span className="pos-num shrink-0">×{qty}</span>
-                </span>
-              ))}
-            </div>
-          )}
-          <span className="pos-photo-scrim absolute inset-x-0 bottom-0 px-2 pb-1.5 pt-6">
-            <span className="pos-fs-card-name line-clamp-2 text-pos-text">{product.productName}</span>
-          </span>
-        </button>
+      {/* TOP: name */}
+      <div
+        onClick={toggleFlip}
+        className={`${bandClassName} flex h-14 items-center justify-center border-b border-pos-border px-2 py-1.5 text-center`}
+      >
+        <span className="pos-fs-card-name line-clamp-2 text-center text-pos-text">{product.productName}</span>
+      </div>
 
-        {/* BACK */}
-        <div
-          aria-hidden={!isFlipped}
-          className="pos-flip-face pos-flip-back pos-chip-soft flex flex-col gap-1.5 overflow-hidden rounded-pos-lg border border-pos-primary bg-pos-card p-2"
-        >
-          <div className="flex items-start justify-between gap-1">
-            <div className="min-w-0">
-              <div className="pos-fs-card-name line-clamp-1 text-pos-text">{product.productName}</div>
-              <div className="pos-num pos-fs-card-price text-pos-primary-text">{price}</div>
-            </div>
-            <button
-              type="button"
-              onClick={onFlip}
-              tabIndex={isFlipped ? 0 : -1}
-              aria-label={t("pos.catalog.flipBack")}
-              title={t("pos.catalog.flipBack")}
-              className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-pos-border bg-pos-card text-pos-muted transition hover:text-pos-text"
-            >
-              <RotateCcw size={14} />
-            </button>
-          </div>
+      {/* MIDDLE: the only part that flips */}
+      <div data-flipped={isFlipped ? "true" : "false"} className="pos-flip relative min-h-0 flex-1">
+        <div className="pos-flip-inner">
+          {/* FRONT: photo */}
+          <button
+            type="button"
+            onClick={toggleFlip}
+            disabled={disabled}
+            data-roving-item=""
+            aria-label={`${product.productName} · ${price}`}
+            aria-expanded={isFlipped}
+            tabIndex={isFlipped ? -1 : 0}
+            className="pos-flip-face overflow-hidden text-start"
+          >
+            <ProductPhoto imageUrl={product.imageUrl} />
+            {variantBreakdown.length === 1 && (
+              <span className="pos-num absolute left-1.5 top-1.5 grid h-6 min-w-6 place-items-center rounded-full bg-pos-primary-strong px-1.5 text-[11px] font-bold text-white shadow-sm">
+                {variantBreakdown[0].qty}
+              </span>
+            )}
+            {variantBreakdown.length > 1 && (
+              <span className="absolute  flex max-w-[80%] flex-col items-start gap-0.5">
+                {variantBreakdown.map(({ variant, qty }) => (
+                  <span
+                    key={variant.productVariantId}
+                    className="flex max-w-full items-center gap-1 rounded-pos bg-pos-primary-strong px-1.5 py-0.5 text-[10px] font-bold text-white shadow-sm"
+                  >
+                    <span className="min-w-0 break-words">{variant.variantName}</span>
+                    <span className="pos-num shrink-0">×{qty}</span>
+                  </span>
+                ))}
+              </span>
+            )}
+          </button>
 
-          {sizeVariants.length > 0 && (
-            <div role="group" aria-label={t("pos.catalog.size")} className="flex flex-col gap-1">
-              {sizeVariants.map((entry) => (
-                <VariantQuantityRow
-                  key={entry.productVariantId}
-                  variant={entry}
-                  quantity={quantityForVariant(entry.productVariantId)}
-                  currencyCode={currencyCode}
-                  disabled={disabled}
-                  focusable={isFlipped}
-                  onIncrement={() => onIncrement(entry, [])}
-                  onDecrement={() => onDecrement(entry, [])}
-                />
-              ))}
-            </div>
-          )}
-
-          {quantityInCart > 0 && representativeLine && (
-            <div className="pos-chip-soft rounded-pos px-1.5 py-1">
-              {representativeLine.modifiers.length > 0 && (
-                <div className="mb-1 flex flex-wrap items-center gap-1">
-                  {representativeLine.modifiers.map((modifier) => (
-                    <span
-                      key={modifier.modifierOptionId}
-                      className="pos-chip pos-num rounded-full px-1.5 py-0.5 text-[10px] font-bold"
-                    >
-                      {abbreviateModifierLabel(modifier.modifierOptionName)}
-                    </span>
-                  ))}
-                </div>
-              )}
-              <div className="flex items-center justify-between text-[11px]">
-                <span className="text-pos-muted">{t("pos.catalog.subtotal")}</span>
-                <span className="pos-num font-bold text-pos-text">
-                  {formatMoney(cartInfo.subtotal, currencyCode, 2)}
-                </span>
+          {/* BACK: stock lights + quantity controls */}
+          <div
+            aria-hidden={!isFlipped}
+            className="pos-flip-face pos-flip-back flex flex-col gap-1.5 overflow-y-auto bg-pos-card p-2"
+          >
+            <div className="flex items-center gap-1">
+              <div className="min-w-0 flex-1">
+                <StockLine variant={stockVariant} inventory={inventory} active={isFlipped} />
               </div>
+              <button
+                type="button"
+                onClick={toggleFlip}
+                tabIndex={isFlipped ? 0 : -1}
+                aria-label={t("pos.catalog.flipBack")}
+                title={t("pos.catalog.flipBack")}
+                className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-pos-border bg-pos-card text-pos-muted transition hover:text-pos-text"
+              >
+                <RotateCcw size={14} />
+              </button>
             </div>
-          )}
 
-          <StockLine variant={stockVariant} inventory={inventory} active={isFlipped} />
+            {sizeVariants.length > 0 && (
+              <div role="group" aria-label={t("pos.catalog.size")} className="my-auto flex flex-col gap-1">
+                {sizeVariants.map((entry) => (
+                  <VariantQuantityRow
+                    key={entry.productVariantId}
+                    variant={entry}
+                    quantity={quantityForVariant(entry.productVariantId)}
+                    isSelected={representativeVariant?.productVariantId === entry.productVariantId}
+                    disabled={disabled}
+                    focusable={isFlipped}
+                    onSelect={() => selectVariant(entry)}
+                  />
+                ))}
+              </div>
+            )}
 
-          {sizeVariants.length === 0 && (
-            <div className="mt-auto flex flex-col gap-1.5">
-              {product.variants[0]?.sellingMode === "ByWeight" ? (
-                // Single-variant ByWeight product: no stepper at all -- tapping always opens the
-                // weight-entry dialog for a brand new line (addSellableVariant's interception),
-                // whether or not anything of this product is already in the cart.
-                <button
-                  type="button"
-                  onClick={increment}
-                  disabled={disabled}
-                  tabIndex={isFlipped ? 0 : -1}
-                  className="flex h-11 items-center justify-center gap-1.5 rounded-full bg-pos-primary-strong text-sm font-bold text-white shadow-sm transition hover:bg-pos-primary-strong-hover active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <Plus size={15} />
-                  {t("pos.catalog.weigh")}
-                </button>
-              ) : (
-                <QtyStepper
-                  quantity={Number(representativeLine?.quantity ?? 0)}
-                  disabled={disabled}
-                  focusable={isFlipped}
-                  canDecrement={Boolean(representativeVariant)}
-                  onDecrement={decrement}
-                  onIncrement={increment}
-                />
-              )}
-            </div>
-          )}
+            {quantityInCart > 0 && representativeLine?.modifiers.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1">
+                {representativeLine.modifiers.map((modifier) => (
+                  <span
+                    key={modifier.modifierOptionId}
+                    className="pos-chip pos-num rounded-full px-1.5 py-0.5 text-[10px] font-bold"
+                  >
+                    {abbreviateModifierLabel(modifier.modifierOptionName)}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {sizeVariants.length === 0 && (
+              <div className="mt-auto flex flex-col gap-1.5">
+                {product.variants[0]?.sellingMode === "ByWeight" ? (
+                  // Single-variant ByWeight product: no stepper at all -- tapping always opens the
+                  // weight-entry dialog for a brand new line (addSellableVariant's interception).
+                  <button
+                    type="button"
+                    onClick={increment}
+                    disabled={disabled}
+                    tabIndex={isFlipped ? 0 : -1}
+                    className="flex h-11 items-center justify-center gap-1.5 rounded-full bg-pos-primary-strong text-sm font-bold text-white shadow-sm transition hover:bg-pos-primary-strong-hover active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <Plus size={15} />
+                    {t("pos.catalog.weigh")}
+                  </button>
+                ) : (
+                  <QtyStepper
+                    quantity={Number(representativeLine?.quantity ?? 0)}
+                    disabled={disabled}
+                    focusable={isFlipped}
+                    canDecrement={Boolean(representativeVariant)}
+                    onDecrement={decrement}
+                    onIncrement={increment}
+                  />
+                )}
+              </div>
+            )}
+          </div>
         </div>
+      </div>
+
+      {/* BOTTOM: price */}
+      <div
+        onClick={toggleFlip}
+        className={`${bandClassName} pos-num pos-fs-card-price border-t border-pos-border px-2 py-2 text-center font-bold text-pos-primary-text`}
+      >
+        {price}
       </div>
     </div>
   );
 }
 
-// Stock level lights per level (getStockLevel): the lit one is filled in its colour and carries the
-// stock number; the other two stay empty and dimmed.
-const STOCK_LIGHT_CLASSES = {
-  low: "border-pos-danger bg-pos-danger-tint text-pos-danger-text",
-  half: "border-pos-warning bg-pos-warning-tint text-pos-warning-text",
-  full: "border-pos-action bg-pos-action-tint text-pos-action-text",
-};
-const STOCK_LIGHT_DIM_CLASSES = {
-  low: "border-pos-danger/30 text-pos-danger-text/40",
-  half: "border-pos-warning/40 text-pos-warning-text/40",
-  full: "border-pos-action/30 text-pos-action-text/40",
-};
 
 // Available units of one variant = the fewest units its linked stock items allow
 // (floor(on hand / quantity per sales unit), at the branch's default inventory location), shown as
@@ -285,19 +292,22 @@ function StockLine({ variant, inventory, active }) {
           role="img"
           aria-label={`${t("pos.catalog.stock")}: ${Number.isFinite(available) ? available : "∞"} · ${levelLabel}`}
           title={levelLabel}
-          className="flex items-center justify-center gap-1"
+          // Always red -> yellow -> green from left to right, like a real signal, in RTL too.
+          dir="ltr"
+          className="flex items-center justify-center gap-1.5"
         >
+          {/* LED lamps (.pos-led in pos-theme.css): only the current level is lit, with the stock
+              number in its centre; the other two stay dark and empty. */}
           {STOCK_LEVELS.map((entry) => {
             const lit = entry === level;
             return (
               <span
                 key={entry}
                 aria-hidden="true"
-                className={`pos-num grid h-6 min-w-8 place-items-center rounded-full border-2 px-1 text-[10px] font-black transition-colors ${
-                  lit ? STOCK_LIGHT_CLASSES[entry] : STOCK_LIGHT_DIM_CLASSES[entry]
-                }`}
+                data-lit={lit ? "true" : "false"}
+                className={`pos-led pos-led-${entry} pos-num`}
               >
-                ({lit ? (Number.isFinite(available) ? available : "∞") : "  "})
+                {lit ? (Number.isFinite(available) ? available : "∞") : ""}
               </span>
             );
           })}
@@ -309,7 +319,7 @@ function StockLine({ variant, inventory, active }) {
   return <div className="pos-fs-label text-center">{content}</div>;
 }
 
-// Full-bleed product photo for the front face. The fallback icon and the real <img> are never
+// Product photo filling the middle band's front face. The fallback icon and the real <img> are never
 // both mounted at once.
 function ProductPhoto({ imageUrl }) {
   const [failed, setFailed] = useState(false);
@@ -330,7 +340,7 @@ function ProductPhoto({ imageUrl }) {
           onError={() => setFailed(true)}
         />
       ) : (
-        <span className="pos-product-image-fallback pos-chip absolute inset-0 m-auto -translate-y-3 h-12 w-12">
+        <span className="pos-product-image-fallback pos-chip absolute inset-0 m-auto h-12 w-12">
           <Package size={24} />
         </span>
       )}
@@ -368,80 +378,31 @@ function QtyStepper({ quantity, disabled, focusable, canDecrement, onDecrement, 
   );
 }
 
-// One size's own [-] qty [+] row (multi-variant products): the full variant name on its own line
-// (wraps up to 2 lines instead of truncating -- a one-line layout left so little horizontal room
-// for the name next to the price/stepper that most real names got cut off), price + a compact
-// stepper on the line below. "2 Medium + 1 Small" is one tap on the Medium row's "+" twice and the
-// Small row's "+" once, no flip-select-flip-select round trip through a single shared stepper.
-function VariantQuantityRow({ variant, quantity, currencyCode, disabled, focusable, onIncrement, onDecrement }) {
-  const { t } = useI18n();
+// One size's row (multi-variant products): the whole row is one button that picks this size for the
+// card's line (`onSelect` -> selectVariant). The picked size is tinted, with its in-cart quantity
+// beside the name. No price (the card's bottom band already shows it) and no "-": quantities, and
+// any second size, are handled in the cart.
+function VariantQuantityRow({ variant, quantity, isSelected, disabled, focusable, onSelect }) {
   const hasQuantity = quantity > 0;
-  const isByWeight = variant.sellingMode === "ByWeight";
 
   return (
-    <div
-      className={`flex flex-col gap-0.5 rounded-pos border px-1.5 py-1 transition ${
-        hasQuantity ? "border-pos-primary-strong bg-pos-primary-strong/10" : "border-pos-border bg-pos-card"
+    <button
+      type="button"
+      onClick={onSelect}
+      disabled={disabled}
+      tabIndex={focusable ? 0 : -1}
+      aria-pressed={isSelected}
+      aria-label={hasQuantity ? `${variant.variantName} ×${quantity}` : variant.variantName}
+      className={`flex min-h-8 w-full items-center justify-center gap-1.5 rounded-pos border border-pos-border px-1 py-1 transition hover:bg-pos-primary-strong/20 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 ${
+        isSelected ? "bg-pos-primary-strong/15" : "bg-pos-card"
       }`}
     >
-      <span className="line-clamp-2 text-xs font-bold leading-tight text-pos-text">{variant.variantName}</span>
-      <div className="flex items-center justify-between gap-1">
-        <span className="pos-num shrink-0 text-[10px] text-pos-muted">
-          {formatMoney(variant.price, currencyCode, 2)}
-          {isByWeight && `/${variant.salesUnitOfMeasure?.symbol ?? ""}`}
+      <span className="line-clamp-2 text-center text-[11px] font-bold leading-tight text-pos-text">{variant.variantName}</span>
+      {hasQuantity && (
+        <span className="pos-num shrink-0 rounded-full bg-pos-primary-strong px-1.5 py-0.5 text-[10px] font-bold text-white">
+          ×{quantity}
         </span>
-        {isByWeight ? (
-          // ByWeight: no decrement (a measured weight isn't a count to step down) and no running
-          // total shown here (several separately-weighed lines of the same size are never summed
-          // into one number) -- a single "weigh" action that always opens the weight-entry dialog
-          // for a brand new line, same as this row's onIncrement already does for addSellableVariant.
-          <button
-            type="button"
-            onClick={onIncrement}
-            disabled={disabled}
-            tabIndex={focusable ? 0 : -1}
-            aria-label={t("pos.catalog.weigh")}
-            className="flex h-6 shrink-0 items-center gap-1 rounded-full bg-pos-primary-strong px-2 text-[10px] font-bold text-white shadow-sm transition hover:bg-pos-primary-strong-hover active:scale-90 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <Plus size={11} />
-            {t("pos.catalog.weigh")}
-          </button>
-        ) : (
-          <div className="flex shrink-0 items-center gap-1">
-            {/* "-" and the qty number stay mounted (just hidden) even at 0: toggling them in/out
-                of the DOM changed this row's width every time and shoved the rest of the line
-                around. */}
-            <button
-              type="button"
-              onClick={onDecrement}
-              disabled={disabled || !hasQuantity}
-              tabIndex={focusable && hasQuantity ? 0 : -1}
-              aria-hidden={!hasQuantity}
-              aria-label={t("pos.catalog.decrement")}
-              className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-pos-muted transition hover:bg-pos-bg hover:text-pos-text active:scale-90 disabled:cursor-not-allowed disabled:opacity-40 ${
-                hasQuantity ? "" : "invisible"
-              }`}
-            >
-              <Minus size={13} />
-            </button>
-            <span
-              className={`pos-num w-4 shrink-0 text-center text-xs font-black text-pos-text ${hasQuantity ? "" : "invisible"}`}
-            >
-              {quantity}
-            </span>
-            <button
-              type="button"
-              onClick={onIncrement}
-              disabled={disabled}
-              tabIndex={focusable ? 0 : -1}
-              aria-label={t("pos.catalog.increment")}
-              className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-pos-primary-strong text-white shadow-sm transition hover:bg-pos-primary-strong-hover active:scale-90 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Plus size={13} />
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
+      )}
+    </button>
   );
 }

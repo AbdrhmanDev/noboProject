@@ -78,7 +78,7 @@
      PosProductCard.jsx). */
   --pos-card-h: 340px;
   --pos-fs-card-name: 15px;
-  --pos-fs-card-price: 13px;
+  --pos-fs-card-price: 15px;
   --pos-shadow-hover: 0 4px 12px rgb(0 0 0 / 0.1);
   /* Thin info strip (time, date, cashier) fixed at the very bottom -- see PosStatusBar.jsx. */
   --pos-status-bar-h: 2.25rem;
@@ -156,15 +156,22 @@ html[lang="ar"] .pos-root {
   font-size: calc(var(--pos-fs-price) * var(--pos-font-scale));
   font-weight: 500;
 }
+/* Product card name/price: Noto Kufi Arabic (already loaded in index.html), chosen for the cards; its
+   taller letterforms need the 1.45 line height on the name. A SelfHosted build strips the Google Fonts link, so it falls back
+   to the regular POS font there. */
 .pos-fs-card-name {
+  font-family: "Noto Kufi Arabic", var(--pos-font);
   font-size: calc(var(--pos-fs-card-name) * var(--pos-font-scale));
-  font-weight: 500;
-  line-height: 1.3;
+  font-weight: 700;
+  line-height: 1.45;
 }
 .pos-fs-card-price {
+  font-family: "Noto Kufi Arabic", var(--pos-font);
   font-size: calc(var(--pos-fs-card-price) * var(--pos-font-scale));
-  font-weight: 700;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
   line-height: 1.3;
+  letter-spacing: 0.01em;
 }
 .pos-fs-line {
   font-size: calc(var(--pos-fs-line) * var(--pos-font-scale));
@@ -284,10 +291,11 @@ html[lang="ar"] .pos-root {
   }
 }
 
-/* Product card 3D flip (PosProductCard): the front (full image) and back (sizes / stepper / stock)
-   are both absolutely stacked inside .pos-flip-inner, each with backface-visibility hidden; the
-   back is pre-rotated 180deg so it reads the right way round once the inner turns. Off under
-   prefers-reduced-motion (the faces swap instantly). */
+/* Product card 3D flip (PosProductCard's middle band): the front (photo) and back (stock / sizes /
+   stepper) are both absolutely stacked inside .pos-flip-inner, each with backface-visibility hidden;
+   the back is pre-rotated 180deg so it reads the right way round once the inner turns. Deliberately
+   kept under prefers-reduced-motion: the turn is the cashier's confirmation that the tap added a
+   unit, and Windows' "Animation effects: off" (common on POS terminals) would otherwise hide it. */
 .pos-flip {
   perspective: 900px;
 }
@@ -309,10 +317,46 @@ html[lang="ar"] .pos-root {
 .pos-flip-back {
   transform: rotateY(180deg);
 }
-@media (prefers-reduced-motion: reduce) {
-  .pos-flip-inner {
-    transition: none;
-  }
+/* Stock LED lamps (PosProductCard's StockLine): a round lamp with a rim and a dot-matrix of LEDs,
+   like a traffic signal. Only the lamp for the current level is lit (glow + the stock number in its
+   centre); the other two stay dark. Each level sets its own --led colour. */
+.pos-led {
+  --led: #22c55e;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  border: 2px solid color-mix(in srgb, var(--led) 55%, #000);
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.75), 0 0 4px rgb(0 0 0 / 0.45);
+  background:
+    radial-gradient(circle, rgb(255 255 255 / 0.85) 0 0.8px, transparent 1.4px) center / 4px 4px,
+    radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--led) 55%, #fff) 0%, var(--led) 55%, color-mix(in srgb, var(--led) 65%, #000) 100%);
+  box-shadow:
+    0 0 10px 1px color-mix(in srgb, var(--led) 65%, transparent),
+    inset 0 0 6px rgb(0 0 0 / 0.35);
+}
+.pos-led[data-lit="false"] {
+  background:
+    radial-gradient(circle, color-mix(in srgb, var(--led) 45%, #000) 0 0.8px, transparent 1.4px) center / 4px 4px,
+    radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--led) 30%, #222) 0%, color-mix(in srgb, var(--led) 18%, #111) 100%);
+  border-color: color-mix(in srgb, var(--led) 30%, #000);
+  box-shadow: inset 0 0 6px rgb(0 0 0 / 0.55);
+  opacity: 0.75;
+}
+.pos-led-low {
+  --led: #ff2b2b;
+}
+.pos-led-half {
+  --led: #ffb000;
+}
+.pos-led-full {
+  --led: #22e04a;
 }
 /* Keeps a full-bleed product photo's name legible on any image. */
 .pos-photo-scrim {

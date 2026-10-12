@@ -20,6 +20,7 @@ import {
   Tags,
 } from "lucide-react";
 import AppLayout from "../../components/AppLayout";
+import { ProductsListView } from "../../features/catalog/components/ProductsListView";
 import { useI18n } from "../../i18n/I18nContext";
 import { env } from "../../app/config/env";
 import {
@@ -1513,6 +1514,9 @@ export default function CatalogAdminPage() {
   const [productSearch, setProductSearch] = useState("");
   const [productCategoryId, setProductCategoryId] = useState("");
   const [productPage, setProductPage] = useState(1);
+  const [productPageSize, setProductPageSize] = useState(25);
+  // Products tab: the list (default) or one product's form, opened from a row or "New product".
+  const [productEditorOpen, setProductEditorOpen] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
   const [selectedProductId, setSelectedProductId] = useState(null);
   const [selectedVariantId, setSelectedVariantId] = useState(null);
@@ -1540,9 +1544,9 @@ export default function CatalogAdminPage() {
       categoryId: productCategoryId,
       search: productSearch.trim(),
       pageNumber: productPage,
-      pageSize: 25,
+      pageSize: productPageSize,
     }),
-    [productCategoryId, productPage, productSearch, productStatus],
+    [productCategoryId, productPage, productPageSize, productSearch, productStatus],
   );
   const variantFilters = useMemo(() => ({ status: variantStatus }), [variantStatus]);
   const branchAvailabilityFilters = useMemo(
@@ -1652,7 +1656,6 @@ export default function CatalogAdminPage() {
   const selectedProduct = productDetailsQuery.data || null;
   const selectedVariant = variantDetailsQuery.data || null;
   const categories = allCategoriesQuery.data || [];
-  const products = productsQuery.data?.items || [];
   const variants = variantsQuery.data || [];
   const branchAvailabilitySummary = useMemo(() => {
     const items = branchAvailabilityOverviewQuery.data?.items || [];
@@ -1688,6 +1691,7 @@ export default function CatalogAdminPage() {
   };
 
   const startCreateProduct = () => {
+    setProductEditorOpen(true);
     setProductMode("create");
     setSelectedProductId(null);
     setSelectedVariantId(null);
@@ -1712,7 +1716,16 @@ export default function CatalogAdminPage() {
     });
   };
 
+  // Back from a product's form to the products list.
+  const closeProductEditor = () => {
+    setProductEditorOpen(false);
+    setProductMode("create");
+    setSelectedProductId(null);
+    setSelectedVariantId(null);
+  };
+
   const selectProduct = (product) => {
+    setProductEditorOpen(true);
     setProductMode("edit");
     setSelectedProductId(product.productId);
     setSelectedVariantId(null);
@@ -2046,107 +2059,18 @@ export default function CatalogAdminPage() {
             </section>
           </div>
         ) : tab === "products" ? (
-          <div className="grid gap-4 2xl:grid-cols-[380px_1fr]">
-            <section className="rounded-xl border border-line bg-surface p-3">
-              <div className="mb-3 grid gap-2 sm:grid-cols-[1fr_130px]">
-                <label className="relative block">
-                  <Search size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-subtle" />
-                  <input
-                    value={productSearch}
-                    onChange={(event) => {
-                      setProductSearch(event.target.value);
-                      setProductPage(1);
-                    }}
-                    maxLength={100}
-                    placeholder={t("catalogAdmin.products.searchPlaceholder")}
-                    className="h-10 w-full rounded-xl border border-line bg-canvas pr-9 pl-3 text-sm text-ink outline-none"
-                  />
-                </label>
-                <select
-                  value={productStatus}
-                  onChange={(event) => {
-                    setProductStatus(event.target.value);
-                    setProductPage(1);
-                  }}
-                  className="h-10 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none"
-                >
-                  <option value="">{t("catalogAdmin.field.allStatus")}</option>
-                  <option value="Active">{t("catalogAdmin.common.active")}</option>
-                  <option value="Suspended">{t("catalogAdmin.common.suspended")}</option>
-                </select>
-                <select
-                  value={productCategoryId}
-                  onChange={(event) => {
-                    setProductCategoryId(event.target.value);
-                    setProductPage(1);
-                  }}
-                  className="h-10 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none sm:col-span-2"
-                >
-                  <option value="">{t("catalogAdmin.field.allCategories")}</option>
-                  {categories.map((category) => (
-                    <option key={category.categoryId} value={category.categoryId}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {productsQuery.isLoading && <LoadingState label={t("catalogAdmin.products.loading")} />}
-              {productsQuery.isError && (
-                <ErrorState title={t("catalogAdmin.products.loadError")} message={getErrorMessage(productsQuery.error, t)} />
-              )}
-              {!productsQuery.isLoading && !productsQuery.isError && products.length === 0 && (
-                <EmptyState title={t("catalogAdmin.products.empty.title")} message={t("catalogAdmin.products.empty.message")} />
-              )}
-              {!productsQuery.isLoading && !productsQuery.isError && products.length > 0 && (
-                <div className="max-h-[calc(100vh-420px)] min-h-[320px] space-y-2 overflow-y-auto pr-1 scrollbar-none">
-                  {products.map((product) => (
-                    <EntityCard
-                      key={product.productId}
-                      icon={<Package size={15} className="shrink-0 text-accent" />}
-                      title={product.name}
-                      meta={product.categoryName || t("catalogAdmin.field.noCategory")}
-                      status={product.status}
-                      selected={selectedProductId === product.productId}
-                      onSelect={() => selectProduct(product)}
-                    >
-                      <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                        <div className="rounded-lg bg-raised p-2">
-                          <div className="text-subtle">{t("catalogAdmin.common.variants")}</div>
-                          <div className="mt-1 font-semibold text-ink">{product.variantCount}</div>
-                        </div>
-                        <div className="rounded-lg bg-raised p-2">
-                          <div className="text-subtle">{t("catalogAdmin.common.sort")}</div>
-                          <div className="mt-1 font-semibold text-ink">{product.sortOrder}</div>
-                        </div>
-                      </div>
-                    </EntityCard>
-                  ))}
-                </div>
-              )}
-              <div className="mt-3 flex items-center justify-between gap-2 text-sm text-muted">
-                <span>
-                  {t("catalogAdmin.common.pageOf", { current: productsQuery.data?.pageNumber || 1, total: productsQuery.data?.totalPages || 0 })}
-                </span>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    disabled={productPage <= 1}
-                    onClick={() => setProductPage((page) => Math.max(1, page - 1))}
-                    className="rounded-lg border border-line px-3 py-1 disabled:opacity-40"
-                  >
-                    {t("catalogAdmin.common.prev")}
-                  </button>
-                  <button
-                    type="button"
-                    disabled={!productsQuery.data || productPage >= productsQuery.data.totalPages}
-                    onClick={() => setProductPage((page) => page + 1)}
-                    className="rounded-lg border border-line px-3 py-1 disabled:opacity-40"
-                  >
-                    {t("catalogAdmin.common.next")}
-                  </button>
-                </div>
-              </div>
-            </section>
+          productEditorOpen ? (
+          <div className="space-y-3">
+            {/* Form view of one product: breadcrumb back to the list. */}
+            <nav aria-label="breadcrumb" className="flex flex-wrap items-center gap-1.5 rounded-xl border border-line bg-surface px-4 py-2.5 text-base shadow-[var(--shadow-surface)]">
+              <button type="button" onClick={closeProductEditor} className="odoo-link hover:underline">
+                {t("catalogAdmin.tab.products")}
+              </button>
+              <span className="text-subtle">/</span>
+              <span className="truncate font-bold text-ink">
+                {productMode === "create" ? t("catalogAdmin.products.newTitle") : selectedProduct?.name || t("catalogAdmin.common.loading")}
+              </span>
+            </nav>
             <section className="space-y-4">
               <div className="rounded-xl border border-line bg-surface p-4">
                 <PanelTitle
@@ -2315,6 +2239,39 @@ export default function CatalogAdminPage() {
               </div>
             </section>
           </div>
+          ) : (
+            <ProductsListView
+              companyId={currentCompanyId}
+              branchId={currentBranchId}
+              categories={categories}
+              productsQuery={productsQuery}
+              search={productSearch}
+              onSearchChange={(value) => {
+                setProductSearch(value);
+                setProductPage(1);
+              }}
+              status={productStatus}
+              onStatusChange={(value) => {
+                setProductStatus(value);
+                setProductPage(1);
+              }}
+              categoryId={productCategoryId}
+              onCategoryChange={(value) => {
+                setProductCategoryId(value);
+                setProductPage(1);
+              }}
+              page={productPage}
+              onPageChange={setProductPage}
+              pageSize={productPageSize}
+              onPageSizeChange={(size) => {
+                setProductPageSize(size);
+                setProductPage(1);
+              }}
+              canManage={canManage}
+              onOpenProduct={selectProduct}
+              showNotice={showNotice}
+            />
+          )
         ) : (
           <CatalogModifiersAdmin
             currentCompanyId={currentCompanyId}

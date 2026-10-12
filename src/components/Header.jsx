@@ -3,6 +3,53 @@ import { Keyboard, LogOut, Moon, Sun, CalendarDays, Clock } from "lucide-react";
 import { useI18n } from "../i18n/I18nContext";
 import { useShortcutContext } from "../features/shortcuts/useShortcuts";
 
+// Small live analog clock face (hour / minute / second hands on the current time), drawn in
+// currentColor so it takes the chip's tint in both themes.
+function AnalogClock({ date, size }) {
+  const seconds = date.getSeconds();
+  const minutes = date.getMinutes() + seconds / 60;
+  const hours = (date.getHours() % 12) + minutes / 60;
+  const hand = (angle, length, width, opacity = 1) => (
+    <line
+      x1="20"
+      y1="20"
+      x2={20 + length * Math.sin((angle * Math.PI) / 180)}
+      y2={20 - length * Math.cos((angle * Math.PI) / 180)}
+      stroke="currentColor"
+      strokeWidth={width}
+      strokeLinecap="round"
+      opacity={opacity}
+    />
+  );
+
+  return (
+    <svg width={size} height={size} viewBox="0 0 40 40" aria-hidden="true">
+      <circle cx="20" cy="20" r="18" fill="none" stroke="currentColor" strokeWidth="2" opacity="0.9" />
+      {Array.from({ length: 12 }, (_, index) => {
+        const angle = (index * 30 * Math.PI) / 180;
+        const major = index % 3 === 0;
+        return (
+          <line
+            key={index}
+            x1={20 + 14.5 * Math.sin(angle)}
+            y1={20 - 14.5 * Math.cos(angle)}
+            x2={20 + (major ? 11.5 : 13) * Math.sin(angle)}
+            y2={20 - (major ? 11.5 : 13) * Math.cos(angle)}
+            stroke="currentColor"
+            strokeWidth={major ? 1.8 : 1}
+            strokeLinecap="round"
+            opacity={major ? 0.9 : 0.5}
+          />
+        );
+      })}
+      {hand(hours * 30, 8, 2.8)}
+      {hand(minutes * 6, 12, 2)}
+      {hand(seconds * 6, 13.5, 1, 0.7)}
+      <circle cx="20" cy="20" r="1.8" fill="currentColor" />
+    </svg>
+  );
+}
+
 export default function Header({ onLogout, compact = false, bare = false }) {
   const { t, lang, dir } = useI18n();
   const { openHelp } = useShortcutContext();
@@ -76,14 +123,12 @@ export default function Header({ onLogout, compact = false, bare = false }) {
   return (
     <div className={compact ? "mb-2 flex items-center justify-between gap-2" : "mb-4 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-between"}>
       <div
-        className={`flex items-center border shadow-sm ${compact ? "gap-2.5 rounded-xl px-3 py-0.5" : "w-full gap-4 rounded-2xl px-5 py-3 sm:w-auto"} ${
-          isDark
-            ? "border-blue-400/25 bg-gradient-to-br from-slate-900/90 to-slate-950/80 text-white shadow-slate-950/30"
-            : "border-slate-300/60 bg-gradient-to-br from-white to-slate-100 text-slate-900 shadow-slate-300/30"
+        className={`flex items-center ${compact ? "gap-2.5 py-0.5" : "w-full gap-4 py-3 sm:w-auto"} ${
+          isDark ? "text-white" : "text-slate-900"
         }`}
       >
-        <div className={`grid shrink-0 place-items-center rounded-xl ${compact ? "h-8 w-8" : "h-12 w-12"} ${isDark ? "bg-blue-500/15 text-blue-300" : "bg-blue-500/10 text-blue-600"}`}>
-          <Clock size={compact ? 16 : 24} />
+        <div className={`grid shrink-0 place-items-center ${compact ? "h-8 w-8" : "h-12 w-12"} ${isDark ? "text-blue-300" : "text-blue-600"}`}>
+          <AnalogClock date={now} size={compact ? 24 : 38} />
         </div>
         <div className={compact ? "flex min-w-0 items-center gap-3" : "min-w-0"} dir="ltr">
           <div className="flex items-baseline gap-1.5 leading-none">
