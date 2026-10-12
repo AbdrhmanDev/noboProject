@@ -8,6 +8,7 @@ import {
   rebindDeviceHardware,
   setDeviceLabelPrinterProfile,
   setDeviceReceiptPrinterProfile,
+  setDeviceSerialSettings,
   testPrintDevice,
   unbindDeviceHardware,
   updateDevice,
@@ -20,6 +21,7 @@ import type {
   RebindDeviceHardwareRequest,
   SetDeviceLabelPrinterProfileRequest,
   SetDeviceReceiptPrinterProfileRequest,
+  SetDeviceSerialSettingsRequest,
   UpdateDeviceRequest,
   UpdateDeviceStatusRequest,
 } from "../types/devices.types";
@@ -169,6 +171,22 @@ export function useSetDeviceLabelPrinterProfile(
         deviceId as string,
         payload,
       ),
+    onSuccess: () => invalidateDevices(queryClient, companyId, branchId, deviceId),
+  });
+}
+
+// Variable-Weight Products Phase F.9: invalidates hardware-binding (BaudRate/DataBits/Parity/
+// StopBits live there) exactly like useRebindDeviceHardware/useUnbindDeviceHardware already do.
+export function useSetDeviceSerialSettings(
+  companyId: string | null | undefined,
+  branchId: string | null | undefined,
+  deviceId: string | null | undefined,
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: SetDeviceSerialSettingsRequest) =>
+      setDeviceSerialSettings(companyId as string, branchId as string, deviceId as string, payload),
     onSuccess: () => invalidateDevices(queryClient, companyId, branchId, deviceId),
   });
 }

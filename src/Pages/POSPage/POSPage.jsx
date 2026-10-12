@@ -77,6 +77,10 @@ import { ShiftDialogs } from "../../features/pos/components/shift/ShiftDialogs";
 import { ShiftReportDialog } from "../../features/pos/components/shift/ShiftReportDialog";
 import { PosMiscDialogs } from "../../features/pos/components/PosMiscDialogs";
 import { NumericKeypadModal } from "../../features/pos/components/keypad/NumericKeypadModal";
+import { ScaleSimulatorPanel } from "../../features/pos/components/scale/ScaleSimulatorPanel";
+import { ScaleBridgePanel } from "../../features/pos/components/scale/ScaleBridgePanel";
+import { useScaleReadingSimulator } from "../../features/pos/hooks/useScaleReadingSimulator";
+import { useScaleBridgeReading } from "../../features/pos/hooks/useScaleBridgeReading";
 import {
   getCartItemCount,
   getCashMovementLabel,
@@ -442,6 +446,15 @@ export default function POSPage() {
   const [weightEntryVariant, setWeightEntryVariant] = useState(null);
   const [pendingWeight, setPendingWeight] = useState(null);
   const [modifierQuantities, setModifierQuantities] = useState({});
+  // Variable-Weight Products Phase F.2: development-only scale-reading simulator state. Always
+  // constructed (cheap plain React state, no side effects) -- only ever RENDERED when
+  // env.features.scaleSimulatorEnabled, in the weightEntry modal below.
+  const scaleSimulator = useScaleReadingSimulator();
+  // Variable-Weight Products Phase F.4: polls the real Edge Agent scale bridge ONLY while the
+  // weightEntry modal is actually open -- useScaleBridgeReading itself also no-ops entirely
+  // unless env.features.scaleBridgeEnabled is on, so this line has zero effect in every
+  // deployment that hasn't explicitly turned the bridge integration on.
+  const scaleBridgeState = useScaleBridgeReading(modal === "weightEntry");
   const [countedCashInput, setCountedCashInput] = useState("");
   const [closingNoteInput, setClosingNoteInput] = useState("");
   const [lastClosedShift, setLastClosedShift] = useState(null);
@@ -2827,7 +2840,33 @@ export default function POSPage() {
               setWeightEntryVariant(null);
             }}
             onConfirm={confirmWeightEntry}
-          />
+          >
+            {({ setValue }) => (
+              <>
+                {/* Phase F.4: the real Edge Agent bridge and the Phase F.2 development
+                    simulator are deliberately independent -- each is gated by its own env flag
+                    and renders its own panel; neither affects the other's state or configuration. */}
+                {env.features.scaleBridgeEnabled && (
+                  <ScaleBridgePanel
+                    bridgeState={scaleBridgeState}
+                    targetUnit={weightEntryVariant.salesUnitOfMeasure?.code}
+                    onApply={(value) => setValue(String(value))}
+                  />
+                )}
+                {env.features.scaleSimulatorEnabled && (
+                  <ScaleSimulatorPanel
+                    simulator={scaleSimulator}
+                    // .code ("KG"/"G"), not .symbol ("kg") -- matches the catalog's own unit
+                    // code convention and the simulator's own sample-unit values exactly, so the
+                    // conversion check never relies on code/symbol happening to differ only by
+                    // letter case.
+                    targetUnit={weightEntryVariant.salesUnitOfMeasure?.code}
+                    onApply={(value) => setValue(String(value))}
+                  />
+                )}
+              </>
+            )}
+          </NumericKeypadModal>
         )}
       </main>
     </AppLayout>

@@ -35,6 +35,7 @@ import { DeviceReadinessChecklist } from "../../features/devices/components/Devi
 import { TestPrintPanel } from "../../features/devices/components/TestPrintPanel";
 import { PrinterProfilePanel } from "../../features/devices/components/PrinterProfilePanel";
 import { LabelPrinterProfilePanel } from "../../features/devices/components/LabelPrinterProfilePanel";
+import { ScaleProfilePanel } from "../../features/devices/components/ScaleProfilePanel";
 import { DeviceFormDialog } from "../../features/devices/components/DeviceFormDialog";
 import { DeviceConfirmActionDialog } from "../../features/devices/components/DeviceConfirmActionDialog";
 import { RebindDeviceHardwareDialog } from "../../features/devices/components/RebindDeviceHardwareDialog";
@@ -576,6 +577,15 @@ export default function DeviceDetailsPage() {
                   companyId={currentCompanyId}
                   branchId={currentBranchId}
                   device={device}
+                  canManage={canManage}
+                />
+              )}
+              {device.deviceType === "Scale" && (
+                <ScaleProfilePanel
+                  companyId={currentCompanyId}
+                  branchId={currentBranchId}
+                  device={device}
+                  hardwareBinding={hardwareBindingQuery.data}
                   canManage={canManage}
                 />
               )}

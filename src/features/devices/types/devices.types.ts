@@ -233,7 +233,50 @@ export type DeviceHardwareBindingResponse = {
   // Set only when transportType represents an installed Windows printer queue -- execution
   // goes through this spooler queue, not a raw USB VID/PID/instance path.
   windowsPrinterQueueName: string | null;
+  // Variable-Weight Products Phase F.9: only meaningful when transportType is "SerialCom" --
+  // already settable via the existing serial-settings endpoint (setDeviceSerialSettings below),
+  // just not previously typed here. Null means "not yet configured", never a default.
+  baudRate: number | null;
+  dataBits: number | null;
+  parity: string | null;
+  stopBits: string | null;
   confirmedAtUtc: string;
+};
+
+// Already a real, working backend endpoint (PUT .../hardware-binding/serial-settings) -- only
+// its frontend type/client function were missing before Phase F.9. Only meaningful for a
+// Serial/COM-transport hardware binding; omit/null a field to leave it unchanged server-side is
+// NOT supported here -- all four must be supplied together (matching
+// DeviceHardwareBinding.ConfigureSerialSettings' own all-or-nothing contract).
+export type SetDeviceSerialSettingsRequest = {
+  baudRate: number;
+  dataBits: number;
+  parity: string;
+  stopBits: string;
+};
+
+// ---- Scale protocol profile ----
+// Variable-Weight Products Phase F.9: the typed shape of Device.connectionConfigurationJson for
+// a Scale device, matching Nobo.EdgeAgent.Scales.ScaleProtocolProfile (Phase F.7) and validated
+// server-side by ScaleConnectionProfileValidator on every Create/Update (Phase F.9). There is no
+// dedicated "set scale profile" endpoint -- this is serialized to a JSON string and sent through
+// the EXISTING updateDevice call's connectionConfigurationJson field, exactly like the generic
+// raw-JSON textarea in DeviceFormDialog already does, just with a structured UI building the
+// string instead of asking an admin to hand-write it.
+//
+// "GenericLineV1" is, today, the ONLY supported profile -- a line-delimited ASCII format with a
+// configured marker/unit/delimiter convention. It does not claim compatibility with any specific
+// physical scale model; see ScaleProfilePanel's own in-UI explanation.
+export type ScaleProtocolProfileKind = "GenericLineV1";
+
+export type ScaleProtocolProfile = {
+  profile: ScaleProtocolProfileKind;
+  allowedUnits: string[];
+  stableMarker: string | null;
+  unstableMarker: string | null;
+  frameDelimiter: string;
+  maxFrameLength: number;
+  readTimeoutMs: number;
 };
 
 // ---- Edge Agents ----

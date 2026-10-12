@@ -19,8 +19,15 @@ export function NumericKeypadModal({
   cancelLabel = "إلغاء",
   onConfirm,
   onCancel,
+  // Optional extra content rendered between the keypad and its clear/cancel/confirm row -- a
+  // render-prop called with `setSanitizedValue` so the caller can push a value into the keypad's
+  // own buffer through the exact same character-shaping rules typing/tapping already use (e.g.
+  // the development-only scale-reading simulator panel, Variable-Weight Products Phase F.2,
+  // copying a reading in after the cashier explicitly chooses to use it -- never automatically).
+  // Every existing caller omits this and is completely unaffected.
+  children,
 }) {
-  const { value, isEmpty, applyChar, backspace, clear, onInputChange, inputRef } =
+  const { value, setSanitizedValue, isEmpty, applyChar, backspace, clear, onInputChange, inputRef } =
     useNumericKeypadState({ initialValue, allowDecimal, maxDecimalPlaces });
 
   const confirm = () => {
@@ -46,6 +53,8 @@ export function NumericKeypadModal({
         ariaLabel={ariaLabel}
         unitLabel={unitLabel}
       />
+
+      {typeof children === "function" ? children({ setValue: setSanitizedValue }) : children}
 
       <div className="mt-3 grid grid-cols-3 gap-2">
         <button

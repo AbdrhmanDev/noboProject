@@ -59,5 +59,23 @@ export function useNumericKeypadState({ initialValue = "", allowDecimal = true, 
     setValue(sanitizeKeypadValue(event.target.value, { allowDecimal, maxDecimalPlaces }));
   };
 
-  return { value, setValue, isEmpty, applyChar, backspace, clear, onInputChange, inputRef };
+  // Same character-shaping rules as every other entry path (typing, tapping, pasting) -- for a
+  // caller that wants to push a whole value in at once (e.g. a scale-reading simulator applying
+  // a reading), never the raw unsanitized setValue.
+  const setSanitizedValue = (nextValue) => {
+    setValue(sanitizeKeypadValue(String(nextValue ?? ""), { allowDecimal, maxDecimalPlaces }));
+    inputRef.current?.focus();
+  };
+
+  return {
+    value,
+    setValue,
+    setSanitizedValue,
+    isEmpty,
+    applyChar,
+    backspace,
+    clear,
+    onInputChange,
+    inputRef,
+  };
 }

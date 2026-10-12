@@ -10,6 +10,7 @@ import type {
   RebindDeviceHardwareResponse,
   SetDeviceLabelPrinterProfileRequest,
   SetDeviceReceiptPrinterProfileRequest,
+  SetDeviceSerialSettingsRequest,
   TestPrintResponse,
   UnbindDeviceHardwareResponse,
   UpdateDeviceRequest,
@@ -134,6 +135,23 @@ export async function printProductVariantLabel(
 export async function testPrintDevice(companyId: string, branchId: string, deviceId: string) {
   const response = await httpClient.post<TestPrintResponse>(
     `${devicesBaseUrl(companyId, branchId)}/${deviceId}/test-print`,
+  );
+
+  return response.data;
+}
+
+// Variable-Weight Products Phase F.9: the backend endpoint already existed (Phase F.5/F.6 audit)
+// -- only this frontend client function was missing. Only meaningful for a Serial/COM hardware
+// binding; the backend rejects this for any other transport type.
+export async function setDeviceSerialSettings(
+  companyId: string,
+  branchId: string,
+  deviceId: string,
+  payload: SetDeviceSerialSettingsRequest,
+) {
+  const response = await httpClient.put<DeviceHardwareBindingResponse>(
+    `${devicesBaseUrl(companyId, branchId)}/${deviceId}/hardware-binding/serial-settings`,
+    payload,
   );
 
   return response.data;
