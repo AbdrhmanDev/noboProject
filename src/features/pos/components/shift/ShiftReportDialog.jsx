@@ -123,7 +123,7 @@ export function ShiftReportDialog({ shift, companyId, branchId, cashierName, onC
         </div>
 
         {methodRows.length > 0 && (
-          <div className="overflow-hidden rounded-xl border border-line">
+          <div className="overflow-x-auto rounded-xl border border-line">
             <table className="w-full text-xs">
               <thead className="bg-inset text-subtle">
                 <tr>

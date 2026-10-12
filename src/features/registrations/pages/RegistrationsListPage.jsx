@@ -83,38 +83,41 @@ function RegistrationsTable() {
       )}
       {!registrationsQuery.isLoading && !registrationsQuery.isError && rows.length > 0 && (
         <>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-start text-subtle">
-                <th className="pb-2 font-medium">Reference</th>
-                <th className="pb-2 font-medium">Kind</th>
-                <th className="pb-2 font-medium">Applicant / legal name</th>
-                <th className="pb-2 font-medium">Status</th>
-                <th className="pb-2 font-medium">Submitted</th>
-                <th className="pb-2 font-medium">Updated</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((registration) => (
-                <tr
-                  key={registration.id}
-                  onClick={() => navigate(platformRegistrationDetailsPath(registration.id))}
-                  className="cursor-pointer border-t border-line hover:bg-raised"
-                >
-                  <td className="py-2.5 font-bold text-ink">{registration.reference}</td>
-                  <td className="py-2.5 text-muted">{registration.kind}</td>
-                  <td className="py-2.5 text-muted">{registration.legalName || "-"}</td>
-                  <td className="py-2.5">
-                    <RegistrationStatusBadge status={registration.status} />
-                  </td>
-                  <td className="py-2.5 text-muted">
-                    {registration.submittedAtUtc ? formatDateTime(registration.submittedAtUtc) : "-"}
-                  </td>
-                  <td className="py-2.5 text-muted">{formatDateTime(registration.updatedAtUtc)}</td>
+          {/* Scrolls sideways on narrow screens instead of squeezing the columns. */}
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px] text-sm">
+              <thead>
+                <tr className="text-start text-subtle">
+                  <th className="pb-2 font-medium">Reference</th>
+                  <th className="pb-2 font-medium">Kind</th>
+                  <th className="pb-2 font-medium">Applicant / legal name</th>
+                  <th className="pb-2 font-medium">Status</th>
+                  <th className="pb-2 font-medium">Submitted</th>
+                  <th className="pb-2 font-medium">Updated</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {rows.map((registration) => (
+                  <tr
+                    key={registration.id}
+                    onClick={() => navigate(platformRegistrationDetailsPath(registration.id))}
+                    className="cursor-pointer border-t border-line hover:bg-raised"
+                  >
+                    <td className="py-2.5 font-bold text-ink">{registration.reference}</td>
+                    <td className="py-2.5 text-muted">{registration.kind}</td>
+                    <td className="py-2.5 text-muted">{registration.legalName || "-"}</td>
+                    <td className="py-2.5">
+                      <RegistrationStatusBadge status={registration.status} />
+                    </td>
+                    <td className="py-2.5 text-muted">
+                      {registration.submittedAtUtc ? formatDateTime(registration.submittedAtUtc) : "-"}
+                    </td>
+                    <td className="py-2.5 text-muted">{formatDateTime(registration.updatedAtUtc)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           <div className="mt-3 flex items-center justify-between gap-2 text-sm text-muted">
             <button
               type="button"

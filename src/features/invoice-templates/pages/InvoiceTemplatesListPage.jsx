@@ -260,29 +260,32 @@ export function InvoiceTemplatesListPage() {
               />
             )}
             {!templatesQuery.isLoading && !templatesQuery.isError && (templatesQuery.data || []).length > 0 && (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-right text-subtle">
-                    <th className="pb-2 font-medium">Name</th>
-                    <th className="pb-2 font-medium">Scope</th>
-                    <th className="pb-2 font-medium">Paper width</th>
-                    <th className="pb-2 font-medium">Status</th>
-                    <th className="pb-2 font-medium">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {templatesQuery.data.map((template) => (
-                    <TemplateRow
-                      key={template.id}
-                      companyId={currentCompanyId}
-                      template={template}
-                      branchName={template.branchId ? branchNameById.get(template.branchId) : null}
-                      canManage={canManage}
-                      navigate={navigate}
-                    />
-                  ))}
-                </tbody>
-              </table>
+              <div className="overflow-x-auto">
+                {/* Scrolls sideways on narrow screens instead of squeezing the columns. */}
+                <table className="w-full min-w-[560px] text-sm">
+                  <thead>
+                    <tr className="text-right text-subtle">
+                      <th className="pb-2 font-medium">Name</th>
+                      <th className="pb-2 font-medium">Scope</th>
+                      <th className="pb-2 font-medium">Paper width</th>
+                      <th className="pb-2 font-medium">Status</th>
+                      <th className="pb-2 font-medium">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {templatesQuery.data.map((template) => (
+                      <TemplateRow
+                        key={template.id}
+                        companyId={currentCompanyId}
+                        template={template}
+                        branchName={template.branchId ? branchNameById.get(template.branchId) : null}
+                        canManage={canManage}
+                        navigate={navigate}
+                      />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         )}

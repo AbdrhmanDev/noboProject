@@ -44,32 +44,35 @@ export default function AccountingPage({ onLogout }) {
         {/* transactions */}
         <div className="panel rounded-2xl p-4">
           <h3 className="font-bold text-sm mb-3">{t("acc.recentActivity")}</h3>
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="text-gray-500 text-right">
-                <th className="font-medium pb-2">{t("acc.date")}</th>
-                <th className="font-medium pb-2">{t("acc.desc")}</th>
-                <th className="font-medium pb-2">{t("acc.amount")}</th>
-                <th className="font-medium pb-2">{t("acc.type")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {transactions.map((tx, i) => (
-                <tr key={i} className="border-t border-white/5">
-                  <td className="py-2.5 text-gray-400">{tx.date}</td>
-                  <td className="py-2.5 text-gray-200">{tx.desc}</td>
-                  <td className={`py-2.5 font-bold ${tx.type === "دخل" ? "text-green-400" : "text-red-400"}`}>
-                    {tx.type === "دخل" ? "+" : "-"}{tx.amount}
-                  </td>
-                  <td className="py-2.5">
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                      tx.type === "دخل" ? "bg-green-500/15 text-green-400" : "bg-red-500/15 text-red-400"
-                    }`}>{t(tx.type === "دخل" ? "acc.income" : "acc.expense")}</span>
-                  </td>
+          {/* Scrolls sideways on narrow screens instead of squeezing the columns. */}
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[420px] text-xs">
+              <thead>
+                <tr className="text-gray-500 text-right">
+                  <th className="font-medium pb-2">{t("acc.date")}</th>
+                  <th className="font-medium pb-2">{t("acc.desc")}</th>
+                  <th className="font-medium pb-2">{t("acc.amount")}</th>
+                  <th className="font-medium pb-2">{t("acc.type")}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {transactions.map((tx, i) => (
+                  <tr key={i} className="border-t border-white/5">
+                    <td className="py-2.5 text-gray-400">{tx.date}</td>
+                    <td className="py-2.5 text-gray-200">{tx.desc}</td>
+                    <td className={`py-2.5 font-bold ${tx.type === "دخل" ? "text-green-400" : "text-red-400"}`}>
+                      {tx.type === "دخل" ? "+" : "-"}{tx.amount}
+                    </td>
+                    <td className="py-2.5">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        tx.type === "دخل" ? "bg-green-500/15 text-green-400" : "bg-red-500/15 text-red-400"
+                      }`}>{t(tx.type === "دخل" ? "acc.income" : "acc.expense")}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {/* summary widget */}

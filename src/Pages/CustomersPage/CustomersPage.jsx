@@ -112,28 +112,31 @@ export default function CustomersPage({ onLogout }) {
           )}
 
         {viewPermissionQuery.hasPermission && !customersQuery.isLoading && customersList.length > 0 && (
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="text-gray-500 text-right">
-                <th className="font-medium pb-2">{t("cust.customer")}</th>
-                <th className="font-medium pb-2">{t("cust.email")}</th>
-                <th className="font-medium pb-2">{t("cust.phone")}</th>
-                <th className="font-medium pb-2">{t("cust.status")}</th>
-                <th className="font-medium pb-2">{t("cust.classification")}</th>
-                <th className="font-medium pb-2">{t("cust.actions")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {customersList.map((customer) => (
-                <CustomerRow
-                  key={customer.customerId}
-                  customer={customer}
-                  companyId={currentCompanyId}
-                  onOpenCompliance={() => setComplianceCustomer(customer)}
-                />
-              ))}
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            {/* Scrolls sideways on narrow screens instead of squeezing the columns. */}
+            <table className="w-full min-w-[600px] text-xs">
+              <thead>
+                <tr className="text-gray-500 text-right">
+                  <th className="font-medium pb-2">{t("cust.customer")}</th>
+                  <th className="font-medium pb-2">{t("cust.email")}</th>
+                  <th className="font-medium pb-2">{t("cust.phone")}</th>
+                  <th className="font-medium pb-2">{t("cust.status")}</th>
+                  <th className="font-medium pb-2">{t("cust.classification")}</th>
+                  <th className="font-medium pb-2">{t("cust.actions")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {customersList.map((customer) => (
+                  <CustomerRow
+                    key={customer.customerId}
+                    customer={customer}
+                    companyId={currentCompanyId}
+                    onOpenCompliance={() => setComplianceCustomer(customer)}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 

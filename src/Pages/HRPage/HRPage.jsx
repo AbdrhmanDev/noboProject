@@ -46,37 +46,40 @@ export default function HRPage({ onLogout }) {
           <h3 className="font-bold text-sm">{t("hr.employeeList")}</h3>
           <button className="primary-btn rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1"><Plus size={13} /> {t("hr.addEmployee")}</button>
         </div>
-        <table className="w-full text-xs">
-          <thead>
-            <tr className="text-gray-500 text-right">
-              <th className="font-medium pb-2">{t("hr.employee")}</th>
-              <th className="font-medium pb-2">{t("hr.job")}</th>
-              <th className="font-medium pb-2">{t("hr.department")}</th>
-              <th className="font-medium pb-2">{t("hr.salary")}</th>
-              <th className="font-medium pb-2">{t("hr.status")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {employees.map((e, i) => (
-              <tr key={i} className="border-t border-white/5">
-                <td className="py-2.5">
-                  <div className="flex items-center gap-2">
-                    <img src={e.avatar} alt="" className="w-7 h-7 rounded-full bg-gray-700" />
-                    <span className="text-gray-200 font-bold">{e.name}</span>
-                  </div>
-                </td>
-                <td className="py-2.5 text-gray-300">{e.role}</td>
-                <td className="py-2.5 text-gray-400">{e.dept}</td>
-                <td className="py-2.5 text-gray-300">{e.salary} ر.س</td>
-                <td className="py-2.5">
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                    e.status === "حاضر" ? "bg-green-500/15 text-green-400" : "bg-yellow-500/15 text-yellow-400"
-                  }`}>{t(e.status === "حاضر" ? "hr.present" : "hr.leave")}</span>
-                </td>
+        {/* Scrolls sideways on narrow screens instead of squeezing the columns. */}
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[520px] text-xs">
+            <thead>
+              <tr className="text-gray-500 text-right">
+                <th className="font-medium pb-2">{t("hr.employee")}</th>
+                <th className="font-medium pb-2">{t("hr.job")}</th>
+                <th className="font-medium pb-2">{t("hr.department")}</th>
+                <th className="font-medium pb-2">{t("hr.salary")}</th>
+                <th className="font-medium pb-2">{t("hr.status")}</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {employees.map((e, i) => (
+                <tr key={i} className="border-t border-white/5">
+                  <td className="py-2.5">
+                    <div className="flex items-center gap-2">
+                      <img src={e.avatar} alt="" className="w-7 h-7 rounded-full bg-gray-700" />
+                      <span className="text-gray-200 font-bold">{e.name}</span>
+                    </div>
+                  </td>
+                  <td className="py-2.5 text-gray-300">{e.role}</td>
+                  <td className="py-2.5 text-gray-400">{e.dept}</td>
+                  <td className="py-2.5 text-gray-300">{e.salary} ر.س</td>
+                  <td className="py-2.5">
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                      e.status === "حاضر" ? "bg-green-500/15 text-green-400" : "bg-yellow-500/15 text-yellow-400"
+                    }`}>{t(e.status === "حاضر" ? "hr.present" : "hr.leave")}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </AppLayout>
   );
