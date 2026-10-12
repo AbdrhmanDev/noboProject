@@ -2051,9 +2051,12 @@ export default function POSPage() {
   // product active); decrementing adjusts/removes the one exact matching line (same variant AND
   // same modifier-option set) the same way OrderLines' own stepper does (changeQty/removeDraftLine)
   // -- never a new mutation path.
-  const incrementProductLine = (variant, modifierOptionIds = []) => {
+  // `modifierOptionIds` null/omitted = a size that isn't in the cart yet: its REQUIRED modifier groups
+  // get their defaults (same as addItem), otherwise the server rejects the line ("Selected modifier
+  // options do not satisfy modifier group rules"). An existing line passes its own ids to add to it.
+  const incrementProductLine = (variant, modifierOptionIds = null) => {
     if (!variant) return;
-    addSellableVariant(variant, modifierOptionIds);
+    addSellableVariant(variant, modifierOptionIds ?? resolveVariantModifierOptionIds(variant));
   };
   const decrementProductLine = (variant, modifierOptionIds = []) => {
     if (!variant) return;
@@ -2468,7 +2471,6 @@ export default function POSPage() {
               activeProductId={activeProductId}
               onIncrementProductLine={incrementProductLine}
               onDecrementProductLine={decrementProductLine}
-              onChangeLineVariant={changeLineVariant}
               inventory={productInventory}
             />
           </div>

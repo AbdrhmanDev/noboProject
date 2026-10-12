@@ -15,8 +15,9 @@ import {
 // (.pos-flip in pos-theme.css):
 //  - FRONT: the product photo, with the in-cart quantity in its corner -- a single number for one
 //    variant, or a small stacked "size×qty" breakdown once more than one size is in the cart.
-//  - BACK: the stock lights (StockLine) and the quantity controls -- one tap-to-add row PER size
-//    (`VariantQuantityRow`) for multi-variant products, else the one shared QtyStepper (or the
+//  - BACK: the stock lights (StockLine) and the quantity controls -- one "name [-] qty [+]" row PER
+//    size (`VariantQuantityRow`) for multi-variant products, so several sizes of the same product
+//    can be ordered from the card ("2 Medium + 1 Small"); else the one shared QtyStepper (or the
 //    "weigh" button for a ByWeight product).
 // Turning the middle over ALSO adds one unit (`increment`: the size last put in the cart, else the
 // default one; a ByWeight product opens the weight-entry dialog instead). Turning it back adds
@@ -35,7 +36,6 @@ export function PosProductCard({
   onAddDefault,
   onIncrement,
   onDecrement,
-  onChangeVariant,
 }) {
   const { t } = useI18n();
   const quantityInCart = cartInfo?.quantity ?? 0;
@@ -60,30 +60,18 @@ export function PosProductCard({
     if (representativeVariant) onDecrement(representativeVariant, representativeModifierOptionIds);
   };
 
-  // Size rows pick ONE size for the card's line instead of adding another line: not in the cart yet
-  // -> add one of that size; in the cart in another size -> move that same line (same quantity) to
-  // this size (changeLineVariant); already this size -> nothing. A second size alongside is added
-  // from the cart. ByWeight on either side can't be "moved" (a weight isn't a count), so that
-  // falls back to a plain add, which opens the weight-entry dialog.
-  const selectVariant = (variant) => {
-    if (!representativeLine || !representativeVariant) {
-      onIncrement(variant, []);
-      return;
-    }
-    if (representativeVariant.productVariantId === variant.productVariantId) return;
-    if (variant.sellingMode === "ByWeight" || representativeVariant.sellingMode === "ByWeight") {
-      onIncrement(variant, []);
-      return;
-    }
-    onChangeVariant(representativeLine, variant);
-  };
-
   // Front -> back: flip AND add one. Back -> front: just flip back.
   const toggleFlip = () => {
     if (disabled) return;
     onFlip();
     if (!isFlipped) increment();
   };
+
+  // A size row's +/- act on the latest cart line of that size, with that line's own modifiers (a
+  // size with required modifier groups never has an empty modifier set once it's in the cart).
+  const lineForVariant = (variantId) =>
+    [...(cartInfo?.lines ?? [])].reverse().find((line) => line.productVariantId === variantId) ?? null;
+  const modifierIdsOf = (line) => line.modifiers.map((modifier) => modifier.modifierOptionId);
 
   // Quantity shown on a size row: every cart line for that exact variant, regardless of modifiers.
   const quantityForVariant = (variantId) =>
@@ -184,10 +172,17 @@ export function PosProductCard({
                     key={entry.productVariantId}
                     variant={entry}
                     quantity={quantityForVariant(entry.productVariantId)}
-                    isSelected={representativeVariant?.productVariantId === entry.productVariantId}
                     disabled={disabled}
                     focusable={isFlipped}
-                    onSelect={() => selectVariant(entry)}
+                    onIncrement={() => {
+                      const line = lineForVariant(entry.productVariantId);
+                      // Not in the cart yet -> null, so POSPage fills in required modifier defaults.
+                      onIncrement(entry, line ? modifierIdsOf(line) : null);
+                    }}
+                    onDecrement={() => {
+                      const line = lineForVariant(entry.productVariantId);
+                      if (line) onDecrement(entry, modifierIdsOf(line));
+                    }}
                   />
                 ))}
               </div>
@@ -378,31 +373,61 @@ function QtyStepper({ quantity, disabled, focusable, canDecrement, onDecrement, 
   );
 }
 
-// One size's row (multi-variant products): the whole row is one button that picks this size for the
-// card's line (`onSelect` -> selectVariant). The picked size is tinted, with its in-cart quantity
-// beside the name. No price (the card's bottom band already shows it) and no "-": quantities, and
-// any second size, are handled in the cart.
-function VariantQuantityRow({ variant, quantity, isSelected, disabled, focusable, onSelect }) {
+// One size's row (multi-variant products): the size name with its own [-] qty [+] beside it, each
+// targeting that exact size with no modifiers -- so "2 Medium + 1 Small" is just taps on two rows,
+// every size its own cart line. "-" and the number stay mounted (only hidden) at 0 so the row never
+// changes width. A ByWeight size gets a single "weigh" button instead (a weight isn't a count to
+// step down); it opens the weight-entry dialog for a new line. No price: the bottom band shows it.
+function VariantQuantityRow({ variant, quantity, disabled, focusable, onIncrement, onDecrement }) {
+  const { t } = useI18n();
   const hasQuantity = quantity > 0;
+  const isByWeight = variant.sellingMode === "ByWeight";
+  const stepButton =
+    "grid h-6 w-6 shrink-0 place-items-center rounded-full transition active:scale-90 disabled:cursor-not-allowed disabled:opacity-40";
 
   return (
-    <button
-      type="button"
-      onClick={onSelect}
-      disabled={disabled}
-      tabIndex={focusable ? 0 : -1}
-      aria-pressed={isSelected}
-      aria-label={hasQuantity ? `${variant.variantName} ×${quantity}` : variant.variantName}
-      className={`flex min-h-8 w-full items-center justify-center gap-1.5 rounded-pos border border-pos-border px-1 py-1 transition hover:bg-pos-primary-strong/20 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 ${
-        isSelected ? "bg-pos-primary-strong/15" : "bg-pos-card"
-      }`}
-    >
-      <span className="line-clamp-2 text-center text-[11px] font-bold leading-tight text-pos-text">{variant.variantName}</span>
-      {hasQuantity && (
-        <span className="pos-num shrink-0 rounded-full bg-pos-primary-strong px-1.5 py-0.5 text-[10px] font-bold text-white">
-          ×{quantity}
-        </span>
+    <div className="flex min-h-8 items-center gap-1.5 rounded-pos border border-pos-border bg-pos-card px-1.5 py-1 transition hover:bg-pos-primary-strong/10">
+      <span className="line-clamp-2 min-w-0 flex-1 text-[11px] font-bold leading-tight text-pos-text">{variant.variantName}</span>
+      {isByWeight ? (
+        <button
+          type="button"
+          onClick={onIncrement}
+          disabled={disabled}
+          tabIndex={focusable ? 0 : -1}
+          aria-label={`${t("pos.catalog.weigh")} · ${variant.variantName}`}
+          className="flex h-6 shrink-0 items-center gap-1 rounded-full bg-pos-primary-strong px-2 text-[10px] font-bold text-white shadow-sm transition hover:bg-pos-primary-strong-hover active:scale-90 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Plus size={11} />
+          {t("pos.catalog.weigh")}
+        </button>
+      ) : (
+        <div className="flex shrink-0 items-center gap-1">
+          <button
+            type="button"
+            onClick={onDecrement}
+            disabled={disabled || !hasQuantity}
+            tabIndex={focusable && hasQuantity ? 0 : -1}
+            aria-hidden={!hasQuantity}
+            aria-label={`${t("pos.catalog.decrement")} · ${variant.variantName}`}
+            className={`${stepButton} border border-pos-border text-pos-muted hover:bg-pos-bg hover:text-pos-text ${hasQuantity ? "" : "invisible"}`}
+          >
+            <Minus size={12} />
+          </button>
+          <span className={`pos-num w-4 shrink-0 text-center text-[11px] font-black text-pos-text ${hasQuantity ? "" : "invisible"}`}>
+            {quantity}
+          </span>
+          <button
+            type="button"
+            onClick={onIncrement}
+            disabled={disabled}
+            tabIndex={focusable ? 0 : -1}
+            aria-label={`${t("pos.catalog.increment")} · ${variant.variantName}`}
+            className={`${stepButton} bg-pos-primary-strong text-white shadow-sm hover:bg-pos-primary-strong-hover`}
+          >
+            <Plus size={12} />
+          </button>
+        </div>
       )}
-    </button>
+    </div>
   );
 }
