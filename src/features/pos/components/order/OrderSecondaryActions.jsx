@@ -186,7 +186,7 @@ export function OrderSecondaryActions({
             className={`relative grid w-12 shrink-0 place-items-center rounded-pos border transition ${
               expanded
                 ? "border-pos-primary bg-pos-tint text-pos-primary-text"
-                : "border-pos-border bg-pos-card text-pos-muted hover:border-pos-primary hover:text-pos-text"
+                : "border-pos-border bg-pos-card text-pos-muted"
             }`}
           >
             <MoreHorizontal size={16} />
@@ -203,7 +203,7 @@ export function OrderSecondaryActions({
             type="button"
             onClick={() => removeDraftLine(selectedLineId)}
             disabled={!canVoidLine}
-            className="pos-control pos-fs-name flex !min-h-10 items-center justify-center gap-1.5 border border-pos-danger/50 bg-pos-card text-pos-danger-text transition hover:bg-pos-danger/10 disabled:cursor-not-allowed disabled:opacity-45"
+            className="pos-control pos-fs-name flex !min-h-10 items-center justify-center gap-1.5 border border-pos-danger/50 bg-pos-card text-pos-danger-text transition disabled:cursor-not-allowed disabled:opacity-45"
           >
             <Trash2 size={14} />
             Void line
@@ -212,7 +212,7 @@ export function OrderSecondaryActions({
             type="button"
             onClick={() => openLifecycleModal(voidAllAction)}
             disabled={!canVoidAll}
-            className="pos-control pos-fs-name flex !min-h-10 items-center justify-center gap-1.5 border border-pos-danger/50 bg-pos-card text-pos-danger-text transition hover:bg-pos-danger/10 disabled:cursor-not-allowed disabled:opacity-45"
+            className="pos-control pos-fs-name flex !min-h-10 items-center justify-center gap-1.5 border border-pos-danger/50 bg-pos-card text-pos-danger-text transition disabled:cursor-not-allowed disabled:opacity-45"
           >
             <Ban size={14} />
             Void all
@@ -341,7 +341,7 @@ export function OrderSecondaryActions({
                   className={`pos-fs-base relative flex min-h-24 flex-col items-center justify-center gap-2 rounded-pos border px-2 font-medium transition disabled:cursor-not-allowed disabled:opacity-45 ${
                     selected
                       ? "border-pos-primary bg-pos-tint text-pos-primary-text"
-                      : "border-pos-border bg-pos-bg text-pos-text hover:border-pos-primary hover:bg-pos-tint"
+                      : "border-pos-border bg-pos-bg text-pos-text"
                   }`}
                 >
                   {selected && <Check size={14} className="absolute end-2 top-2" />}
@@ -376,7 +376,7 @@ export function OrderSecondaryActions({
                 onKitchenNoteChange?.("");
                 setNoteOpen(false);
               }}
-              className="pos-control pos-fs-name border border-pos-border bg-pos-card text-pos-text transition hover:bg-pos-tint"
+              className="pos-control pos-fs-name border border-pos-border bg-pos-card text-pos-text transition"
             >
               {t("pos.quick.clear")}
             </button>
@@ -386,7 +386,7 @@ export function OrderSecondaryActions({
                 onKitchenNoteChange?.(noteDraft.trim());
                 setNoteOpen(false);
               }}
-              className="pos-control pos-fs-name bg-pos-primary-strong text-white transition hover:bg-pos-primary-strong-hover"
+              className="pos-control pos-fs-name bg-pos-primary-strong text-white transition"
             >
               {t("pos.quick.saveNote")}
             </button>

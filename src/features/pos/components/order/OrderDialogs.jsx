@@ -174,7 +174,7 @@ export function OrderDialogs({
                 onClick={() => {
                   selectVariantForDraft(variant);
                 }}
-                className="flex h-14 w-full items-center justify-between gap-3 rounded-pos-lg border border-pos-border bg-pos-card px-3.5 text-start transition hover:border-pos-primary hover:bg-pos-tint active:scale-[0.99]"
+                className="flex h-14 w-full items-center justify-between gap-3 rounded-pos-lg border border-pos-border bg-pos-card px-3.5 text-start transition active:scale-[0.99]"
               >
                 <span className="min-w-0">
                   <span className="pos-fs-name block truncate font-bold text-pos-text">
@@ -242,7 +242,7 @@ export function OrderDialogs({
                         className={`flex items-center gap-1.5 rounded-full text-sm font-bold transition ${
                           checked
                             ? "pos-chip shadow-sm"
-                            : "border border-pos-border bg-pos-card text-pos-text hover:border-pos-primary"
+                            : "border border-pos-border bg-pos-card text-pos-text"
                         } ${pendingWeight != null && checked ? "pe-1" : ""}`}
                       >
                         <button
@@ -268,7 +268,7 @@ export function OrderDialogs({
                               type="button"
                               onClick={() => onChangeModifierOptionQuantity(option.modifierOptionId, -1)}
                               aria-label={t("pos.catalog.decrement")}
-                              className="grid h-6 w-6 place-items-center rounded-full text-pos-muted hover:bg-pos-card active:scale-90"
+                              className="grid h-6 w-6 place-items-center rounded-full text-pos-muted active:scale-90"
                             >
                               <Minus size={12} />
                             </button>
@@ -294,7 +294,7 @@ export function OrderDialogs({
             type="button"
             disabled={!canEditDraft || !modifierSelectionIsValid || isDraftMutationPending}
             onClick={onConfirmModifierDialog}
-            className="mt-4 flex h-[52px] w-full items-center justify-center gap-2 rounded-full bg-pos-action font-black text-pos-on-action shadow-sm transition hover:bg-pos-action-hover active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+            className="mt-4 flex h-[52px] w-full items-center justify-center gap-2 rounded-full bg-pos-action font-black text-pos-on-action shadow-sm transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Plus size={20} />
             {t("pos.catalog.addToOrder")}

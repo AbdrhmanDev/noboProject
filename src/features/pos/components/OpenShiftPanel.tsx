@@ -109,7 +109,7 @@ export function OpenShiftPanel({ terminal, onOpened }: OpenShiftPanelProps) {
             <WalletCards size={20} />
           </div>
           <div>
-            <h1 className="brand-text text-xl font-black">Open POS Shift</h1>
+            <h1 className="text-xl font-black text-white">Open POS Shift</h1>
             <p className="text-xs text-slate-400">
               {terminal.name} · {terminal.code}
             </p>

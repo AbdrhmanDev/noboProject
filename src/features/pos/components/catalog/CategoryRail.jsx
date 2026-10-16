@@ -14,7 +14,7 @@ function ScrollButton({ icon: Icon, label, onClick }) {
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="z-10 hidden h-8 w-8 shrink-0 place-items-center rounded-full border border-pos-border bg-pos-card text-pos-muted shadow-sm transition hover:border-pos-primary hover:text-pos-primary-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-pos-primary sm:grid"
+      className="z-10 hidden h-8 w-8 shrink-0 place-items-center rounded-full border border-pos-border bg-pos-card text-pos-muted shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-pos-primary sm:grid"
     >
       <Icon size={16} />
     </button>
@@ -148,7 +148,7 @@ export function CategoryRail({ categories, activeCategoryId, onSelect }) {
                 className={`pos-fs-name flex h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-4 transition ${
                   active
                     ? "border-pos-primary-strong bg-pos-primary-strong text-white"
-                    : "border-pos-border bg-pos-card text-pos-text hover:border-pos-primary hover:text-pos-primary-text"
+                    : "border-pos-border bg-pos-card text-pos-text"
                 }`}
               >
                 <Icon size={15} className={active ? "text-white" : "text-pos-muted"} />

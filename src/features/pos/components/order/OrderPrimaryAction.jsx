@@ -55,7 +55,7 @@ export function OrderPrimaryAction({
       <button
         type="button"
         onClick={primaryAction.run}
-        className="pos-fs-base flex h-12 w-full items-center justify-center gap-2 rounded-pos bg-pos-primary-strong font-bold text-white transition hover:bg-pos-primary-strong-hover"
+        className="pos-fs-base flex h-12 w-full items-center justify-center gap-2 rounded-pos bg-pos-primary-strong font-bold text-white transition"
       >
         {isClosedOrder ? <CircleCheckBig size={18} /> : <Ban size={18} />}
         {isClosedOrder
@@ -82,7 +82,7 @@ export function OrderPrimaryAction({
         <button
           type="button"
           onClick={primaryAction.run}
-          className="pos-fs-base flex h-12 w-full items-center justify-center gap-2 rounded-pos bg-pos-action font-bold text-pos-on-action transition hover:bg-pos-action-hover"
+          className="pos-fs-base flex h-12 w-full items-center justify-center gap-2 rounded-pos bg-pos-action font-bold text-pos-on-action transition"
         >
           <WalletCards size={19} />
           {t("pos.action.payNow")} · <span className="pos-num">{formatMoney(remainingAmount, settlementCurrencyCode, settlementMinorUnitDigits)}</span>
@@ -92,7 +92,7 @@ export function OrderPrimaryAction({
           <button
             type="button"
             onClick={onOpenRetrieve}
-            className="flex h-9 w-full items-center justify-center gap-1.5 rounded-lg text-xs font-bold text-muted transition hover:text-ink"
+            className="flex h-9 w-full items-center justify-center gap-1.5 rounded-lg text-xs font-bold text-muted transition"
           >
             {t("pos.action.payLater")}
           </button>
@@ -113,7 +113,7 @@ export function OrderPrimaryAction({
         <button
           type="button"
           onClick={primaryAction.run}
-          className="pos-fs-base flex h-12 w-full items-center justify-center gap-2 rounded-pos bg-pos-primary-strong font-bold text-white transition hover:bg-pos-primary-strong-hover"
+          className="pos-fs-base flex h-12 w-full items-center justify-center gap-2 rounded-pos bg-pos-primary-strong font-bold text-white transition"
         >
           <Plus size={18} />
           {t("pos.action.newOrder")}
@@ -135,7 +135,7 @@ export function OrderPrimaryAction({
           type="button"
           disabled={primaryAction.disabled}
           onClick={primaryAction.run}
-          className="pos-fs-base flex h-12 w-full items-center justify-center gap-2 rounded-pos bg-pos-action font-bold text-pos-on-action transition hover:bg-pos-action-hover disabled:cursor-not-allowed disabled:opacity-50"
+          className="pos-fs-base flex h-12 w-full items-center justify-center gap-2 rounded-pos bg-pos-action font-bold text-pos-on-action transition disabled:cursor-not-allowed disabled:opacity-50"
         >
           <CircleCheckBig size={19} />
           {t("pos.action.closeOrder")}
@@ -159,7 +159,7 @@ export function OrderPrimaryAction({
         type="button"
         disabled={primaryAction.disabled}
         onClick={primaryAction.run}
-        className="pos-fs-base flex h-12 w-full items-center justify-center gap-2 rounded-pos bg-pos-action font-bold text-pos-on-action transition hover:bg-pos-action-hover disabled:cursor-not-allowed disabled:opacity-50"
+        className="pos-fs-base flex h-12 w-full items-center justify-center gap-2 rounded-pos bg-pos-action font-bold text-pos-on-action transition disabled:cursor-not-allowed disabled:opacity-50"
       >
         <WalletCards size={19} />
         {t("pos.action.payment")} · <span className="pos-num">{formatMoney(total, catalogCurrencyCode, 2)}</span>
@@ -170,7 +170,7 @@ export function OrderPrimaryAction({
           type="button"
           disabled={primaryAction.disabled}
           onClick={confirmCurrentOrder}
-          className="flex h-9 w-full items-center justify-center gap-1.5 rounded-lg text-xs font-bold text-muted transition hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex h-9 w-full items-center justify-center gap-1.5 rounded-lg text-xs font-bold text-muted transition disabled:cursor-not-allowed disabled:opacity-40"
         >
           <Check size={13} />
           {t("pos.action.confirmPayLater")}

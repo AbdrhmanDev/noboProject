@@ -49,7 +49,7 @@ export function PosTerminalSelector() {
             <Monitor size={20} />
           </div>
           <div>
-            <h1 className="brand-text text-xl font-black">Select POS Terminal</h1>
+            <h1 className="text-xl font-black text-white">Select POS Terminal</h1>
             <p className="text-xs text-slate-400">
               {hasActiveTerminal
                 ? "Choose an active terminal for this branch."
@@ -61,14 +61,14 @@ export function PosTerminalSelector() {
           type="button"
           onClick={() => refetch()}
           disabled={isFetching}
-          className="flex h-10 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 text-xs font-bold text-slate-200 transition hover:border-blue-400/45 hover:bg-blue-500/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex h-10 items-center gap-2 rounded-xl bg-white/[0.035] px-3 text-xs font-bold text-slate-200 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <RefreshCw size={15} className={isFetching ? "animate-spin" : ""} />
           Refresh
         </button>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2">
+      <div className="grid gap-3">
         {terminals.map((terminal) => {
           const enterable = isTerminalEnterable(terminal.status);
           const hasOpenShift = Boolean(terminal.openShift);
@@ -79,7 +79,7 @@ export function PosTerminalSelector() {
               type="button"
               disabled={!enterable}
               onClick={() => selectPosTerminal(terminal.posTerminalId)}
-              className="group rounded-2xl border border-white/10 bg-[#0d1728]/75 p-4 text-start transition hover:border-blue-400/45 hover:bg-blue-500/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400 disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:border-white/10 disabled:hover:bg-[#0d1728]/75"
+              className="group rounded-2xl bg-[#0d1728]/75 p-4 text-start transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400 disabled:cursor-not-allowed disabled:opacity-55"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -100,7 +100,7 @@ export function PosTerminalSelector() {
                 </span>
               </div>
 
-              <div className="mt-4 rounded-xl border border-white/8 bg-white/[0.025] p-3">
+              <div className="mt-4 rounded-xl bg-white/[0.025] p-3">
                 <div className="flex items-center gap-2 text-xs font-bold text-slate-200">
                   <CheckCircle2
                     size={15}

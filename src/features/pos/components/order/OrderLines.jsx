@@ -182,7 +182,7 @@ export function OrderLines({
             className={`relative cursor-pointer rounded-pos border px-2 py-1 transition ${
               selected
                 ? "border-pos-warning-text/70 bg-pos-warning-tint before:absolute before:inset-y-1.5 before:start-0 before:w-[3px] before:rounded-full before:bg-pos-warning"
-                : "border-pos-border bg-pos-card hover:border-pos-primary"
+                : "border-pos-border bg-pos-card"
             }`}
           >
             <div className="flex items-center gap-1.5">
@@ -200,7 +200,7 @@ export function OrderLines({
                 }}
                 disabled={!canEditDraft}
                 aria-label={t("pos.lines.remove")}
-                className="grid h-7 w-7 shrink-0 place-items-center rounded-pos text-pos-danger-text transition hover:bg-pos-danger/10 disabled:cursor-not-allowed disabled:opacity-50"
+                className="grid h-7 w-7 shrink-0 place-items-center rounded-pos text-pos-danger-text transition disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Trash2 size={13} />
               </button>
@@ -228,7 +228,7 @@ export function OrderLines({
                       className={`pos-num grid h-8 min-w-8 place-items-center rounded-full border px-1.5 text-xs font-bold transition active:scale-90 disabled:cursor-not-allowed disabled:opacity-50 ${
                         isCurrent
                           ? "border-pos-primary-strong bg-pos-primary-strong text-white"
-                          : "border-pos-border bg-pos-card text-pos-muted hover:border-pos-primary hover:text-pos-primary-text"
+                          : "border-pos-border bg-pos-card text-pos-muted"
                       }`}
                     >
                       {variantSizeLabel(variant.variantName)}
@@ -244,7 +244,7 @@ export function OrderLines({
                     className={`pos-fs-label ms-1 flex h-8 items-center gap-1 rounded-full border border-dashed px-2.5 font-bold transition disabled:cursor-not-allowed disabled:opacity-50 ${
                       addSizeOpen
                         ? "border-pos-primary bg-pos-tint text-pos-primary-text"
-                        : "border-pos-border text-pos-text hover:border-pos-primary hover:text-pos-primary-text"
+                        : "border-pos-border text-pos-text"
                     }`}
                   >
                     <Plus size={13} />
@@ -272,7 +272,7 @@ export function OrderLines({
                       onAddLineInSize(variant);
                       setAddSizeOpenIndex(null);
                     }}
-                    className="pos-num flex h-8 min-w-8 items-center justify-center gap-0.5 rounded-full bg-pos-primary-strong px-2 text-xs font-bold text-white transition hover:bg-pos-primary-strong-hover active:scale-90 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="pos-num flex h-8 min-w-8 items-center justify-center gap-0.5 rounded-full bg-pos-primary-strong px-2 text-xs font-bold text-white transition active:scale-90 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Plus size={11} />
                     {variantSizeLabel(variant.variantName)}
@@ -295,7 +295,7 @@ export function OrderLines({
                   }}
                   disabled={!canEditDraft || !onEditQuantity}
                   aria-label={t("pos.lines.editQty")}
-                  className={`pos-num flex h-11 shrink-0 items-center gap-1 rounded-pos border border-pos-border bg-pos-card px-3 font-bold text-pos-text transition-opacity ${pending ? "opacity-60" : ""} ${onEditQuantity ? "hover:border-pos-primary hover:text-pos-primary-text" : ""} disabled:cursor-not-allowed disabled:opacity-50`}
+                  className={`pos-num flex h-11 shrink-0 items-center gap-1 rounded-pos border border-pos-border bg-pos-card px-3 font-bold text-pos-text transition-opacity ${pending ? "opacity-60" : ""} ${onEditQuantity ? "" : ""} disabled:cursor-not-allowed disabled:opacity-50`}
                 >
                   {formatQuantity(item.quantity)} {item.salesUnitOfMeasure?.symbol ?? ""}
                 </button>
@@ -308,7 +308,7 @@ export function OrderLines({
                     type="button"
                     onClick={() => changeQty(item.salesOrderLineId, -1)}
                     disabled={!canEditDraft}
-                    className="grid h-11 w-11 place-items-center text-pos-muted hover:bg-pos-tint hover:text-pos-text disabled:cursor-not-allowed disabled:opacity-50"
+                    className="grid h-11 w-11 place-items-center text-pos-muted disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Minus size={15} />
                   </button>
@@ -317,7 +317,7 @@ export function OrderLines({
                     onClick={() => onEditQuantity?.(item)}
                     disabled={!canEditDraft || !onEditQuantity}
                     aria-label={t("pos.lines.editQty")}
-                    className={`pos-fs-line min-w-9 px-1 text-center font-bold text-pos-text transition-opacity ${pending ? "opacity-60" : ""} ${onEditQuantity ? "hover:text-pos-primary-text" : ""}`}
+                    className={`pos-fs-line min-w-9 px-1 text-center font-bold text-pos-text transition-opacity ${pending ? "opacity-60" : ""} ${onEditQuantity ? "" : ""}`}
                   >
                     {Number(item.quantity)}
                   </button>
@@ -325,7 +325,7 @@ export function OrderLines({
                     type="button"
                     onClick={() => changeQty(item.salesOrderLineId, 1)}
                     disabled={!canEditDraft}
-                    className="grid h-11 w-11 place-items-center text-pos-primary-text hover:bg-pos-tint disabled:cursor-not-allowed disabled:opacity-50"
+                    className="grid h-11 w-11 place-items-center text-pos-primary-text disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Plus size={15} />
                   </button>
@@ -344,7 +344,7 @@ export function OrderLines({
                   className={`pos-fs-label flex h-11 shrink-0 items-center gap-1 rounded-pos border px-2.5 font-bold transition disabled:cursor-not-allowed disabled:opacity-50 ${
                     extrasOpen
                       ? "border-pos-primary bg-pos-tint text-pos-primary-text"
-                      : "border-pos-border bg-pos-card text-pos-text hover:border-pos-primary"
+                      : "border-pos-border bg-pos-card text-pos-text"
                   }`}
                 >
                   <SlidersHorizontal size={14} />
@@ -394,7 +394,7 @@ export function OrderLines({
                                   className={`pos-fs-label flex min-h-9 items-center gap-1 rounded-full border font-bold transition ${
                                     isSelected
                                       ? "border-pos-primary-strong bg-pos-primary-strong text-white"
-                                      : "border-pos-border bg-pos-card text-pos-text hover:border-pos-primary"
+                                      : "border-pos-border bg-pos-card text-pos-text"
                                   }`}
                                 >
                                   <button
@@ -425,7 +425,7 @@ export function OrderLines({
                                           onChangeLineModifierSelections?.(item, next);
                                         }}
                                         aria-label={t("pos.catalog.decrement")}
-                                        className="grid h-6 w-6 place-items-center rounded-full hover:bg-black/10 active:scale-90 disabled:cursor-not-allowed disabled:opacity-50"
+                                        className="grid h-6 w-6 place-items-center rounded-full active:scale-90 disabled:cursor-not-allowed disabled:opacity-50"
                                       >
                                         <Minus size={11} />
                                       </button>
@@ -440,7 +440,7 @@ export function OrderLines({
                                           onChangeLineModifierSelections?.(item, next);
                                         }}
                                         aria-label={t("pos.catalog.increment")}
-                                        className="grid h-6 w-6 place-items-center rounded-full hover:bg-black/10 active:scale-90 disabled:cursor-not-allowed disabled:opacity-50"
+                                        className="grid h-6 w-6 place-items-center rounded-full active:scale-90 disabled:cursor-not-allowed disabled:opacity-50"
                                       >
                                         <Plus size={11} />
                                       </button>
@@ -463,7 +463,7 @@ export function OrderLines({
                                 className={`pos-fs-label flex min-h-9 items-center gap-1 rounded-full border px-3 font-bold transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 ${
                                   isSelected
                                     ? "border-pos-primary-strong bg-pos-primary-strong text-white"
-                                    : "border-pos-border bg-pos-card text-pos-text hover:border-pos-primary"
+                                    : "border-pos-border bg-pos-card text-pos-text"
                                 }`}
                               >
                                 {option.name}

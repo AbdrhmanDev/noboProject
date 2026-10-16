@@ -60,14 +60,14 @@ export function NumericKeypadModal({
         <button
           type="button"
           onClick={clear}
-          className="pos-control pos-fs-name border border-pos-border bg-pos-card text-pos-text transition hover:bg-pos-tint"
+          className="pos-control pos-fs-name border border-pos-border bg-pos-card text-pos-text transition"
         >
           مسح
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="pos-control pos-fs-name flex items-center justify-center gap-1.5 border border-pos-border bg-pos-card text-pos-text transition hover:bg-pos-tint"
+          className="pos-control pos-fs-name flex items-center justify-center gap-1.5 border border-pos-border bg-pos-card text-pos-text transition"
         >
           <X size={15} />
           {cancelLabel}
@@ -76,7 +76,7 @@ export function NumericKeypadModal({
           type="button"
           onClick={confirm}
           disabled={isEmpty}
-          className="pos-control pos-fs-name flex items-center justify-center gap-1.5 bg-pos-action text-pos-on-action transition hover:bg-pos-action-hover disabled:cursor-not-allowed disabled:opacity-40"
+          className="pos-control pos-fs-name flex items-center justify-center gap-1.5 bg-pos-action text-pos-on-action transition disabled:cursor-not-allowed disabled:opacity-40"
         >
           <Check size={15} />
           {confirmLabel}

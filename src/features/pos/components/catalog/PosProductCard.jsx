@@ -159,7 +159,7 @@ export function PosProductCard({
                 tabIndex={isFlipped ? 0 : -1}
                 aria-label={t("pos.catalog.flipBack")}
                 title={t("pos.catalog.flipBack")}
-                className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-pos-border bg-pos-card text-pos-muted transition hover:text-pos-text"
+                className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-pos-border bg-pos-card text-pos-muted transition"
               >
                 <RotateCcw size={14} />
               </button>
@@ -211,7 +211,7 @@ export function PosProductCard({
                     onClick={increment}
                     disabled={disabled}
                     tabIndex={isFlipped ? 0 : -1}
-                    className="flex h-11 items-center justify-center gap-1.5 rounded-full bg-pos-primary-strong text-sm font-bold text-white shadow-sm transition hover:bg-pos-primary-strong-hover active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex h-11 items-center justify-center gap-1.5 rounded-full bg-pos-primary-strong text-sm font-bold text-white shadow-sm transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Plus size={15} />
                     {t("pos.catalog.weigh")}
@@ -354,7 +354,7 @@ function QtyStepper({ quantity, disabled, focusable, canDecrement, onDecrement, 
         disabled={disabled || !canDecrement}
         tabIndex={focusable ? 0 : -1}
         aria-label={t("pos.catalog.decrement")}
-        className="grid h-full aspect-square shrink-0 place-items-center rounded-full text-pos-muted transition hover:bg-pos-bg hover:text-pos-text active:scale-90 disabled:cursor-not-allowed disabled:opacity-40"
+        className="grid h-full aspect-square shrink-0 place-items-center rounded-full text-pos-muted transition active:scale-90 disabled:cursor-not-allowed disabled:opacity-40"
       >
         <Minus size={17} />
       </button>
@@ -365,7 +365,7 @@ function QtyStepper({ quantity, disabled, focusable, canDecrement, onDecrement, 
         disabled={disabled}
         tabIndex={focusable ? 0 : -1}
         aria-label={t("pos.catalog.increment")}
-        className="grid h-full aspect-square shrink-0 place-items-center rounded-full bg-pos-primary-strong text-white shadow-sm transition hover:bg-pos-primary-strong-hover active:scale-90 disabled:cursor-not-allowed disabled:opacity-50"
+        className="grid h-full aspect-square shrink-0 place-items-center rounded-full bg-pos-primary-strong text-white shadow-sm transition active:scale-90 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <Plus size={17} />
       </button>
@@ -386,7 +386,7 @@ function VariantQuantityRow({ variant, quantity, disabled, focusable, onIncremen
     "grid h-6 w-6 shrink-0 place-items-center rounded-full transition active:scale-90 disabled:cursor-not-allowed disabled:opacity-40";
 
   return (
-    <div className="flex min-h-8 items-center gap-1.5 rounded-pos border border-pos-border bg-pos-card px-1.5 py-1 transition hover:bg-pos-primary-strong/10">
+    <div className="flex min-h-8 items-center gap-1.5 rounded-pos border border-pos-border bg-pos-card px-1.5 py-1 transition">
       <span className="line-clamp-2 min-w-0 flex-1 text-[11px] font-bold leading-tight text-pos-text">{variant.variantName}</span>
       {isByWeight ? (
         <button
@@ -395,7 +395,7 @@ function VariantQuantityRow({ variant, quantity, disabled, focusable, onIncremen
           disabled={disabled}
           tabIndex={focusable ? 0 : -1}
           aria-label={`${t("pos.catalog.weigh")} · ${variant.variantName}`}
-          className="flex h-6 shrink-0 items-center gap-1 rounded-full bg-pos-primary-strong px-2 text-[10px] font-bold text-white shadow-sm transition hover:bg-pos-primary-strong-hover active:scale-90 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex h-6 shrink-0 items-center gap-1 rounded-full bg-pos-primary-strong px-2 text-[10px] font-bold text-white shadow-sm transition active:scale-90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Plus size={11} />
           {t("pos.catalog.weigh")}
@@ -409,7 +409,7 @@ function VariantQuantityRow({ variant, quantity, disabled, focusable, onIncremen
             tabIndex={focusable && hasQuantity ? 0 : -1}
             aria-hidden={!hasQuantity}
             aria-label={`${t("pos.catalog.decrement")} · ${variant.variantName}`}
-            className={`${stepButton} border border-pos-border text-pos-muted hover:bg-pos-bg hover:text-pos-text ${hasQuantity ? "" : "invisible"}`}
+            className={`${stepButton} border border-pos-border text-pos-muted ${hasQuantity ? "" : "invisible"}`}
           >
             <Minus size={12} />
           </button>
@@ -422,7 +422,7 @@ function VariantQuantityRow({ variant, quantity, disabled, focusable, onIncremen
             disabled={disabled}
             tabIndex={focusable ? 0 : -1}
             aria-label={`${t("pos.catalog.increment")} · ${variant.variantName}`}
-            className={`${stepButton} bg-pos-primary-strong text-white shadow-sm hover:bg-pos-primary-strong-hover`}
+            className={`${stepButton} bg-pos-primary-strong text-white shadow-sm`}
           >
             <Plus size={12} />
           </button>

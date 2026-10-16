@@ -75,7 +75,7 @@ export function CompleteStep({
             <button
               type="button"
               onClick={onOpenCloseOrder}
-              className="flex h-14 w-full items-center justify-center gap-2 rounded-pos-lg border border-pos-border bg-pos-bg text-sm font-bold text-pos-text hover:border-pos-action hover:bg-pos-action-tint"
+              className="flex h-14 w-full items-center justify-center gap-2 rounded-pos-lg border border-pos-border bg-pos-bg text-sm font-bold text-pos-text"
             >
               <CircleCheckBig size={18} />
               {t("pos.action.closeOrder")}
@@ -84,7 +84,7 @@ export function CompleteStep({
           <button
             type="button"
             onClick={startNewOrder}
-            className="flex h-14 w-full items-center justify-center gap-2 rounded-pos-lg bg-pos-primary-strong text-base font-black text-white shadow-lg transition hover:bg-pos-primary-strong-hover"
+            className="flex h-14 w-full items-center justify-center gap-2 rounded-pos-lg bg-pos-primary-strong text-base font-black text-white shadow-lg transition"
           >
             <Plus size={20} />
             {t("pos.action.newOrder")}

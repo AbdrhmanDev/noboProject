@@ -62,19 +62,19 @@ export function ScaleSimulatorPanel({ simulator, targetUnit, onApply }) {
       </div>
 
       <div className="flex flex-wrap gap-1.5">
-        <button type="button" onClick={simulator.simulateStable} className="pos-fs-label h-8 rounded-full border border-pos-border bg-pos-card px-2.5 text-pos-text hover:border-pos-primary">
+        <button type="button" onClick={simulator.simulateStable} className="pos-fs-label h-8 rounded-full border border-pos-border bg-pos-card px-2.5 text-pos-text">
           مستقر
         </button>
-        <button type="button" onClick={simulator.simulateUnstable} className="pos-fs-label h-8 rounded-full border border-pos-border bg-pos-card px-2.5 text-pos-text hover:border-pos-primary">
+        <button type="button" onClick={simulator.simulateUnstable} className="pos-fs-label h-8 rounded-full border border-pos-border bg-pos-card px-2.5 text-pos-text">
           غير مستقر
         </button>
-        <button type="button" onClick={simulator.simulateStale} className="pos-fs-label h-8 rounded-full border border-pos-border bg-pos-card px-2.5 text-pos-text hover:border-pos-primary">
+        <button type="button" onClick={simulator.simulateStale} className="pos-fs-label h-8 rounded-full border border-pos-border bg-pos-card px-2.5 text-pos-text">
           قديم
         </button>
-        <button type="button" onClick={simulator.simulateMalformed} className="pos-fs-label h-8 rounded-full border border-pos-border bg-pos-card px-2.5 text-pos-text hover:border-pos-primary">
+        <button type="button" onClick={simulator.simulateMalformed} className="pos-fs-label h-8 rounded-full border border-pos-border bg-pos-card px-2.5 text-pos-text">
           غير صالح
         </button>
-        <button type="button" onClick={simulator.simulateDisconnected} className="pos-fs-label h-8 rounded-full border border-pos-border bg-pos-card px-2.5 text-pos-text hover:border-pos-primary">
+        <button type="button" onClick={simulator.simulateDisconnected} className="pos-fs-label h-8 rounded-full border border-pos-border bg-pos-card px-2.5 text-pos-text">
           غير متصل
         </button>
       </div>

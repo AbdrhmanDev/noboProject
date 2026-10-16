@@ -28,7 +28,7 @@ const TILE_TONE = {
 
 export function DashboardCard({ title, action, children, className = "" }) {
   return (
-    <section className={`min-w-0 rounded-2xl border border-line bg-surface p-4 shadow-[var(--shadow-surface)] ${className}`}>
+    <section className={`min-w-0 rounded-2xl bg-blue p-4 shadow-[var(--shadow-surface)] ${className}`}>
       {(title || action) && (
         <div className="mb-3 flex items-center justify-between gap-2">
           <h2 className="dash-display truncate text-xl font-extrabold text-ink">{title}</h2>
@@ -50,7 +50,7 @@ export function KpiTile({ icon: Icon, tone = "info", label, value, current, prev
   const DeltaIcon = up ? ArrowUp : ArrowDown;
 
   return (
-    <div className="flex min-w-0 items-start gap-3 rounded-2xl border border-line bg-surface p-4 shadow-[var(--shadow-surface)]">
+    <div className="flex min-w-0 items-start gap-3 rounded-2xl bg-blue p-4 shadow-[var(--shadow-surface)]">
       <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-xl ${TILE_TONE[tone]}`}>
         <Icon size={22} />
       </span>
@@ -127,7 +127,7 @@ export function TrendCompareChart({ trend, previousTrend, currencyCode }) {
             <Tooltip
               content={({ active, payload, label }) =>
                 active && payload?.length ? (
-                  <div className="rounded-lg border border-line bg-surface px-3 py-2 text-[11px] shadow-xl">
+                  <div className="rounded-lg bg-surface px-3 py-2 text-[11px] shadow-xl">
                     <div className="font-bold text-ink">{tick(label)}</div>
                     <div className="mt-1" style={{ color: CHART_COLORS[0] }}>
                       {t("dash.currentPeriod")}: {money(payload[0].payload.current)}
@@ -228,7 +228,7 @@ export function RecentOrders({ query, onOpenOrder }) {
   if (!orders.length) return <p className="py-8 text-center text-sm text-subtle">{t("salesOrders.empty.title")}</p>;
 
   return (
-    <ul className="divide-y divide-line">
+    <ul className="space-y-0.5">
       {orders.map((order) => (
         <li key={order.salesOrderId}>
           <button
@@ -280,7 +280,7 @@ export function AlertsPanel({ alerts }) {
             <button
               type="button"
               onClick={alert.onOpen}
-              className="flex w-full items-center gap-3 rounded-xl border border-line px-3 py-2.5 text-start transition hover:bg-hover"
+              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start transition hover:bg-hover"
             >
               <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${tone.chip}`}>
                 <tone.Icon size={16} />

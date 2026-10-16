@@ -305,7 +305,7 @@ export function ShiftDialogs({
               type="button"
               onClick={closeCurrentShift}
               disabled={!canCloseShift}
-              className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-rose-600 text-xs font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-rose-600 text-xs font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-50"
             >
               <LockKeyhole size={16} />
               {closeShiftMutation.isPending ? "Closing shift..." : "Confirm close shift"}

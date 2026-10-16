@@ -135,7 +135,7 @@ export default function Dashboard({ onLogout }) {
             <div className="min-w-0">
               <h1 className="dash-display text-3xl font-black leading-tight text-ink">{t("dash.welcome")}</h1>
             </div>
-            <div className="flex items-center gap-1 rounded-xl border border-line bg-surface p-1 shadow-[var(--shadow-surface)]" role="group" aria-label={t("dash.period")}>
+            <div className="flex items-center gap-1 rounded-xl bg-surface p-1 shadow-[var(--shadow-surface)]" role="group" aria-label={t("dash.period")}>
               <CalendarRange size={15} className="mx-1.5 text-subtle" />
               {PERIODS.map((value) => (
                 <button

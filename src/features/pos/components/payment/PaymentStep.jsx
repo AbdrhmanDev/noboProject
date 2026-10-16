@@ -290,14 +290,14 @@ export function PaymentStep({
                     <button
                       type="button"
                       onClick={() => setShowAddPaymentMethod(true)}
-                      className="pos-control mt-3 inline-flex items-center justify-center gap-2 bg-pos-primary-strong px-4 text-sm font-bold text-white hover:bg-pos-primary-strong-hover"
+                      className="pos-control mt-3 inline-flex items-center justify-center gap-2 bg-pos-primary-strong px-4 text-sm font-bold text-white"
                     >
                       {t("pos.pay.addMethod")}
                     </button>
                     <button
                       type="button"
                       onClick={() => navigate(ROUTES.PAYMENT_METHODS_ADMIN)}
-                      className="mt-3 block w-full text-[11px] font-semibold text-pos-primary-text hover:underline"
+                      className="mt-3 block w-full text-[11px] font-semibold text-pos-primary-text"
                     >
                       {t("pos.pay.manageMethods")}
                     </button>
@@ -332,7 +332,7 @@ export function PaymentStep({
                           className={`min-h-14 rounded-pos border px-3 py-2 text-center transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-pos-primary ${
                             active
                               ? "border-pos-primary bg-pos-tint shadow-sm"
-                              : "border-pos-border bg-pos-bg hover:border-pos-primary"
+                              : "border-pos-border bg-pos-bg"
                           }`}
                         >
                           <span className="pos-chip mx-auto grid h-9 w-9 place-items-center rounded-full">
@@ -361,7 +361,7 @@ export function PaymentStep({
                         <button
                           type="button"
                           onClick={() => setPaymentAmountInput(String(remainingAmount))}
-                          className="pos-control flex items-center justify-center gap-1.5 border border-pos-primary/50 bg-pos-tint text-xs font-bold text-pos-primary-text hover:bg-pos-primary/15"
+                          className="pos-control flex items-center justify-center gap-1.5 border border-pos-primary/50 bg-pos-tint text-xs font-bold text-pos-primary-text"
                         >
                           {t("pos.pay.exact")}
                           <ShortcutHint action="pos.exactAmount" />
@@ -371,7 +371,7 @@ export function PaymentStep({
                             key={amount}
                             type="button"
                             onClick={() => setPaymentAmountInput(String(amount))}
-                            className="pos-control flex items-center justify-center border border-pos-border bg-pos-bg text-xs font-bold text-pos-text hover:border-pos-primary"
+                            className="pos-control flex items-center justify-center border border-pos-border bg-pos-bg text-xs font-bold text-pos-text"
                           >
                             <span className="pos-num">{formatMoney(amount, settlementCurrencyCode, settlementMinorUnitDigits)}</span>
                           </button>
@@ -415,7 +415,7 @@ export function PaymentStep({
                   type="button"
                   disabled={!canReceivePayment}
                   onClick={receiveCurrentPayment}
-                  className="flex h-16 w-full shrink-0 items-center justify-center gap-2 rounded-pos-lg bg-pos-action text-lg font-black text-pos-on-action shadow-lg transition hover:bg-pos-action-hover disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex h-16 w-full shrink-0 items-center justify-center gap-2 rounded-pos-lg bg-pos-action text-lg font-black text-pos-on-action shadow-lg transition disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <Wallet size={22} />
                   {receivePaymentMutation.isPending
@@ -495,7 +495,7 @@ function SplitCheckPanel({ total, netPaidAmount, remainingAmount, currencyCode, 
             aria-pressed={!parts}
             onClick={() => setParts(null)}
             className={`h-8 rounded-pos border px-2.5 text-[11px] font-bold transition ${
-              !parts ? "border-pos-primary bg-pos-tint text-pos-primary-text" : "border-pos-border bg-pos-card text-pos-text hover:border-pos-primary"
+              !parts ? "border-pos-primary bg-pos-tint text-pos-primary-text" : "border-pos-border bg-pos-card text-pos-text"
             }`}
           >
             {t("pos.split.none")}
@@ -511,7 +511,7 @@ function SplitCheckPanel({ total, netPaidAmount, remainingAmount, currencyCode, 
                 payCheque(buildCheques(option, totalMinor).find((cheque) => cheque.cumulativeMinor > paidMinor));
               }}
               className={`pos-num h-8 min-w-8 rounded-pos border px-2 text-[11px] font-bold transition ${
-                parts === option ? "border-pos-primary bg-pos-tint text-pos-primary-text" : "border-pos-border bg-pos-card text-pos-text hover:border-pos-primary"
+                parts === option ? "border-pos-primary bg-pos-tint text-pos-primary-text" : "border-pos-border bg-pos-card text-pos-text"
               }`}
             >
               ÷{option}
@@ -552,7 +552,7 @@ function SplitCheckPanel({ total, netPaidAmount, remainingAmount, currencyCode, 
                     type="button"
                     disabled={!isCurrent}
                     onClick={() => payCheque(cheque)}
-                    className="h-8 shrink-0 rounded-pos bg-pos-primary-strong px-3 text-[11px] font-bold text-white transition hover:bg-pos-primary-strong-hover disabled:cursor-not-allowed disabled:bg-pos-border disabled:text-pos-muted"
+                    className="h-8 shrink-0 rounded-pos bg-pos-primary-strong px-3 text-[11px] font-bold text-white transition disabled:cursor-not-allowed disabled:bg-pos-border disabled:text-pos-muted"
                   >
                     {t("pos.split.payThis")}
                   </button>

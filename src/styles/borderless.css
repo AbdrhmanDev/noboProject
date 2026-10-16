@@ -1,0 +1,89 @@
+/*
+ * Flat pages: kitchen, restaurant (floor plan, reservations, settings) and the setup pages
+ * (catalog, pricing, tax, payment methods). The POS keeps its own look. AppLayout adds
+ * .nobo-borderless to <main> on those routes (BORDERLESS_ROUTE_PREFIXES there).
+ *
+ * Content sits straight on the page background: no neutral borders and no neutral box backgrounds
+ * or shadows (sections, panels, cards). Kept on purpose:
+ *  - colours that carry meaning (primary buttons, status pills, selected / error / focus borders);
+ *  - anything that floats over the page (dialogs, menus, popovers -- fixed / absolute / role=dialog
+ *    / role=menu, and everything inside them), which would be unreadable without its own surface;
+ *  - a faint fill on form fields, so there is still somewhere visible to type.
+ */
+
+/* Neutral border tokens -> transparent. !important so nested .odoo-root / .pos-root (which define
+   these tokens themselves, per theme) can't bring them back. */
+.nobo-borderless,
+.nobo-borderless .odoo-root,
+.nobo-borderless .pos-root {
+  --nobo-line: transparent !important;
+  --nobo-line-strong: transparent !important;
+  --pos-border: transparent !important;
+}
+
+/* Hard-coded neutral borders and the global glass panel's border. */
+.nobo-borderless [class*="border-white"],
+.nobo-borderless .panel,
+.nobo-borderless .panel:hover {
+  border-color: transparent !important;
+}
+
+/* Clearer text with the boxes gone: secondary text (labels, descriptions, column headings) moves
+   closer to the main text colour, derived from each theme's own text/canvas tokens. */
+.nobo-borderless,
+.nobo-borderless .odoo-root {
+  --nobo-muted: color-mix(in srgb, var(--nobo-text) 80%, var(--nobo-canvas)) !important;
+  --nobo-subtle: color-mix(in srgb, var(--nobo-text) 64%, var(--nobo-canvas)) !important;
+}
+.nobo-borderless thead th {
+  color: var(--nobo-text);
+  font-weight: 700;
+}
+
+/* Neutral box backgrounds (theme surfaces + the hard-coded dark/glass fills used on the restaurant
+   and kitchen pages) -> none, with their shadows and blur. Pills, avatars and round step buttons
+   (rounded-full) and form fields keep theirs; floating layers and their contents are excluded. */
+.nobo-borderless
+  :is(
+    [class*="bg-surface"],
+    [class*="bg-raised"],
+    [class*="bg-canvas"],
+    [class*="bg-inset"],
+    [class*="bg-pos-bg"],
+    [class*="bg-pos-card"],
+    [class*="bg-white/"],
+    [class*="bg-black/"],
+    [class*="bg-[#"],
+    .panel
+  ):not(input, select, textarea, [class*="rounded-full"]):not(
+    :is([role="dialog"], [role="menu"], [role="listbox"], [class*="fixed"], [class*="absolute"])
+  ):not(:is([role="dialog"], [role="menu"], [role="listbox"], [class*="fixed"]) *) {
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Form fields: a faint fill marks where to type now that the outline is gone (fields that are
+   deliberately transparent inside a styled wrapper keep theirs). Focus keeps a visible ring. */
+.nobo-borderless
+  :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]), select, textarea):not(
+    [class*="bg-transparent"]
+  ) {
+  background-color: color-mix(in srgb, currentColor 11%, transparent) !important;
+}
+.nobo-borderless :is(input, select, textarea):focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--nobo-accent) 55%, transparent);
+  outline-offset: 0;
+}
+
+/* Odoo's black filled button is only told apart from a dark page by a white hairline -- a border.
+   On flat pages drop the hairline and, in dark mode, give the button a lighter fill instead. */
+.nobo-borderless,
+.nobo-borderless .odoo-root {
+  --odoo-button-edge: transparent !important;
+}
+:root:not([data-theme="light"]) .nobo-borderless,
+:root:not([data-theme="light"]) .nobo-borderless .odoo-root {
+  --odoo-button: #3a3f4f !important;
+  --odoo-button-hover: #4a5063 !important;
+}

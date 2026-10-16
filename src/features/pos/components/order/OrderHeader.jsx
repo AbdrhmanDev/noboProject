@@ -102,7 +102,7 @@ export function OrderHeader({
           type="button"
           onClick={onOpenCustomer}
           disabled={!canEditDraft || !canViewCustomers}
-          className="pos-control pos-fs-secondary shrink-0 border border-pos-border bg-pos-card px-3 font-medium !text-pos-primary-text transition hover:border-pos-primary hover:bg-pos-tint disabled:cursor-not-allowed disabled:opacity-50"
+          className="pos-control pos-fs-secondary shrink-0 border border-pos-border bg-pos-card px-3 font-medium !text-pos-primary-text transition disabled:cursor-not-allowed disabled:opacity-50"
         >
           {customer ? customer.name : t("pos.cart.selectCustomer")}
         </button>
@@ -130,7 +130,7 @@ export function OrderHeader({
               className={`pos-fs-name flex min-h-11 items-center justify-center gap-1 rounded-pos px-2 transition disabled:cursor-not-allowed disabled:opacity-50 ${
                 orderType === type
                   ? "bg-pos-primary-strong text-white"
-                  : "text-pos-text hover:bg-pos-tint"
+                  : "text-pos-text"
               }`}
             >
               {t(`pos.type.${type}`)}
@@ -155,7 +155,7 @@ export function OrderHeader({
                   <button
                     type="button"
                     onClick={closePicker}
-                    className="pos-control pos-fs-label flex shrink-0 items-center gap-1 border border-pos-border bg-pos-card px-3 font-bold text-pos-text transition hover:bg-pos-tint"
+                    className="pos-control pos-fs-label flex shrink-0 items-center gap-1 border border-pos-border bg-pos-card px-3 font-bold text-pos-text transition"
                   >
                     <X size={14} />
                     {t("pos.table.transferCancel")}
@@ -167,7 +167,7 @@ export function OrderHeader({
                       onClick={() => setPickerMode("transfer")}
                       disabled={!canTransferTable}
                       title={canEditDraft ? undefined : t("pos.table.transferLocked")}
-                      className="pos-control pos-fs-label flex items-center gap-1.5 border border-pos-primary bg-pos-card px-3 font-bold text-pos-primary-text transition hover:bg-pos-tint disabled:cursor-not-allowed disabled:border-pos-border disabled:text-pos-muted disabled:opacity-60"
+                      className="pos-control pos-fs-label flex items-center gap-1.5 border border-pos-primary bg-pos-card px-3 font-bold text-pos-primary-text transition disabled:cursor-not-allowed disabled:border-pos-border disabled:text-pos-muted disabled:opacity-60"
                     >
                       <ArrowLeftRight size={14} />
                       {t("pos.table.transfer")}
@@ -177,7 +177,7 @@ export function OrderHeader({
                       onClick={() => setPickerMode("merge")}
                       disabled={!canMergeTables}
                       title={mergeFeatureEnabled ? undefined : t("pos.merge.notAvailable")}
-                      className="pos-control pos-fs-label flex items-center gap-1.5 border border-pos-primary bg-pos-card px-3 font-bold text-pos-primary-text transition hover:bg-pos-tint disabled:cursor-not-allowed disabled:border-pos-border disabled:text-pos-muted disabled:opacity-60"
+                      className="pos-control pos-fs-label flex items-center gap-1.5 border border-pos-primary bg-pos-card px-3 font-bold text-pos-primary-text transition disabled:cursor-not-allowed disabled:border-pos-border disabled:text-pos-muted disabled:opacity-60"
                     >
                       <Combine size={14} />
                       {t("pos.merge.button")}
@@ -215,7 +215,7 @@ export function OrderHeader({
                       await onMergeTable(mergeCandidate);
                       closePicker();
                     }}
-                    className="pos-control pos-fs-label flex flex-1 items-center justify-center gap-1.5 bg-pos-primary-strong px-3 font-bold text-white transition hover:bg-pos-primary-strong-hover disabled:cursor-not-allowed disabled:opacity-60"
+                    className="pos-control pos-fs-label flex flex-1 items-center justify-center gap-1.5 bg-pos-primary-strong px-3 font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {isMergePending ? <Loader2 size={14} className="animate-spin" /> : <Combine size={14} />}
                     {t("pos.merge.confirmButton")}
@@ -224,7 +224,7 @@ export function OrderHeader({
                     type="button"
                     disabled={isMergePending}
                     onClick={() => setMergeCandidate(null)}
-                    className="pos-control pos-fs-label border border-pos-border bg-pos-card px-3 font-bold text-pos-text transition hover:bg-pos-bg disabled:opacity-60"
+                    className="pos-control pos-fs-label border border-pos-border bg-pos-card px-3 font-bold text-pos-text transition disabled:opacity-60"
                   >
                     {t("pos.table.transferCancel")}
                   </button>
@@ -264,7 +264,7 @@ export function OrderHeader({
                   <button
                     type="button"
                     onClick={() => navigate(ROUTES.RESTAURANT_ADMIN)}
-                    className="block w-full text-[10px] font-semibold text-pos-primary-text hover:underline"
+                    className="block w-full text-[10px] font-semibold text-pos-primary-text"
                   >
                     {t("pos.table.manage")}
                   </button>
@@ -303,7 +303,7 @@ export function OrderHeader({
                               ? "border-success bg-success-soft text-pos-text"
                               : table.isOccupied
                                 ? "border-pos-danger/60 bg-pos-danger-tint text-pos-danger-text disabled:opacity-60"
-                                : "border-pos-action/60 bg-pos-action-tint text-pos-action-text hover:border-pos-action"
+                                : "border-pos-action/60 bg-pos-action-tint text-pos-action-text"
                         }`}
                       >
                         <span className="block truncate font-bold">{table.code}</span>

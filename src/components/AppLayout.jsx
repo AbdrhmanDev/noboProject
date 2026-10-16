@@ -71,11 +71,34 @@ const NAV_SECTIONS = buildSidebarSections(NAV_ITEMS.slice(1));
 
 const SIDEBAR_COLLAPSE_STORAGE_KEY = "nobo-sidebar-collapsed";
 
+// Pages drawn flat, without borders or box backgrounds (see styles/borderless.css): kitchen,
+// restaurant, purchases, suppliers, inventory (+ admin), sales and the catalog / pricing / tax /
+// payment-method setup pages.
+// The POS keeps its own look.
+const BORDERLESS_ROUTE_PREFIXES = [
+  ROUTES.KITCHEN,
+  "/restaurant/",
+  ROUTES.CATALOG_ADMIN,
+  ROUTES.PRICING_ADMIN,
+  ROUTES.TAX_ADMIN,
+  ROUTES.PAYMENT_METHODS_ADMIN,
+  ROUTES.PURCHASES,
+  ROUTES.SUPPLIERS,
+  ROUTES.INVENTORY,
+  ROUTES.SALES,
+];
+
+// Pages that keep their cards but lose every border, with their own dark-mode background (see
+// styles/noborder.css): the dashboard.
+const NO_BORDER_ROUTE_PREFIXES = [ROUTES.DASHBOARD];
+
 export default function AppLayout({ children, onLogout }) {
   const navigate = useNavigate();
   const location = useLocation();
   const activePath = (location?.hash && location.hash.replace("#", "")) || location?.pathname || ROUTES.DASHBOARD;
   const isPos = activePath === ROUTES.POS;
+  const isBorderless = BORDERLESS_ROUTE_PREFIXES.some((prefix) => activePath.startsWith(prefix));
+  const isNoBorder = NO_BORDER_ROUTE_PREFIXES.some((prefix) => activePath.startsWith(prefix));
   const [collapsed, setCollapsed] = useState(() => {
     try {
       const stored = localStorage.getItem(SIDEBAR_COLLAPSE_STORAGE_KEY);
@@ -375,7 +398,7 @@ export default function AppLayout({ children, onLogout }) {
       {/* main */}
       {/* Every back-office page takes the Odoo look (`odoo-root`: Odoo colour tokens, black buttons,
           see shared/components/odoo/odoo.css). The POS keeps its own touch-first design. */}
-      <main className={`min-w-0 flex-1 overflow-x-hidden ${isPos ? "p-1.5" : "odoo-root p-3 sm:p-4 md:p-6"}`}>
+      <main className={`min-w-0 flex-1 overflow-x-hidden ${isPos ? "p-1.5" : "odoo-root p-3 sm:p-4 md:p-6"} ${isBorderless ? "nobo-borderless" : ""} ${isPos ? "nobo-pos-flat" : ""} ${isNoBorder ? "nobo-noborder" : ""}`}>
         {/* Mobile top bar (below lg): the menu button that opens the drawer, plus the logo. It
             replaces the old horizontal scrolling row of nav buttons. */}
         <div className={`flex items-center gap-2 lg:hidden ${isPos ? "mb-1.5" : "mb-3"}`}>

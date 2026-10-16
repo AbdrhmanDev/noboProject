@@ -73,7 +73,7 @@ export function PosStatusBar({ cashierName, onCloseShift, onLogout }) {
               onClick={onCloseShift}
               aria-label={t("pos.statusBar.closeShift")}
               title={t("pos.statusBar.closeShift")}
-              className="flex h-7 shrink-0 items-center gap-1.5 rounded-pos border border-pos-danger/40 bg-pos-card px-2 font-bold text-pos-danger-text transition hover:bg-pos-danger/10 sm:px-2.5"
+              className="flex h-7 shrink-0 items-center gap-1.5 rounded-pos border border-pos-danger/40 bg-pos-card px-2 font-bold text-pos-danger-text transition sm:px-2.5"
             >
               <Power size={14} />
               <span className="hidden sm:inline">{t("pos.statusBar.closeShift")}</span>
@@ -84,7 +84,7 @@ export function PosStatusBar({ cashierName, onCloseShift, onLogout }) {
             onClick={() => setIsDark((prev) => !prev)}
             aria-label={isDark ? t("header.lightMode") : t("header.darkMode")}
             title={isDark ? t("header.lightMode") : t("header.darkMode")}
-            className="flex shrink-0 items-center transition hover:text-pos-text"
+            className="flex shrink-0 items-center transition"
           >
             {isDark ? <Moon size={15} /> : <Sun size={15} />}
           </button>
@@ -93,7 +93,7 @@ export function PosStatusBar({ cashierName, onCloseShift, onLogout }) {
             onClick={openHelp}
             aria-label={t("header.shortcuts")}
             title={t("header.shortcuts")}
-            className="flex shrink-0 items-center transition hover:text-pos-text"
+            className="flex shrink-0 items-center transition"
           >
             <Keyboard size={15} />
           </button>
@@ -103,7 +103,7 @@ export function PosStatusBar({ cashierName, onCloseShift, onLogout }) {
               onClick={onLogout}
               aria-label={t("header.logout")}
               title={t("header.logout")}
-              className="flex shrink-0 items-center transition hover:text-pos-danger-text"
+              className="flex shrink-0 items-center transition"
             >
               <LogOut size={15} />
             </button>

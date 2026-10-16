@@ -1,0 +1,49 @@
+/*
+ * No-border pages: currently just the dashboard (the home page). AppLayout adds .nobo-noborder to
+ * <main> on those routes (NO_BORDER_ROUTE_PREFIXES there). Unlike the flat pages (borderless.css),
+ * cards and panels keep their own backgrounds -- only the outlines go, and in dark mode the page
+ * itself is black.
+ */
+
+/* Neutral borders -> transparent: the line tokens (!important so a nested .odoo-root can't bring
+   them back), hard-coded border-white/NN, the global glass panel, and the hairline drawn around
+   the black Odoo buttons in dark mode. State colours (accent / danger / success...) are untouched. */
+.nobo-noborder,
+.nobo-noborder .odoo-root {
+  --nobo-line: transparent !important;
+  --nobo-line-strong: transparent !important;
+  --odoo-button-edge: transparent !important;
+}
+.nobo-noborder [class*="border-white"],
+.nobo-noborder .panel,
+.nobo-noborder .panel:hover {
+  border-color: transparent !important;
+}
+
+/* Dark mode: black page (the app's default theme is dark, so "not light" covers both an explicit
+   dark choice and no choice). The canvas token follows so canvas-coloured parts match the page,
+   and the black Odoo filled buttons -- invisible on black -- take a lighter dark grey. Light mode
+   keeps its normal colours. */
+:root:not([data-theme="light"]) .nobo-noborder {
+  background-color: #000000;
+}
+:root:not([data-theme="light"]) .nobo-noborder,
+:root:not([data-theme="light"]) .nobo-noborder .odoo-root {
+  --nobo-canvas: #000000 !important;
+  --odoo-button: #3a3f4f !important;
+  --odoo-button-hover: #4a5063 !important;
+}
+
+/* Fields lost their outline (and in dark mode canvas-coloured ones match the page), so give every
+   field a light fill (fields deliberately transparent inside a styled wrapper keep theirs) and a
+   focus ring. */
+.nobo-noborder
+  :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]), select, textarea):not(
+    [class*="bg-transparent"]
+  ) {
+  background-color: color-mix(in srgb, currentColor 9%, transparent) !important;
+}
+.nobo-noborder :is(input, select, textarea):focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--nobo-accent) 55%, transparent);
+  outline-offset: 0;
+}

@@ -35,7 +35,7 @@ export function FloatingOrderButton({ itemCount, total, currencyCode, minorUnitD
         type="button"
         onClick={onClick}
         aria-label={t("pos.cart.floatingLabel", { count: itemCount })}
-        className="relative grid h-[68px] w-[68px] shrink-0 place-items-center rounded-full border border-pos-border bg-pos-primary-strong text-white shadow-2xl transition hover:bg-pos-primary-strong-hover active:scale-95"
+        className="relative grid h-[68px] w-[68px] shrink-0 place-items-center rounded-full border border-pos-border bg-pos-primary-strong text-white shadow-2xl transition active:scale-95"
       >
         <ShoppingCart size={28} />
         {itemCount > 0 && (

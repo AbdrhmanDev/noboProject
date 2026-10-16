@@ -225,7 +225,7 @@ export function OrderSidebar({
             onClick={onOpenShiftReport}
             aria-label={t("pos.quick.zReport")}
             title={t("pos.quick.zReport")}
-            className="grid h-12 w-12 shrink-0 place-items-center rounded-pos border border-pos-border bg-pos-card text-pos-text transition hover:border-pos-primary hover:bg-pos-tint"
+            className="grid h-12 w-12 shrink-0 place-items-center rounded-pos border border-pos-border bg-pos-card text-pos-text transition"
           >
             <ReceiptText size={18} />
           </button>

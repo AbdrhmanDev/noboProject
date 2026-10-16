@@ -2,6 +2,8 @@
 @import "./styles/tokens.css";
 @import "./styles/sidebar.css";
 @import "./features/pos/styles/pos-theme.css";
+@import "./styles/borderless.css";
+@import "./styles/noborder.css";
 
 /* ---------- app reset ---------- */
 * {

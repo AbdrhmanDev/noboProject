@@ -2375,7 +2375,7 @@ export default function POSPage() {
                 <button
                   type="button"
                   onClick={backToOrderFromPayment}
-                  className="pos-control pos-fs-name flex shrink-0 items-center gap-2 border border-pos-border bg-pos-card px-3 text-pos-text transition hover:border-pos-primary hover:bg-pos-tint"
+                  className="pos-control pos-fs-name flex shrink-0 items-center gap-2 border border-pos-border bg-pos-card px-3 text-pos-text transition"
                 >
                   <ArrowRight size={16} className="ltr:-scale-x-100" />
                   العودة للطلب
@@ -2429,7 +2429,7 @@ export default function POSPage() {
                   onClick={() => navigate(ROUTES.POS_SHIFT_HISTORY)}
                   aria-label={t("pos.transactions")}
                   title={t("pos.transactions")}
-                  className="pos-control pos-fs-name flex shrink-0 items-center gap-2 border border-pos-border bg-pos-card px-3 text-pos-text transition hover:border-pos-primary hover:bg-pos-tint sm:px-4"
+                  className="pos-control pos-fs-name flex shrink-0 items-center gap-2 border border-pos-border bg-pos-card px-3 text-pos-text transition sm:px-4"
                 >
                   <History size={16} />
                   <span className="hidden sm:inline">{t("pos.transactions")}</span>
@@ -2667,7 +2667,7 @@ export default function POSPage() {
               type="button"
               onClick={() => setToast(null)}
               aria-label={t("pos.dismiss")}
-              className="shrink-0 rounded-pos p-1 text-pos-muted transition hover:bg-pos-tint hover:text-pos-text"
+              className="shrink-0 rounded-pos p-1 text-pos-muted transition"
             >
               <X size={16} />
             </button>

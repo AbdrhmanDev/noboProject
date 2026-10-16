@@ -79,7 +79,7 @@ export function OrderBottomSheet({ open, onClose, children }) {
           type="button"
           onClick={onClose}
           aria-label={t("pos.cart.close")}
-          className="absolute end-3 top-2 grid h-9 w-9 place-items-center rounded-pos text-pos-muted transition hover:bg-pos-tint hover:text-pos-text"
+          className="absolute end-3 top-2 grid h-9 w-9 place-items-center rounded-pos text-pos-muted transition"
         >
           <X size={18} />
         </button>

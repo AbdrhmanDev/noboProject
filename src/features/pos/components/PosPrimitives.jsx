@@ -1,10 +1,10 @@
 export function IconButton({ icon: Icon, label, onClick, tone = "default", disabled = false, hint = null }) {
   const tones = {
     default:
-      "border-white/10 bg-white/[0.035] hover:border-blue-400/45 hover:bg-blue-500/10",
+      "border-white/10 bg-white/[0.035]",
     danger:
-      "border-rose-500/25 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20",
-    pink: "border-pink-400/25 bg-pink-500/10 text-pink-100 hover:bg-pink-500/20",
+      "border-rose-500/25 bg-rose-500/10 text-rose-200",
+    pink: "border-pink-400/25 bg-pink-500/10 text-pink-100",
   };
   return (
     <button

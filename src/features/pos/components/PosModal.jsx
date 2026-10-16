@@ -59,7 +59,7 @@ export function PosModal({ title, children, onClose, size = "md" }) {
           <button
             type="button"
             onClick={onClose}
-            className="rounded-pos p-1.5 text-pos-muted hover:bg-pos-tint hover:text-pos-text"
+            className="rounded-pos p-1.5 text-pos-muted"
           >
             <X size={18} />
           </button>

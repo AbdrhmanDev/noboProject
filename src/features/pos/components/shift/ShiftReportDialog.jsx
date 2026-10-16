@@ -151,14 +151,14 @@ export function ShiftReportDialog({ shift, companyId, branchId, cashierName, onC
           <button
             type="button"
             onClick={onClose}
-            className="h-11 rounded-xl border border-line bg-inset text-xs font-bold text-muted transition hover:bg-hover hover:text-ink"
+            className="h-11 rounded-xl border border-line bg-inset text-xs font-bold text-muted transition"
           >
             إغلاق
           </button>
           <button
             type="button"
             onClick={handlePrint}
-            className="flex h-11 items-center justify-center gap-2 rounded-xl bg-accent text-xs font-bold text-white transition hover:bg-accent-strong"
+            className="flex h-11 items-center justify-center gap-2 rounded-xl bg-accent text-xs font-bold text-white transition"
           >
             <Printer size={15} />
             طباعة

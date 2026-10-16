@@ -24,7 +24,7 @@ export function CategorySidebar({ categories, activeCategoryId, onSelect }) {
             className={`relative flex min-h-[64px] w-full shrink-0 flex-col items-center justify-center gap-1 rounded-pos px-1 py-2 text-center transition active:scale-95 ${
               active
                 ? "bg-pos-tint text-pos-primary-text"
-                : "text-pos-text hover:bg-pos-bg"
+                : "text-pos-text"
             }`}
           >
             {active && (

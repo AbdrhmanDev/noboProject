@@ -50,7 +50,7 @@ export function NumericKeypadCore({
             key={digit}
             type="button"
             onClick={() => applyChar(digit)}
-            className="pos-fs-numpad h-12 rounded-pos border border-pos-border bg-pos-card text-pos-text transition hover:border-pos-primary hover:bg-pos-tint active:bg-pos-tint"
+            className="pos-fs-numpad h-12 rounded-pos border border-pos-border bg-pos-card text-pos-text transition active:bg-pos-tint"
             aria-label={digit}
           >
             {digit}
@@ -61,7 +61,7 @@ export function NumericKeypadCore({
           type="button"
           onClick={() => allowDecimal && applyChar(".")}
           disabled={!allowDecimal}
-          className="pos-fs-numpad h-12 rounded-pos border border-pos-border bg-pos-card text-pos-text transition hover:border-pos-primary hover:bg-pos-tint active:bg-pos-tint disabled:cursor-not-allowed disabled:opacity-30"
+          className="pos-fs-numpad h-12 rounded-pos border border-pos-border bg-pos-card text-pos-text transition active:bg-pos-tint disabled:cursor-not-allowed disabled:opacity-30"
           aria-label="Decimal point"
         >
           .
@@ -69,7 +69,7 @@ export function NumericKeypadCore({
         <button
           type="button"
           onClick={() => applyChar("0")}
-          className="pos-fs-numpad h-12 rounded-pos border border-pos-border bg-pos-card text-pos-text transition hover:border-pos-primary hover:bg-pos-tint active:bg-pos-tint"
+          className="pos-fs-numpad h-12 rounded-pos border border-pos-border bg-pos-card text-pos-text transition active:bg-pos-tint"
           aria-label="0"
         >
           0
@@ -77,7 +77,7 @@ export function NumericKeypadCore({
         <button
           type="button"
           onClick={backspace}
-          className="grid h-12 place-items-center rounded-pos border border-pos-border bg-pos-card text-pos-text transition hover:border-pos-danger hover:bg-pos-danger/10 active:bg-pos-danger/10"
+          className="grid h-12 place-items-center rounded-pos border border-pos-border bg-pos-card text-pos-text transition active:bg-pos-danger/10"
           aria-label="Backspace"
         >
           <Delete size={20} />

@@ -73,14 +73,14 @@ export function CatalogPanel({
             <button
               type="button"
               onClick={() => navigate(ROUTES.TAX_ADMIN)}
-              className="font-semibold text-amber-200 hover:text-white"
+              className="font-semibold text-amber-200"
             >
               Configure
             </button>
             <button
               type="button"
               onClick={() => setTaxCategoryBanner(null)}
-              className="text-amber-300/70 hover:text-white"
+              className="text-amber-300/70"
               aria-label="Dismiss"
             >
               <X size={14} />
