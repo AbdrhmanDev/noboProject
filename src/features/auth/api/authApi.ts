@@ -1,4 +1,4 @@
-import { httpClient } from "../../../shared/api/httpClient";
+import { httpClient, refreshAuthSessionRaw } from "../../../shared/api/httpClient";
 import type {
   AuthSession,
   ConfirmEmailRequest,
@@ -12,8 +12,6 @@ import type {
   ResendConfirmationRequest,
   ResendConfirmationResponse,
 } from "../types/auth.types";
-
-let startupRefreshPromise: Promise<AuthSession> | null = null;
 
 export async function loginApi(payload: LoginRequest) {
   const response = await httpClient.post<AuthSession>("/api/auth/login", payload, {
@@ -51,19 +49,14 @@ export async function resendConfirmationApi(payload: ResendConfirmationRequest) 
   return response.data;
 }
 
+// Delegates to the SAME single-flight guard the httpClient 401-interceptor uses (see
+// httpClient.ts's own comment) -- this used to keep a separate promise, which let two
+// /api/auth/refresh calls race on the same refresh-token cookie and get the whole session
+// revoked. Error shape/side effects here are unchanged: no setAuthSession/clearAuthSession, the
+// raw (non-normalized) axios error propagates so AuthProvider's restoreSession can still inspect
+// error.response.status for its retry-vs-give-up decision.
 export async function refreshApi() {
-  if (!startupRefreshPromise) {
-    startupRefreshPromise = httpClient
-      .post<AuthSession>("/api/auth/refresh", undefined, {
-        skipAuthRefresh: true,
-      })
-      .then((response) => response.data)
-      .finally(() => {
-        startupRefreshPromise = null;
-      });
-  }
-
-  return startupRefreshPromise;
+  return refreshAuthSessionRaw();
 }
 
 export async function logoutApi() {

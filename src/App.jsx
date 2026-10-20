@@ -37,6 +37,7 @@ import InvoiceTemplatesAdminPage from "./Pages/InvoiceTemplatesAdminPage/Invoice
 import InvoiceTemplateEditorPage from "./Pages/InvoiceTemplateEditorPage/InvoiceTemplateEditorPage";
 import BranchesAdminPage from "./Pages/BranchesAdminPage/BranchesAdminPage";
 import GenerationUnitsAdminPage from "./Pages/GenerationUnitsAdminPage/GenerationUnitsAdminPage";
+import CompanyComplianceSettingsPage from "./Pages/CompanyComplianceSettingsPage/CompanyComplianceSettingsPage";
 import CompanyProfilePage from "./Pages/CompanyProfilePage/CompanyProfilePage";
 import CompanyProfileAmendmentsPage from "./Pages/CompanyProfileAmendmentsPage/CompanyProfileAmendmentsPage";
 import CompanyProfileAmendmentDetailsPage from "./Pages/CompanyProfileAmendmentDetailsPage/CompanyProfileAmendmentDetailsPage";
@@ -126,6 +127,7 @@ export default function App() {
               <Route path={ROUTES.INVOICE_TEMPLATE_DETAILS} element={accessGatedPage(<InvoiceTemplateEditorPage />, { permission: "InvoiceTemplates.View" })} />
               <Route path={ROUTES.BRANCHES_ADMIN} element={accessGatedPage(<BranchesAdminPage />, { permission: "Branches.View" })} />
               <Route path={ROUTES.GENERATION_UNITS_ADMIN} element={accessGatedPage(<GenerationUnitsAdminPage />, { permission: "Compliance.Manage" })} />
+              <Route path={ROUTES.COMPANY_COMPLIANCE_SETTINGS} element={accessGatedPage(<CompanyComplianceSettingsPage />, { permission: "Compliance.Manage" })} />
               <Route path={ROUTES.COMPANY_PROFILE} element={accessGatedPage(<CompanyProfilePage />, { permission: "CompanyProfile.View" })} />
               <Route path={ROUTES.COMPANY_PROFILE_AMENDMENTS} element={protectedPage(<CompanyProfileAmendmentsPage />)} />
               <Route path={ROUTES.COMPANY_PROFILE_AMENDMENT_DETAILS} element={protectedPage(<CompanyProfileAmendmentDetailsPage />)} />

@@ -43,6 +43,7 @@ export const translations = {
     // ---- Branches / Generation Units nav ----
     "nav.branches": "الفروع",
     "nav.generationUnits": "وحدات التوليد",
+    "nav.companyComplianceSettings": "تكامل زاتكا",
 
     // ---- Invoice Templates nav ----
     "nav.invoiceTemplates": "قوالب الفواتير",
@@ -3106,6 +3107,7 @@ export const translations = {
     // ---- Branches / Generation Units nav ----
     "nav.branches": "Branches",
     "nav.generationUnits": "Generation Units",
+    "nav.companyComplianceSettings": "ZATCA Integration",
 
     // ---- Invoice Templates nav ----
     "nav.invoiceTemplates": "Invoice Templates",
@@ -6140,6 +6142,7 @@ export const translations = {
     // ---- Branches / Generation Units nav ----
     "nav.branches": "Sucursales",
     "nav.generationUnits": "Unidades de generación",
+    "nav.companyComplianceSettings": "Integración con ZATCA",
 
     // ---- Invoice Templates nav ----
     "nav.invoiceTemplates": "Plantillas de factura",
@@ -8912,6 +8915,7 @@ export const translations = {
     // ---- Branches / Generation Units nav ----
     "nav.branches": "Filialen",
     "nav.generationUnits": "Generierungseinheiten",
+    "nav.companyComplianceSettings": "ZATCA-Integration",
 
     // ---- Invoice Templates nav ----
     "nav.invoiceTemplates": "Rechnungsvorlagen",

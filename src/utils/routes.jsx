@@ -32,6 +32,7 @@ export const ROUTES = {
   COMPANY_PROFILE_AMENDMENT_DETAILS: "/company/profile/amendments/:registrationId",
   BRANCHES_ADMIN: "/branches/admin",
   GENERATION_UNITS_ADMIN: "/compliance/generation-units",
+  COMPANY_COMPLIANCE_SETTINGS: "/compliance/company-settings",
   INVENTORY: "/inventory",
   INVENTORY_ADMIN: "/inventory/admin",
   CUSTOMERS: "/customers",

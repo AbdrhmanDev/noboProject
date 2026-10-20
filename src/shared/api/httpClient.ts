@@ -44,24 +44,38 @@ function isAuthEndpoint(url = "") {
   return url.includes("/api/auth/login") || url.includes("/api/auth/refresh");
 }
 
-function refreshAuthSessionSingleFlight() {
+// Shared single-flight guard around the actual network call to /api/auth/refresh -- at most one
+// request is ever in flight at a time, no matter which caller triggers it (this response
+// interceptor below, or AuthProvider's boot-time silent refresh via refreshApi() in authApi.ts,
+// which used to keep its own separate promise). The refresh token is single-use/rotating
+// server-side: two concurrent calls carrying the same not-yet-rotated cookie make the backend's
+// reuse-detection logic revoke the WHOLE session for whichever call loses the race, which is what
+// caused the "logged out a few minutes after a page refresh" bug. Deliberately has no side
+// effects of its own (no setAuthSession/clearAuthSession/error normalization) -- each caller
+// applies its own, exactly as before; only the underlying network call itself is now shared.
+export function refreshAuthSessionRaw(): Promise<AuthSession> {
   if (!refreshPromise) {
     refreshPromise = refreshClient
       .post<AuthSession>("/api/auth/refresh")
-      .then((response) => {
-        setAuthSession(response.data);
-        return response.data;
-      })
-      .catch((error) => {
-        clearAuthSession();
-        throw normalizeApiError(error);
-      })
+      .then((response) => response.data)
       .finally(() => {
         refreshPromise = null;
       });
   }
 
   return refreshPromise;
+}
+
+function refreshAuthSessionSingleFlight() {
+  return refreshAuthSessionRaw()
+    .then((session) => {
+      setAuthSession(session);
+      return session;
+    })
+    .catch((error) => {
+      clearAuthSession();
+      throw normalizeApiError(error);
+    });
 }
 
 httpClient.interceptors.request.use((config) => {

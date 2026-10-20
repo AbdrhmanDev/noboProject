@@ -2,7 +2,7 @@ import {
   Home, ScanLine, ChefHat, ShoppingBag, ShoppingCart, Boxes,
   Package,
   Coins, ReceiptText, WalletCards, Armchair, Printer, ShieldCheck, ShieldAlert, UsersRound, FileText,
-  Building2, Cpu, ShieldHalf,
+  Building2, Cpu, ShieldHalf, Shield,
 } from "lucide-react";
 import { ROUTES } from "./routes";
 import { ENTITLEMENT_POS } from "../features/companies/constants/entitlementCodes";
@@ -24,6 +24,7 @@ export const NAV_ITEMS = [
   { icon: FileText, labelKey: "nav.invoiceTemplates", to: ROUTES.INVOICE_TEMPLATES_ADMIN, permission: "InvoiceTemplates.View" },
   { icon: Building2, labelKey: "nav.branches", to: ROUTES.BRANCHES_ADMIN, permission: "Branches.View" },
   { icon: Cpu, labelKey: "nav.generationUnits", to: ROUTES.GENERATION_UNITS_ADMIN, permission: "Compliance.Manage" },
+  { icon: Shield, labelKey: "nav.companyComplianceSettings", to: ROUTES.COMPANY_COMPLIANCE_SETTINGS, permission: "Compliance.Manage" },
   { icon: ShieldHalf, labelKey: "nav.companyProfile", to: ROUTES.COMPANY_PROFILE, permission: "CompanyProfile.View" },
   { icon: Printer, labelKey: "nav.devices", kind: "group", module: "devices" },
   { icon: Armchair, labelKey: "nav.restaurant", kind: "group", module: "restaurant" },
