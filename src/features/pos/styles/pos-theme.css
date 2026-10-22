@@ -310,47 +310,6 @@ html[lang="ar"] .pos-root {
 .pos-flip-back {
   transform: rotateY(180deg);
 }
-/* Stock LED lamps (PosProductCard's StockLine): a round lamp with a rim and a dot-matrix of LEDs,
-   like a traffic signal. Only the lamp for the current level is lit (glow + the stock number in its
-   centre); the other two stay dark. Each level sets its own --led colour. */
-.pos-led {
-  --led: #22c55e;
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  flex-shrink: 0;
-  border-radius: 999px;
-  border: 2px solid color-mix(in srgb, var(--led) 55%, #000);
-  font-size: 12px;
-  font-weight: 900;
-  line-height: 1;
-  color: #fff;
-  text-shadow: 0 1px 2px rgb(0 0 0 / 0.75), 0 0 4px rgb(0 0 0 / 0.45);
-  background:
-    radial-gradient(circle, rgb(255 255 255 / 0.85) 0 0.8px, transparent 1.4px) center / 4px 4px,
-    radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--led) 55%, #fff) 0%, var(--led) 55%, color-mix(in srgb, var(--led) 65%, #000) 100%);
-  box-shadow:
-    0 0 10px 1px color-mix(in srgb, var(--led) 65%, transparent),
-    inset 0 0 6px rgb(0 0 0 / 0.35);
-}
-.pos-led[data-lit="false"] {
-  background:
-    radial-gradient(circle, color-mix(in srgb, var(--led) 45%, #000) 0 0.8px, transparent 1.4px) center / 4px 4px,
-    radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--led) 30%, #222) 0%, color-mix(in srgb, var(--led) 18%, #111) 100%);
-  border-color: color-mix(in srgb, var(--led) 30%, #000);
-  box-shadow: inset 0 0 6px rgb(0 0 0 / 0.55);
-  opacity: 0.75;
-}
-.pos-led-low {
-  --led: #ff2b2b;
-}
-.pos-led-half {
-  --led: #ffb000;
-}
-.pos-led-full {
-  --led: #22e04a;
-}
 /* Keeps a full-bleed product photo's name legible on any image. */
 .pos-photo-scrim {
   background: linear-gradient(to top, var(--pos-card), color-mix(in srgb, var(--pos-card) 75%, transparent) 65%, transparent);

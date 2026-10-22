@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { LayoutGrid, RefreshCw } from "lucide-react";
 import AppLayout from "../../components/AppLayout";
 import { EmptyState, ErrorState, LoadingState } from "../../shared/components/ui";
@@ -19,6 +19,40 @@ import { ROUTES } from "../../utils/routes";
 const RESTAURANT_VIEW_PERMISSION = "Restaurant.View";
 const RESTAURANT_MANAGE_PERMISSION = "Restaurant.Manage";
 const SALES_ORDERS_VIEW_PERMISSION = "SalesOrders.View";
+// Sizes the floor grid to exactly the space left on screen: from the grid's top edge to the bottom of
+// the window, minus whatever the page still has BELOW the grid (scroller padding, the section's own
+// padding, AppLayout's padding and footer). With that height the document is never taller than the
+// window, so there is no vertical page scroll -- extra tables go sideways instead. Recomputed when the
+// window resizes and whenever anything on the page changes size (filters wrapping, the details
+// drawer opening, the header). Returns [ref for the grid, height in px | null].
+function useFitToViewportHeight(enabled) {
+  const ref = useRef(null);
+  const [height, setHeight] = useState(null);
+
+  useLayoutEffect(() => {
+    if (!enabled) return undefined;
+    const measure = () => {
+      const el = ref.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const top = rect.top + window.scrollY;
+      const below = document.documentElement.scrollHeight - (rect.bottom + window.scrollY);
+      const next = Math.floor(window.innerHeight - top - Math.max(0, below));
+      setHeight((current) => (current === next ? current : next));
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(document.body);
+    window.addEventListener("resize", measure);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [enabled]);
+
+  return [ref, height];
+}
+
 export default function RestaurantFloorPage() {
   const { t } = useI18n();
   const { currentCompanyId } = useCompany();
@@ -26,6 +60,19 @@ export default function RestaurantFloorPage() {
 
   const [floorFilter, setFloorFilter] = useState("");
   const [selectedTableId, setSelectedTableId] = useState(null);
+  const [floorGridRef, floorGridHeight] = useFitToViewportHeight(true);
+  // Table size that fills the measured height with a whole number of rows (no dead band at the
+  // bottom): the most rows a full-size table allows -- rounding up when it's only a few px short --
+  // then each table shrinks a little to fit, kept between 64px and the full 112px. A tile is the table
+  // plus 3rem of chairs and padding; rows are 16px apart.
+  const FLOOR_GAP = 16;
+  const FLOOR_TILE_EXTRA = 48;
+  const floorRows = floorGridHeight
+    ? Math.max(1, Math.round((floorGridHeight + FLOOR_GAP) / (112 + FLOOR_TILE_EXTRA + FLOOR_GAP)))
+    : null;
+  const floorTableHeight = floorRows
+    ? Math.min(112, Math.max(64, Math.floor((floorGridHeight - (floorRows - 1) * FLOOR_GAP) / floorRows - FLOOR_TILE_EXTRA)))
+    : null;
 
   const viewPermissionQuery = useHasPermission(currentCompanyId, RESTAURANT_VIEW_PERMISSION);
   const managePermissionQuery = useHasPermission(currentCompanyId, RESTAURANT_MANAGE_PERMISSION);
@@ -151,27 +198,35 @@ export default function RestaurantFloorPage() {
                   </div>
                 )}
                 {!floorStateQuery.isLoading && !floorStateQuery.isError && filteredTables.length > 0 && (
-                  // Floor-plan grid: every table the same fixed size (--floor-table-h / --floor-table-fs, read by
-                  // RestaurantTableTile), auto-filling as many columns as fit -- ~20 tables on one
-                  // desktop screen. Tune the size from these two values.
-                  <div
-                    className="grid grid-cols-[repeat(auto-fill,minmax(var(--floor-table-min-w),1fr))] gap-2 sm:gap-4"
-                    style={{
-                      // Responsive: two tables per row on a phone, growing to the full size on wide screens.
-                      "--floor-table-min-w": "clamp(130px, 40vw, 180px)",
-                      "--floor-table-h": "clamp(84px, 24vw, 112px)",
-                      "--floor-table-fs": "clamp(1.6rem, 6vw, 2.25rem)",
-                    }}
-                  >
-                    {filteredTables.map((table) => (
-                      <RestaurantTableTile
-                        key={table.restaurantTableId}
-                        table={table}
-                        canManage={canManage}
-                        selected={selectedTableId === table.restaurantTableId}
-                        onSelect={() => setSelectedTableId(table.restaurantTableId)}
-                      />
-                    ))}
+                  // Floor-plan grid, scrolling SIDEWAYS: the area has a fixed height that fits the screen, the
+                  // tables fill each column top to bottom (grid-flow-col) as many rows as that height allows,
+                  // and any extra tables add columns to the right/left -- so the page never grows downward.
+                  // Every table is the same fixed size (--floor-table-h / --floor-table-fs, read by
+                  // RestaurantTableTile); --floor-tile-h is that plus the chair rows and padding around it.
+                  <div className="overflow-x-auto overflow-y-hidden pb-2">
+                    <div
+                      ref={floorGridRef}
+                      className="grid min-h-[var(--floor-tile-h)] grid-flow-col auto-cols-[var(--floor-table-min-w)] grid-rows-[repeat(auto-fill,var(--floor-tile-h))] content-start gap-4"
+                      style={{
+                        // Measured height (see useFitToViewportHeight); before the first measure, a
+                        // CSS estimate so the grid never renders unbounded.
+                        height: floorGridHeight ?? "calc(100dvh - 15rem)",
+                        "--floor-table-min-w": "clamp(130px, 40vw, 180px)",
+                        "--floor-table-h": floorTableHeight ? `${floorTableHeight}px` : "clamp(84px, 24vw, 112px)",
+                        "--floor-tile-h": "calc(var(--floor-table-h) + 3rem)",
+                        "--floor-table-fs": "clamp(1.6rem, 6vw, 2.25rem)",
+                      }}
+                    >
+                      {filteredTables.map((table) => (
+                        <RestaurantTableTile
+                          key={table.restaurantTableId}
+                          table={table}
+                          canManage={canManage}
+                          selected={selectedTableId === table.restaurantTableId}
+                          onSelect={() => setSelectedTableId(table.restaurantTableId)}
+                        />
+                      ))}
+                    </div>
                   </div>
                 )}
               </section>
