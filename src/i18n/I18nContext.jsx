@@ -1,55 +1,8 @@
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { translations, LANGUAGES, interpolate } from "./translations";
+import { createContext, useContext } from "react";
 
-const I18nContext = createContext(null);
-
-const STORAGE_KEY = "nobo-lang";
-
-function getSavedLang() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved && LANGUAGES.some((l) => l.code === saved)) return saved;
-  } catch {
-    // ignore
-  }
-  return "ar";
-}
-
-export function I18nProvider({ children }) {
-  const [lang, setLangState] = useState(getSavedLang);
-
-  const setLang = useCallback((code) => {
-    if (!LANGUAGES.some((l) => l.code === code)) return;
-    setLangState(code);
-    try {
-      localStorage.setItem(STORAGE_KEY, code);
-    } catch {
-      // ignore
-    }
-  }, []);
-
-  // Update document direction/lang based on selected language
-  useEffect(() => {
-    const meta = LANGUAGES.find((l) => l.code === lang) || LANGUAGES[0];
-    document.documentElement.lang = lang;
-    document.documentElement.dir = meta.dir;
-  }, [lang]);
-
-  const t = useCallback(
-    (key, vars = {}) => {
-      const dict = translations[lang] || translations.ar;
-      const str = dict[key] !== undefined ? dict[key] : translations.ar[key] || key;
-      return interpolate(str, vars);
-    },
-    [lang]
-  );
-
-  const dir = (LANGUAGES.find((l) => l.code === lang) || LANGUAGES[0]).dir;
-
-  const value = { lang, setLang, t, dir, LANGUAGES };
-
-  return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
-}
+// The i18n context and its hook. The provider component lives in I18nProvider.jsx, so this module exports no
+// component (keeps React Fast Refresh working: react-refresh/only-export-components).
+export const I18nContext = createContext(null);
 
 export function useI18n() {
   const ctx = useContext(I18nContext);

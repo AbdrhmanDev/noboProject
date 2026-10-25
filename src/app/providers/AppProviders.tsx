@@ -4,7 +4,7 @@ import { AuthProvider } from "../../features/auth/context/AuthProvider";
 import { BranchProvider } from "../../features/branches/context/BranchContext";
 import { CompanyProvider } from "../../features/companies/context/CompanyContext";
 import { PosProvider } from "../../features/pos/context/PosContext";
-import { I18nProvider } from "../../i18n/I18nContext";
+import { I18nProvider } from "../../i18n/I18nProvider";
 import { QueryProvider } from "./QueryProvider";
 
 type AppProvidersProps = {
