@@ -9,16 +9,18 @@ import {
   abbreviateModifierLabel,
   getStockLevel,
   sortVariantsBySize,
+  variantSizeLabel,
 } from "../../utils/posFormatters";
 
 // Three-band card: name on top, a flipping middle, price at the bottom. Only the middle turns over
 // (.pos-flip in pos-theme.css):
 //  - FRONT: the product photo, with the in-cart quantity in its corner -- a single number for one
 //    variant, or a small stacked "size×qty" breakdown once more than one size is in the cart.
-//  - BACK: the stock lights (StockLine) and the quantity controls -- one "name [-] qty [+]" row PER
-//    size (`VariantQuantityRow`) for multi-variant products, so several sizes of the same product
-//    can be ordered from the card ("2 Medium + 1 Small"); else the one shared QtyStepper (or the
-//    "weigh" button for a ByWeight product).
+//  - BACK: the stock lights (StockLine) and the quantity controls. Multi-variant products get the
+//    S / M / L size circles (`SizeCircles`): tapping one picks the size the [-] qty [+] stepper below
+//    works on, and each circle carries its own in-cart count -- so several sizes of the same
+//    product can still be ordered from the card ("2 S + 1 L", each its own cart line). Single-
+//    variant products keep the one shared stepper (or the "weigh" button for a ByWeight product).
 // Turning the middle over ALSO adds one unit (`increment`: the size last put in the cart, else the
 // default one; a ByWeight product opens the weight-entry dialog instead). Turning it back adds
 // nothing. Tapping the name/price bands does the same as tapping the middle. Only one card is
@@ -40,6 +42,9 @@ export function PosProductCard({
   const { t } = useI18n();
   const quantityInCart = cartInfo?.quantity ?? 0;
   const sizeVariants = product.variants.length > 1 ? sortVariantsBySize(product.variants) : [];
+  // The size the circles' stepper works on: the one picked, else the size last put in the cart,
+  // else the first (smallest) size.
+  const [pickedSizeId, setPickedSizeId] = useState(null);
 
   const representativeLine = cartInfo?.lines?.[cartInfo.lines.length - 1] ?? null;
   const representativeVariant = representativeLine
@@ -149,10 +154,7 @@ export function PosProductCard({
             aria-hidden={!isFlipped}
             className="pos-flip-face pos-flip-back flex flex-col gap-1.5 overflow-y-auto bg-pos-card p-2"
           >
-            <div className="flex items-center gap-1">
-              <div className="min-w-0 flex-1">
-                <StockLine variant={stockVariant} inventory={inventory} active={isFlipped} />
-              </div>
+            <div className="flex items-center justify-end">
               <button
                 type="button"
                 onClick={toggleFlip}
@@ -166,26 +168,29 @@ export function PosProductCard({
             </div>
 
             {sizeVariants.length > 0 && (
-              <div role="group" aria-label={t("pos.catalog.size")} className="my-auto flex flex-col gap-1">
-                {sizeVariants.map((entry) => (
-                  <VariantQuantityRow
-                    key={entry.productVariantId}
-                    variant={entry}
-                    quantity={quantityForVariant(entry.productVariantId)}
-                    disabled={disabled}
-                    focusable={isFlipped}
-                    onIncrement={() => {
-                      const line = lineForVariant(entry.productVariantId);
-                      // Not in the cart yet -> null, so POSPage fills in required modifier defaults.
-                      onIncrement(entry, line ? modifierIdsOf(line) : null);
-                    }}
-                    onDecrement={() => {
-                      const line = lineForVariant(entry.productVariantId);
-                      if (line) onDecrement(entry, modifierIdsOf(line));
-                    }}
-                  />
-                ))}
-              </div>
+              <SizeCircles
+                sizes={sizeVariants}
+                activeSize={
+                  sizeVariants.find((entry) => entry.productVariantId === pickedSizeId) ??
+                  sizeVariants.find((entry) => entry.productVariantId === representativeVariant?.productVariantId) ??
+                  sizeVariants[0]
+                }
+                quantityOf={(entry) => quantityForVariant(entry.productVariantId)}
+                currencyCode={currencyCode}
+                inventory={inventory}
+                disabled={disabled}
+                focusable={isFlipped}
+                onPick={(entry) => setPickedSizeId(entry.productVariantId)}
+                onIncrement={(entry) => {
+                  const line = lineForVariant(entry.productVariantId);
+                  // Not in the cart yet -> null, so POSPage fills in required modifier defaults.
+                  onIncrement(entry, line ? modifierIdsOf(line) : null);
+                }}
+                onDecrement={(entry) => {
+                  const line = lineForVariant(entry.productVariantId);
+                  if (line) onDecrement(entry, modifierIdsOf(line));
+                }}
+              />
             )}
 
             {quantityInCart > 0 && representativeLine?.modifiers.length > 0 && (
@@ -202,7 +207,8 @@ export function PosProductCard({
             )}
 
             {sizeVariants.length === 0 && (
-              <div className="mt-auto flex flex-col gap-1.5">
+              <div className="mt-auto flex flex-col gap-2">
+                <StockLine variant={stockVariant} inventory={inventory} active={isFlipped} />
                 {product.variants[0]?.sellingMode === "ByWeight" ? (
                   // Single-variant ByWeight product: no stepper at all -- tapping always opens the
                   // weight-entry dialog for a brand new line (addSellableVariant's interception).
@@ -244,11 +250,23 @@ export function PosProductCard({
 }
 
 
+// Stock level lights per level (getStockLevel): plain "(n)" parentheses, no box. The lit one shows
+// the stock number in its colour with a soft glow (green = plenty, yellow = running low, red = 5 or
+// fewer); the other two stay as faint empty "( )".
+// text = the theme's readable ink for that colour (darker in light mode), glow = the colour itself.
+const STOCK_LIGHT_COLOR = {
+  low: { text: "var(--pos-danger-text)", glow: "var(--pos-danger)" },
+  half: { text: "var(--pos-warning-text)", glow: "var(--pos-warning)" },
+  full: { text: "var(--pos-action-text)", glow: "var(--pos-action)" },
+};
+
 // Available units of one variant = the fewest units its linked stock items allow
 // (floor(on hand / quantity per sales unit), at the branch's default inventory location), shown as
-// three (red) (yellow) (green) lights -- only the light for the current level is on, with the
-// number inside it. The variant's recipe is only fetched once its card is flipped. Hidden without
-// Inventory.View.
+// three "( )" lights in red / yellow / green -- only the one for the current level is lit, with the
+// number inside it. The variant's recipe is only fetched once its card is flipped. The three
+// parentheses are always drawn: a variant with no linked stock item counts as 0 (red "(0)"), and
+// while loading / on a load error / without inventory access all three stay dim. The reason is in
+// the tooltip, never as text on the card.
 function StockLine({ variant, inventory, active }) {
   const { t } = useI18n();
   const enabled = Boolean(inventory?.enabled && variant && active);
@@ -258,19 +276,21 @@ function StockLine({ variant, inventory, active }) {
     enabled,
   );
 
-  if (!inventory?.enabled) return null;
-
-  let content;
-  if (consumptionQuery.isLoading || inventory.isLoading) {
-    content = <span className="text-pos-muted">{t("pos.catalog.stockLoading")}</span>;
+  let available = null; // null = nothing lit
+  let hint;
+  if (!inventory?.enabled) {
+    hint = t("pos.catalog.stockUnavailable");
+  } else if (consumptionQuery.isLoading || inventory.isLoading) {
+    hint = t("pos.catalog.stockLoading");
   } else if (consumptionQuery.isError || inventory.isError) {
-    content = <span className="text-pos-muted">{t("pos.catalog.stockUnavailable")}</span>;
+    hint = t("pos.catalog.stockUnavailable");
   } else {
     const components = consumptionQuery.data?.components ?? [];
     if (!components.length) {
-      content = <span className="text-pos-muted">{t("pos.catalog.stockNotTracked")}</span>;
+      available = 0;
+      hint = t("pos.catalog.stockNotTracked");
     } else {
-      const available = Math.max(
+      available = Math.max(
         0,
         Math.min(
           ...components.map((component) => {
@@ -280,38 +300,39 @@ function StockLine({ variant, inventory, active }) {
           }),
         ),
       );
-      const level = getStockLevel(available);
-      const levelLabel = t(`pos.catalog.stockLevel.${level}`);
-      content = (
-        <div
-          role="img"
-          aria-label={`${t("pos.catalog.stock")}: ${Number.isFinite(available) ? available : "∞"} · ${levelLabel}`}
-          title={levelLabel}
-          // Always red -> yellow -> green from left to right, like a real signal, in RTL too.
-          dir="ltr"
-          className="flex items-center justify-center gap-1.5"
-        >
-          {/* LED lamps (.pos-led in pos-theme.css): only the current level is lit, with the stock
-              number in its centre; the other two stay dark and empty. */}
-          {STOCK_LEVELS.map((entry) => {
-            const lit = entry === level;
-            return (
-              <span
-                key={entry}
-                aria-hidden="true"
-                data-lit={lit ? "true" : "false"}
-                className={`pos-led pos-led-${entry} pos-num`}
-              >
-                {lit ? (Number.isFinite(available) ? available : "∞") : ""}
-              </span>
-            );
-          })}
-        </div>
-      );
     }
   }
 
-  return <div className="pos-fs-label text-center">{content}</div>;
+  const level = available === null ? null : getStockLevel(available);
+  const levelLabel = level ? t(`pos.catalog.stockLevel.${level}`) : null;
+  const shown = available === null ? "" : Number.isFinite(available) ? available : "∞";
+
+  return (
+    <div
+      role="img"
+      aria-label={`${t("pos.catalog.stock")}: ${shown === "" ? hint : `${shown} · ${levelLabel}`}`}
+      title={[hint, levelLabel].filter(Boolean).join(" · ")}
+      className="pos-fs-label flex items-center justify-center gap-3"
+    >
+      {STOCK_LEVELS.map((entry) => {
+        const lit = entry === level;
+        const { text, glow } = STOCK_LIGHT_COLOR[entry];
+        return (
+          <span
+            key={entry}
+            aria-hidden="true"
+            className={`pos-num whitespace-pre text-lg leading-none font-black transition-colors ${lit ? "" : "opacity-35"}`}
+            style={{
+              color: text,
+              textShadow: lit ? `0 0 8px ${glow}, 0 0 16px color-mix(in srgb, ${glow} 55%, transparent)` : "none",
+            }}
+          >
+            ({lit ? shown : "  "})
+          </span>
+        );
+      })}
+    </div>
+  );
 }
 
 // Product photo filling the middle band's front face. The fallback icon and the real <img> are never
@@ -373,61 +394,71 @@ function QtyStepper({ quantity, disabled, focusable, canDecrement, onDecrement, 
   );
 }
 
-// One size's row (multi-variant products): the size name with its own [-] qty [+] beside it, each
-// targeting that exact size with no modifiers -- so "2 Medium + 1 Small" is just taps on two rows,
-// every size its own cart line. "-" and the number stay mounted (only hidden) at 0 so the row never
-// changes width. A ByWeight size gets a single "weigh" button instead (a weight isn't a count to
-// step down); it opens the weight-entry dialog for a new line. No price: the bottom band shows it.
-function VariantQuantityRow({ variant, quantity, disabled, focusable, onIncrement, onDecrement }) {
+// Size circles (multi-variant products), S / M / L order (sortVariantsBySize), labelled by
+// variantSizeLabel, under the picked size's stock (StockLine). Tapping a circle picks it (filled);
+// the stock above and the [-] qty [+] below act on the picked size only, and every circle shows its own in-cart count as a small badge. A picked ByWeight size gets
+// a single "weigh" button instead of the stepper (a weight isn't a count); it opens the
+// weight-entry dialog for a new line.
+function SizeCircles({ sizes, activeSize, quantityOf, currencyCode, inventory, disabled, focusable, onPick, onIncrement, onDecrement }) {
   const { t } = useI18n();
-  const hasQuantity = quantity > 0;
-  const isByWeight = variant.sellingMode === "ByWeight";
-  const stepButton =
-    "grid h-6 w-6 shrink-0 place-items-center rounded-full transition active:scale-90 disabled:cursor-not-allowed disabled:opacity-40";
+  const activeQuantity = quantityOf(activeSize);
 
   return (
-    <div className="flex min-h-8 items-center gap-1.5 rounded-pos border border-pos-border bg-pos-card px-1.5 py-1 transition">
-      <span className="line-clamp-2 min-w-0 flex-1 text-[11px] font-bold leading-tight text-pos-text">{variant.variantName}</span>
-      {isByWeight ? (
-        <button
-          type="button"
-          onClick={onIncrement}
-          disabled={disabled}
-          tabIndex={focusable ? 0 : -1}
-          aria-label={`${t("pos.catalog.weigh")} · ${variant.variantName}`}
-          className="flex h-6 shrink-0 items-center gap-1 rounded-full bg-pos-primary-strong px-2 text-[10px] font-bold text-white shadow-sm transition active:scale-90 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <Plus size={11} />
-          {t("pos.catalog.weigh")}
-        </button>
-      ) : (
-        <div className="flex shrink-0 items-center gap-1">
+    <div role="group" aria-label={t("pos.catalog.size")} className="my-auto flex flex-col items-center gap-3">
+      {/* Stock first, above the size circles and the stepper. */}
+      <StockLine variant={activeSize} inventory={inventory} active={focusable} />
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        {sizes.map((entry) => {
+          const picked = entry.productVariantId === activeSize.productVariantId;
+          const count = quantityOf(entry);
+          return (
+            <button
+              key={entry.productVariantId}
+              type="button"
+              onClick={() => onPick(entry)}
+              disabled={disabled}
+              tabIndex={focusable ? 0 : -1}
+              aria-pressed={picked}
+              aria-label={`${entry.variantName}${count ? ` ×${count}` : ""}`}
+              title={`${entry.variantName} · ${formatMoney(entry.price, currencyCode, 2)}`}
+              className={`pos-num relative grid h-10 min-w-10 place-items-center rounded-full px-1.5 text-sm font-black transition active:scale-90 disabled:cursor-not-allowed disabled:opacity-50 ${
+                picked ? "bg-pos-primary-strong text-white shadow-sm" : "bg-pos-bg text-pos-text"
+              }`}
+            >
+              {variantSizeLabel(entry.variantName)}
+              {count > 0 && (
+                <span className="absolute -end-1.5 -top-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-pos-action px-1 text-[10px] font-black text-pos-on-action shadow-sm">
+                  {count}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="w-full">
+        {activeSize.sellingMode === "ByWeight" ? (
           <button
             type="button"
-            onClick={onDecrement}
-            disabled={disabled || !hasQuantity}
-            tabIndex={focusable && hasQuantity ? 0 : -1}
-            aria-hidden={!hasQuantity}
-            aria-label={`${t("pos.catalog.decrement")} · ${variant.variantName}`}
-            className={`${stepButton} border border-pos-border text-pos-muted ${hasQuantity ? "" : "invisible"}`}
-          >
-            <Minus size={12} />
-          </button>
-          <span className={`pos-num w-4 shrink-0 text-center text-[11px] font-black text-pos-text ${hasQuantity ? "" : "invisible"}`}>
-            {quantity}
-          </span>
-          <button
-            type="button"
-            onClick={onIncrement}
+            onClick={() => onIncrement(activeSize)}
             disabled={disabled}
             tabIndex={focusable ? 0 : -1}
-            aria-label={`${t("pos.catalog.increment")} · ${variant.variantName}`}
-            className={`${stepButton} bg-pos-primary-strong text-white shadow-sm`}
+            className="flex h-11 w-full items-center justify-center gap-1.5 rounded-full bg-pos-primary-strong text-sm font-bold text-white shadow-sm transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <Plus size={12} />
+            <Plus size={15} />
+            {t("pos.catalog.weigh")}
           </button>
-        </div>
-      )}
+        ) : (
+          <QtyStepper
+            quantity={activeQuantity}
+            disabled={disabled}
+            focusable={focusable}
+            canDecrement={activeQuantity > 0}
+            onDecrement={() => onDecrement(activeSize)}
+            onIncrement={() => onIncrement(activeSize)}
+          />
+        )}
+      </div>
     </div>
   );
 }

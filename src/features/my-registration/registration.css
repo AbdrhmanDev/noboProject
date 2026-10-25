@@ -1,0 +1,21 @@
+/* Registration page. GlobalStyle forces dark text on every button / field in light mode, which
+   overrode the coloured actions here (e.g. the red "Cancel registration"). revert-layer drops that
+   unlayered rule on this page so each control keeps its own Tailwind colour class. */
+[data-theme="light"] .reg-page :is(button, input, select, textarea) {
+  color: revert-layer;
+}
+
+/* No borders anywhere on the registration form: the page title box, the documents and branch boxes,
+   the dashed empty-documents box, buttons and the coloured message boxes (their tinted background
+   and text already set them apart). The field focus highlight is a ring (box-shadow), not a border,
+   so it stays. */
+.reg-page,
+.reg-page * {
+  border-color: transparent !important;
+}
+/* The black Odoo buttons draw a white hairline (an inset shadow) in dark mode, which reads as a
+   border -- drop it here too; they still stand out against the grey card. */
+.reg-page,
+.reg-page .odoo-root {
+  --odoo-button-edge: transparent !important;
+}

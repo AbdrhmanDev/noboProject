@@ -214,8 +214,8 @@ export function getDefaultVariant(product) {
 // product -- the catalog has no per-product "full" quantity -- in AVAILABLE UNITS of the product
 // (what its stock items can still make). Change the numbers here to retune all cards.
 export const STOCK_LEVEL_THRESHOLDS = {
-  full: 20, // >= full -> green
-  half: 10, // >= half -> yellow; below -> red (about to run out)
+  full: 20, // >= full -> green (plenty)
+  half: 6, // >= half -> yellow (running low); 5 and below -> red
 };
 
 export const STOCK_LEVELS = ["low", "half", "full"];
