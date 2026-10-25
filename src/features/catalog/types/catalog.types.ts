@@ -138,6 +138,9 @@ export type ProductVariantAdmin = {
   status: CatalogAdminStatus;
   createdAtUtc: string;
   sellingMode: SellingMode;
+  // Scale Label Barcodes Phase 1: the label scale's PLU (ByWeight only), canonical form (no
+  // leading zeros), or null.
+  scaleItemCode?: string | null;
 };
 
 // Only barcodes with isActive=true are usable for scanning/label printing -- inactive rows are
@@ -198,6 +201,8 @@ export type CreateProductVariantRequest = {
   sortOrder: number;
   // Omit for the existing piece-based default ("PerUnit").
   sellingMode?: SellingMode;
+  // ByWeight only; omit (or null) for none.
+  scaleItemCode?: string | null;
 };
 
 export type CreateProductVariantResponse = {
@@ -211,12 +216,16 @@ export type CreateProductVariantResponse = {
   status: CatalogAdminStatus;
   createdAtUtc: string;
   sellingMode: SellingMode;
+  scaleItemCode?: string | null;
 };
 
 export type UpdateProductVariantRequest = {
   name: string;
   sku: string | null;
   sortOrder: number;
+  // Scale Label Barcodes Phase 1: OMIT to keep the current PLU unchanged, "" to clear it, digits to
+  // set it (ByWeight only -- the backend rejects a PLU on a PerUnit variant).
+  scaleItemCode?: string;
 };
 
 export type UnitOfMeasure = {

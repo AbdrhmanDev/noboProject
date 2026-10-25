@@ -18,9 +18,12 @@ import {
   Search,
   SlidersHorizontal,
   Tags,
+  Scale,
 } from "lucide-react";
 import AppLayout from "../../components/AppLayout";
 import { ProductsListView } from "../../features/catalog/components/ProductsListView";
+import { ScaleLabelSettingsPanel } from "../../features/catalog/components/ScaleLabelSettingsPanel";
+import { scaleLabelErrorMessage } from "../../features/pos/utils/scaleLabelMessages";
 import { useI18n } from "../../i18n/I18nContext";
 import { env } from "../../app/config/env";
 import {
@@ -93,6 +96,8 @@ const EMPTY_VARIANT_FORM = {
   // has no way to change it afterward (ProductVariant.SellingMode has no setter), so this only
   // ever matters on the create form; the edit form shows it read-only.
   sellingMode: "PerUnit",
+  // Scale Label Barcodes Phase 1: the label scale's PLU. Only shown and sent for ByWeight variants.
+  scaleItemCode: "",
 };
 const EMPTY_MODIFIER_GROUP_FORM = { name: "" };
 const EMPTY_MODIFIER_OPTION_FORM = { name: "", sortOrder: "0" };
@@ -446,10 +451,14 @@ function VariantForm({
   isPending,
   onSubmit,
   onStatusChange,
+  scaleItemCodeError,
 }) {
   const { t } = useI18n();
   const nextStatus = selectedVariant?.status === "Active" ? "Suspended" : "Active";
   const isByWeight = form.sellingMode === "ByWeight";
+  // The PLU field exists only for ByWeight variants: the create form's chosen mode, or the edit
+  // form's (fixed) loaded mode.
+  const showScaleItemCode = mode === "create" ? isByWeight : selectedVariant?.sellingMode === "ByWeight";
   // The backend rejects ByWeight with anything but an active unit that measures mass and allows
   // a fractional reading (CreateProductVariantHandler) -- filtering the picker to only those
   // units is pure UX help; the server remains the authority that actually enforces this.
@@ -582,6 +591,26 @@ function VariantForm({
           </>
         )}
       </div>
+      {showScaleItemCode && (
+        <label className="block max-w-xs text-sm font-semibold text-muted">
+          {t("catalogAdmin.field.scaleItemCode")}
+          <input
+            value={form.scaleItemCode}
+            onChange={(event) => setForm((draft) => ({ ...draft, scaleItemCode: event.target.value }))}
+            maxLength={6}
+            inputMode="numeric"
+            dir="ltr"
+            aria-invalid={Boolean(scaleItemCodeError)}
+            disabled={!canManage || isPending || !selectedProduct}
+            className={`mt-1 h-11 w-full rounded-xl border bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50 ${scaleItemCodeError ? "border-danger" : "border-line"}`}
+          />
+          {scaleItemCodeError ? (
+            <span className="mt-1 block text-xs font-normal text-danger">{scaleItemCodeError}</span>
+          ) : (
+            <span className="mt-1 block text-xs font-normal text-subtle">{t("catalogAdmin.scaleItemCode.hint")}</span>
+          )}
+        </label>
+      )}
       <ActionRow
         mode={mode}
         entity="variant"
@@ -1497,7 +1526,7 @@ function NumberField({ label, value, onChange, min = "0" }) {
   );
 }
 
-const CATALOG_ADMIN_TABS = ["categories", "products", "modifiers"];
+const CATALOG_ADMIN_TABS = ["categories", "products", "modifiers", "scaleLabels"];
 
 export default function CatalogAdminPage() {
   const { t } = useI18n();
@@ -1526,6 +1555,8 @@ export default function CatalogAdminPage() {
   const [categoryForm, setCategoryForm] = useState(EMPTY_CATEGORY_FORM);
   const [productForm, setProductForm] = useState(EMPTY_PRODUCT_FORM);
   const [variantForm, setVariantForm] = useState(EMPTY_VARIANT_FORM);
+  // Scale Label Barcodes Phase 1: PLU problems (in use / invalid) shown on the field itself.
+  const [scaleItemCodeError, setScaleItemCodeError] = useState("");
   const [notice, setNotice] = useState("");
 
   const viewPermissionQuery = useHasPermission(currentCompanyId, CATALOG_VIEW_PERMISSION);
@@ -1698,12 +1729,14 @@ export default function CatalogAdminPage() {
     setProductForm(EMPTY_PRODUCT_FORM);
     setVariantMode("create");
     setVariantForm(EMPTY_VARIANT_FORM);
+    setScaleItemCodeError("");
   };
 
   const startCreateVariant = () => {
     setVariantMode("create");
     setSelectedVariantId(null);
     setVariantForm(EMPTY_VARIANT_FORM);
+    setScaleItemCodeError("");
   };
 
   const selectCategory = (category) => {
@@ -1738,6 +1771,7 @@ export default function CatalogAdminPage() {
       imageUrl: product.imageUrl || "",
     });
     setVariantForm(EMPTY_VARIANT_FORM);
+    setScaleItemCodeError("");
   };
 
   const selectVariant = (variant) => {
@@ -1751,7 +1785,9 @@ export default function CatalogAdminPage() {
       // Display only in edit mode -- there is no backend operation that changes it afterward
       // (see submitVariant, which never sends this field on update).
       sellingMode: variant.sellingMode || "PerUnit",
+      scaleItemCode: variant.scaleItemCode || "",
     });
+    setScaleItemCodeError("");
   };
 
   const submitCategory = async () => {
@@ -1845,6 +1881,15 @@ export default function CatalogAdminPage() {
       return showNotice(t("catalogAdmin.notice.uomRequired"));
     }
 
+    // Scale Label Barcodes Phase 1: the PLU only ever goes out for a ByWeight variant. On update
+    // it is always sent for one (the form holds the loaded value): "" clears it, digits set it --
+    // the backend keeps it unchanged only when the field is omitted, which is what happens for
+    // every PerUnit variant here.
+    const isByWeightVariant =
+      variantMode === "create" ? variantForm.sellingMode === "ByWeight" : selectedVariant?.sellingMode === "ByWeight";
+    const scaleItemCode = variantForm.scaleItemCode.trim();
+    setScaleItemCodeError("");
+
     try {
       const payload = {
         name: variantForm.name,
@@ -1859,8 +1904,9 @@ export default function CatalogAdminPage() {
               // Never sent on update -- the backend has no operation that changes an existing
               // variant's selling mode (ProductVariant.SellingMode has no setter).
               sellingMode: variantForm.sellingMode,
+              ...(isByWeightVariant && scaleItemCode ? { scaleItemCode } : {}),
             })
-          : await updateVariantMutation.mutateAsync(payload);
+          : await updateVariantMutation.mutateAsync(isByWeightVariant ? { ...payload, scaleItemCode } : payload);
       setVariantMode("edit");
       setSelectedVariantId(result.productVariantId);
       setVariantForm({
@@ -1869,6 +1915,7 @@ export default function CatalogAdminPage() {
         salesUnitOfMeasureId: result.salesUnitOfMeasureId,
         sortOrder: String(result.sortOrder),
         sellingMode: result.sellingMode || "PerUnit",
+        scaleItemCode: result.scaleItemCode || "",
       });
       showNotice(
         variantMode === "create"
@@ -1876,6 +1923,10 @@ export default function CatalogAdminPage() {
           : t("catalogAdmin.notice.variantUpdated"),
       );
     } catch (error) {
+      if (error?.code === "ProductVariant.ScaleItemCodeInUse" || error?.code === "ProductVariant.ScaleItemCodeInvalid") {
+        setScaleItemCodeError(scaleLabelErrorMessage(error.code, t));
+        return;
+      }
       showNotice(getErrorMessage(error, t));
     }
   };
@@ -1925,7 +1976,7 @@ export default function CatalogAdminPage() {
                 <RefreshCw size={14} />
                 {t("catalogAdmin.refresh")}
               </button>
-              {tab !== "modifiers" && (
+              {tab !== "modifiers" && tab !== "scaleLabels" && (
                 <button
                   type="button"
                   onClick={tab === "categories" ? startCreateCategory : startCreateProduct}
@@ -1976,6 +2027,16 @@ export default function CatalogAdminPage() {
             <SlidersHorizontal size={15} />
             {t("catalogAdmin.tab.modifiers")}
           </button>
+          <button
+            type="button"
+            onClick={() => setTab("scaleLabels")}
+            className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-bold transition ${
+              tab === "scaleLabels" ? "bg-accent-soft text-accent" : "text-muted hover:bg-hover hover:text-ink"
+            }`}
+          >
+            <Scale size={15} />
+            {t("catalogAdmin.tab.scaleLabels")}
+          </button>
         </div>
 
         {!currentCompanyId ? (
@@ -1984,6 +2045,8 @@ export default function CatalogAdminPage() {
           <LoadingState label={t("catalogAdmin.gate.checkingPermissions")} />
         ) : !viewPermissionQuery.hasPermission ? (
           <ErrorState title={t("catalogAdmin.gate.permissionRequired.title")} message={t("catalogAdmin.gate.permissionRequired.message")} />
+        ) : tab === "scaleLabels" ? (
+          <ScaleLabelSettingsPanel companyId={currentCompanyId} canManage={canManage} />
         ) : tab === "categories" ? (
           <div className="grid gap-4 xl:grid-cols-[420px_1fr]">
             <section className="rounded-xl border border-line bg-surface p-3">
@@ -2215,6 +2278,7 @@ export default function CatalogAdminPage() {
                             isPending={variantPending}
                             onSubmit={submitVariant}
                             onStatusChange={(status) => changeStatus(variantStatusMutation, status, "catalogAdmin.entity.variant")}
+                            scaleItemCodeError={scaleItemCodeError}
                           />
                           <BranchAvailabilityPanel
                             currentBranch={currentBranch}

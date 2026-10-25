@@ -81,6 +81,9 @@ import { ScaleSimulatorPanel } from "../../features/pos/components/scale/ScaleSi
 import { ScaleBridgePanel } from "../../features/pos/components/scale/ScaleBridgePanel";
 import { useScaleReadingSimulator } from "../../features/pos/hooks/useScaleReadingSimulator";
 import { useScaleBridgeReading } from "../../features/pos/hooks/useScaleBridgeReading";
+import { ScaleLabelDuplicateDialog } from "../../features/pos/components/scale/ScaleLabelDuplicateDialog";
+import { SCALE_LABEL_RESOLVED_FROM } from "../../features/pos/api/barcodeApi";
+import { scaleLabelErrorMessage } from "../../features/pos/utils/scaleLabelMessages";
 import {
   getCartItemCount,
   getCashMovementLabel,
@@ -445,6 +448,15 @@ export default function POSPage() {
   // group-id-keyed shape above, which only ever tracked presence, never a count).
   const [weightEntryVariant, setWeightEntryVariant] = useState(null);
   const [pendingWeight, setPendingWeight] = useState(null);
+  // Scale Label Barcodes Phase 1: where pendingWeight came from, carried to the modifier picker
+  // with it -- { weightSource: "Manual" | "ScaleBridge" } or { weightSource: "ScaleLabel",
+  // scaleLabelBarcode }.
+  const [pendingWeightSource, setPendingWeightSource] = useState(null);
+  // The last value the Scale Bridge panel applied into the open weight dialog. Confirming exactly
+  // that weight records ScaleBridge; typing or changing it (or using the simulator) records Manual.
+  const bridgeAppliedWeightRef = useRef(null);
+  // A scale label already on this order, scanned again: waits for the cashier's confirmation.
+  const [duplicateScaleLabel, setDuplicateScaleLabel] = useState(null);
   const [modifierQuantities, setModifierQuantities] = useState({});
   // Variable-Weight Products Phase F.2: development-only scale-reading simulator state. Always
   // constructed (cheap plain React state, no side effects) -- only ever RENDERED when
@@ -768,9 +780,20 @@ export default function POSPage() {
   // genuine "2 sauces" selection back down to a flat, quantity-less presence the moment ANY other
   // line in the cart is edited (this endpoint fully replaces the whole line array on every
   // request, so every line gets re-sent on every edit, not just the one actually changed).
+  //
+  // Scale Label Barcodes Phase 1: for the same reason, every ByWeight line re-sends its own
+  // weightSource (and a ScaleLabel line its raw scaleLabelBarcode) on every update -- the backend
+  // re-verifies a label each time. A line with no recorded source (created before this existed)
+  // sends none and so stays null/unknown; nothing is ever guessed for it.
   const mapDraftLinesToRequest = (lines = draftLines) =>
     lines.map((line) => {
       const base = { productVariantId: line.productVariantId, quantity: Number(line.quantity) };
+      if (line.sellingMode === "ByWeight" && line.weightSource) {
+        base.weightSource = line.weightSource;
+        if (line.weightSource === "ScaleLabel" && line.scaleLabelBarcode) {
+          base.scaleLabelBarcode = line.scaleLabelBarcode;
+        }
+      }
 
       if (line.sellingMode === "ByWeight" && line.modifiers.length > 0) {
         return {
@@ -880,6 +903,15 @@ export default function POSPage() {
       );
       setTaxCategoryBanner(names.length ? names : ["This product"]);
       notify("This product needs a tax category before it can be sold.");
+      return;
+    }
+
+    // Scale Label Barcodes Phase 1 -- e.g. SalesOrder.ScaleLabelNotEnabled (the company turned scale
+    // labels off while this draft still holds label lines): the message tells the cashier to remove
+    // those lines. Error toasts stay until dismissed (see notify).
+    const scaleLabelMessage = scaleLabelErrorMessage(error?.code, t);
+    if (scaleLabelMessage) {
+      notify(scaleLabelMessage);
       return;
     }
 
@@ -1742,14 +1774,36 @@ export default function POSPage() {
     if (!canEditDraft || !currentCompanyId || !currentBranchId) return;
 
     try {
-      const { item } = await resolveBarcodeMutation.mutateAsync(scan.value);
+      const { item, resolvedFrom, decodedWeight } = await resolveBarcodeMutation.mutateAsync(scan.value);
+
+      // Scale Label Barcodes Phase 1: a label printed by the label scale already carries the
+      // weight -- the server decoded it (no JavaScript decoder exists) and priced the item from the
+      // catalog. The line is added with that weight straight away, no weight dialog, and the RAW
+      // scanned code travels with it so the server can re-decode it on every update.
+      if (resolvedFrom === SCALE_LABEL_RESOLVED_FROM && Number(decodedWeight) > 0) {
+        const barcode = scan.value.trim();
+        // The label has no unique id, so the same printed label could be scanned twice by mistake.
+        // It cannot be fully prevented (two packs CAN carry identical labels) -- ask first.
+        if (draftLines.some((line) => line.scaleLabelBarcode === barcode)) {
+          setDuplicateScaleLabel({ item, weight: Number(decodedWeight), barcode });
+          setModal("scaleLabelDuplicate");
+          return;
+        }
+
+        addScaleLabelLine(item, Number(decodedWeight), barcode);
+        return;
+      }
+
       // Resolved directly to the same shape the product grid renders -- add one unit straight
       // to the basket (Section C), skipping the modifier-selection dialog selectVariantForDraft
       // would open for a manual click: a scan is a single unambiguous action, not the start of a
       // guided picker flow.
       await addSellableVariant(item, []);
     } catch (error) {
-      if (error?.code === "Catalog.ProductVariantNotSellable") {
+      const scaleLabelMessage = scaleLabelErrorMessage(error?.code, t);
+      if (scaleLabelMessage) {
+        notify(scaleLabelMessage);
+      } else if (error?.code === "Catalog.ProductVariantNotSellable") {
         notify(error.message || "This product is not currently available for sale.");
       } else if (error?.code === "Catalog.BarcodeNotFound") {
         notify(`No product found for "${scan.value}".`);
@@ -1757,6 +1811,35 @@ export default function POSPage() {
         notify(error?.message || "Unable to resolve scanned barcode.");
       }
     }
+  };
+
+  // Scale Label Barcodes Phase 1: adds a scale-label line with its decoded weight. A variant with
+  // modifier groups still gets the modifier picker (required groups must be satisfied), just
+  // without the weight dialog -- the weight and its label ride along as pendingWeight/-Source.
+  const addScaleLabelLine = (item, weight, barcode) => {
+    const source = { weightSource: "ScaleLabel", scaleLabelBarcode: barcode };
+    if (item.modifierGroups?.length) {
+      setSelectedVariantProduct(null);
+      setSelectedModifierVariant(item);
+      setModifierSelections({});
+      setModifierQuantities({});
+      setPendingWeight(weight);
+      setPendingWeightSource(source);
+      setModal("modifiers");
+      return;
+    }
+
+    addWeightedLine(item, weight, [], source);
+  };
+  const confirmDuplicateScaleLabel = () => {
+    const pending = duplicateScaleLabel;
+    setDuplicateScaleLabel(null);
+    setModal(null);
+    if (pending) addScaleLabelLine(pending.item, pending.weight, pending.barcode);
+  };
+  const cancelDuplicateScaleLabel = () => {
+    setDuplicateScaleLabel(null);
+    setModal(null);
   };
 
   useKeyboardWedgeScanner({
@@ -1775,6 +1858,10 @@ export default function POSPage() {
     if (variant.modifierGroups?.length) {
       setSelectedModifierVariant(variant);
       setModifierSelections({});
+      // A PerUnit pick never carries a weight. Closing the modifier picker does not clear these,
+      // so a weighed (or scale-label) item whose picker was cancelled must not leak onto this one.
+      setPendingWeight(null);
+      setPendingWeightSource(null);
       setModal("modifiers");
       return;
     }
@@ -1805,6 +1892,11 @@ export default function POSPage() {
   // keeping whichever of its modifier options also exist on the new variant.
   const changeLineVariant = (line, variant) => {
     if (!variant || line.productVariantId === variant.productVariantId) return;
+    // A scale label belongs to one product; the server would reject the moved line.
+    if (line.weightSource === "ScaleLabel") {
+      notify(t("pos.scaleLabel.sizeLocked"));
+      return;
+    }
     const currentIds = line.modifiers.map((modifier) => modifier.modifierOptionId);
     updateDraftLine(line, {
       productVariantId: variant.productVariantId,
@@ -1838,10 +1930,14 @@ export default function POSPage() {
       if (index < 0) return null;
 
       const requestLines = mapDraftLinesToRequest(baseLines);
+      const current = requestLines[index];
       requestLines[index] = {
-        productVariantId: requestLines[index].productVariantId,
-        quantity: requestLines[index].quantity,
+        productVariantId: current.productVariantId,
+        quantity: current.quantity,
         modifierSelections: nextSelections,
+        // Scale Label Barcodes Phase 1: only the extras change -- the weight source and label stay.
+        ...(current.weightSource ? { weightSource: current.weightSource } : {}),
+        ...(current.scaleLabelBarcode ? { scaleLabelBarcode: current.scaleLabelBarcode } : {}),
       };
       return requestLines;
     });
@@ -1851,7 +1947,11 @@ export default function POSPage() {
   // and modifier selections, because "merging" two independently-weighed portions would mean
   // silently adding their weights together, which the cashier never asked for. "Weigh the same
   // fish again" is always its own deliberate new line.
-  const addWeightedLine = async (variant, weight, selections) => {
+  //
+  // Scale Label Barcodes Phase 1: `source` says where the weight came from and is always sent --
+  // { weightSource: "Manual" } (the default: typed, keypad or simulator), { weightSource:
+  // "ScaleBridge" }, or { weightSource: "ScaleLabel", scaleLabelBarcode: <raw scanned code> }.
+  const addWeightedLine = async (variant, weight, selections, source = { weightSource: "Manual" }) => {
     if (!canEditDraft || !variant) return;
 
     setActiveProductId(variant.productId ?? null);
@@ -1862,6 +1962,7 @@ export default function POSPage() {
         productVariantId: variant.productVariantId,
         quantity: weight,
         modifierSelections: selections,
+        ...source,
       });
       return requestLines;
     });
@@ -1875,6 +1976,8 @@ export default function POSPage() {
     setModifierSelections({});
     setModifierQuantities({});
     setPendingWeight(null);
+    setPendingWeightSource(null);
+    bridgeAppliedWeightRef.current = null;
     setWeightEntryVariant(variant);
     setModal("weightEntry");
   };
@@ -1888,8 +1991,15 @@ export default function POSPage() {
     const variant = weightEntryVariant;
     if (!variant) return;
 
+    // ScaleBridge only when the cashier confirms exactly the weight the bridge panel applied;
+    // anything typed or changed afterwards is a Manual weight. Neither is verified server-side.
+    const applied = bridgeAppliedWeightRef.current;
+    const source = { weightSource: applied !== null && Number(applied) === weight ? "ScaleBridge" : "Manual" };
+    bridgeAppliedWeightRef.current = null;
+
     if (variant.modifierGroups?.length) {
       setPendingWeight(weight);
+      setPendingWeightSource(source);
       setSelectedModifierVariant(variant);
       setModifierSelections({});
       setModifierQuantities({});
@@ -1900,7 +2010,7 @@ export default function POSPage() {
 
     setWeightEntryVariant(null);
     setModal(null);
-    addWeightedLine(variant, weight, []);
+    addWeightedLine(variant, weight, [], source);
   };
   // Final submit of the "modifiers" dialog: a ByWeight variant (pendingWeight set) sends its
   // selections as modifierSelections, with each option's own quantity from modifierQuantities
@@ -1916,12 +2026,14 @@ export default function POSPage() {
       }));
       const variant = selectedModifierVariant;
       const weight = pendingWeight;
+      const source = pendingWeightSource ?? { weightSource: "Manual" };
       setSelectedModifierVariant(null);
       setModifierSelections({});
       setModifierQuantities({});
       setPendingWeight(null);
+      setPendingWeightSource(null);
       setModal(null);
-      addWeightedLine(variant, weight, selections);
+      addWeightedLine(variant, weight, selections, source);
       return;
     }
 
@@ -2525,6 +2637,12 @@ export default function POSPage() {
               selectedLineId={effectiveSelectedLineId}
               onSelectLine={setSelectedLineId}
               onEditQuantity={(line) => {
+                // Scale Label Barcodes Phase 1: a label line's weight is the label's -- never edited
+                // in place (OrderLines hides the control too; this is the backstop).
+                if (line.weightSource === "ScaleLabel") {
+                  notify(t("pos.scaleLabel.weightLocked"));
+                  return;
+                }
                 setQuantityKeypadTarget({
                   lineId: line.salesOrderLineId,
                   initialValue: line.quantity,
@@ -2853,7 +2971,12 @@ export default function POSPage() {
                   <ScaleBridgePanel
                     bridgeState={scaleBridgeState}
                     targetUnit={weightEntryVariant.salesUnitOfMeasure?.code}
-                    onApply={(value) => setValue(String(value))}
+                    onApply={(value) => {
+                      // Remembered so confirmWeightEntry can record WeightSource = ScaleBridge
+                      // when this exact reading is what gets confirmed.
+                      bridgeAppliedWeightRef.current = value;
+                      setValue(String(value));
+                    }}
                   />
                 )}
                 {env.features.scaleSimulatorEnabled && (
@@ -2864,12 +2987,24 @@ export default function POSPage() {
                     // conversion check never relies on code/symbol happening to differ only by
                     // letter case.
                     targetUnit={weightEntryVariant.salesUnitOfMeasure?.code}
-                    onApply={(value) => setValue(String(value))}
+                    onApply={(value) => {
+                      // A simulated reading is not a real device: it is recorded as Manual.
+                      bridgeAppliedWeightRef.current = null;
+                      setValue(String(value));
+                    }}
                   />
                 )}
               </>
             )}
           </NumericKeypadModal>
+        )}
+
+        {modal === "scaleLabelDuplicate" && duplicateScaleLabel && (
+          <ScaleLabelDuplicateDialog
+            barcode={duplicateScaleLabel.barcode}
+            onConfirm={confirmDuplicateScaleLabel}
+            onCancel={cancelDuplicateScaleLabel}
+          />
         )}
       </main>
     </AppLayout>

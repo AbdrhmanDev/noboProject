@@ -14,11 +14,20 @@ export type ModifierSelectionInput = {
   quantity: number;
 };
 
+// Scale Label Barcodes Phase 1: where a ByWeight line's weight came from. Only "ScaleLabel" is
+// verified by the server (it re-decodes the raw label on every create/update); "Manual" and
+// "ScaleBridge" are declarations. null/absent = unknown (lines created before this existed).
+export type WeightSource = "Manual" | "ScaleLabel" | "ScaleBridge";
+
 export type DraftSalesOrderLineInput = {
   productVariantId: string;
   quantity: number;
   modifierOptionIds?: string[];
   modifierSelections?: ModifierSelectionInput[];
+  // ByWeight lines only. An update replaces EVERY line, so both are re-sent for every line on
+  // every update; a ScaleLabel line must carry the RAW scanned label in scaleLabelBarcode.
+  weightSource?: WeightSource;
+  scaleLabelBarcode?: string;
 };
 
 export type DraftSalesOrderDiscountInput = {
@@ -78,6 +87,10 @@ export type DraftSalesOrderLine = {
   // "PerUnit" | "ByWeight" (Variable-Weight Products Phase B). For ByWeight, `quantity` is the
   // measured weight in `salesUnitOfMeasure` and `unitPrice` is the price per that sales unit.
   sellingMode: SellingMode;
+  // Scale Label Barcodes Phase 1 (see WeightSource). null = unknown; always null for PerUnit.
+  weightSource?: WeightSource | null;
+  scaleLabelBarcode?: string | null;
+  weightSourceVerified?: boolean;
 };
 
 export type DraftSalesOrderDiscount = {

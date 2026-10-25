@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, Minus, Plus, ShoppingCart, SlidersHorizontal, Trash2 } from "lucide-react";
+import { ChevronDown, Minus, Plus, ScanBarcode, ShoppingCart, SlidersHorizontal, Trash2 } from "lucide-react";
 import { formatMoney } from "../../../../shared/utils/formatters";
 import { useI18n } from "../../../../i18n/I18nContext";
 import { brandAccentStyle } from "../../utils/brandAccents";
@@ -133,6 +133,9 @@ export function OrderLines({
           draftOrder?.currencyMinorUnitDigits || 2,
         );
         const isByWeight = item.sellingMode === "ByWeight";
+        // Scale Label Barcodes Phase 1: the weight was read from a scale label (server-verified) --
+        // marked as such, and never editable in place (remove the line and rescan instead).
+        const isScaleLabel = isByWeight && item.weightSource === "ScaleLabel";
         // ByWeight: each modifier shows its own independent quantity ("Sauce x2") -- a plain name
         // list would hide the exact thing Phase 3 exists to make editable. PerUnit keeps the
         // original flat name list unchanged.
@@ -169,6 +172,11 @@ export function OrderLines({
                 )}
                 {modifierNames && <span className="text-pos-primary-text"> · {modifierNames}</span>}
               </span>
+              {isScaleLabel && (
+                <span title={t("pos.scaleLabel.marker")} className="shrink-0 text-pos-muted">
+                  <ScanBarcode size={12} aria-label={t("pos.scaleLabel.marker")} />
+                </span>
+              )}
               <span className="pos-num pos-fs-line shrink-0 font-bold text-pos-text">{lineTotal}</span>
             </div>
           );
@@ -207,6 +215,12 @@ export function OrderLines({
             </div>
             {isByWeight && (
               <div className="pos-num pos-fs-label mt-0.5 text-pos-muted">{unitRate}</div>
+            )}
+            {isScaleLabel && (
+              <div className="pos-fs-label mt-0.5 flex items-center gap-1 text-pos-muted">
+                <ScanBarcode size={12} />
+                {t("pos.scaleLabel.marker")}
+              </div>
             )}
             {modifierNames && (
               <div className="pos-fs-label mt-0.5 line-clamp-2 text-pos-primary-text">+ {modifierNames}</div>
@@ -282,7 +296,15 @@ export function OrderLines({
             )}
 
             <div className="mt-1 flex items-center justify-between gap-2">
-              {isByWeight ? (
+              {isScaleLabel ? (
+                // Scale Label Barcodes Phase 1: shown, never editable -- no keypad for a label's weight.
+                <span
+                  title={t("pos.scaleLabel.weightLocked")}
+                  className={`pos-num flex h-11 shrink-0 items-center gap-1 rounded-pos border border-pos-border bg-pos-tint px-3 font-bold text-pos-text ${pending ? "opacity-60" : ""}`}
+                >
+                  {formatQuantity(item.quantity)} {item.salesUnitOfMeasure?.symbol ?? ""}
+                </span>
+              ) : isByWeight ? (
                 // ByWeight: no +/-1 stepper at all -- a weight is an absolute measured value,
                 // never a count to increment/decrement by whole units. Tapping the value is the
                 // ONLY way to change it, and always opens the decimal weight keypad (see

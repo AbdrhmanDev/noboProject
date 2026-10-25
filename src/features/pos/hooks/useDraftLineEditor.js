@@ -157,7 +157,13 @@ export function useDraftLineEditor({
         return requestLines;
       }
 
-      requestLines[index] = { ...requestLines[index], quantity: desiredQuantity };
+      // Scale Label Barcodes Phase 1: a ByWeight weight changed here came from the weight keypad --
+      // a manual entry -- so the line is recorded as Manual from now on (ScaleLabel lines never get
+      // here: see changeQuantity below).
+      requestLines[index] =
+        baseLines[index].sellingMode === "ByWeight"
+          ? { ...requestLines[index], quantity: desiredQuantity, weightSource: "Manual" }
+          : { ...requestLines[index], quantity: desiredQuantity };
       return requestLines;
     },
     [mapDraftLinesToRequest],
@@ -170,6 +176,9 @@ export function useDraftLineEditor({
       const baseLines = draftRef.current?.lines ?? [];
       const line = baseLines.find((candidate) => candidate.salesOrderLineId === salesOrderLineId);
       if (!line) return;
+      // Scale Label Barcodes Phase 1: a scale-label line's weight IS its label's -- it is removed
+      // and rescanned, never edited (the server would reject the mismatch anyway).
+      if (line.weightSource === "ScaleLabel") return;
 
       const base = desiredQuantitiesRef.current[salesOrderLineId] ?? Number(line.quantity);
       const next = Math.max(base + delta, 0);

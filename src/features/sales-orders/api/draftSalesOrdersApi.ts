@@ -291,6 +291,11 @@ function normalizeDraftDetails(data: Record<string, any>): DraftSalesOrder {
       // Same Phase E addition: which pricing/quantity semantics this line uses. Defaults to
       // PerUnit, matching every line that predates SellingMode.
       sellingMode: line.sellingMode ?? "PerUnit",
+      // Scale Label Barcodes Phase 1: carried through so the next full-draft update re-sends them
+      // (the backend rebuilds every line). Absent/null stays null = unknown, never guessed.
+      weightSource: line.weightSource ?? null,
+      scaleLabelBarcode: line.scaleLabelBarcode ?? null,
+      weightSourceVerified: Boolean(line.weightSourceVerified),
     })),
   };
 }
