@@ -63,6 +63,19 @@ export async function getKitchenStationDetails(
   return response.data;
 }
 
+export async function createKitchenStation(
+  companyId: string,
+  branchId: string,
+  payload: UpdateKitchenStationRequest,
+) {
+  const response = await httpClient.post<KitchenStationDetails>(
+    `${kitchenBaseUrl(companyId, branchId)}/stations`,
+    payload,
+  );
+
+  return response.data;
+}
+
 export async function updateKitchenStation(
   companyId: string,
   branchId: string,

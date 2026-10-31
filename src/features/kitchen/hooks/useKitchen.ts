@@ -5,6 +5,7 @@ import { printJobQueryKeys } from "../../devices/hooks/usePrintJobs";
 import type { PrintJobResponse } from "../../devices/types/devices.types";
 import {
   changeKitchenStationStatus,
+  createKitchenStation,
   getKitchenStationDetails,
   getKitchenStations,
   getOpenKitchenTickets,
@@ -185,6 +186,19 @@ function invalidateKitchenAdmin(
       queryKey: kitchenQueryKeys.adminStation(companyId, branchId, kitchenStationId),
     });
   }
+}
+
+export function useCreateKitchenStation(
+  companyId: string | null | undefined,
+  branchId: string | null | undefined,
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: UpdateKitchenStationRequest) =>
+      createKitchenStation(companyId as string, branchId as string, payload),
+    onSuccess: () => invalidateKitchenAdmin(queryClient, companyId, branchId),
+  });
 }
 
 export function useUpdateKitchenStation(

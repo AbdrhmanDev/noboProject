@@ -6,6 +6,7 @@ import {
   CirclePause,
   CookingPot,
   Pencil,
+  Plus,
   Power,
   RefreshCw,
   Route,
@@ -26,6 +27,7 @@ import { useHasPermission } from "../../features/companies/hooks/useCompanies";
 import { useI18n } from "../../i18n/I18nContext";
 import {
   useChangeKitchenStationStatus,
+  useCreateKitchenStation,
   useKitchenStationDetails,
   useKitchenStations,
   useProductVariantKitchenRoutes,
@@ -241,6 +243,8 @@ export default function KitchenAdminPage() {
   const [stationStatus, setStationStatus] = useState("");
   const [selectedStationId, setSelectedStationId] = useState(null);
   const [stationForm, setStationForm] = useState(EMPTY_STATION_FORM);
+  // True while the right-hand pane holds the empty "new station" form instead of a selected station.
+  const [isCreatingStation, setIsCreatingStation] = useState(false);
   const [selectedVariantId, setSelectedVariantId] = useState("");
   const [routeSearch, setRouteSearch] = useState("");
   const [routeForm, setRouteForm] = useState(EMPTY_ROUTE_FORM);
@@ -280,6 +284,7 @@ export default function KitchenAdminPage() {
     selectedVariantId,
     canRead && Boolean(selectedVariantId),
   );
+  const createStationMutation = useCreateKitchenStation(currentCompanyId, currentBranchId);
   const updateStationMutation = useUpdateKitchenStation(
     currentCompanyId,
     currentBranchId,
@@ -297,6 +302,7 @@ export default function KitchenAdminPage() {
   );
   const selectedStation = stationDetailsQuery.data || null;
   const isStationMutating =
+    createStationMutation.isPending ||
     updateStationMutation.isPending ||
     statusMutation.isPending;
   const variants = useMemo(() => {
@@ -318,7 +324,14 @@ export default function KitchenAdminPage() {
     window.setTimeout(() => setNotice(""), 3000);
   };
 
+  const startCreateStation = () => {
+    setIsCreatingStation(true);
+    setSelectedStationId(null);
+    setStationForm(EMPTY_STATION_FORM);
+  };
+
   const selectStation = (station) => {
+    setIsCreatingStation(false);
     setSelectedStationId(station.kitchenStationId);
     setStationForm({
       code: station.code,
@@ -331,6 +344,22 @@ export default function KitchenAdminPage() {
     const sortOrder = parseSortOrder(stationForm.sortOrder);
     if (sortOrder === null) {
       showNotice(t("kitchenAdmin.notice.invalidSortOrder"));
+      return;
+    }
+
+    if (isCreatingStation) {
+      try {
+        const created = await createStationMutation.mutateAsync({
+          code: stationForm.code,
+          name: stationForm.name,
+          sortOrder,
+        });
+        setIsCreatingStation(false);
+        setSelectedStationId(created.kitchenStationId);
+        showNotice(t("kitchenAdmin.notice.stationCreated"));
+      } catch (error) {
+        showNotice(getErrorMessage(error, t));
+      }
       return;
     }
 
@@ -488,6 +517,16 @@ export default function KitchenAdminPage() {
                   <option value="Suspended">{t("kitchenAdmin.common.suspended")}</option>
                 </select>
               </div>
+              {canManage && (
+                <button
+                  type="button"
+                  onClick={startCreateStation}
+                  className="mb-3 flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-blue-400/40 bg-blue-500/10 text-xs font-bold text-blue-100 transition hover:bg-blue-500/20"
+                >
+                  <Plus size={15} />
+                  {t("kitchenAdmin.action.newStation")}
+                </button>
+              )}
 
               {stationsQuery.isLoading && <LoadingState label={t("kitchenAdmin.loadingStations")} />}
               {stationsQuery.isError && (
@@ -528,7 +567,8 @@ export default function KitchenAdminPage() {
                     {t("kitchenAdmin.stationDetails.label")}
                   </div>
                   <h2 className="mt-1 text-xl font-black text-white">
-                    {selectedStation?.code ||
+                    {(isCreatingStation && t("kitchenAdmin.stationDetails.newTitle")) ||
+                      selectedStation?.code ||
                       (selectedStationId
                         ? t("kitchenAdmin.stationDetails.loading")
                         : t("kitchenAdmin.stationDetails.selectPrompt"))}
@@ -548,6 +588,17 @@ export default function KitchenAdminPage() {
                 <ErrorState
                   title={t("kitchenAdmin.loadStationDetailsError")}
                   message={getErrorMessage(stationDetailsQuery.error, t)}
+                />
+              )}
+              {isCreatingStation && (
+                <StationForm
+                  form={stationForm}
+                  setForm={setStationForm}
+                  canManage={canManage}
+                  isPending={isStationMutating}
+                  selectedStation={null}
+                  onSubmit={submitStation}
+                  onStatusChange={() => {}}
                 />
               )}
               {selectedStation && (
