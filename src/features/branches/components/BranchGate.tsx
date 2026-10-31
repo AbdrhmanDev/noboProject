@@ -31,6 +31,12 @@ export function BranchGate({ children }: BranchGateProps) {
     isError: branchesError,
   } = useMyBranches(currentCompanyId, canLoadBranches);
 
+  // CompanyGate lets children through without a company only for platform staff on the Control
+  // Plane (/platform/*), which needs no branch either.
+  if (isCompanyContextReady && !currentCompanyId) {
+    return children;
+  }
+
   if (!isBranchContextReady) {
     return (
       <BranchGateShell>
