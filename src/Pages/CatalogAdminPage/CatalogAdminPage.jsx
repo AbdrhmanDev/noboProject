@@ -98,6 +98,8 @@ const EMPTY_VARIANT_FORM = {
   sellingMode: "PerUnit",
   // Scale Label Barcodes Phase 1: the label scale's PLU. Only shown and sent for ByWeight variants.
   scaleItemCode: "",
+  // Optional kcal shown on the POS product card (per kg for ByWeight). Digits only; "" = none.
+  calories: "",
 };
 const EMPTY_MODIFIER_GROUP_FORM = { name: "" };
 const EMPTY_MODIFIER_OPTION_FORM = { name: "", sortOrder: "0" };
@@ -591,6 +593,23 @@ function VariantForm({
           </>
         )}
       </div>
+      {/* Optional calories (kcal), shown on the POS product card. Per kg for a ByWeight variant. */}
+      <label className="block max-w-xs text-sm font-semibold text-muted">
+        {t("catalogAdmin.field.calories")}
+        <input
+          value={form.calories}
+          onChange={(event) => setForm((draft) => ({ ...draft, calories: event.target.value.replace(/\D/g, "") }))}
+          maxLength={5}
+          inputMode="numeric"
+          dir="ltr"
+          placeholder={t("catalogAdmin.calories.placeholder")}
+          disabled={!canManage || isPending || !selectedProduct}
+          className="mt-1 h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
+        />
+        <span className="mt-1 block text-xs font-normal text-subtle">
+          {showScaleItemCode ? t("catalogAdmin.calories.hintPerKg") : t("catalogAdmin.calories.hint")}
+        </span>
+      </label>
       {showScaleItemCode && (
         <label className="block max-w-xs text-sm font-semibold text-muted">
           {t("catalogAdmin.field.scaleItemCode")}
@@ -1786,6 +1805,7 @@ export default function CatalogAdminPage() {
       // (see submitVariant, which never sends this field on update).
       sellingMode: variant.sellingMode || "PerUnit",
       scaleItemCode: variant.scaleItemCode || "",
+      calories: variant.calories == null ? "" : String(variant.calories),
     });
     setScaleItemCodeError("");
   };
@@ -1890,11 +1910,19 @@ export default function CatalogAdminPage() {
     const scaleItemCode = variantForm.scaleItemCode.trim();
     setScaleItemCodeError("");
 
+    // Calories: on create sent only when filled; on update an empty field clears it (clearCalories).
+    const caloriesText = variantForm.calories.trim();
+    const calories = caloriesText === "" ? null : Number(caloriesText);
+    if (calories !== null && (!Number.isInteger(calories) || calories < 0 || calories > 99999)) {
+      return showNotice(t("catalogAdmin.notice.caloriesInvalid"));
+    }
+
     try {
       const payload = {
         name: variantForm.name,
         sku: variantForm.sku.trim() || null,
         sortOrder,
+        ...(calories !== null ? { calories } : variantMode === "edit" ? { clearCalories: true } : {}),
       };
       const result =
         variantMode === "create"
@@ -1916,6 +1944,7 @@ export default function CatalogAdminPage() {
         sortOrder: String(result.sortOrder),
         sellingMode: result.sellingMode || "PerUnit",
         scaleItemCode: result.scaleItemCode || "",
+        calories: result.calories == null ? "" : String(result.calories),
       });
       showNotice(
         variantMode === "create"

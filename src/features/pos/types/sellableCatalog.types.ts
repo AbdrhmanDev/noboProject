@@ -40,6 +40,8 @@ export type BranchSellableCatalogItem = {
   unitPrice: number;
   modifierGroups: BranchSellableCatalogModifierGroup[];
   sellingMode: SellingMode;
+  // Optional kcal (per kg for ByWeight) shown on the product card; null/absent = not stated.
+  calories?: number | null;
 };
 
 export type BranchSellableCatalogResponse = {

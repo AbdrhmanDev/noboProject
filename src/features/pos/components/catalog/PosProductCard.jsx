@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Minus, Package, Plus, RotateCcw } from "lucide-react";
+import { Flame, Minus, Package, Plus, RotateCcw } from "lucide-react";
 import { formatMoney } from "../../../../shared/utils/formatters";
 import { useResolvedImageSrc } from "../../../../shared/hooks/useResolvedImageSrc";
 import { useI18n } from "../../../../i18n/I18nContext";
@@ -129,6 +129,7 @@ export function PosProductCard({
             className="pos-flip-face overflow-hidden text-start"
           >
             <ProductPhoto imageUrl={product.imageUrl} />
+            <CaloriesTag variant={stockVariant} className="absolute bottom-1.5 end-1.5" />
             {variantBreakdown.length === 1 && (
               <span className="pos-num absolute left-1.5 top-1.5 grid h-6 min-w-6 place-items-center rounded-full bg-pos-primary-strong px-1.5 text-[11px] font-bold text-white shadow-sm">
                 {variantBreakdown[0].qty}
@@ -335,6 +336,27 @@ function StockLine({ variant, inventory, active }) {
   );
 }
 
+// The variant's optional calories ("220 kcal", per kg for ByWeight) as a small pill; nothing when
+// the variant has none. On the photo it is the shown variant's (the size in the cart, else the
+// smallest); on the back of a multi-size card it follows the picked size.
+function CaloriesTag({ variant, className = "" }) {
+  const { t } = useI18n();
+  if (variant?.calories == null) return null;
+  const label = t(variant.sellingMode === "ByWeight" ? "pos.catalog.caloriesPerKg" : "pos.catalog.calories", {
+    value: variant.calories,
+  });
+
+  return (
+    <span
+      title={label}
+      className={`pos-num inline-flex items-center gap-0.5 rounded-full bg-pos-card px-1.5 py-0.5 text-[10px] font-bold text-pos-text shadow-sm ${className}`}
+    >
+      <Flame size={11} aria-hidden="true" className="text-pos-warning-text" />
+      <span>{label}</span>
+    </span>
+  );
+}
+
 // Product photo filling the middle band's front face. The fallback icon and the real <img> are never
 // both mounted at once.
 function ProductPhoto({ imageUrl }) {
@@ -435,6 +457,7 @@ function SizeCircles({ sizes, activeSize, quantityOf, currencyCode, inventory, d
           );
         })}
       </div>
+      <CaloriesTag variant={activeSize} />
 
       <div className="w-full">
         {activeSize.sellingMode === "ByWeight" ? (

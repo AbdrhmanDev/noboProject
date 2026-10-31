@@ -141,6 +141,8 @@ export type ProductVariantAdmin = {
   // Scale Label Barcodes Phase 1: the label scale's PLU (ByWeight only), canonical form (no
   // leading zeros), or null.
   scaleItemCode?: string | null;
+  // Optional kcal (per kg for ByWeight) shown on the POS product card, or null.
+  calories?: number | null;
 };
 
 // Only barcodes with isActive=true are usable for scanning/label printing -- inactive rows are
@@ -203,6 +205,8 @@ export type CreateProductVariantRequest = {
   sellingMode?: SellingMode;
   // ByWeight only; omit (or null) for none.
   scaleItemCode?: string | null;
+  // Optional kcal (per kg for ByWeight), 0-99999; omit for none.
+  calories?: number | null;
 };
 
 export type CreateProductVariantResponse = {
@@ -217,6 +221,8 @@ export type CreateProductVariantResponse = {
   createdAtUtc: string;
   sellingMode: SellingMode;
   scaleItemCode?: string | null;
+  // Optional kcal (per kg for ByWeight) shown on the POS product card, or null.
+  calories?: number | null;
 };
 
 export type UpdateProductVariantRequest = {
@@ -226,6 +232,9 @@ export type UpdateProductVariantRequest = {
   // Scale Label Barcodes Phase 1: OMIT to keep the current PLU unchanged, "" to clear it, digits to
   // set it (ByWeight only -- the backend rejects a PLU on a PerUnit variant).
   scaleItemCode?: string;
+  // Calories: omit to keep unchanged, a number to set, clearCalories: true to remove.
+  calories?: number;
+  clearCalories?: boolean;
 };
 
 export type UnitOfMeasure = {
