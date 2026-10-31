@@ -19,7 +19,7 @@ import {
   isCompanyEnterable,
   useCompany,
 } from "../features/companies/context/CompanyContext";
-import { useMyCompanies } from "../features/companies/hooks/useCompanies";
+import { useCompanyPermissions, useMyCompanies } from "../features/companies/hooks/useCompanies";
 import { ROUTES } from "../utils/routes";
 import { NAV_ITEMS } from "../utils/navItems";
 import { InventoryNavGroup } from "../features/inventory/components/InventoryNavGroup";
@@ -129,6 +129,7 @@ export default function AppLayout({ children, onLogout }) {
   const { currentCompanyId, clearCompany } = useCompany();
   const { clearBranch } = useBranch();
   const { data: companies = [] } = useMyCompanies();
+  const { data: currentCompanyPermissions } = useCompanyPermissions(currentCompanyId);
   // Self-scoped (no Branches.View required) -- the top-bar branch switcher must work for a
   // cashier-only role too.
   const { data: branches = [] } = useMyBranches(currentCompanyId);
@@ -244,11 +245,13 @@ export default function AppLayout({ children, onLogout }) {
             {/* Deliberately NOT a PermissionNavItem: those all require currentCompanyId truthy,
                 but the applicant Customer Registration flow is exactly for a user who may have NO
                 company yet (its route bypasses CompanyGate too -- see AuthenticatedOnlyRoute).
-                Always visible to any authenticated user; the backend is the real gate.
+                Shown to a user with no company yet (the applicant) and to the current company's
+                Owner (their registration and amendments) -- never to its other members (cashiers,
+                managers); the backend is still the real gate.
                 SelfHosted exception: a single-restaurant offline install has no "register a new
                 company with NOBO" use case at all, so this entry point is hidden there -- Cloud
                 (where this is a real new-customer signup flow) is unaffected. */}
-            {env.deploymentMode !== "SelfHosted" && (
+            {env.deploymentMode !== "SelfHosted" && (companies.length === 0 || currentCompanyPermissions?.isOwner) && (
               <button
                 type="button"
                 onClick={() => go(ROUTES.REGISTRATION_NEW)}
