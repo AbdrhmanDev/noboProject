@@ -20,6 +20,10 @@ type AppEnv = {
     // Agent to reach) can never have this on, no matter how the env var is set, so a
     // misconfigured Cloud build never tries to talk to localhost:47811 from a browser elsewhere.
     scaleBridgeEnabled: boolean;
+    // Product images uploaded through the API (catalog admin "upload" button) instead of a pasted
+    // URL. Always on for SelfHosted (local disk); on for Cloud only with VITE_PRODUCT_IMAGE_UPLOAD
+    // =true, i.e. when that backend has its ProductImageStore:R2 bucket configured.
+    productImageUpload: boolean;
   };
   // Separate from `features` because it's a value, not a toggle -- read by scaleBridgeApi.ts
   // only, and only consulted at all when features.scaleBridgeEnabled is true.
@@ -62,6 +66,7 @@ export const env: AppEnv = {
     tableMerge: flagEnv("VITE_FEATURE_TABLE_MERGE"),
     scaleSimulatorEnabled: flagEnv("VITE_SCALE_SIMULATOR_ENABLED"),
     scaleBridgeEnabled: flagEnv("VITE_SCALE_BRIDGE_ENABLED") && deploymentMode === "SelfHosted",
+    productImageUpload: deploymentMode === "SelfHosted" || flagEnv("VITE_PRODUCT_IMAGE_UPLOAD"),
   },
   scaleBridge: {
     baseUrl: (import.meta.env.VITE_SCALE_BRIDGE_URL || "http://127.0.0.1:47811").replace(/\/+$/, ""),

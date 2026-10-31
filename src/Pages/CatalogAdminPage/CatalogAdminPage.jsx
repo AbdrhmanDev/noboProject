@@ -281,10 +281,10 @@ function ProductForm({
 }) {
   const { t } = useI18n();
   const nextStatus = selectedProduct?.status === "Active" ? "Suspended" : "Active";
-  const isSelfHosted = env.deploymentMode === "SelfHosted";
+  const canUploadImage = env.features.productImageUpload;
   const fileInputRef = useRef(null);
   const { src: imagePreviewSrc, failed: imagePreviewFailed } = useResolvedImageSrc(
-    isSelfHosted ? selectedProduct?.imageUrl : form.imageUrl,
+    canUploadImage ? selectedProduct?.imageUrl : form.imageUrl,
   );
 
   const pickImageFile = (event) => {
@@ -357,7 +357,7 @@ function ProductForm({
           className="mt-1 w-full rounded-xl border border-line bg-canvas px-3 py-2 text-sm text-ink outline-none focus:border-accent-line disabled:opacity-50"
         />
       </label>
-      {isSelfHosted ? (
+      {canUploadImage ? (
         <div className="flex items-end gap-3">
           <div className="flex-1 text-sm font-semibold text-muted">
             {t("catalogAdmin.field.image")}
@@ -1842,7 +1842,7 @@ export default function CatalogAdminPage() {
     if (sortOrder === null) return showNotice(t("catalogAdmin.notice.sortOrderInvalid"));
 
     try {
-      // SelfHosted: the image is managed entirely by the separate upload/remove endpoints, and
+      // Upload mode (SelfHosted, or Cloud with VITE_PRODUCT_IMAGE_UPLOAD): the image is managed entirely by the separate upload/remove endpoints, and
       // productForm.imageUrl is never kept in sync with them (there's no text field writing to it
       // in that mode) -- sending it here would silently overwrite a just-uploaded image back to
       // whatever stale value was loaded when the product was selected. Pass through the server's
@@ -1853,7 +1853,7 @@ export default function CatalogAdminPage() {
         categoryId: productForm.categoryId || null,
         sortOrder,
         imageUrl:
-          env.deploymentMode === "SelfHosted"
+          env.features.productImageUpload
             ? (selectedProduct?.imageUrl ?? null)
             : productForm.imageUrl.trim() || null,
       };

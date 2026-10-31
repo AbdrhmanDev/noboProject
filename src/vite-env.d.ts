@@ -7,6 +7,7 @@ interface ImportMetaEnv {
   readonly VITE_SCALE_SIMULATOR_ENABLED?: string;
   readonly VITE_SCALE_BRIDGE_ENABLED?: string;
   readonly VITE_SCALE_BRIDGE_URL?: string;
+  readonly VITE_PRODUCT_IMAGE_UPLOAD?: string;
 }
 
 interface ImportMeta {
