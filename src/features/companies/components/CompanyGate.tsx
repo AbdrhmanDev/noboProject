@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { ErrorState, LoadingState } from "../../../shared/components/ui";
+import { ROUTES } from "../../../utils/routes";
+import { useCurrentPlatformAccess } from "../../platform/hooks/usePlatform";
 import {
   buildInviteAcceptPath,
   getPendingInvitationToken,
@@ -33,6 +35,11 @@ export function CompanyGate({ children }: CompanyGateProps) {
     isError: companiesError,
   } = useMyCompanies();
   const permissionsQuery = useCompanyPermissions(currentCompanyId);
+  const location = useLocation();
+  // Only asked for a user with no company at all: platform staff (e.g. the platform owner on a fresh
+  // deployment) need no company for the Control Plane, so they must not be sent to company onboarding.
+  const hasNoCompanies = !companiesLoading && !companiesError && companies?.length === 0;
+  const platformAccessQuery = useCurrentPlatformAccess(hasNoCompanies);
 
   if (companiesLoading || !isCompanyContextReady) {
     return (
@@ -60,6 +67,22 @@ export function CompanyGate({ children }: CompanyGateProps) {
     const pendingInvitationToken = getPendingInvitationToken();
     if (pendingInvitationToken) {
       return <Navigate to={buildInviteAcceptPath(pendingInvitationToken)} replace />;
+    }
+
+    if (platformAccessQuery.isLoading) {
+      return (
+        <CompanyGateShell>
+          <LoadingState label="Preparing company context..." />
+        </CompanyGateShell>
+      );
+    }
+
+    // Platform staff without a company of their own: let the Control Plane (/platform/*) through and
+    // send every other route there. A failed access check just falls through to onboarding.
+    if (platformAccessQuery.data?.isPlatformStaff) {
+      return location.pathname.startsWith("/platform/")
+        ? children
+        : <Navigate to={ROUTES.PLATFORM_OVERVIEW} replace />;
     }
 
     return (
