@@ -393,6 +393,9 @@ export default function POSPage() {
   const [orderType, setOrderType] = useState(DEFAULT_FULFILLMENT_TYPE);
   const [selectedRestaurantTableId, setSelectedRestaurantTableId] = useState(null);
   const [discountInput, setDiscountInput] = useState("");
+  // "Percentage" or "FixedAmount" (SAR). A fixed amount is sent as-is: the backend applies exactly that amount and derives the
+  // effective percentage itself for the approval threshold, so no client-side rounding can turn 2.00 into 1.99.
+  const [discountType, setDiscountType] = useState("Percentage");
   const [discountReason, setDiscountReason] = useState("");
   // Pending approval reference returned by the backend (display only -- never applied locally).
   const [discountApproval, setDiscountApproval] = useState(null);
@@ -1597,6 +1600,7 @@ export default function POSPage() {
     setOrderType(DEFAULT_FULFILLMENT_TYPE);
     setSelectedRestaurantTableId(null);
     setDiscountInput("");
+    setDiscountType("Percentage");
     setDiscountReason("");
     setDiscountApproval(null);
     setPaymentAmountInput("");
@@ -1657,6 +1661,7 @@ export default function POSPage() {
       setOrderType(details.fulfillmentType || DEFAULT_FULFILLMENT_TYPE);
       setSelectedRestaurantTableId(details.restaurantTableId || null);
       setDiscountInput("");
+      setDiscountType("Percentage");
       setDiscountReason("");
       setDiscountApproval(null);
       setPaymentAmountInput("");
@@ -2196,7 +2201,7 @@ export default function POSPage() {
       changeQty(line.salesOrderLineId, -1);
     }
   };
-  const submitDiscountRequest = async (value) => {
+  const submitDiscountRequest = async (value, type) => {
     if (requestDiscountMutation.isPending) return;
 
     const reason = discountReason.trim();
@@ -2208,7 +2213,7 @@ export default function POSPage() {
     try {
       // Only { discountType, value, reason } is sent -- never lines/customer/table/amounts.
       const result = await requestDiscountMutation.mutateAsync({
-        discountType: "Percentage",
+        discountType: type,
         value,
         reason,
       });
@@ -2238,20 +2243,26 @@ export default function POSPage() {
     }
 
     const value = Number(discountInput);
-    if (!Number.isFinite(value) || value <= 0 || value > 100) {
-      notify("Enter a percentage discount between 1 and 100.");
+    if (discountType === "FixedAmount") {
+      // The backend refuses an amount above the order total; this only catches what is obviously invalid.
+      if (!/^\d+(\.\d{1,2})?$/.test(String(discountInput).trim()) || value <= 0) {
+        notify(t("pos.discount.invalidAmount"));
+        return;
+      }
+    } else if (!Number.isFinite(value) || value <= 0 || value > 100) {
+      notify(t("pos.discount.invalidPercent"));
       return;
     }
 
     // Users WITHOUT SalesOrders.ApplyDiscount go through the narrow discount endpoint instead of
     // sending an unauthorized full-draft update. The backend stays authoritative on the outcome.
     if (!discountPermissionQuery.hasPermission) {
-      submitDiscountRequest(value);
+      submitDiscountRequest(value, discountType);
       return;
     }
 
     replaceDraftLines(mapDraftLinesToRequest(), {
-      type: "Percentage",
+      type: discountType,
       value,
       reason: "POS manual discount",
     });
@@ -2815,6 +2826,8 @@ export default function POSPage() {
           onConfirmModifierDialog={confirmModifierDialog}
           discountInput={discountInput}
           setDiscountInput={setDiscountInput}
+          discountType={discountType}
+          setDiscountType={setDiscountType}
           discountPermissionQuery={discountPermissionQuery}
           applyDraftDiscount={applyDraftDiscount}
           discountReason={discountReason}

@@ -76,6 +76,8 @@ export function OrderDialogs({
   // Discount
   discountInput,
   setDiscountInput,
+  discountType,
+  setDiscountType,
   discountPermissionQuery,
   applyDraftDiscount,
   discountReason,
@@ -304,17 +306,41 @@ export function OrderDialogs({
 
       {modal === "discount" && (
         <PosModal title={t("pos.discount.title")} onClose={() => setModal(null)}>
-          <label className="block text-xs text-slate-400">{t("pos.discount.percentageLabel")}</label>
+          <div className="mb-3 grid grid-cols-2 gap-2">
+            {["Percentage", "FixedAmount"].map((type) => (
+              <button
+                key={type}
+                type="button"
+                onClick={() => {
+                  setDiscountType(type);
+                  setDiscountInput("");
+                }}
+                aria-pressed={discountType === type}
+                className={`h-10 rounded-xl border text-xs font-bold transition ${
+                  discountType === type
+                    ? "border-pink-500 bg-pink-600 text-white"
+                    : "border-white/10 bg-black/20 text-slate-300 hover:border-pink-400/50"
+                }`}
+              >
+                {type === "Percentage" ? t("pos.discount.typePercent") : t("pos.discount.typeAmount")}
+              </button>
+            ))}
+          </div>
+          <label className="block text-xs text-slate-400">
+            {discountType === "FixedAmount" ? t("pos.discount.amountLabel") : t("pos.discount.percentageLabel")}
+          </label>
           <div className="mt-2 flex items-center gap-2 rounded-xl border border-white/10 bg-black/20 px-3">
             <input
               type="number"
-              min="1"
-              max="100"
+              min={discountType === "FixedAmount" ? "0.01" : "1"}
+              max={discountType === "FixedAmount" ? undefined : "100"}
+              step={discountType === "FixedAmount" ? "0.01" : "1"}
+              inputMode="decimal"
               value={discountInput}
               onChange={(event) => setDiscountInput(event.target.value)}
               className="h-11 min-w-0 flex-1 bg-transparent text-sm outline-none"
             />
-            <span className="text-slate-400">%</span>
+            <span className="text-slate-400">{discountType === "FixedAmount" ? t("pos.discount.currency") : "%"}</span>
           </div>
           {!discountPermissionQuery.isLoading && !discountPermissionQuery.hasPermission && (
             <>
