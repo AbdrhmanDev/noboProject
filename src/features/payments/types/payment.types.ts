@@ -81,6 +81,15 @@ export type RefundSalesOrderPaymentRequest = {
   amount: number;
   posShiftId: string | null;
   reason: string;
+  // Required once the order has an issued invoice: the credit note this refund pays out against.
+  creditNoteId?: string | null;
+};
+
+export type CreditNoteResponse = {
+  creditNoteId: string;
+  invoiceNumber: string;
+  grossAmount: number;
+  wasAlreadyIssued: boolean;
 };
 
 export type SalesOrderPaymentRefundResponse = {

@@ -56,6 +56,7 @@ import {
   useReceiveSalesOrderPayment,
   useRefundSalesOrderPayment,
 } from "../../features/payments/hooks/usePayments";
+import { issueFullCreditNote } from "../../features/payments/api/paymentsApi";
 import {
   useApproveSalesOrderPaymentRefund,
   useSalesOrderPaymentRefundApproval,
@@ -1490,14 +1491,27 @@ export default function POSPage() {
     }
 
     try {
-      const result = await refundPaymentMutation.mutateAsync({
+      const refundRequest = {
         salesOrderPaymentId: refundDraft.payment.salesOrderPaymentId,
         payload: {
           amount: refundAmount.amount,
           posShiftId: openShiftId,
           reason: refundDraft.reason,
         },
-      });
+      };
+      let result;
+      try {
+        result = await refundPaymentMutation.mutateAsync(refundRequest);
+      } catch (error) {
+        // A paid order already has its tax invoice, and money can only go back against a credit note: issue the order's full credit
+        // note (or get the one already issued) and refund against it -- one step for the cashier.
+        if (error?.code !== "PaymentRefund.CreditNoteRequired") throw error;
+        const creditNote = await issueFullCreditNote(currentCompanyId, currentBranchId, draftSalesOrderId);
+        result = await refundPaymentMutation.mutateAsync({
+          ...refundRequest,
+          payload: { ...refundRequest.payload, creditNoteId: creditNote.creditNoteId },
+        });
+      }
 
       setRefundDraft(null);
 

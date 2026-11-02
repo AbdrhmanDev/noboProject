@@ -3,6 +3,7 @@ import type {
   ActivePaymentMethod,
   ChangePaymentMethodStatusRequest,
   CreatePaymentMethodRequest,
+  CreditNoteResponse,
   CustomerReceiptResponse,
   PaymentMethodAdmin,
   PaymentMethodAdminFilters,
@@ -184,6 +185,18 @@ export async function printCustomerReceipt(
         "Idempotency-Key": createPaymentIdempotencyKey("receipt-print"),
       },
     },
+  );
+
+  return response.data;
+}
+
+// The full credit note of an invoiced order (no lines = everything still creditable). One fixed reason and one key per order, so every
+// payment of a split-paid order refunds against the SAME note (a repeat returns it instead of issuing another).
+export async function issueFullCreditNote(companyId: string, branchId: string, salesOrderId: string) {
+  const response = await httpClient.post<CreditNoteResponse>(
+    `${salesOrdersUrl(companyId, branchId)}/${salesOrderId}/credit-notes`,
+    { reason: "استرجاع كامل للطلب", lines: [] },
+    { headers: { "Idempotency-Key": `full-refund-${salesOrderId}` } },
   );
 
   return response.data;
