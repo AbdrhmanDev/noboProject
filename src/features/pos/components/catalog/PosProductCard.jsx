@@ -5,7 +5,6 @@ import { useResolvedImageSrc } from "../../../../shared/hooks/useResolvedImageSr
 import { useI18n } from "../../../../i18n/I18nContext";
 import { useProductVariantInventoryConsumption } from "../../../inventory/hooks/useInventory";
 import {
-  STOCK_LEVELS,
   abbreviateModifierLabel,
   getStockLevel,
   sortVariantsBySize,
@@ -153,9 +152,9 @@ export function PosProductCard({
           {/* BACK: stock lights + quantity controls */}
           <div
             aria-hidden={!isFlipped}
-            className="pos-flip-face pos-flip-back flex flex-col gap-1.5 overflow-y-auto bg-pos-card p-2"
+            className="pos-flip-face pos-flip-back flex flex-col gap-1.5 overflow-hidden bg-pos-card px-2 pb-2 pt-3"
           >
-            <div className="flex items-center justify-end">
+            <div className="absolute end-1.5 top-1.5 z-10">
               <button
                 type="button"
                 onClick={toggleFlip}
@@ -251,9 +250,12 @@ export function PosProductCard({
 }
 
 
-// Stock level lights per level (getStockLevel): plain "(n)" parentheses, no box. The lit one shows
-// the stock number in its colour with a soft glow (green = plenty, yellow = running low, red = 5 or
-// fewer); the other two stay as faint empty "( )".
+// Stock ring (getStockLevel): a circular gauge around the stock number that fills with the
+// quantity (STOCK_RING_FULL units or more = a full ring), coloured by level -- green = plenty,
+// yellow = running low, red = 5 or fewer -- with a soft glow.
+const STOCK_RING_FULL = 30;
+const STOCK_RING_RADIUS = 15;
+const STOCK_RING_LENGTH = 2 * Math.PI * STOCK_RING_RADIUS;
 // text = the theme's readable ink for that colour (darker in light mode), glow = the colour itself.
 const STOCK_LIGHT_COLOR = {
   low: { text: "var(--pos-danger-text)", glow: "var(--pos-danger)" },
@@ -263,11 +265,11 @@ const STOCK_LIGHT_COLOR = {
 
 // Available units of one variant = the fewest units its linked stock items allow
 // (floor(on hand / quantity per sales unit), at the branch's default inventory location), shown as
-// three "( )" lights in red / yellow / green -- only the one for the current level is lit, with the
-// number inside it. The variant's recipe is only fetched once its card is flipped. The three
-// parentheses are always drawn: a variant with no linked stock item counts as 0 (red "(0)"), and
-// while loading / on a load error / without inventory access all three stay dim. The reason is in
-// the tooltip, never as text on the card.
+// the stock ring: the number in the middle, the ring filled by the quantity and coloured by level.
+// The variant's recipe is only fetched once its card is flipped. The ring is always drawn: a variant
+// with no linked stock item counts as 0 (empty red ring, "0"), and while loading / on a load error /
+// without inventory access it stays empty and dim with no number. The reason is in the tooltip, never
+// as text on the card.
 function StockLine({ variant, inventory, active }) {
   const { t } = useI18n();
   const enabled = Boolean(inventory?.enabled && variant && active);
@@ -308,30 +310,39 @@ function StockLine({ variant, inventory, active }) {
   const levelLabel = level ? t(`pos.catalog.stockLevel.${level}`) : null;
   const shown = available === null ? "" : Number.isFinite(available) ? available : "∞";
 
+  const colors = level ? STOCK_LIGHT_COLOR[level] : null;
+  const ratio = available === null || !Number.isFinite(available) ? (available === null ? 0 : 1) : Math.min(1, available / STOCK_RING_FULL);
+
   return (
     <div
       role="img"
       aria-label={`${t("pos.catalog.stock")}: ${shown === "" ? hint : `${shown} · ${levelLabel}`}`}
       title={[hint, levelLabel].filter(Boolean).join(" · ")}
-      className="pos-fs-label flex items-center justify-center gap-3"
+      className={`relative mx-auto h-11 w-11 shrink-0 ${colors ? "" : "opacity-40"}`}
     >
-      {STOCK_LEVELS.map((entry) => {
-        const lit = entry === level;
-        const { text, glow } = STOCK_LIGHT_COLOR[entry];
-        return (
-          <span
-            key={entry}
-            aria-hidden="true"
-            className={`pos-num whitespace-pre text-lg leading-none font-black transition-colors ${lit ? "" : "opacity-35"}`}
-            style={{
-              color: text,
-              textShadow: lit ? `0 0 8px ${glow}, 0 0 16px color-mix(in srgb, ${glow} 55%, transparent)` : "none",
-            }}
-          >
-            ({lit ? shown : "  "})
-          </span>
-        );
-      })}
+      <svg viewBox="0 0 36 36" className="h-full w-full -rotate-90" aria-hidden="true">
+        <circle cx="18" cy="18" r={STOCK_RING_RADIUS} fill="none" strokeWidth="3.5" className="stroke-pos-bg" />
+        {colors && ratio > 0 && (
+          <circle
+            cx="18"
+            cy="18"
+            r={STOCK_RING_RADIUS}
+            fill="none"
+            strokeWidth="3.5"
+            strokeLinecap="round"
+            strokeDasharray={STOCK_RING_LENGTH}
+            strokeDashoffset={STOCK_RING_LENGTH * (1 - ratio)}
+            style={{ stroke: colors.glow, filter: `drop-shadow(0 0 3px ${colors.glow})`, transition: "stroke-dashoffset 300ms ease-out" }}
+          />
+        )}
+      </svg>
+      <span
+        aria-hidden="true"
+        className="pos-num absolute inset-0 grid place-items-center text-sm leading-none font-black"
+        style={colors ? { color: colors.text, textShadow: `0 0 8px color-mix(in srgb, ${colors.glow} 60%, transparent)` } : undefined}
+      >
+        {shown}
+      </span>
     </div>
   );
 }
@@ -426,7 +437,7 @@ function SizeCircles({ sizes, activeSize, quantityOf, currencyCode, inventory, d
   const activeQuantity = quantityOf(activeSize);
 
   return (
-    <div role="group" aria-label={t("pos.catalog.size")} className="my-auto flex flex-col items-center gap-3">
+    <div role="group" aria-label={t("pos.catalog.size")} className="my-auto flex flex-col items-center gap-2">
       {/* Stock first, above the size circles and the stepper. */}
       <StockLine variant={activeSize} inventory={inventory} active={focusable} />
       <div className="flex flex-wrap items-center justify-center gap-2">
