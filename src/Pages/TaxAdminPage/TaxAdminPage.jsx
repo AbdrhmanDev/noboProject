@@ -38,6 +38,7 @@ import {
   useTaxCategoryDetails,
   useUpdateTaxCategory,
 } from "../../features/tax/hooks/useTax";
+import { VatNumberMissingBanner } from "../../features/tax/components/VatNumberMissingBanner";
 
 const TAX_VIEW_PERMISSION = "Tax.View";
 const TAX_MANAGE_PERMISSION = "Tax.Manage";
@@ -448,6 +449,7 @@ export default function TaxAdminPage() {
               <ErrorState title={t("taxAdmin.loadSettingsError")} message={getErrorMessage(settingsQuery.error, t)} />
             ) : (
               <div className="space-y-4">
+                <VatNumberMissingBanner settings={settingsQuery.data} showTaxLink={false} />
                 <div className="grid gap-2 md:grid-cols-4">
                   <InfoTile label={t("taxAdmin.field.billingRegime")} value={t(`taxAdmin.regime.${billingRegime}`)} />
                   <InfoTile label={t("taxAdmin.field.taxEnabled")} value={settingsQuery.data?.isTaxEnabled ? t("taxAdmin.common.yes") : t("taxAdmin.common.no")} />

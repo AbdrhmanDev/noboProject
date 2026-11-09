@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowRight, CircleCheck, Eye, Save, TriangleAlert, Upload } from "lucide-react";
 import AppLayout from "../../../components/AppLayout";
@@ -16,6 +16,7 @@ import { TemplateDocumentEditor } from "../components/TemplateDocumentEditor";
 import { RenderedDocumentPreview } from "../components/RenderedDocumentPreview";
 import { EffectiveTemplateBadge } from "../components/EffectiveTemplateBadge";
 import { buildSystemDefaultDocument } from "../utils/templateDocumentDefaults";
+import { isValidInvoiceId } from "../utils/invoiceId";
 import {
   useCreateInvoiceTemplateVersion,
   useEffectiveInvoiceTemplate,
@@ -91,6 +92,8 @@ function PreviewPanel({ companyId, template, branches, canView, document }) {
   const [invoiceId, setInvoiceId] = useState("");
   const effectiveQuery = useEffectiveInvoiceTemplate(companyId, branchId, canView && Boolean(branchId));
   const previewMutation = useRenderInvoiceTemplatePreview(companyId, branchId);
+  const invoiceIdEntered = invoiceId.trim().length > 0;
+  const invoiceIdValid = isValidInvoiceId(invoiceId);
 
   return (
     <div className="space-y-3 rounded-xl border border-line bg-surface p-4">
@@ -125,15 +128,24 @@ function PreviewPanel({ companyId, template, branches, canView, document }) {
           value={invoiceId}
           onChange={(event) => setInvoiceId(event.target.value)}
           placeholder="Invoice ID (GUID)"
-          className="h-10 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none"
+          dir="ltr"
+          className={`h-10 rounded-xl border bg-canvas px-3 text-sm text-ink outline-none ${
+            invoiceIdEntered && !invoiceIdValid ? "border-danger" : "border-line"
+          }`}
         />
       </div>
+
+      {invoiceIdEntered && !invoiceIdValid && (
+        <div className="text-xs text-danger">
+          The invoice ID must be a GUID, for example 01a18c0a-6163-7433-948e-23b43d753d93.
+        </div>
+      )}
 
       {effectiveQuery.data && <EffectiveTemplateBadge effective={effectiveQuery.data} />}
 
       <button
         type="button"
-        disabled={!branchId || !invoiceId.trim() || !document || previewMutation.isPending}
+        disabled={!branchId || !invoiceIdValid || !document || previewMutation.isPending}
         onClick={() => previewMutation.mutate({ invoiceId: invoiceId.trim(), document })}
         className="flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-accent text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
       >
@@ -168,9 +180,18 @@ export function InvoiceTemplateEditorPage() {
   const effectiveVersionId = selectedVersionId !== undefined ? selectedVersionId : template?.activeVersionId ?? null;
 
   const versionQuery = useInvoiceTemplateVersion(currentCompanyId, templateId, effectiveVersionId, Boolean(effectiveVersionId));
-  const initialDocument = effectiveVersionId ? versionQuery.data?.document : buildSystemDefaultDocument();
-
-  const [document, setDocument] = useState(null);
+  const versionData = versionQuery.data;
+  // The document as loaded for the selected version (or the system default for a new one): what Validate and Render preview use until
+  // the first edit. Edits are kept per version, so choosing another version always starts again from that version's own document.
+  const initialDocument = useMemo(
+    () => (effectiveVersionId ? versionData?.document : buildSystemDefaultDocument()),
+    [effectiveVersionId, versionData],
+  );
+  const versionKey = effectiveVersionId || "new";
+  const [edited, setEdited] = useState({ key: null, document: null });
+  const isEdited = edited.key === versionKey;
+  const document = isEdited ? edited.document : initialDocument ?? null;
+  const setDocument = (next) => setEdited({ key: versionKey, document: next });
   const [notice, setNotice] = useState("");
   const [showPreview, setShowPreview] = useState(searchParams.get("panel") === "preview");
 
@@ -308,7 +329,7 @@ export function InvoiceTemplateEditorPage() {
                     </button>
                     <button
                       type="button"
-                      disabled={!document || createVersionMutation.isPending}
+                      disabled={!isEdited || !document || createVersionMutation.isPending}
                       onClick={saveVersion}
                       className="flex h-10 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
                     >

@@ -120,8 +120,20 @@ function RenderedImageNode() {
   );
 }
 
+// Placeholders follow the DOCUMENT's language (the template locale), not the admin UI's.
+const PLACEHOLDERS = {
+  ar: { qr: "رمز QR غير متاح", barcode: "الباركود غير متاح" },
+  en: { qr: "QR not available", barcode: "Barcode not available" },
+};
+
+function placeholder(language, key) {
+  return (PLACEHOLDERS[language] ?? PLACEHOLDERS.en)[key];
+}
+
 // The server-resolved QR payload drawn as an image (error correction M, like the thermal printers). The payload is used exactly as given.
-function RenderedQrNode({ node }) {
+// With no QR: exactly one line. When the server sends the reason right after it (a "qrUnavailable" text node), that reason IS the line;
+// otherwise a placeholder in the document's language.
+function RenderedQrNode({ node, language, next }) {
   const available = node.state === "available" && Boolean(node.payload);
   // The drawn image is kept with the payload it was drawn from, so a stale image is never shown for a different payload.
   const [drawn, setDrawn] = useState({ payload: null, src: "" });
@@ -152,21 +164,23 @@ function RenderedQrNode({ node }) {
     );
   }
 
+  if (!available && next?.kind === "text" && next.role === "qrUnavailable") return null;
+
   return (
-    <div className="flex flex-col items-center gap-1 rounded-lg border border-dashed border-line p-3 text-xs text-muted">
+    <div className="flex items-center justify-center gap-1 rounded-lg border border-dashed border-line p-3 text-xs text-muted">
       <QrCode size={18} />
-      <span>QR not available</span>
+      <span>{placeholder(language, "qr")}</span>
     </div>
   );
 }
 
-function RenderedBarcodeNode({ node }) {
+function RenderedBarcodeNode({ node, language }) {
   return (
     <div className="rounded-lg border border-dashed border-line p-2 text-center text-xs text-muted">
       {node.state === "available" && node.value ? (
         <span className="font-mono text-ink">{node.value}</span>
       ) : (
-        <span>Barcode not available</span>
+        <span>{placeholder(language, "barcode")}</span>
       )}
     </div>
   );
@@ -204,7 +218,9 @@ export function RenderedDocumentPreview({ document }) {
     >
       {document.nodes.map((node, index) => {
         const Renderer = NODE_RENDERERS[node.kind];
-        return Renderer ? <Renderer key={index} node={node} /> : null;
+        return Renderer ? (
+          <Renderer key={index} node={node} language={document.language} next={document.nodes[index + 1]} />
+        ) : null;
       })}
     </div>
   );

@@ -5,6 +5,7 @@ import { EmptyState, ErrorState, LoadingState } from "../../../../shared/compone
 import { PriceListOnboarding } from "../../../pricing/components/PriceListOnboarding";
 import { FirstProductOnboarding } from "../../../catalog/components/FirstProductOnboarding";
 import { TaxSettingsOnboarding } from "../../../tax/components/TaxSettingsOnboarding";
+import { VatNumberMissingBanner } from "../../../tax/components/VatNumberMissingBanner";
 import { CategorySidebar } from "./CategorySidebar";
 import { CategoryRail } from "./CategoryRail";
 import { PosProductCard } from "./PosProductCard";
@@ -156,6 +157,7 @@ export function CatalogPanel({
           taxSetupRequired && (
             <TaxSettingsOnboarding onCompleted={() => taxSettingsQuery.refetch()} />
           )}
+        {!taxSetupRequired && <VatNumberMissingBanner settings={taxSettingsQuery.data} showTaxLink={false} compact />}
         {sellableCatalogQuery.data &&
           filteredProducts.length > 0 &&
           !taxSettingsQuery.isLoading &&

@@ -8,6 +8,7 @@ import { formatMoney } from "../../shared/utils/formatters";
 import { useCompany } from "../../features/companies/context/CompanyContext";
 import { useBranch } from "../../features/branches/context/BranchContext";
 import { useHasPermission } from "../../features/companies/hooks/useCompanies";
+import { VatNumberMissingBanner } from "../../features/tax/components/VatNumberMissingBanner";
 import { useSalesOrders, useSalesOverview } from "../../features/sales/hooks/useSalesOrders";
 import { useSalesRankings } from "../../features/sales/hooks/useSalesRankings";
 import { presetDateRange } from "../../features/sales/utils/dateRangePresets";
@@ -130,6 +131,7 @@ export default function Dashboard({ onLogout }) {
         <ErrorState title={t("salesOrders.permissionRequired.title")} message={t("salesOrders.permissionRequired.message")} />
       ) : (
         <div className="space-y-4">
+          <VatNumberMissingBanner companyId={currentCompanyId} />
           {/* Greeting + period */}
           <header className="flex flex-wrap items-center justify-between gap-3">
             <div className="min-w-0">

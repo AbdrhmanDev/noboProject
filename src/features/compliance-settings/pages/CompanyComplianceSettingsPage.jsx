@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { RefreshCw, ShieldAlert, ShieldCheck } from "lucide-react";
 import AppLayout from "../../../components/AppLayout";
 import { EmptyState, ErrorState, LoadingState, PageHeader, StatusBadge } from "../../../shared/components/ui";
@@ -6,12 +7,22 @@ import { formatDateTime } from "../../../shared/utils/formatters";
 import { useCompany } from "../../companies/context/CompanyContext";
 import { useHasPermission } from "../../companies/hooks/useCompanies";
 import { COMPLIANCE_MANAGE_PERMISSION } from "../../authorization/constants/applicationPermissions";
-import { ConfirmActionDialog } from "../../branches/components/ConfirmActionDialog";
 import { useCompanyComplianceStatus, useDisableCompanyCompliance, useEnableCompanyCompliance } from "../hooks/useCompanyCompliance";
+import { useCompanyTaxSettings } from "../../tax/hooks/useTax";
+import { useI18n } from "../../../i18n/I18nContext";
+import { ROUTES } from "../../../utils/routes";
 
-function getErrorMessage(error) {
-  // 403 from the backend's own Compliance.Manage check (never re-derived client-side) surfaces
+// Known gate codes get a translated message; anything else shows the server's own message.
+const GATE_ERROR_CODES = ["Integration.NotAvailableYet", "Integration.BranchesNotReady", "BillingRegime.ReasonRequired"];
+
+function getErrorMessage(error, t) {
+  // 403 from the backend's own permission checks (never re-derived client-side) surfaces
   // through the same normalized error shape every other feature in this app already uses.
+  if (t && GATE_ERROR_CODES.includes(error?.code)) {
+    const key = `compliance.switch.error.${error.code}`;
+    const text = t(key);
+    if (text && text !== key) return error.code === "Integration.BranchesNotReady" && error.message ? `${text} ${error.message}` : text;
+  }
   return error?.message || "Request failed.";
 }
 
@@ -22,6 +33,7 @@ function isForbidden(error) {
 }
 
 export function CompanyComplianceSettingsPage() {
+  const { t } = useI18n();
   const { currentCompanyId } = useCompany();
   const permissionQuery = useHasPermission(currentCompanyId, COMPLIANCE_MANAGE_PERMISSION);
   const canManage = permissionQuery.hasPermission;
@@ -30,7 +42,13 @@ export function CompanyComplianceSettingsPage() {
   const enableMutation = useEnableCompanyCompliance(currentCompanyId);
   const disableMutation = useDisableCompanyCompliance(currentCompanyId);
 
+  // One source of truth: the billing regime lives on the tax page; this tab only shows it.
+  const taxSettingsQuery = useCompanyTaxSettings(currentCompanyId, canManage);
+  const billingRegime =
+    taxSettingsQuery.data?.billingRegime || (taxSettingsQuery.data?.isTaxEnabled ? "KsaPhase1" : "NotVatRegistered");
+
   const [confirmDisable, setConfirmDisable] = useState(false);
+  const [disableReason, setDisableReason] = useState("");
   const [actionError, setActionError] = useState("");
   const [lastAction, setLastAction] = useState(null); // "enabled" | "disabled" | null
 
@@ -42,18 +60,19 @@ export function CompanyComplianceSettingsPage() {
       await enableMutation.mutateAsync();
       setLastAction("enabled");
     } catch (error) {
-      setActionError(getErrorMessage(error));
+      setActionError(getErrorMessage(error, t));
     }
   };
 
   const handleDisable = async () => {
     setActionError("");
     try {
-      await disableMutation.mutateAsync({});
+      await disableMutation.mutateAsync({ reason: disableReason.trim() });
       setConfirmDisable(false);
+      setDisableReason("");
       setLastAction("disabled");
     } catch (error) {
-      setActionError(getErrorMessage(error));
+      setActionError(getErrorMessage(error, t));
       setConfirmDisable(false);
     }
   };
@@ -111,6 +130,18 @@ export function CompanyComplianceSettingsPage() {
               />
             )}
 
+            {taxSettingsQuery.data && (
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-line bg-raised px-3 py-2 text-sm">
+                <div>
+                  <span className="text-subtle">{t("taxAdmin.field.billingRegime")}: </span>
+                  <span className="font-bold text-ink">{t(`taxAdmin.regime.${billingRegime}`)}</span>
+                </div>
+                <Link to={ROUTES.TAX_ADMIN} className="text-xs font-bold text-accent underline">
+                  {t("compliance.switch.manageOnTaxPage")}
+                </Link>
+              </div>
+            )}
+
             {hasLoadedStatus && (
               <div className="space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
@@ -136,7 +167,10 @@ export function CompanyComplianceSettingsPage() {
                   {status.state === "Enabled" ? (
                     <button
                       type="button"
-                      onClick={() => setConfirmDisable(true)}
+                      onClick={() => {
+                        setActionError("");
+                        setConfirmDisable(true);
+                      }}
                       disabled={isMutating}
                       className="flex items-center gap-1.5 rounded-lg border border-line px-3 py-2 text-xs font-bold text-ink hover:border-accent-line disabled:cursor-not-allowed disabled:opacity-40"
                     >
@@ -191,14 +225,35 @@ export function CompanyComplianceSettingsPage() {
         )}
 
         {confirmDisable && (
-          <ConfirmActionDialog
-            title="Disable ZATCA integration"
-            message="Every branch will be treated as effectively disabled for ZATCA integration until this is re-enabled. No branch's own saved setting is changed or lost."
-            confirmLabel="Disable"
-            isPending={disableMutation.isPending}
-            onConfirm={handleDisable}
-            onClose={() => setConfirmDisable(false)}
-          />
+          <div className="space-y-2 rounded-xl border border-warning bg-warning-soft p-3">
+            <div className="text-sm font-bold text-warning">{t("compliance.switch.disableTitle")}</div>
+            <p className="text-xs leading-5 text-warning">{t("compliance.switch.disableMessage")}</p>
+            <textarea
+              value={disableReason}
+              onChange={(event) => setDisableReason(event.target.value)}
+              maxLength={500}
+              rows={2}
+              placeholder={t("compliance.switch.reasonPlaceholder")}
+              className="w-full rounded-lg border border-line bg-canvas p-2 text-sm text-ink outline-none"
+            />
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleDisable}
+                disabled={!disableReason.trim() || disableMutation.isPending}
+                className="rounded-lg bg-danger px-3 py-2 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {disableMutation.isPending ? t("compliance.switch.disabling") : t("compliance.switch.disable")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmDisable(false)}
+                className="rounded-lg border border-line px-3 py-2 text-xs font-bold text-ink"
+              >
+                {t("compliance.switch.cancel")}
+              </button>
+            </div>
+          </div>
         )}
       </main>
     </AppLayout>

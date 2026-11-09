@@ -12,6 +12,8 @@ export type CompanyTaxSettings = {
   createdAtUtc: string | null;
   updatedAtUtc: string | null;
   billingRegime?: BillingRegime;
+  // VAT-registered (KSA Phase 1/2) but no valid Saudi VAT number on the company profile: tax invoices print without it and without a QR.
+  sellerVatNumberMissing?: boolean;
 };
 
 export type SetCompanyBillingRegimeRequest = {
