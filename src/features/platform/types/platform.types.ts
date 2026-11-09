@@ -91,6 +91,10 @@ export type PlatformCompanyDetails = {
   ordersCount: number;
   salesAmount: number;
   lastActivityAtUtc: string | null;
+  // "NotVatRegistered" | "KsaPhase1" | "KsaPhase2"
+  billingRegime?: string;
+  sellerVatNumberMissing?: boolean;
+  integrationEnabled?: boolean;
 };
 
 // EntitlementKind mirrors the backend's Nobo.Application.Entitlements.EntitlementKind.

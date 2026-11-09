@@ -9,7 +9,8 @@ import { PlatformAccessGate } from "../../features/platform/components/PlatformA
 import { PlatformDateRangeSelector } from "../../features/platform/components/PlatformDateRangeSelector";
 import { PlatformEnabledAppsBadges } from "../../features/platform/components/PlatformEnabledAppsBadges";
 import { useCurrentPlatformAccess, usePlatformCompanyDetails } from "../../features/platform/hooks/usePlatform";
-import { PLATFORM_ENTITLEMENTS_VIEW } from "../../features/platform/constants/platformPermissions";
+import { PLATFORM_ENTITLEMENTS_MANAGE, PLATFORM_ENTITLEMENTS_VIEW } from "../../features/platform/constants/platformPermissions";
+import { PlatformBillingRegimePanel } from "../../features/platform/components/PlatformBillingRegimePanel";
 import { presetDateRange } from "../../features/platform/utils/dateRangePresets";
 import { platformCompanyEntitlementsPath, ROUTES } from "../../utils/routes";
 
@@ -39,6 +40,8 @@ function PlatformCompanyDetailsContent({ companyId }) {
 
   const accessQuery = useCurrentPlatformAccess();
   const canManageEntitlements = (accessQuery.data?.permissions || []).includes(PLATFORM_ENTITLEMENTS_VIEW);
+  // The billing-regime downgrade needs the same permission the server checks (Platform.Entitlements.Manage).
+  const canChangeBillingRegime = (accessQuery.data?.permissions || []).includes(PLATFORM_ENTITLEMENTS_MANAGE);
 
   const detailsQuery = usePlatformCompanyDetails(companyId, dateRange);
   const company = detailsQuery.data;
@@ -86,6 +89,8 @@ function PlatformCompanyDetailsContent({ companyId }) {
           <StatCard label={t("platform.companies.businessSector")} value={company.businessSectorName || "—"} />
         </div>
       </section>
+
+      <PlatformBillingRegimePanel companyId={companyId} company={company} canManage={canChangeBillingRegime} />
 
       <section className="rounded-xl border border-line bg-surface p-4">
         <div className="mb-3 text-sm font-black text-ink">{t("platform.details.section.usage")}</div>
