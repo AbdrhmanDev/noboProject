@@ -7,7 +7,7 @@ import { ROUTES } from "../../../utils/routes";
 import { useBranch } from "../../branches/context/BranchContext";
 import { useCompany } from "../../companies/context/CompanyContext";
 import { useHasPermission } from "../../companies/hooks/useCompanies";
-import { useSetCompanyTaxSettings } from "../hooks/useTax";
+import { useSetCompanyBillingRegime, useSetCompanyTaxSettings } from "../hooks/useTax";
 
 const TAX_MANAGE_PERMISSION = "Tax.Manage";
 
@@ -19,6 +19,12 @@ function mapTaxSettingsError(error: ApiError) {
       return "You do not have permission to manage tax settings.";
     case "Authentication.Unauthenticated":
       return "Your session has expired. Please sign in again.";
+    case "BillingRegime.VatNumberInvalid":
+      return "Add the company's Saudi VAT number (15 digits, starting and ending with 3) to the company profile first.";
+    case "BillingRegime.SellerProfileIncomplete":
+      return "Complete the company's legal name and Saudi registered address first.";
+    case "BillingRegime.OpenOrdersExist":
+      return "Pay, close or cancel the open orders first.";
     default:
       return "Could not save tax settings. Please try again.";
   }
@@ -35,12 +41,21 @@ export function TaxSettingsOnboarding({ onCompleted }: TaxSettingsOnboardingProp
   const permissionQuery = useHasPermission(currentCompanyId, TAX_MANAGE_PERMISSION);
   const [formError, setFormError] = useState("");
   const [saved, setSaved] = useState(false);
-  const mutation = useSetCompanyTaxSettings(currentCompanyId, currentBranchId);
+  const notRegisteredMutation = useSetCompanyTaxSettings(currentCompanyId, currentBranchId);
+  const regimeMutation = useSetCompanyBillingRegime(currentCompanyId, currentBranchId);
+  const [askPrices, setAskPrices] = useState(false);
+  const mutation = { isPending: notRegisteredMutation.isPending || regimeMutation.isPending };
 
-  const handleChoice = async (isTaxEnabled: boolean) => {
+  // Not VAT-registered: confirm the "VAT off" settings row. VAT-registered (KSA Phase 1): a billing-regime change, which needs to know
+  // whether the current prices already include VAT.
+  const handleChoice = async (vatRegistered: boolean, pricesIncludeVat?: boolean) => {
     setFormError("");
     try {
-      await mutation.mutateAsync({ isTaxEnabled });
+      if (vatRegistered) {
+        await regimeMutation.mutateAsync({ targetRegime: "KsaPhase1", pricesIncludeVat: pricesIncludeVat ?? true });
+      } else {
+        await notRegisteredMutation.mutateAsync({ isTaxEnabled: false });
+      }
       setSaved(true);
       onCompleted?.();
     } catch (error) {
@@ -90,35 +105,56 @@ export function TaxSettingsOnboarding({ onCompleted }: TaxSettingsOnboardingProp
       </div>
 
       <div className="mt-5 grid gap-3">
-        <p className="text-xs font-bold text-muted">Enable tax for this company?</p>
+        <p className="text-xs font-bold text-muted">Is this company registered for VAT?</p>
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          <button
-            type="button"
-            onClick={() => handleChoice(true)}
-            disabled={mutation.isPending}
-            className="rounded-xl border border-line bg-inset p-4 text-start transition hover:border-accent-line hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-55"
-          >
-            <div className="font-bold text-ink">Yes, enable tax</div>
-            <p className="mt-1 text-xs text-muted">
-              Each product will need a tax category assigned before it can be sold.
-              Configure categories in Tax Administration.
-            </p>
-          </button>
+        {askPrices ? (
+          <div className="grid gap-3 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => handleChoice(true, true)}
+              disabled={mutation.isPending}
+              className="rounded-xl border border-line bg-inset p-4 text-start transition hover:border-accent-line hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-55"
+            >
+              <div className="font-bold text-ink">My prices include VAT</div>
+              <p className="mt-1 text-xs text-muted">The customer pays the listed price; 15% VAT is inside it.</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleChoice(true, false)}
+              disabled={mutation.isPending}
+              className="rounded-xl border border-line bg-inset p-4 text-start transition hover:border-accent-line hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-55"
+            >
+              <div className="font-bold text-ink">VAT is added on top</div>
+              <p className="mt-1 text-xs text-muted">The customer pays the listed price plus 15% VAT.</p>
+            </button>
+          </div>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => setAskPrices(true)}
+              disabled={mutation.isPending}
+              className="rounded-xl border border-line bg-inset p-4 text-start transition hover:border-accent-line hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-55"
+            >
+              <div className="font-bold text-ink">Yes, VAT-registered (KSA)</div>
+              <p className="mt-1 text-xs text-muted">
+                Simplified tax invoices with the ZATCA QR code. Needs the company's VAT number on its profile.
+              </p>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => handleChoice(false)}
-            disabled={mutation.isPending}
-            className="rounded-xl border border-line bg-inset p-4 text-start transition hover:border-accent-line hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-55"
-          >
-            <div className="font-bold text-ink">No, disable tax</div>
-            <p className="mt-1 text-xs text-muted">
-              Sales will be created without tax. You can enable this later in Tax
-              Administration.
-            </p>
-          </button>
-        </div>
+            <button
+              type="button"
+              onClick={() => handleChoice(false)}
+              disabled={mutation.isPending}
+              className="rounded-xl border border-line bg-inset p-4 text-start transition hover:border-accent-line hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-55"
+            >
+              <div className="font-bold text-ink">No, not VAT-registered</div>
+              <p className="mt-1 text-xs text-muted">
+                No VAT is charged; customers get a sales receipt. You can register later in Tax Administration.
+              </p>
+            </button>
+          </div>
+        )}
 
         {mutation.isPending && (
           <div className="flex items-center gap-2 text-xs text-muted">

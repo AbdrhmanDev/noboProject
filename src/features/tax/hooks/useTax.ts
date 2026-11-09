@@ -7,6 +7,7 @@ import {
   getCompanyTaxSettings,
   getTaxCategories,
   getTaxCategoryDetails,
+  setCompanyBillingRegime,
   setCompanyTaxSettings,
   setProductSalesTaxCategory,
   updateTaxCategory,
@@ -14,6 +15,7 @@ import {
 import type {
   ChangeTaxCategoryStatusRequest,
   CreateTaxCategoryRequest,
+  SetCompanyBillingRegimeRequest,
   SetCompanyTaxSettingsRequest,
   SetProductSalesTaxCategoryRequest,
   TaxCategoryFilters,
@@ -121,6 +123,26 @@ export function useSetCompanyTaxSettings(
     mutationFn: (payload: SetCompanyTaxSettingsRequest) =>
       setCompanyTaxSettings(companyId as string, payload),
     onSuccess: () => invalidateTax(queryClient, companyId, branchId),
+  });
+}
+
+// Moving between "not VAT-registered" and "KSA Phase 1" re-prices nothing by itself but can switch every active price list's tax mode,
+// so the catalog and POS caches are refreshed with the tax ones.
+export function useSetCompanyBillingRegime(
+  companyId: string | null | undefined,
+  branchId: string | null | undefined,
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: SetCompanyBillingRegimeRequest) =>
+      setCompanyBillingRegime(companyId as string, payload),
+    onSuccess: () => {
+      invalidateTax(queryClient, companyId, branchId);
+      queryClient.invalidateQueries({ queryKey: ["pricing"] });
+      queryClient.invalidateQueries({ queryKey: catalogQueryKeys.all });
+      queryClient.invalidateQueries({ queryKey: sellableCatalogQueryKeys.all });
+    },
   });
 }
 

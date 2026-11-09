@@ -32,7 +32,7 @@ import {
   useChangeTaxCategoryStatus,
   useCompanyTaxSettings,
   useCreateTaxCategory,
-  useSetCompanyTaxSettings,
+  useSetCompanyBillingRegime,
   useSetProductSalesTaxCategory,
   useTaxCategories,
   useTaxCategoryDetails,
@@ -227,7 +227,9 @@ export default function TaxAdminPage() {
     canRead && Boolean(selectedProductId),
   );
 
-  const settingsMutation = useSetCompanyTaxSettings(currentCompanyId, currentBranchId);
+  const settingsMutation = useSetCompanyBillingRegime(currentCompanyId, currentBranchId);
+  const [regimePriceChoice, setRegimePriceChoice] = useState(false);
+  const billingRegime = settingsQuery.data?.billingRegime || (settingsQuery.data?.isTaxEnabled ? "KsaPhase1" : "NotVatRegistered");
   const createCategoryMutation = useCreateTaxCategory(currentCompanyId, currentBranchId);
   const updateCategoryMutation = useUpdateTaxCategory(
     currentCompanyId,
@@ -284,14 +286,16 @@ export default function TaxAdminPage() {
     setAssignmentTaxCategoryId(product.salesTaxCategoryId || "");
   };
 
-  const toggleTaxSettings = async () => {
+  // Not VAT-registered -> KSA Phase 1 (the owner/manager); back to not VAT-registered is a NOBO platform action.
+  const registerForVat = async (pricesIncludeVat) => {
     try {
-      await settingsMutation.mutateAsync({
-        isTaxEnabled: !settingsQuery.data?.isTaxEnabled,
-      });
+      await settingsMutation.mutateAsync({ targetRegime: "KsaPhase1", pricesIncludeVat });
+      setRegimePriceChoice(false);
       showNotice(t("taxAdmin.notice.settingsUpdated"));
     } catch (error) {
-      showNotice(getErrorMessage(error, t));
+      const key = `taxAdmin.regimeError.${error?.code}`;
+      const message = t(key);
+      showNotice(message && message !== key ? message : getErrorMessage(error, t));
     }
   };
 
@@ -445,6 +449,7 @@ export default function TaxAdminPage() {
             ) : (
               <div className="space-y-4">
                 <div className="grid gap-2 md:grid-cols-4">
+                  <InfoTile label={t("taxAdmin.field.billingRegime")} value={t(`taxAdmin.regime.${billingRegime}`)} />
                   <InfoTile label={t("taxAdmin.field.taxEnabled")} value={settingsQuery.data?.isTaxEnabled ? t("taxAdmin.common.yes") : t("taxAdmin.common.no")} />
                   <InfoTile label={t("taxAdmin.field.configured")} value={settingsQuery.data?.isConfigured ? t("taxAdmin.common.yes") : t("taxAdmin.common.no")} />
                   <InfoTile label={t("taxAdmin.common.created")} value={settingsQuery.data?.createdAtUtc ? formatDateTime(settingsQuery.data.createdAtUtc) : t("taxAdmin.common.notConfigured")} />
@@ -453,15 +458,40 @@ export default function TaxAdminPage() {
                 <div className="rounded-xl border border-line bg-raised px-3 py-2 text-sm text-muted">
                   {t("taxAdmin.settingsNote")}
                 </div>
-                <button
-                  type="button"
-                  onClick={toggleTaxSettings}
-                  disabled={!canManage || settingsMutation.isPending}
-                  className="flex h-10 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-bold text-white disabled:opacity-50"
-                >
-                  <Power size={15} />
-                  {settingsQuery.data?.isTaxEnabled ? t("taxAdmin.disableTax") : t("taxAdmin.enableTax")}
-                </button>
+                <div className="rounded-xl border border-line bg-raised px-3 py-2 text-sm text-muted">
+                  {t(`taxAdmin.regimeHelp.${billingRegime}`)}
+                </div>
+                {billingRegime === "NotVatRegistered" && !regimePriceChoice && (
+                  <button
+                    type="button"
+                    onClick={() => setRegimePriceChoice(true)}
+                    disabled={!canManage || settingsMutation.isPending}
+                    className="flex h-10 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-bold text-white disabled:opacity-50"
+                  >
+                    <Power size={15} />
+                    {t("taxAdmin.registerForVat")}
+                  </button>
+                )}
+                {billingRegime === "NotVatRegistered" && regimePriceChoice && (
+                  <div className="grid gap-2 md:grid-cols-2">
+                    <button
+                      type="button"
+                      onClick={() => registerForVat(true)}
+                      disabled={!canManage || settingsMutation.isPending}
+                      className="rounded-xl border border-line bg-surface p-3 text-start text-sm font-bold text-ink hover:border-accent-line disabled:opacity-50"
+                    >
+                      {t("taxAdmin.pricesIncludeVat")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => registerForVat(false)}
+                      disabled={!canManage || settingsMutation.isPending}
+                      className="rounded-xl border border-line bg-surface p-3 text-start text-sm font-bold text-ink hover:border-accent-line disabled:opacity-50"
+                    >
+                      {t("taxAdmin.pricesExcludeVat")}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </section>

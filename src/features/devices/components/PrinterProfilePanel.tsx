@@ -65,6 +65,7 @@ export function PrinterProfilePanel({
   );
   const [dpi, setDpi] = useState(String(profile?.dpi ?? 203));
   const [cutterSupported, setCutterSupported] = useState(profile?.cutterSupported ?? true);
+  const [nativeQrSupported, setNativeQrSupported] = useState(profile?.nativeQrSupported ?? true);
   const [feedLinesBeforeCut, setFeedLinesBeforeCut] = useState(
     String(profile?.feedLinesBeforeCut ?? 4),
   );
@@ -84,6 +85,7 @@ export function PrinterProfilePanel({
         customDpi: isCustom ? Number(dpi) : null,
         customCutterSupported: isCustom ? cutterSupported : null,
         customFeedLinesBeforeCut: isCustom ? Number(feedLinesBeforeCut) : null,
+        nativeQrSupported,
       });
       toast.success(t("devices.printerProfile.savedSuccessfully"));
     } catch (error) {
@@ -286,6 +288,20 @@ export function PrinterProfilePanel({
                   : t("devices.printerProfile.cutterNo")}
               </div>
             )}
+          </div>
+          <div>
+            <label className="mb-1 block text-[11px] text-slate-400">
+              {t("devices.printerProfile.nativeQr")}
+            </label>
+            <label className="flex h-[34px] items-center gap-2 text-[11px] text-slate-300">
+              <input
+                type="checkbox"
+                checked={nativeQrSupported}
+                disabled={!canManage}
+                onChange={(event) => setNativeQrSupported(event.target.checked)}
+              />
+              {nativeQrSupported ? t("devices.printerProfile.nativeQrYes") : t("devices.printerProfile.nativeQrNo")}
+            </label>
           </div>
         </div>
       </AdvancedSettingsDisclosure>

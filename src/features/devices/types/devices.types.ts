@@ -88,6 +88,8 @@ export type DeviceReceiptPrinterProfileResponse = {
   dpi: number;
   cutterSupported: boolean;
   feedLinesBeforeCut: number;
+  // False: the printer cannot print a QR from the native ESC/POS command, so receipts carry it as an image.
+  nativeQrSupported?: boolean;
 };
 
 // Preset "Generic58mm"/"Generic80mm" ignore the custom* fields (the preset's own fixed values
@@ -100,6 +102,7 @@ export type SetDeviceReceiptPrinterProfileRequest = {
   customDpi?: number | null;
   customCutterSupported?: boolean | null;
   customFeedLinesBeforeCut?: number | null;
+  nativeQrSupported?: boolean | null;
 };
 
 // ---- Label Printer Profile ----

@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+import QRCode from "qrcode";
 import { Image, QrCode } from "lucide-react";
 
 // Renders the backend's OWN RenderedDocument tree (see the type's comment for why this contract,
@@ -118,15 +120,42 @@ function RenderedImageNode() {
   );
 }
 
+// The server-resolved QR payload drawn as an image (error correction M, like the thermal printers). The payload is used exactly as given.
 function RenderedQrNode({ node }) {
+  const available = node.state === "available" && Boolean(node.payload);
+  // The drawn image is kept with the payload it was drawn from, so a stale image is never shown for a different payload.
+  const [drawn, setDrawn] = useState({ payload: null, src: "" });
+
+  useEffect(() => {
+    if (!available) return undefined;
+    let cancelled = false;
+    QRCode.toDataURL(node.payload, { errorCorrectionLevel: "M", margin: 4, width: 512 })
+      .then((url) => {
+        if (!cancelled) setDrawn({ payload: node.payload, src: url });
+      })
+      .catch(() => {
+        if (!cancelled) setDrawn({ payload: node.payload, src: "" });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [available, node.payload]);
+
+  const src = available && drawn.payload === node.payload ? drawn.src : "";
+
+  if (available && src) {
+    const size = Math.max(64, Math.round(((node.sizePercent ?? 40) / 100) * 320));
+    return (
+      <div className="flex justify-center p-2">
+        <img src={src} alt="QR" width={size} height={size} style={{ imageRendering: "pixelated" }} />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col items-center gap-1 rounded-lg border border-dashed border-line p-3 text-xs text-muted">
       <QrCode size={18} />
-      {node.state === "available" && node.payload ? (
-        <span className="break-all font-mono text-xs text-muted">{node.payload}</span>
-      ) : (
-        <span>QR not available</span>
-      )}
+      <span>QR not available</span>
     </div>
   );
 }

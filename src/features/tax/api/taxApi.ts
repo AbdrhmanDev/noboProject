@@ -4,6 +4,8 @@ import type {
   CompanyTaxSettings,
   CreateTaxCategoryRequest,
   CreateTaxCategoryResponse,
+  SetCompanyBillingRegimeRequest,
+  SetCompanyBillingRegimeResponse,
   SetCompanyTaxSettingsRequest,
   SetCompanyTaxSettingsResponse,
   SetProductSalesTaxCategoryRequest,
@@ -43,6 +45,15 @@ export async function setCompanyTaxSettings(
 ) {
   const response = await httpClient.put<SetCompanyTaxSettingsResponse>(
     `${taxUrl(companyId)}/settings`,
+    payload,
+  );
+
+  return response.data;
+}
+
+export async function setCompanyBillingRegime(companyId: string, payload: SetCompanyBillingRegimeRequest) {
+  const response = await httpClient.put<SetCompanyBillingRegimeResponse>(
+    `${taxUrl(companyId)}/billing-regime`,
     payload,
   );
 
