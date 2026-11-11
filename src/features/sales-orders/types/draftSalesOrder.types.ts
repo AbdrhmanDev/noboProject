@@ -223,6 +223,17 @@ export type ConfirmSalesOrderResponse = {
   confirmedByUserId: string;
   wasAlreadyConfirmed: boolean;
   kitchenTickets: ConfirmSalesOrderKitchenTicket[];
+  // Present only when Confirm re-priced the order because the company's billing regime (VAT on/off) changed after it was priced.
+  taxRegimeRepricing?: ConfirmSalesOrderTaxRegimeRepricing | null;
+};
+
+export type ConfirmSalesOrderTaxRegimeRepricing = {
+  previousIsTaxEnabled: boolean;
+  isTaxEnabled: boolean;
+  previousTaxAmount: number;
+  taxAmount: number;
+  previousPayableAmount: number;
+  payableAmount: number;
 };
 
 export type CloseSalesOrderResponse = {

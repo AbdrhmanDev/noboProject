@@ -30,6 +30,37 @@ export type SetCompanyBillingRegimeResponse = {
   changed: boolean;
 };
 
+// Confirmed orders with no invoice yet: they block a billing-regime change until paid or cancelled.
+export type BillingRegimeBlockingOrder = {
+  salesOrderId: string;
+  orderNumber: string;
+  branchId: string;
+  branchName: string;
+  status: string;
+  createdAtUtc: string;
+  confirmedAtUtc: string | null;
+  currencyCode: string;
+  payableAmount: number;
+  paidAmount: number;
+};
+
+export type BillingRegimeBlockingOrders = {
+  total: number;
+  items: BillingRegimeBlockingOrder[];
+};
+
+export type CancelStaleDraftSalesOrdersRequest = {
+  olderThanDays: number;
+  reason?: string | null;
+  previewOnly: boolean;
+};
+
+export type CancelStaleDraftSalesOrdersResponse = {
+  olderThanDays: number;
+  matching: number;
+  cancelled: number;
+};
+
 export type SetCompanyTaxSettingsRequest = {
   isTaxEnabled: boolean;
 };

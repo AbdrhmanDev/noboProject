@@ -1,5 +1,8 @@
 import { httpClient } from "../../../shared/api/httpClient";
 import type {
+  BillingRegimeBlockingOrders,
+  CancelStaleDraftSalesOrdersRequest,
+  CancelStaleDraftSalesOrdersResponse,
   ChangeTaxCategoryStatusRequest,
   CompanyTaxSettings,
   CreateTaxCategoryRequest,
@@ -54,6 +57,24 @@ export async function setCompanyTaxSettings(
 export async function setCompanyBillingRegime(companyId: string, payload: SetCompanyBillingRegimeRequest) {
   const response = await httpClient.put<SetCompanyBillingRegimeResponse>(
     `${taxUrl(companyId)}/billing-regime`,
+    payload,
+  );
+
+  return response.data;
+}
+
+export async function getBillingRegimeBlockingOrders(companyId: string) {
+  const response = await httpClient.get<BillingRegimeBlockingOrders>(
+    `${taxUrl(companyId)}/billing-regime/blocking-orders`,
+  );
+
+  return response.data;
+}
+
+// Platform staff only. previewOnly: count the matching drafts, change nothing.
+export async function cancelStaleDraftSalesOrders(companyId: string, payload: CancelStaleDraftSalesOrdersRequest) {
+  const response = await httpClient.post<CancelStaleDraftSalesOrdersResponse>(
+    `${taxUrl(companyId)}/billing-regime/stale-drafts/cancel`,
     payload,
   );
 

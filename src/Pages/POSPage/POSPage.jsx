@@ -765,6 +765,16 @@ export default function POSPage() {
     !cashMovementAmount.error &&
     cashMovementAmount.amount !== null &&
     cashMovementDraft.reason.trim().length > 0;
+  // Billing regimes: Confirm re-prices a Draft priced under another VAT regime, so the cashier must see the new total before
+  // taking any money. Not a success tone: it stays up until the cashier closes it.
+  const notifyTaxRegimeRepricing = (repricing) =>
+    notify(
+      t("pos.taxRegimeRepriced", {
+        previous: formatMoney(repricing.previousPayableAmount, settlementCurrencyCode, settlementMinorUnitDigits),
+        current: formatMoney(repricing.payableAmount, settlementCurrencyCode, settlementMinorUnitDigits),
+      }),
+      "warning",
+    );
   const notify = (message, tone = "error") => {
     setToast({ message, tone });
     // Only success confirmations auto-dismiss -- they are nice-to-know, not critical-to-read. Every
@@ -1123,13 +1133,17 @@ export default function POSPage() {
     }
 
     try {
-      await confirmSalesOrderMutation.mutateAsync();
+      const confirmed = await confirmSalesOrderMutation.mutateAsync();
       setSelectedVariantProduct(null);
       setSelectedModifierVariant(null);
       setModifierSelections({});
       await draftDetailsQuery.refetch();
       invalidateRestaurantSeating(currentCompanyId, currentBranchId);
-      notify("Sales order confirmed.", "success");
+      if (confirmed?.taxRegimeRepricing) {
+        notifyTaxRegimeRepricing(confirmed.taxRegimeRepricing);
+      } else {
+        notify("Sales order confirmed.", "success");
+      }
     } catch (error) {
       if (
         error?.code === "SalesOrder.DraftVersionConflict" ||
@@ -1183,6 +1197,13 @@ export default function POSPage() {
 
     if (staleCodes.includes(error?.code)) {
       refreshPaymentState();
+    }
+
+    // Billing regimes: the order's tax was fixed under a different regime than the company's current one -- it can never be invoiced.
+    if (error?.code === "Invoice.TaxRegimeMismatch") {
+      refreshPaymentState();
+      notify(t("pos.taxRegimeMismatch"));
+      return;
     }
 
     notify(error?.message || "Payment request failed.");
@@ -1403,9 +1424,10 @@ export default function POSPage() {
     // (ConfirmSalesOrderHandler no-ops on an already-Confirmed order), so a
     // retry of this whole action can't double-confirm; the payment call
     // right after keeps its own existing idempotency-key protection.
-    // Pricing/tax/discount are unaffected by Confirm, so the total/remaining
-    // already computed for this render stay correct — no re-derivation
-    // needed after this resolves.
+    // Pricing/tax/discount are unaffected by Confirm -- EXCEPT when the
+    // company's billing regime (VAT on/off) changed since the Draft was
+    // priced: Confirm then re-prices it, and the payment stops here so the
+    // cashier sees the new total (old vs new) before taking any money.
     if (draftOrder.status === "Draft") {
       if (lineEditor.hasPendingEdits()) {
         notify("Finish updating the cart before completing payment.");
@@ -1413,9 +1435,14 @@ export default function POSPage() {
       }
 
       try {
-        await confirmSalesOrderMutation.mutateAsync();
+        const confirmed = await confirmSalesOrderMutation.mutateAsync();
         await draftDetailsQuery.refetch();
         invalidateRestaurantSeating(currentCompanyId, currentBranchId);
+        if (confirmed?.taxRegimeRepricing) {
+          setPaymentAmountInput("");
+          notifyTaxRegimeRepricing(confirmed.taxRegimeRepricing);
+          return;
+        }
       } catch (error) {
         if (
           error?.code === "SalesOrder.DraftVersionConflict" ||

@@ -24,7 +24,7 @@ function mapTaxSettingsError(error: ApiError) {
     case "BillingRegime.SellerProfileIncomplete":
       return "Complete the company's legal name and Saudi registered address first.";
     case "BillingRegime.OpenOrdersExist":
-      return "Pay, close or cancel the open orders first.";
+      return "Pay or cancel the confirmed orders that have no invoice yet first. Drafts do not block: they follow the new regime when confirmed.";
     default:
       return "Could not save tax settings. Please try again.";
   }
