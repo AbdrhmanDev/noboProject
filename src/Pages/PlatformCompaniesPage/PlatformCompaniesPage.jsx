@@ -16,6 +16,23 @@ import { platformCompanyDetailsPath, ROUTES } from "../../utils/routes";
 // summary fetch, so a small page size is intentional here (unlike the Overview page).
 const PAGE_SIZE = 25;
 const STATUS_OPTIONS = ["", "Active", "Suspended"];
+const REGIME_OPTIONS = ["", "NotVatRegistered", "KsaPhase1", "KsaPhase2"];
+const REGIME_TONE = { NotVatRegistered: "neutral", KsaPhase1: "info", KsaPhase2: "success" };
+
+// Billing regime + "VAT number missing" (VAT-registered without a valid Saudi VAT number). A company
+// without the field (older API) is shown as not VAT-registered, the backend's own default.
+function BillingRegimeCell({ company }) {
+  const { t } = useI18n();
+  const regime = company.billingRegime || "NotVatRegistered";
+  return (
+    <span className="inline-flex flex-wrap items-center gap-1">
+      <StatusBadge tone={REGIME_TONE[regime] || "neutral"}>{t(`platform.companies.regime.${regime}`)}</StatusBadge>
+      {company.sellerVatNumberMissing && (
+        <StatusBadge tone="warning">{t("platform.companies.vatNumberMissing")}</StatusBadge>
+      )}
+    </span>
+  );
+}
 
 function CompanyStatusBadge({ status }) {
   const { t } = useI18n();
@@ -40,6 +57,7 @@ function PlatformCompaniesContent() {
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
+  const [billingRegime, setBillingRegime] = useState("");
   const [pageNumber, setPageNumber] = useState(1);
   const [datePreset, setDatePreset] = useState("last30");
   const [dateRange, setDateRange] = useState(() => presetDateRange("last30"));
@@ -57,6 +75,11 @@ function PlatformCompaniesContent() {
     setPageNumber(1);
   };
 
+  const handleRegimeChange = (value) => {
+    setBillingRegime(value);
+    setPageNumber(1);
+  };
+
   const handleRangeChange = (range) => {
     setDateRange(range);
     setPageNumber(1);
@@ -68,10 +91,11 @@ function PlatformCompaniesContent() {
       pageSize: PAGE_SIZE,
       search: search || undefined,
       status: status || undefined,
+      billingRegime: billingRegime || undefined,
       fromUtc: dateRange.fromUtc,
       toUtc: dateRange.toUtc,
     }),
-    [pageNumber, search, status, dateRange],
+    [pageNumber, search, status, billingRegime, dateRange],
   );
   const companiesQuery = usePlatformCompanies(filters);
   const companies = companiesQuery.data?.items || [];
@@ -109,6 +133,18 @@ function PlatformCompaniesContent() {
               </option>
             ))}
           </select>
+          <select
+            value={billingRegime}
+            onChange={(event) => handleRegimeChange(event.target.value)}
+            aria-label={t("platform.companies.billingRegime")}
+            className="h-10 rounded-xl border border-line bg-canvas px-3 text-sm text-ink outline-none"
+          >
+            {REGIME_OPTIONS.map((option) => (
+              <option key={option || "all"} value={option} className="bg-surface">
+                {option ? t(`platform.companies.regime.${option}`) : t("platform.companies.billingRegime.all")}
+              </option>
+            ))}
+          </select>
         </div>
         <PlatformDateRangeSelector preset={datePreset} onPresetChange={setDatePreset} onRangeChange={handleRangeChange} />
       </section>
@@ -138,6 +174,7 @@ function PlatformCompaniesContent() {
                   <tr className="text-start text-subtle">
                     <th className="pb-2 text-start font-medium">{t("platform.companies.legalName")}</th>
                     <th className="pb-2 text-start font-medium">{t("platform.companies.status")}</th>
+                    <th className="pb-2 text-start font-medium">{t("platform.companies.billingRegime")}</th>
                     <th className="pb-2 text-start font-medium">{t("platform.companies.branches")}</th>
                     <th className="pb-2 text-start font-medium">{t("platform.companies.users")}</th>
                     <th className="pb-2 text-start font-medium">{t("platform.companies.activeUsers")}</th>
@@ -164,6 +201,9 @@ function PlatformCompaniesContent() {
                       </td>
                       <td className="py-2.5">
                         <CompanyStatusBadge status={company.status} />
+                      </td>
+                      <td className="py-2.5">
+                        <BillingRegimeCell company={company} />
                       </td>
                       <td className="py-2.5 text-muted">{company.branchCount}</td>
                       <td className="py-2.5 text-muted">{company.userCount}</td>
@@ -201,6 +241,7 @@ function PlatformCompaniesContent() {
                     </span>
                     <CompanyStatusBadge status={company.status} />
                   </div>
+                  <BillingRegimeCell company={company} />
                   <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-muted">
                     <span>{t("platform.companies.branches")}: {company.branchCount}</span>
                     <span>{t("platform.companies.users")}: {company.userCount}</span>

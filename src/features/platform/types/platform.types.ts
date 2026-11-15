@@ -43,11 +43,19 @@ export type PlatformCompanyListItem = {
   ordersCount: number;
   salesAmount: number;
   lastActivityAtUtc: string | null;
+  // No tax settings row = "NotVatRegistered" (backend rule). Optional so an older API without the
+  // field still renders (as not VAT-registered).
+  billingRegime?: PlatformBillingRegime;
+  // VAT-registered without a valid Saudi VAT number on the company.
+  sellerVatNumberMissing?: boolean;
 };
+
+export type PlatformBillingRegime = "NotVatRegistered" | "KsaPhase1" | "KsaPhase2";
 
 export type PlatformCompanyListFilters = {
   search?: string;
   status?: PlatformCompanyStatus;
+  billingRegime?: PlatformBillingRegime;
   pageNumber?: number;
   pageSize?: number;
   fromUtc?: string;
